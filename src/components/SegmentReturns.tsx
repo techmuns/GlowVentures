@@ -7,7 +7,12 @@ import { MarketReturnInfo } from './MarketReturnInfo';
 import { HoldingAssumptionInfo } from './HoldingAssumptionInfo';
 import { CapitalBridge } from './CapitalBridge';
 import { capitalBridge } from '@/lib/capitalBridge';
-import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME, BOOK_CAPITAL_GAINS } from '@/data/glowData';
+import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME, BOOK_CAPITAL_GAINS, BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES, BOOK_REVIEW_FLOWS } from '@/data/glowData';
+import { BENCHMARKS } from '@/lib/benchmarks';
+import { capitalMovesWithCalls } from '@/lib/tranches';
+import { lineBenchmark, type LineBenchmark } from '@/lib/lineBenchmark';
+import { useBenchmarkLevels } from '@/components/HoldingBenchmark';
+import { LineBenchmarkCell, BENCH_HOW } from '@/components/LineBenchmarkCell';
 import { AvailableReturnCoverage } from '@/components/AvailableReturnCoverage';
 import { Card } from '@/components/Card';
 import { ExportableTable } from '@/components/ExportableTable';
@@ -48,7 +53,8 @@ import type { Position } from '@/lib/types';
 const REVIEW_COLS = reviewColumnIds('holding').filter(id => id !== 'review:investmentRange');
 const REVIEW_SET = new Set(REVIEW_COLS);
 const COLS = ['seg', 'holdings', 'qty', 'avgCost', 'cmp', 'day', 'value', 'weight', 'deployed', 'investedOn', 'cost', 'gain', 'pnl', 'realised',
-  'market', 'ret', 'contrib', 'basis', 'sector', 'entity', ...REVIEW_COLS];
+  'bench', 'ret', 'contrib', 'basis', 'sector', 'entity', ...REVIEW_COLS];
+const ALL_BENCH_KEYS = BENCHMARKS.map(b => b.key);
 const OPTIONAL = ['qty', 'cmp', 'day', 'cost', 'pnl', 'realised', 'sector', 'entity', ...REVIEW_COLS];
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 const HEAD: Record<string, string> = { category: 'Category', assetClass: 'Asset class', basket: 'Basket', sector: 'Sector / class', side: 'Side', security: 'Security' };
@@ -123,6 +129,22 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     add(a.total);
     return m;
   }, [a, companySectors, inSession, idx, wholeAccountsOf]);
+  // EACH ROW AGAINST ITS OWN INDEX, ON ITS OWN MONEY (Stage 10mr, `lineBenchmark`): in place of
+  // the Market return column, which restated the Return column wherever a row is one holding.
+  const benchLevels = useBenchmarkLevels(ALL_BENCH_KEYS);
+  const benchCtx = useMemo(() => {
+    const accounts = statementPortfolio?.accounts ?? [];
+    return { isMandate: (id: string) => idx.get(id)?.engagement === 'PMS', accounts, tranches: BOOK_POSITION_TRANCHES,
+      moves: selection.inception ? capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, accounts, BOOK_REVIEW_FLOWS) : [] };
+  }, [statementPortfolio, idx, selection.inception]);
+  const benches = useMemo(() => {
+    const m = new Map<SelectedLine, LineBenchmark>();
+    if (!a) return m;
+    const add = (l: SelectedLine) => m.set(l, lineBenchmark(l, selection, benchLevels, benchCtx));
+    for (const r of a.rows) { add(r); for (const c of r.children) { add(c); c.children.forEach(add); } }
+    add(a.total);
+    return m;
+  }, [a, selection, benchLevels, benchCtx]);
   // Since investment covers every holding; a period, the public ones — private investments are reported apart, as on the cards.
   const marketBase = useMemo(() => current.filter(p => p.marketValue > 0 && (selection.inception || p.marketSide !== 'private')), [current, selection.inception]);
   const marketPrivate = selection.inception ? 0 : current.filter(p => p.marketValue > 0 && p.marketSide === 'private').length;
@@ -174,14 +196,15 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   if (!a) return null;
   const reason = (l: SelectedLine) => !l.measured?.reason && l.missing[0]?.plainReason ? l.missing[0].reason
     : returnGapText(l.measured?.reason ?? l.missing[0]?.reason ?? 'We need values and dated payments for these dates.', selection.start);
-  const fig = (l: SelectedLine) => figures.get(l) ?? lineHoldingFigures(l.positions, { wholeAccounts: wholeAccountsOf(l), inSession, ownerOf: p => ownerOf(idx, p) });
+  const bench = (l: SelectedLine) => benches.get(l) ?? lineBenchmark(l, selection, benchLevels, benchCtx);
+  const fig = (l: SelectedLine) => figures.get(l) ??lineHoldingFigures(l.positions, { wholeAccounts: wholeAccountsOf(l), inSession, ownerOf: p => ownerOf(idx, p) });
   const reviewScopeOf = (l: SelectedLine): ReviewScope => {
     const whole = wholeAccountsOf(l);
     return whole && whole.every(id => idx.get(id)?.engagement === 'PMS') ? { accountIds: whole, isMandate: true } : { positions: l.positions };
   };
   const named = (xs: string[], noun: string) => xs.length === 1 ? xs[0] : xs.length ? `${xs.length} ${noun}` : null;
   const accessors = withReviewAccessors<SelectedLine>({ seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
-    weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, market: r => marketOf(r.positions).pct, ret: r => r.returnPct, contrib: r => r.contribution,
+    weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, bench: r => bench(r).pct, ret: r => r.returnPct, contrib: r => r.contribution,
     basis: r => r.units.some(u => u.assumption) ? 'Assumed held' : 'Statement records',
     qty: r => fig(r).quantity, avgCost: r => fig(r).avgCost, cmp: r => fig(r).price, day: r => fig(r).day.pct,
     investedOn: r => fig(r).investedOn?.first, cost: r => fig(r).costReason ? null : fig(r).cost.cost,
@@ -236,7 +259,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     };
   };
   const cells = (l: SelectedLine, kind: 'parent' | 'child') => {
-    const pad = TREE_CELL[kind], m = marketOf(l.positions), h = holdingCells(l, pad), scope = reviewScopeOf(l);
+    const pad = TREE_CELL[kind], h = holdingCells(l, pad), scope = reviewScopeOf(l);
     return [
       <td key="holdings" className={`${pad} text-right mono text-slate-400`}>{l.positions.length || (l.units.length ? '—' : 0)}</td>,
       h.qty, h.avgCost, h.cmp, h.day,
@@ -247,9 +270,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
       <td key="gain" data-seg-cell="gain" className={`${pad} text-right mono ${changeColor(l.gain)}`}><span className="inline-flex items-center justify-end gap-1">
         {l.gain != null ? money(l.gain, true) : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} />{info(l, 'gain')}</span></td>,
       h.pnl, h.realised,
-      <td key="market" data-seg-cell="market" data-market-return={m.pct ?? ''} className={`${pad} text-right mono ${changeColor(m.pct)}`}><span className="inline-flex items-center justify-end gap-1">
-        {m.pct != null ? <>{pct(m.pct)}{m.annual && <span className="text-[10px]">p.a.</span>}</> : m.pending ? <span className="text-slate-400">Loading…</span> : <AbsentCell reason={m.gaps[0]?.reason ?? 'This row has no separately priced current holdings.'} />}
-        {l.positions.length > 0 && marketInfo(l.key === 'total' ? 'Total' : l.label, l.positions)}</span></td>,
+      <LineBenchmarkCell key="bench" label={l.key === 'total' ? 'Total' : l.label} b={bench(l)} pad={pad} requested={selection.type} money={money} />,
       <td key="ret" data-seg-cell="ret" data-seg-shown-as={l.measured?.shown ? (l.measured.shownAs ?? selection.type) : undefined} className={`${pad} text-right mono ${changeColor(l.returnPct)}`}><span className="inline-flex items-center justify-end gap-1"
         title={shownAbsolute(l) ? `Held under a year, so this is the absolute return, not ${type.label}: a return under a year is never annualised.`
           : l.measured?.basis === 'annual' && l.periodPct != null ? `${pct(l.periodPct)} over the period itself, not stated per year` : undefined}>
@@ -271,7 +292,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     data-seg-assumed={a.total.units.filter(u => u.assumption).length} data-status="ready" {...marketData}>
     {summaryCards}
     <Card pad={false} title={title}
-      subtitle="Gain and return use available statements plus labelled holding assumptions. Open the info button for shares, dates and missing records. Market return uses current portfolio weights."
+      subtitle="Gain and return use available statements plus labelled holding assumptions. Open the info button for shares, dates and missing records. Benchmark return puts the same dated money into each holding's own index."
       right={<div className="flex flex-wrap items-center justify-end gap-2 text-[12px]">
         {axisTabs}
         {openable.length > 0 && <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable, !allOpen)} />}
@@ -294,7 +315,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
           <SortHeader col="gain" view={view} pad="px-4 py-2">Gain / loss</SortHeader>
           <SortHeader col="pnl" view={view} pad="px-4 py-2" title="Value now less purchase cost, over the holdings that report a cost. Since purchase, not the selected period.">Unreal. P&amp;L</SortHeader>
           <SortHeader col="realised" view={view} pad="px-4 py-2" title="Booked on units already sold, first-in first-out, holding by holding from the statements' own records. Since purchase, not the selected period.">Realised P&amp;L</SortHeader>
-          <SortHeader col="market" view={view} pad="px-4 py-2" title="How the holdings held today moved over the period — each one's price, NAV or statement value, weighted by what it is worth today. Not the return on the money invested (that is the Return column). The info button lists dates, weights, sources and exclusions.">Market return</SortHeader>
+          <SortHeader col="bench" view={view} pad="px-4 py-2" title={`What the row's own index would have earned on the same money, on the Return column's measure. ${BENCH_HOW} A share is compared by AMFI's size class (Nifty 50, Midcap 150, Smallcap 250), a fund by its category, a managed account by the benchmark its manager reports, a private holding with the Nifty 500; a row holding different kinds is a blend of each one's index. Cash, debt, arbitrage and hybrid holdings have no index in the feed and are named in the info button. Price indices: dividends are not in them.`}>Benchmark return</SortHeader>
           <SortHeader col="ret" view={view} pad="px-4 py-2">Return · {typeHead}</SortHeader>
           <SortHeader col="contrib" view={view} pad="px-4 py-2" title="For Absolute return only: row gain divided by the total's shared money base, so these contributions add to the total return.">Contribution</SortHeader>
           <SortHeader col="basis" view={view} pad="px-4 py-2" title="Assumed held means no later sale or transfer appears in the records we have. This basis is also included in Excel exports.">Holding basis</SortHeader>

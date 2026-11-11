@@ -50,8 +50,8 @@ try {
    await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.marketPending === '0');
    const actual = Number(await summary.getAttribute('data-market-total'));
    assert.ok(Number.isFinite(actual), `${period}/${type}: a market figure`);
-   const footer = table.locator('[data-seg-total] [data-seg-cell="market"]');
-   assert.ok(Math.abs(Number(await footer.getAttribute('data-market-return'))-actual)<1e-8, `${period}/${type}: the table's total is the panel's`);
+   // Stage 10mr: the attribution table no longer draws a Market return column (it restated the Return column).
+   assert.equal(await table.locator('[data-seg-cell="market"]').count(), 0, `${period}/${type}: no Market return column`);
    assert.ok(Number(await summary.getAttribute('data-market-covered')) > 20, `${period}/${type}: holdings measured`);
    // Each holding from its first value on record in the period: never before
    // the period opens, beyond a statement value at most seven days old
@@ -70,18 +70,26 @@ try {
  for (const period of ['fytd','mtd','ytd','y1','y2','y3']) {
   assert.ok(Math.abs(of(period,'xirr')-of(period,'absolute'))<1e-9 && Math.abs(of(period,'cagr')-of(period,'absolute'))<1e-9, `${period}: each holding's return over the period, whatever the type`);
  }
+ // Stage 10mr: the attribution table sets each row against its own index, so the market return and
+ // its details are the Sector axis's (Stage 10gs): Sector Composition's sectors, priced per sector.
+ await table.locator('[data-seg-axis-option="sector"]').click();
+ await page.waitForFunction(()=>document.querySelector('[data-segment-returns]')?.dataset.segAxis==='sector');
+ await page.waitForFunction(()=>document.querySelector('[data-sector-attribution]')?.dataset.status==='ready');
+ assert.ok(await table.locator('[data-sa-cell="market"][data-market-return]:not([data-market-return=""])').count()>5);
+ await page.screenshot({path:`${out}/sector-market-returns.png`});
+ const sectorTotal = () => Number(document.querySelector('[data-sa-total] [data-sa-cell="market"]')?.dataset.marketReturn);
  await summary.getByRole('button', { name: 'What is included in total market return?', exact: true }).click();
  const dialog = page.getByRole('dialog'); await dialog.waitFor();
  assert.equal(await dialog.getByRole('tab').count(),3);
  assert.equal(await dialog.getByRole('tab',{name:'Return Overview',exact:true}).getAttribute('aria-selected'),'true');
- assert.match(await dialog.innerText(),/values today/);assert.match(await dialog.innerText(),/Gain \/ loss/);
+ assert.match(await dialog.innerText(),/values today/);
  const detail=dialog.locator('[data-market-details]');
  const includedCount=Number(await detail.getAttribute('data-market-included-count'));
  const missingCount=Number(await detail.getAttribute('data-market-missing-count'));
  const holdingCount=Number(await detail.getAttribute('data-market-holding-total'));
+ assert.ok(includedCount>5,'the sector total prices its holdings');
  assert.equal(includedCount+missingCount,holdingCount,'every holding belongs to one of the two lists');
  assert.equal(await dialog.locator('[data-market-source]').count(),0,'Overview stays short; no long list is mounted');
- assert.ok(Number(await dialog.locator('[data-market-private-apart]').getAttribute('data-market-private-apart'))>0,'the private investments reported apart are named');
  await page.screenshot({path:`${out}/overview-tab.png`});
  await dialog.locator('[data-market-tab="included"]').click();
  assert.equal(await dialog.locator('[data-market-source]').count(),includedCount);
@@ -89,8 +97,7 @@ try {
  assert.equal(new Set(includedKeys).size,includedCount,'separate accounts remain separate entries');
  const rows=await dialog.locator('[data-market-source]').evaluateAll(els=>els.map(el=>({pct:+el.dataset.marketPct,value:+el.dataset.marketValue})));
  const tied=rows.reduce((n,r)=>n+r.value*r.pct,0)/rows.reduce((n,r)=>n+r.value,0);
- assert.ok(Math.abs(tied-Number(await summary.getAttribute('data-market-total')))<1e-6,'the total is its holdings\u2019 returns weighted by today\u2019s value');
- assert.ok(await dialog.locator('[data-market-source]').filter({hasText:'PMS mandates'}).count()>0);
+ assert.ok(Math.abs(tied-await page.evaluate(sectorTotal))<1e-6,'the total is its holdings’ returns weighted by today’s value');
  assert.ok(await dialog.locator('[data-market-source]').evaluateAll(els=>els.every(el=>el.querySelector('[data-market-through]')?.textContent.trim()&&el.querySelector('[data-market-category]')?.textContent.trim()&&el.querySelector('[data-market-owner]')?.textContent.includes('Account'))));
  await dialog.getByRole('textbox',{name:'Search included holdings'}).fill('no-such-investment-12345');
  assert.equal(await dialog.locator('[data-market-source]').count(),0);
@@ -103,19 +110,13 @@ try {
  const missingKeys=await dialog.locator('[data-market-gap]').evaluateAll(els=>els.map(el=>el.dataset.marketHoldingKey));
  assert.equal(new Set([...includedKeys,...missingKeys]).size,holdingCount,'no overlap or omitted holding');
  assert.ok(await dialog.locator('[data-market-gap]').evaluateAll(els=>els.every(el=>el.querySelector('[data-market-through]')?.textContent.trim()&&el.querySelector('[data-market-category]')?.textContent.trim()&&el.querySelector('[data-market-missing-data]')?.textContent.trim()&&el.querySelector('[data-market-needed]')?.textContent.trim())));
- // Stage 10lh: a period reports private investments apart, as the face and the cards do: none is
- // listed or counted here, and the Overview names how many. Their wording (an AIF's NAVs, an unlisted
- // share's valuation) is struck in marketReturnCoverage.test.ts.
+ // Stage 10lh: a period lists no private investment.
  assert.equal(await dialog.locator('[data-market-side="private"]').count(),0,'no private investment is listed on a period');
- assert.equal(holdingCount,Number(await summary.getAttribute('data-market-denominator')),'the details count the face\u2019s public holdings');
- await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill('National Stock Exchange of India');
- const nse = dialog.locator('[data-market-gap]').first();
- assert.match(await nse.locator('[data-market-missing-data]').innerText(), /The price source has no history for this listing/);
- assert.match(await nse.locator('[data-market-needed]').innerText(), /price history.*exact stock or fund.*selected period/);
- assert.ok(await nse.evaluate(el => Boolean(el.querySelector('[data-market-missing-data]').compareDocumentPosition(el.querySelector('[data-market-owner]')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'the missing data comes before account metadata');
  await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill('Karur');
- assert.ok(await dialog.locator('[data-market-gap]').count()>0);
- assert.match(await dialog.innerText(),/No new statement/);assert.match(await dialog.innerText(),/Account/);
+ assert.ok(await dialog.locator('[data-market-gap]').count()>0, 'the failed history is named as missing');
+ const karur = dialog.locator('[data-market-gap]').first();
+ assert.ok(await karur.evaluate(el => Boolean(el.querySelector('[data-market-missing-data]').compareDocumentPosition(el.querySelector('[data-market-owner]')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'the missing data comes before account metadata');
+ assert.match(await dialog.innerText(),/Account/);
  await page.screenshot({path:`${out}/coverage.png`});
  await dialog.locator('[data-market-tab="missing"]').focus();
  await page.keyboard.press('ArrowRight');
@@ -131,12 +132,6 @@ try {
  await dialog.locator('[data-market-retry]').click();
  await page.waitForFunction(n=>Number(document.querySelector('[data-segment-returns]')?.dataset.marketCovered)>n, before);
  await page.keyboard.press('Escape');
- await table.locator('[data-seg-axis-option="sector"]').click();
- await page.waitForFunction(()=>document.querySelector('[data-segment-returns]')?.dataset.segAxis==='sector');
- // Stage 10gs: the Sector axis is Sector Composition's sectors, with the market return per sector.
- await page.waitForFunction(()=>document.querySelector('[data-sector-attribution]')?.dataset.status==='ready');
- assert.ok(await table.locator('[data-sa-cell="market"][data-market-return]:not([data-market-return=""])').count()>5);
- await page.screenshot({path:`${out}/sector-market-returns.png`});
  // Stage 10gu: every history is now kept in this browser, so the next visit draws the figure without fetching any.
  const covered = Number(await summary.getAttribute('data-market-covered')), kept = requests;
  await page.reload();
@@ -146,7 +141,8 @@ try {
  assert.equal(requests, kept, 'a reload draws the kept histories instead of refetching them');
  await page.setViewportSize({width:390,height:844});
  await summary.getByRole('button', {name:'What is included in total market return?',exact:true}).click(); await dialog.waitFor();
- assert.equal(await dialog.locator('[data-market-tab="overview"]').getAttribute('aria-selected'),'true','reopening starts on Overview');
+ // The tab is kept with its history entry (`useNavigationState`): the retry above left it on Missing, and the reload is the same entry.
+ assert.equal(await dialog.locator('[data-market-tab="missing"]').getAttribute('aria-selected'),'true','reopening keeps the tab this history entry left it on');
  for(const tab of ['overview','included','missing']) {
   await dialog.locator(`[data-market-tab="${tab}"]`).click();
   assert.ok(await dialog.evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&el.scrollWidth<=el.clientWidth+1;}));

@@ -158,6 +158,7 @@ SUITES.push(["table number corrections and Excel uploads", "src/lib/__tests__/ta
 SUITES.push(["private market capital cells", "src/lib/__tests__/capitalEntry.test.ts"]);
 SUITES.push(["under a year absolute", "src/lib/__tests__/underAYear.test.ts"]);
 SUITES.push(["holdings against their own index", "src/lib/__tests__/holdingBenchmark.test.ts"]);
+SUITES.push(["returns-tab rows against their own index", "src/lib/__tests__/lineBenchmark.test.ts"]);
 SUITES.push(["private company funding rounds", "src/lib/__tests__/privateRounds.test.ts"]);
 SUITES.push(["the returns tab's one selection", "src/lib/__tests__/selectionMarket.test.ts"]);
 SUITES.push(["moved holdings", "src/lib/__tests__/familyPlacements.test.ts"]);

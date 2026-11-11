@@ -121,7 +121,7 @@ const NONE: [RegExp, string][] = [
   [/\bliquid|overnight|money market|liqbees|cash management|ultra short|low duration/i,
     "A cash fund: its benchmark is a money-market index (such as CRISIL Liquid Debt), which no price feed here carries, so no index figure is shown."],
   [/arbitrage/i, "An arbitrage fund: its benchmark is the Nifty 50 Arbitrage index, which no price feed here carries, so no index figure is shown."],
-  [/balanced advantage|dynamic asset|hybrid|multi asset|absolute return|hedged/i,
+  [/balanced advantage|dynamic asset|hybrid|multi asset|absolute return|hedged|equity savings/i,
     "A hybrid or hedged scheme: its benchmark blends equity and debt indices, which no price feed here carries, so no index figure is shown."],
   [/credit|income|\bdebt|\bbond|gilt|duration|corporate bond|banking (&|and) psu/i, DEBT_WHY],
   [/\bgold\b|\bsilver\b/i, "A precious-metal holding: no equity index measures it, so no index figure is shown."],

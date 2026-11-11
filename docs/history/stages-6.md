@@ -1470,3 +1470,22 @@ Codex's review of #352, verified against the code and the book:
 - **Now** (`spanReason` in `datedCapital.ts`): such a line says the review dates it only as a span (or a month), with one cost, and names the holders. XIRR reads "Date range only" (or "Month only"; `returnColumns.ts`), and the index line reads "Range only" (or "Month only"; `holdingBenchmark.ts`). A line whose account has a capital group keeps that group's reason.
 - **Would date it.** The investment register dates part of it: Ankita's 15,000 pre-bonus shares (8 Dec 2022 and 26 Jan 2023 payments, ₹4.28 Cr) and 5,000 of Ajay's (18 Aug 2023; the amount printed does not match its own 5,000 × ₹3,100). Ajay's other 20,000 have no dated purchase. Not applied: it would replace the review's cost split, and that is the family's decision.
 - Checks: `datedCapital.test.ts` (NSE's two lines: undated, reason names the span, XIRR refuses), `holdingBenchmark.test.ts` (labels).
+
+### Stage 10mq — The client's "records still needed" PDF, regenerated from the book
+
+*"we need to create an updated PDF for the current missing gaps … in the same format"* — the family, 11 Nov 2026, of the 27 October list.
+
+- `npm run client:request` (`scripts/client-request/`) prints `docs/client/Glow-Ventures-records-still-needed-<date>.pdf` in the 27 October layout. Sections 2 (PMS stocks with no purchase date) and 3 (private investments carried at cost) are derived with the dashboard's own `investedOnOf` and `holdingBucket`. Section 1 is written by hand; every item is checked against the book, and an item the book no longer bears out stops the build. Section 4 lists the 27 October items since answered, each one checked.
+- 11 Nov result: 43 named records (was 35), 73 PMS stocks in 6 accounts (was 163 in 9), 75 private records / 60 investments (was 76 / 61).
+- Closed since 27 Oct: Ankita's HDFC Balanced Advantage Regular (sold 23 Sep, MOPWM report); Yash Highvoltage and EMA Partners sales (ICICI order book); SVAN 8710067/8710090 and Molecule dated; SOTEFIN now on the ICICI statement.
+- New from the 31 Oct ICICI and HDFC Securities statements: Indian Bank, IndusInd, Karur Vysya and RBL on 49794950 with no purchase or transfer; City Union's 25,117 shares beyond the 2 July buy; Sotefin's allotment; Vantage Oak (and Ankita's 1,225,000 units); Man Industries, Deepak Fertilisers and Kingfa dates; Sterlite Technologies and its demerged shares. Also LKP's other 31 March balances (dates for the later sales), Hope's Mirae folio, both Marathon Trends holding statements and the second LKP removal notice. Liquid BeES rows name the 21 Oct note's units.
+- Not asked of the client (our follow-ups): Federal Bank (whole balance bought 2 July per the order book), and carrying the Yash, EMA, Insolation and Smartworks recovered costs through the order book's sales (Stage 10kn).
+
+### Stage 10mr — Returns attribution: Benchmark return replaces Market return
+
+*"the market return column and the return XIRR column are showing the same returns … replace the market column with benchmark return similar to what we have in portfolio monitor"* — the family, 11 Nov 2026.
+
+- On a one-holding row, Market return (the holding's own move, `selectionMarket`) equalled the Return column. The attribution table now draws **Benchmark return** (`lineBenchmark.ts`, `LineBenchmarkCell.tsx`). Every unit behind the row's return goes into ITS OWN index, chosen by the Monitor's `rowBenchmark`: the manager's printed benchmark for a whole PMS account, AMFI size class for a share, fund category, Nifty 500 for a private holding. The money goes in through `pmeWindowRows` / `pmeInceptionRows` / dated since-investment money, and the Return column's own measure and debt rule are then struck. A mixed row is a **Blend**, weighted by each unit's money.
+- Cash, debt, arbitrage, hybrid and metal units have no index in the feed. They are named in the info card and left out of BOTH sides: `book` is the row's figure over the same units, and ◦ marks a partial blend. A row of them alone reads "No index". Equity savings funds are now hybrid in `holdingBenchmark.ts` (Monitor too).
+- Each record closes the index on its own last value date, as the return does: Sanshi Class E reads N500 −4.78%, the index's 30 Jun → 30 Oct move.
+- The Sector axis keeps its Market return and details; `check-market-returns.mjs` now opens them there. `check-selected-attribution.mjs` asserts the Total row's `data-seg-cell="bench"`. Suite: `lineBenchmark.test.ts`.
