@@ -1,11 +1,13 @@
 // ONE READER FOR THE FAMILY'S INVESTMENT REGISTER.
 //
 // `source/august-2026-f/NEW INVESTMENT SHEET.xlsx` is the family's own record of
-// what they PAID. It has no reader in `scripts/ingest/` BY DECISION and never
-// becomes a source for `glowData.ts` — no institution struck it, so folding it in
-// would end the guarantee that every figure traces to the statement of the
-// institution that did. `lib/classify.mjs` labels it
-// `Family investment register (not a statement)` and no extractor can reach it.
+// what they PAID. It has no reader in `scripts/ingest/`: `lib/classify.mjs` labels
+// it `Family investment register (not a statement)` and no extractor reaches it.
+// It is NOT kept out of `glowData.ts` any more (the family, 21 Oct and 11 Nov
+// 2026): `recoverHoldingCosts.mjs` fills missing costs from it, and
+// `registerRecords.mjs` dates money no statement does (Stage 10mv). Both read
+// committed rows held to a second document. THIS file reads it whole, for the
+// reconciliation and the sweep below.
 //
 // IT HAD TWO CONSUMERS AND NOW HAS TWO AGAIN, ONE OF THEM A CHECK:
 //   • `scripts/register-reconcile.mjs` -> docs/REGISTER-RECONCILIATION.md

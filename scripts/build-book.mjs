@@ -79,6 +79,7 @@ import { readSpreadsheet } from "./ingest/lib/sheet.mjs";
 import { REVIEW_WORKBOOK, readTransactions as readReviewTransactions } from "./lib/reviewPrivateRead.mjs";
 import { reviewPurchaseDates } from "./lib/reviewPurchaseDates.mjs";
 import { REGISTER } from "./lib/recoverHoldingCosts.mjs";
+import { inceptionMoves, readRegisterWorkbook, registerInceptions } from "./lib/registerRecords.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
 const OUT = process.env.GLOW_BOOK_OUT ?? path.join(ROOT, "src", "data", "glowData.ts");
@@ -2563,6 +2564,8 @@ function build(archived, archiveCount = archived.length, references = {}) {
   const capitalMoves = [];
   /** Accounts whose own printed running balance proves the record starts at inception. */
   const capitalFromInception = new Set();
+  /** The payment that opened a mandate, from the family's investment register (Stage 10mv). */
+  const registerInceptionOf = new Map(registerInceptions(references.registerWorkbook ?? readRegisterWorkbook(ROOT)).map((i) => [i.accountId, i]));
   /** A fund moving a holding between its own unit classes — see `reclassificationsFrom`. */
   const reclassifications = [];
   const accountReturns = {};
@@ -4471,8 +4474,31 @@ function build(archived, archiveCount = archived.length, references = {}) {
      * one record per account). See `datedCapitalElsewhere`.
      */
     const commitmentsHere = commitments.filter((c) => c.accountId === accountId);
+    /**
+     * …AND THE PAYMENT THAT OPENED THE MANDATE, from the family's investment
+     * register (Stage 10mv). A mandate whose statements begin on an opening
+     * capital balance has the money paid before them on no dated row; the
+     * register prints that payment, on the inception date the manager prints,
+     * and it is listed only where it reconciles to the manager's own opening
+     * balance (`inceptionMoves`). The record then reaches the day before that
+     * balance, so the manager's register merges onto it below.
+     */
+    let typedReach = capitalRecordTo;
+    const opening = registerInceptionOf.get(accountId);
+    if (opening) {
+      const r = inceptionMoves(opening, { account: accounts.find((a) => a.accountId === accountId), allIssues, typed: typedMoves });
+      if (r.moves) {
+        typedMoves.push(...r.moves);
+        if (!typedReach || r.reach > typedReach) typedReach = r.reach;
+        notes.push(`account ${accountNo}: the investment register's ${opening.date} payment of ${opening.amount} (${opening.register.sheet} row ${opening.register.row}) `
+          + `opens its dated capital record — the manager's inception date, and its ${r.open.date} opening balance of ${r.open.balance}`
+          + (r.residual ? ` less ${r.residual} netted out before it, listed on ${r.reach} with its date assumed` : ""));
+      } else {
+        notes.push(`account ${accountNo}: the investment register's ${opening.date} payment of ${opening.amount} is not listed — ${r.reason}`);
+      }
+    }
     const merged = datedCapitalElsewhere({
-      accountId, allIssues, existing: typedMoves, typedReach: capitalRecordTo, valueDate: asOf,
+      accountId, allIssues, existing: typedMoves, typedReach, valueDate: asOf,
       reclassificationsHere: switchesHere, notes, label: `account ${accountNo}`,
     });
     /**
@@ -4829,7 +4855,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
   }
 
   // THE REVIEW'S PRIVATE-MARKET ROWS, IN PLACE OF THE STATEMENT ROWS THEY REPLACE.
-  const review = PRIVATE_MARKET_FROM_REVIEW ? reviewBookLayer({ root: ROOT, positions, unvalued: unvaluedHoldings, reviewWorkbook: references.reviewWorkbook }) : null;
+  const review = PRIVATE_MARKET_FROM_REVIEW ? reviewBookLayer({ root: ROOT, positions, unvalued: unvaluedHoldings, reviewWorkbook: references.reviewWorkbook, registerWorkbook: references.registerWorkbook }) : null;
   const supersededUnvaluedBy = new Map();
   if (review) {
     const id = (x) => `${x.accountId}|${x.securityKey}`;

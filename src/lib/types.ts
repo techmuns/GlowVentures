@@ -1113,6 +1113,19 @@ export type CapitalMove = {
    */
   fromReview?: true;
   /**
+   * Set where this movement is a row of the family's INVESTMENT REGISTER
+   * (Stage 10mv, `scripts/lib/registerRecords.mjs`) — the payment that opened a
+   * mandate, or a review line's purchase — rather than a statement's: the sheet
+   * and row it is read from.
+   */
+  fromRegister?: { sheet: string; row: number };
+  /**
+   * Set where no document dates this movement and the book places it: why, and
+   * on what day. Only the amount netted out of a mandate's capital before its
+   * first statement's opening balance carries one (Stage 10mv).
+   */
+  assumedDate?: string;
+  /**
    * PRESENT ONLY ON A TRANCHE, and only where the fund later moved these units
    * into another of its classes. The move is then shown in the class it sits in
    * today — `units` converted at the switch's own printed ratio, `security` the
@@ -1671,8 +1684,10 @@ export type ReviewFlow = {
   amount: number;
   units: number | null;
   rate: number | null;
-  /** The row on the review's Transactions since inception tab. */
-  reviewRow: number;
+  /** The row on the review's Transactions since inception tab; null for a row the investment register dates instead. */
+  reviewRow: number | null;
+  /** The investment register's sheet and row, where it dates a line the review prints only by months (Stage 10mv). */
+  register?: { sheet: string; row: number };
 };
 
 /**

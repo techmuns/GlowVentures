@@ -779,6 +779,7 @@ export function capitalMovesWithCalls(
       units: f.units == null ? null : f.kind === "purchase" ? f.units : f.kind === "sale" ? -f.units : null,
       security: f.security, securityKey: f.securityKey,
       fromReview: true,
+      ...(f.register ? { fromRegister: f.register } : {}),
       // A sale returns capital; Div / Int is gain paid out. Typed so the split
       // below can be struck on the review's own rows.
       ...(f.kind === "sale" ? { payoutKind: "capital" as const } : f.kind === "income" ? { payoutKind: "income" as const } : {}),
