@@ -1518,6 +1518,7 @@ Codex's review of #352, verified against the code and the book:
 - Residual-only classes stay in AUM but offer no empty current-holdings link; classes with current holdings retain their arc and legend links.
 - Geography names the unclassified value. The book has no verified country exposure, so no countries, weights or historical AUM change are inferred from the screenshot, listing venue, currency or fund names.
 - Validation covers canonical AUM, dedupe, allocation totals, missing classifications, scoped totals, search, navigation, currency and light/dark desktop/mobile layouts.
+- The full CI run exposed a pre-existing 200-batch cap in its table-scroll probe after the workbook grew beyond 10,000 rows. The probe now bounds attempts by the actual row count while retaining strict progress and complete-row assertions.
 
 ### Stage 10mv — The investment register dates money no statement does: Sotefin, V.E.C 128005, Goldstandard ×2, Ankita's NSE
 

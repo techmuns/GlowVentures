@@ -32,7 +32,10 @@ async function appendByScrolling(table) {
 }
 async function scrollToEnd(table) {
   const end = table.locator('[data-table-scroll-end]');
-  for (let i = 0; i < 200; i++) {
+  // Each append must advance at least one row. Use the actual table size so a
+  // workbook exceeding 10,000 rows cannot exhaust a fixed 200-batch allowance.
+  const maxAppends = Number(await end.getAttribute('data-total-rows'));
+  for (let i = 0; i <= maxAppends; i++) {
     const shown = Number(await end.getAttribute('data-loaded-rows'));
     const total = Number(await end.getAttribute('data-total-rows'));
     if (shown === total) return total;
