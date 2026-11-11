@@ -395,8 +395,14 @@ console.log("\n5. Each member's share is the review's own Investorwise figure");
 // ───────────────────────────────────────────────────────────────────────────
 console.log("\n6. Every dated private-market flow is the review's own Transactions row");
 {
-  type Flow = { accountId: string; securityKey: string; security: string; date: string; kind: string; amount: number; units: number | null; rate: number | null; reviewRow: number };
-  const flows = BOOK_REVIEW_FLOWS as Flow[];
+  type Flow = { accountId: string; securityKey: string; security: string; date: string; kind: string; amount: number; units: number | null; rate: number | null; reviewRow: number | null; register?: { sheet: string; row: number } };
+  // The rows the investment register dates instead are their own document's (Stage 10mv):
+  // Ankita's two NSE payments, and nothing else.
+  const registered = (BOOK_REVIEW_FLOWS as Flow[]).filter((f) => f.reviewRow === null);
+  ok("the flows the review does not print are the investment register's, each naming its row — Ankita's two NSE payments",
+    registered.length === 2 && registered.every((f) => f.register && f.securityKey === "national-stock-exchange-of-india" && f.accountId === "review-ankita-jaisinghani"),
+    registered.map((f) => `${f.accountId} ${f.securityKey} ${f.date}`).join("; "));
+  const flows = (BOOK_REVIEW_FLOWS as Flow[]).filter((f) => f.reviewRow !== null) as (Flow & { reviewRow: number })[];
   const want = txRows.filter((t) => !/^closing$/i.test(t.kind));
   ok("the book's review flows are exactly the review's non-closing private-market Transactions rows",
     flows.map((f) => f.reviewRow).sort((a, b) => a - b).join() === want.map((t) => t.row).sort((a, b) => a - b).join(),
