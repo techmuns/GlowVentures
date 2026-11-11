@@ -27,7 +27,7 @@ export function LineBenchmarkCell({ label, b, pad, requested, money }: {
       gap != null ? `This row ${gap >= 0 ? "is ahead of" : "trails"} it by ${Math.abs(gap).toFixed(2)} percentage points${partial ? " on the same holdings" : ""}.` : null,
       partial ? `Left out: ${b.left.length} holding${b.left.length === 1 ? "" : "s"} with no index or no dated money (${money(b.left.reduce((s, l) => s + l.invested, 0))}).` : null,
     ].filter(Boolean).join(" ");
-  return <td data-seg-cell="bench" data-bench-return={b.pct ?? ""} data-bench-book={b.book ?? ""} data-bench-keys={b.uses.map((u) => u.bench.key).join(" ")}
+  return <td data-seg-cell="bench" data-bench-currency="INR" data-bench-return={b.pct ?? ""} data-bench-book={b.book ?? ""} data-bench-keys={b.uses.map((u) => u.bench.key).join(" ")}
     data-bench-covered={b.coveredInvested} data-bench-total={b.totalInvested} data-bench-left={b.left.length} data-bench-pending={b.pending ? "" : undefined}
     data-bench-shown-as={b.shownAs ?? undefined} data-bench-from={b.from ?? undefined} data-bench-to={b.to ?? undefined} className={`${pad} text-right mono ${changeColor(b.pct)}`}>
     <span className="inline-flex items-center justify-end gap-1" title={title}>
@@ -39,6 +39,7 @@ export function LineBenchmarkCell({ label, b, pad, requested, money }: {
       {(b.uses.length > 0 || b.left.length > 0) && <ReturnCalculationInfo label={`${label} benchmark return`} value={b.pct == null ? "—" : pct(b.pct)}
         intro="Which index, on which money" triggerLabel={`Which benchmark is ${label} compared with?`}>
         <div className="space-y-3 text-[12px] leading-relaxed text-slate-300" data-bench-details>
+          <p>The comparison uses INR cash flows. Changing the display currency does not change this return percentage.</p>
           <p>{BENCH_HOW} {PRICE_BASIS}</p>
           {b.uses.length > 0 && <ul className="space-y-1.5" data-bench-uses>{b.uses.map((u) => <li key={u.bench.key} data-bench-use={u.bench.key}>
             <span className="font-medium text-slate-100">{u.bench.name}</span> · {money(u.invested)} over {u.units} record{u.units === 1 ? "" : "s"}

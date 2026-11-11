@@ -21,6 +21,7 @@ const DIR = fs.mkdtempSync(path.join(TEMP_ROOT, "run-"));
 const SUITES = [
   ["Home dashboard dates and history", "src/lib/__tests__/homeDashboard.test.ts"],
   ["home overview", "src/lib/__tests__/homeOverview.test.ts"],
+  ["INR adjusted time-weighted returns", "src/lib/__tests__/adjustedTwr.test.ts"],
   ["navigation snapshots", "src/lib/__tests__/navigationMemory.test.ts"],
   ["archive sheet decoding", "src/lib/__tests__/auditSheet.test.ts"],
   ["ETF unit continuity", "src/lib/__tests__/fundUnitActions.test.ts"],
