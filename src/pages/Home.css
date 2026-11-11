@@ -207,3 +207,4 @@ html #root .home-table tfoot > tr:first-child > :is(th, td) { border-top: 0; }
 html #root .home-table thead > tr:last-child > :is(th, td) { border-bottom: 1px solid var(--home-border); }
 html #root .home-table tfoot td { border-bottom: 0; }
 @media (max-width: 700px) { .home-widget-dialog-content { max-height: calc(100dvh - 34px); } }
+.home-widget-tools > button { min-width: 26px; min-height: 26px; }
