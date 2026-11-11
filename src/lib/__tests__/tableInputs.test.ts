@@ -89,6 +89,13 @@ assert.equal(JSON.stringify(book), original, "the canonical source book stays un
 const position = applied.positions.find(p => privateCapitalId(p) === cap.id)!;
 assert.equal(position.quantity, 0);
 assert.equal(position.enteredCapital?.paid, 100);
+const paidOnly = applyTableInputs(book, [edits[1]])!.positions.find(p => privateCapitalId(p) === cap.id)!;
+assert.match(paidOnly.returnInputsUnavailableReason!, /paid-in capital.*dated transaction record/, 'capital-only corrections cannot preserve an incompatible dated return');
+const sourcedCapital = source.find(r => r.kind === 'capital' && r.values.paid != null && r.values.paid >= 1 && r.values.called != null && book.positions.some(p => r.id === `capital:${p.accountId}`))!;
+assert.ok(sourcedCapital);
+const accountCapitalEdits = [change(sourcedCapital, 'paid', sourcedCapital.values.paid! - 1), ...(sourcedCapital.values.pending == null ? [] : [change(sourcedCapital, 'pending', sourcedCapital.values.pending + 1)])]
+  .map(c => ({ ...c, updatedAt: '2026-11-11T00:00:00Z' }));
+assert.match(applyTableInputs(book, accountCapitalEdits)!.positions.find(p => `capital:${p.accountId}` === sourcedCapital.id)!.returnInputsUnavailableReason!, /paid-in capital/);
 assert.deepEqual(position.integrity?.metrics.unrealizedPnL, book.positions.find(p => privateCapitalId(p) === cap.id)!.integrity?.metrics.unrealizedPnL, 'quantity and private-capital edits do not claim an unchanged P&L');
 const folios = privateBookFolios(applied, []).folios.filter(f => f.position === position);
 assert.equal(figuresOf(folios, true).paid, 100, "new capital numbers reach the shared private-book rollup");

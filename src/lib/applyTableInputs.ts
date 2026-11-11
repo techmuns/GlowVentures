@@ -12,14 +12,16 @@ export function applyTableInputs(book: Portfolio | null, saved: readonly SavedIn
   const by = new Map(catalog.map(r => [r.id, r]));
   const positions = book.positions.map(original => {
     const input = by.get(positionInputId(original)), cap = by.get(privateCapitalId(original));
+    const accountCapital = by.get(capitalInputId(original.accountId));
     const fields = Object.keys(input?.versions ?? {});
     const hasCap = cap && Object.keys(cap.versions).length > 0 && Object.values(cap.values).some(value => value !== null);
-    if (!fields.length && !hasCap) return original;
+    const paidChanged = cap?.versions.paid != null || accountCapital?.versions.paid != null;
+    if (!fields.length && !hasCap && !paidChanged) return original;
     // A retained old correction is rechecked against today's complete source
     // record, not trusted because it once passed the cell-range validator.
     if (hasCap && capitalIssues(cap.values, cap.capitalTerms).length) return original;
     const p = { ...original, enteredNumbers: fields, enteredCapital: hasCap ? cap.values : undefined };
-    if (fields.some(field => field !== 'marketValue')) p.returnInputsUnavailableReason = 'A saved correction changes units, cost or income, but the dated transaction record has not been corrected to reconcile with it.';
+    if (paidChanged || fields.some(field => field !== 'marketValue')) p.returnInputsUnavailableReason = 'A saved correction changes units, cost, income or paid-in capital, but the dated transaction record has not been corrected to reconcile with it.';
     for (const field of fields) Object.assign(p, { [field]: input!.values[field] });
     // A newly supplied valuation supersedes the old "held at cost" treatment.
     // A cost-only correction keeps that treatment and carries its value with it.
