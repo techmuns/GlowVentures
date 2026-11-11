@@ -685,6 +685,8 @@ And:
 - `npm run import-private-market` — Inc42 funding rows and private-company headlines
   from Glow Central Research's site (`--offline` re-matches the rows held).
 - `npm run accounts-table` — the accounts table above (`-- --write` splices).
+- `npm run client:request` — the client's "records still needed" PDF in `docs/client/`
+  (Stage 10mq); stops on a hand-written request the book no longer bears out.
 - Replays (each `--check` is a no-op control; follow with `build-book`):
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,
   `replay:movements`, `replay:flows`, `replay:flow-lines`,
