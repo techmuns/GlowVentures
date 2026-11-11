@@ -58,6 +58,7 @@ import { displaySecurity, DASH } from "@/lib/format";
 import { singlePurchaseGap } from "@/lib/analytics";
 import type { Position } from "@/lib/types";
 import type { Txn, TxnData } from "@/lib/ledger";
+import savedActions from "../../../public/data/corporate-actions.json";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -248,6 +249,26 @@ function solveXirr(recordKeys: readonly string[]): number | null {
  * lacks a figure.
  */
 const STMT = new Map(BOOK_POSITIONS.map((p) => [`${p.accountId}|${p.securityKey}`, p]));
+/**
+ * EVERY UNIT A BUY OR A BONUS ON ONE (Stage 10mx): the window sold nothing, every
+ * row in it is a buy, and the saved bonus issues after the last of them multiply
+ * those buys to exactly the units held — so the buys are every rupee paid.
+ * Re-expressed off the saved capture, never `investedOn.ts`.
+ */
+const bonusMadeTheRest = (p: Position): boolean => {
+  const r = p.tradeRecord;
+  if (!r || r.sells || !(p.quantity! > 0)) return false;
+  const ts = (BOOK_HOLDING_TRADES[`${p.accountId}|${p.securityKey}`] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
+  if (!ts.length || ts.some((t) => t.side !== "buy" || !(t.quantity! > 0))) return false;
+  // A PMS statement prints no ISIN; the line's NSE symbol names it instead.
+  const mine = savedActions.rows.filter((a) => (p.isin ? a.isin === p.isin : !!p.symbol && a.ticker === p.symbol));
+  if (new Set(mine.map((a) => a.isin)).size !== 1) return false;
+  const last = ts[ts.length - 1].date;
+  const bonus = mine.filter((a) => a.type === "bonus" && a.exDate > last && a.exDate <= r.to);
+  if (!bonus.length || bonus.some((a) => !(a.factor! > 1))) return false;
+  const bought = ts.reduce((n, t) => n + t.quantity!, 0);
+  return Math.abs(bought * bonus.reduce((f, a) => f * a.factor!, 1) - p.quantity!) <= 0.0005;
+};
 function holdingRate(ps: readonly Position[]): { annual: number | null; days: number; payments: number } | null | "short" {
   const flows: { t: number; amount: number }[] = [];
   let since = Infinity, to = -Infinity, payments = 0;
@@ -261,7 +282,7 @@ function holdingRate(ps: readonly Position[]): { annual: number | null; days: nu
     const lots = BOOK_HOLDING_LOTS[k];
     const rec = p.recoveredCost;
     let close: string, from: string;
-    if (r && r.unaccounted === 0) {
+    if (r && (r.unaccounted === 0 || bonusMadeTheRest(p))) {
       const ts = (BOOK_HOLDING_TRADES[k] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
       if (!ts.length) return null;
       if (ts.some((t) => t.amount === null) || inc.some((i) => !i.date)) return "short";
