@@ -62,8 +62,8 @@ const OPTIONAL = ['qty', 'cmp', 'day', 'cost', 'pnl', 'realised', 'sector', 'ent
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 const HEAD: Record<string, string> = { category: 'Category', assetClass: 'Asset class', basket: 'Basket', sector: 'Sector / class', side: 'Side', security: 'Security' };
 
-export default function SegmentReturns({ selection: recordedSelection, period }: {
-  selection: ReturnSelection; period: PeriodKey;
+export default function SegmentReturns({ selection: recordedSelection, period, end }: {
+  selection: ReturnSelection; period: PeriodKey; end: string | null;
 }) {
   const { statementPortfolio, consolidated, fmtFromBase, corporateActions, quoteFeed, scope: memberScope } = usePortfolio();
   const [axis, setAxis] = useViewParam(SEGMENT_VIEWS, {}, 'seg');
@@ -88,7 +88,7 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
   const sectorAxis = axis === 'sector';
   const originalAttribution = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
     () => null, calculationCurrent) : null, [current, exited, statementPortfolio, axis, selection, calculationCurrent, sectorAxis]);
-  const { model: a, of: twrOf, pending: twrPending } = useAdjustedTwrColumns({ model: originalAttribution, current, exited, calculationCurrent, axis, end: selection.end });
+  const { model: a, of: twrOf, pending: twrPending } = useAdjustedTwrColumns({ model: originalAttribution, current, exited, calculationCurrent, axis, end });
   // The capital bridge is the selected period's total on every axis (Stage 10gu): the table's own total
   // units, or on the Sector view — which draws no dated total of its own — the same pool grouped by category.
   const pool = useMemo(() => a ?? (statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, 'category', selection,

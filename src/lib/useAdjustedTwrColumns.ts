@@ -3,7 +3,7 @@ import { usePortfolio } from '@/context/PortfolioContext';
 import { isDebtHolding } from './analytics';
 import { periodSelection, statementReturnInputs } from './availableCardReturns';
 import { assumedHoldingBook } from './assumedHoldingBook';
-import { selectedSegmentReturns, type SelectedLine } from './selectedSegmentReturns';
+import { selectedSegmentReturns, UNSPLIT_RETURNS, type SelectedLine } from './selectedSegmentReturns';
 import type { SegmentAxis } from './segmentReturns';
 import type { Position } from './types';
 import { useMarketHistories } from './useMarketReturns';
@@ -62,18 +62,27 @@ export function useAdjustedTwrColumns({ model, current, exited, calculationCurre
   }), [statement, end, axis, inputs, current, universe, exited, calculationCurrent, assumptions]);
   const displayed = useMemo(() => {
     if (!model) return null;
-    const rows = new Map(model.rows.map(r => [r.key, r]));
-    const unmeasured = (r: SelectedLine, top = false): SelectedLine => ({ ...r, label: top ? `${r.label} · exited` : r.label, exited: true,
+    const isExited = (r: SelectedLine) => {
+      const ps = r.positions.length ? r.positions : r.units.flatMap(u => u.positions);
+      return ps.length > 0 && ps.every(p => !(p.marketValue > 0) && !((p.quantity ?? 0) > 0));
+    };
+    const unmeasured = (r: SelectedLine, top = false): SelectedLine => ({ ...r, label: top && isExited(r) ? `${r.label} · exited` : r.label, exited: isExited(r) ? true : undefined,
       units: [], measured: null, gain: null, invested: null, returnPct: null, periodPct: null, contribution: null,
       missing: [{ accountId: r.positions[0]?.accountId ?? '', label: r.label, plainReason: true,
-        reason: 'This investment is fully exited. Its fixed-horizon TWR is shown where the purchase and sale records support it.' }],
+        reason: `${isExited(r) ? 'This investment is fully exited.' : 'The selected-period return is not available for this row.'} Its fixed-horizon TWR is shown where the purchase and sale records support it.` }],
       children: r.children.map(c => unmeasured(c)),
     });
-    for (const source of sources) for (const r of source.model?.rows ?? []) {
-      const ps = r.positions.length ? r.positions : r.units.flatMap(u => u.positions);
-      if (!rows.has(r.key) && ps.length && ps.every(p => !(p.marketValue > 0) && !((p.quantity ?? 0) > 0))) rows.set(r.key, unmeasured(r, true));
-    }
-    return { ...model, rows: [...rows.values()] };
+    const merge = (original: SelectedLine[], peers: SelectedLine[][]): SelectedLine[] => {
+      const rows = new Map(original.map(r => [r.key, r]));
+      for (const list of peers) for (const r of list) {
+        if (!rows.has(r.key) && (isExited(r) || r.key === UNSPLIT_RETURNS)) rows.set(r.key, unmeasured(r, true));
+      }
+      return [...rows.values()].map(r => {
+        const matches = peers.flatMap(list => list.filter(other => other.key === r.key));
+        return { ...r, children: merge(r.children, matches.map(other => other.children)) };
+      });
+    };
+    return { ...model, rows: merge(model.rows, sources.map(source => source.model?.rows ?? [])) };
   }, [model, sources]);
   const currentRows = useMemo(() => new Map([...indexRows(displayed)].map(([key, row]) => [row, key])), [displayed]);
   const calculate = useMemo(() => {
@@ -86,7 +95,7 @@ export function useAdjustedTwrColumns({ model, current, exited, calculationCurre
         if (!row || !end) return [col.key, missingTwr([{ label: 'This row', reason: 'No complete record is available for this row and period.' }])];
         const gaps = row.missing.map(g => ({ label: g.label, reason: g.reason }));
         for (const u of row.units) {
-          if (u.held) gaps.push({ label: u.label, reason: 'Held at its last value: a second verified valuation is needed for TWR.' });
+          if (u.held) gaps.push({ label: u.label, reason: `Held at its last value: a verified valuation record is needed for TWR. ${u.held.reason}` });
           else if (!u.window) gaps.push({ label: u.label, reason: 'A dated valuation series and complete cash-flow record are needed for TWR.' });
           else if (u.key === u.accountId && inputOf.get(u.accountId)?.flows.some(f => f.date > u.window!.closeDate && f.date <= end)) {
             gaps.push({ label: u.label, reason: 'The capital record dates money after the last valuation. A later valuation is needed.' });

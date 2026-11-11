@@ -30,18 +30,30 @@ try {
   await page.route('**/api/market-history?*', route => {
     const q = new URL(route.request().url()).searchParams;
     return route.fulfill({ json: { ok: true, version: 2, symbol: q.get('symbol') ?? q.get('fund'), isin: q.get('isin'),
-      name: 'Deterministic INR price fixture', source: 'Local INR fixture', basis: q.has('fund') ? 'nav' : 'adjusted-close',
+      name: q.has('fund') ? 'Deterministic INR Fund - Growth' : 'Deterministic INR stock', source: 'Local INR fixture', basis: q.has('fund') ? 'nav' : 'adjusted-close',
       first: t[0], last: t.at(-1), t, c, v: c, splits: [] } });
   });
   await page.goto(`${base}/cio?tab=returns&seg=security&rto=2026-11-11`);
   const table = page.locator('[data-segment-returns]'); await table.waitFor();
   await page.waitForFunction(() => { const d = document.querySelector('[data-segment-returns]')?.dataset; return d?.marketPending === '0' && d?.twrPending === '0'; });
   for (const id of columns) assert.ok(await table.locator(`th[data-col="${id}"]`).isVisible(), `${id} visible by default`);
-  const snapshots = async () => table.locator('tr[data-seg-row]').evaluateAll((rows, columns) => rows.map(row => ({
-    key: row.dataset.segRow,
+  await table.getByRole('button', { name: 'Expand all', exact: true }).click();
+  const snapshots = async () => table.locator('tr[data-seg-row], tr[data-seg-child]').evaluateAll((rows, columns) => rows.map(row => ({
+    key: row.dataset.segRow ?? `${row.dataset.segChild}::${row.dataset.segChildKey}`,
+    selector: row.dataset.segRow ? `tr[data-seg-row="${CSS.escape(row.dataset.segRow)}"]`
+      : `tr[data-seg-child="${CSS.escape(row.dataset.segChild)}"][data-seg-child-key="${CSS.escape(row.dataset.segChildKey)}"]`,
     values: Object.fromEntries(columns.map(id => [id, row.querySelector(`[data-seg-cell="${id}"]`)?.getAttribute('data-twr-pct') ?? ''])),
   })).filter(r => !r.key.startsWith('__')), columns);
   const before = await snapshots();
+  await fs.writeFile(path.join(out, 'initial-values.json'), JSON.stringify(before, null, 2));
+  if (!before.some(r => r.values.twrMtd !== '')) {
+    const reasons = [];
+    for (const key of ['helios-flexi-cap-fund-direct', 'mirae-asset-liquid-fund-direct', 'absl-liquid-fund-direct-growth']) {
+      const sample = table.locator(`tr[data-seg-row*="${key}"] [data-seg-cell="twrMtd"]`).first();
+      if (await sample.count()) { await sample.getByRole('button').click(); reasons.push(await page.getByRole('dialog').innerText()); await page.keyboard.press('Escape'); }
+    }
+    await fs.writeFile(path.join(out, 'initial-gaps.json'), JSON.stringify(reasons, null, 2));
+  }
   assert.ok(before.some(r => r.values.twrMtd !== ''), 'at least one holding has measurable MTD');
   assert.ok(before.some(r => r.values.twrQtd !== ''), 'at least one holding has measurable QTD');
   assert.ok(before.some(r => r.values.twrYtd !== ''), 'at least one holding has measurable calendar YTD');
@@ -64,7 +76,7 @@ try {
   assert.equal(await table.locator('[data-twr-currency]:not([data-twr-currency="INR"])').count(), 0);
   assert.match(await table.locator('th[data-col="bench"]').innerText(), /INR/);
   assert.equal(await table.locator('[data-seg-cell="bench"]:not([data-bench-currency="INR"])').count(), 0);
-  const cell = table.locator(`tr[data-seg-row="${match.key}"] [data-seg-cell="twrMtd"]`);
+  const cell = table.locator(`${match.selector} [data-seg-cell="twrMtd"]`);
   await cell.getByRole('button').click();
   const dialog = page.getByRole('dialog'); await dialog.waitFor();
   assert.match(await dialog.innerText(), /INR valuations and INR cash flows/);
@@ -92,8 +104,12 @@ try {
   await page.waitForFunction(() => { const d = document.querySelector('[data-segment-returns]')?.dataset; return d?.marketPending === '0' && d?.twrPending === '0'; });
   const heading = table.locator('th[data-col="twrMtd"]'); await heading.locator('[data-col-button]').click();
   const direction = await heading.getAttribute('aria-sort');
-  const sorted = (await snapshots()).filter(r => r.values.twrMtd !== '').map(r => Number(r.values.twrMtd));
-  assert.ok(sorted.every((v, i) => i === 0 || (direction === 'ascending' ? v >= sorted[i - 1] : v <= sorted[i - 1])), 'numeric TWR sorting');
+  const sortedGroups = new Map();
+  for (const row of await snapshots()) if (row.values.twrMtd !== '') {
+    const group = row.key.includes('::') ? row.key.split('::')[0] : 'root';
+    sortedGroups.set(group, [...(sortedGroups.get(group) ?? []), Number(row.values.twrMtd)]);
+  }
+  assert.ok([...sortedGroups.values()].every(sorted => sorted.every((v, i) => i === 0 || (direction === 'ascending' ? v >= sorted[i - 1] : v <= sorted[i - 1]))), 'numeric TWR sorting within each sibling group');
   const download = page.waitForEvent('download', { timeout: 180000 });
   await table.locator('[data-export-excel]').first().count().then(async n => {
     await (n ? table.locator('[data-export-excel]').first() : page.locator('[data-export-excel]').first()).click();
