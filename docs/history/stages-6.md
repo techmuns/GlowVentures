@@ -1501,7 +1501,16 @@ Codex's review of #352, verified against the code and the book:
 - The client request (Stage 10mq) no longer asks HDFC Securities for these three holdings' dates: 41 named records (was 43).
 - Checks: `reviewPurchaseDates.test.mjs` (each gate broken once).
 
-### Stage 10mt — Returns controls share one compact row
+### Stage 10mt — PMS trade dates: a trade printed on both the investor report and the transaction statement is kept
+
+*"According to the client, we have received transaction statements for all the PMSs from the initial date of investment … we are not able to show the dates anywhere, transaction dates for all the holdings."* — the family, 11 Nov 2026.
+
+- Checked per account. From-inception transaction statements are in the drop for ASK ×2, Green Lantern ×2, Marathon ×2, Molecule, SVAN ×2 and V.E.C 128004, and they date every share held except Vedanta Aluminium Metal (Green Lantern; demerged units with no cited entitlement in `shared/demergers.mjs`). Carnelian 3517383 (inception 6 Jan 2025), Goldstandard 100022/100023 (26 Dec 2025) and V.E.C 128005 (30 Jul 2025) have transaction statements from 1 Apr 2026 only. Nothing else in `source/`, the zips or `statement-publications` dates their earlier lots, so they stay undated with the reason and remain on the client request.
+- Root cause of a real loss: `datedRowsAcross` dedupes trades across ALL of an account's documents, kept documents first. Green Lantern's 30 Jun investor report prints the same trades as its transaction statements. Where both print a row identically (a whole-rupee rate), the investor report's copy won. The tape then kept transaction-statement rows only, so the trade vanished. Green Lantern 510861 lost Ingersoll Rand's 17 Apr 2026 buy (170 at ₹4,100), Ratnamani's 29 Apr buy (157 at ₹2,650) and Anup Engineering's 15 Jun buy (41 at ₹1,950), and its three holdings showed "368 units on no dated trade".
+- `build-book` now reads the tape (`saleRows`: the holding trades and the day's sales settled against capital-gain lots) from the winning report type alone, deduped among itself, which is the runtime ledger's `datedRows` rule. Book: 1,817 → 1,820 trades, Green Lantern 510861 28 → 31 of 34 lines dated; no value, cost, realised gain or summary moves. Client request: 73 → 70 PMS stocks.
+- Check: `holdingTrades.test.mjs` restates the tape off the archive for every account issuing both report types and fails on main's book with exactly those three holdings.
+
+### Stage 10mu — Returns controls share one compact row
 
 - The return-type group's full explanation set its flex basis, pushing it onto a second line while leaving unused space beside the dates. The group now reserves 14rem for its label and dropdown and grows into the remaining row width; the short explanation truncates first, with the full explanation retained on hover.
 - Toolbar gaps are 12px. The period buttons can wrap within the toolbar on narrow screens, and a wrapped return-type group starts at the left edge rather than floating to the right. Period, date and calculation behavior is unchanged.

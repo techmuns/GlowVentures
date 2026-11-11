@@ -323,9 +323,9 @@ A per-contribution breakdown is published for **33** position(s), of which **14*
 
 ## When each holding was bought (Stage 10fm)
 
-Of **435** holdings, **311** carry the date their units were bought: 33 by the fund's own dated allotments, 17 by a lot register, 176 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 85 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
+Of **435** holdings, **314** carry the date their units were bought: 33 by the fund's own dated allotments, 17 by a lot register, 179 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 85 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
 
-**1817** dated buys and sells sit behind **228** holdings (`BOOK_HOLDING_TRADES`); **100** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
+**1820** dated buys and sells sit behind **228** holdings (`BOOK_HOLDING_TRADES`); **100** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
 
 The rest are undated on the page, each with its reason:
 
@@ -337,7 +337,6 @@ The rest are undated on the page, each with its reason:
 - HDFC Securities 3110320 — no transaction statement or dated allotment reaches it: 6
 - V.E.C Assago Capital Management LLP 128005 — no trade in the transaction statements' window: 5
 - Carnelian Asset Management and Advisors Pvt Ltd 3517383 — no trade in the transaction statements' window: 4
-- Green Lantern Capital LLP 510861 — the trades do not account for every unit held: 4
 - SVAN Investment Managers LLP 8710067 — the trades do not account for every unit held: 4
 - SVAN Investment Managers LLP 8710090 — the trades do not account for every unit held: 4
 - Bandhan Mutual Fund 8652064 — no transaction statement or dated allotment reaches it: 2
@@ -351,6 +350,7 @@ The rest are undated on the page, each with its reason:
 - Green Lantern Capital LLP 510854 — no trade in the transaction statements' window: 1
 - Green Lantern Capital LLP 510854 — the trades do not account for every unit held: 1
 - Green Lantern Capital LLP 510861 — no trade in the transaction statements' window: 1
+- Green Lantern Capital LLP 510861 — the trades do not account for every unit held: 1
 - Kotak Mahindra Mutual Fund 4295974 — no transaction statement or dated allotment reaches it: 1
 - Kotak Mahindra Mutual Fund 7111389 — no transaction statement or dated allotment reaches it: 1
 - Mirae Asset Mutual Fund 70413280453 — no transaction statement or dated allotment reaches it: 1

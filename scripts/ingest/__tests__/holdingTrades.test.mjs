@@ -185,5 +185,58 @@ const WINDOW = { from: "2025-01-16", to: "2026-09-22" };
   ok("…but not where the parent's replay misses what the statement holds of it", /parent/.test(unproven?.reason ?? ""), JSON.stringify(unproven));
 }
 
+// ── the book: a tape is its own report type's rows (Stage 10mt) ────────────
+// A manager issuing both an investor report and a transaction statement prints
+// the same trades on each. build-book deduped them across the two, kept the
+// investor report's copy of every row both print identically, then read the
+// transaction statement's rows alone — so a trade printed the same on both
+// (Green Lantern 510861's whole-rupee buys of Ingersoll Rand, Ratnamani and
+// Anup Engineering) left the tape. Restated here off the archive, without
+// build-book: each account's transaction statements, a document's own repeat
+// kept, a repeat across two of them counted once, then `oneCopyPerTrade`.
+{
+  const fs = await import("node:fs");
+  const ROOT = new URL("../../../", import.meta.url);
+  const auditDir = new URL("public/audit/", ROOT);
+  const book = fs.readFileSync(new URL("src/data/glowData.ts", ROOT), "utf8");
+  const start = book.indexOf("export const BOOK_HOLDING_TRADES");
+  const json = start < 0 ? null : book.slice(book.indexOf("= ", start) + 2, book.indexOf(";\n", start));
+  const bookTrades = json ? JSON.parse(json) : null;
+  ok("the book publishes its holdings' trades", bookTrades && Object.keys(bookTrades).length > 0);
+  const docs = fs.readdirSync(auditDir).map((d) => new URL(`${d}/document.json`, auditDir))
+    .filter((f) => fs.existsSync(f)).map((f) => JSON.parse(fs.readFileSync(f, "utf8")))
+    .filter((d) => d.accountNo && d.transactions?.length);
+  const byAccount = new Map();
+  for (const d of docs) byAccount.set(`${d.provider}::${d.accountNo}`, [...(byAccount.get(`${d.provider}::${d.accountNo}`) ?? []), d]);
+  const settled = (t) => t.printed?.settlementAmount ?? t.net ?? t.gross ?? null;
+  let accounts = 0, holdings = 0;
+  const wrong = [];
+  for (const issues of byAccount.values()) {
+    const tape = issues.filter((d) => d.reportType === "transaction-statement");
+    if (!tape.length || !issues.some((d) => d.reportType === "investor-report")) continue;
+    accounts++;
+    const id = `${issues[0].provider.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${issues[0].accountNo}`;
+    const seen = new Set(), rows = [];
+    for (const d of tape) {
+      const n = new Map();
+      for (const t of d.transactions) {
+        const base = [t.date, t.securityKey, t.side, t.quantity, t.unitPrice, settled(t)].join("|");
+        n.set(base, (n.get(base) ?? 0) + 1);
+        const k = `${base}#${n.get(base)}`;
+        if (!seen.has(k)) { seen.add(k); rows.push(t); }
+      }
+    }
+    for (const [k, have] of Object.entries(bookTrades ?? {})) {
+      if (!k.startsWith(`${id}|`)) continue;
+      const key = k.slice(id.length + 1);
+      const want = holdingTradeRows(oneCopyPerTrade(rows.filter((t) => t.securityKey === key).map((t) => ({ ...t, amount: settled(t) }))));
+      holdings++;
+      if (want.length !== have.length) wrong.push(`${k}: the transaction statements print ${want.length}, the book carries ${have.length}`);
+    }
+  }
+  ok("accounts issuing both an investor report and a transaction statement are in the archive", accounts > 0 && holdings > 0, `${accounts} accounts`);
+  ok("every such holding carries exactly its transaction statements' trades", !wrong.length, wrong.slice(0, 5).join("; "));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
