@@ -1489,3 +1489,14 @@ Codex's review of #352, verified against the code and the book:
 - Cash, debt, arbitrage, hybrid and metal units have no index in the feed. They are named in the info card and left out of BOTH sides: `book` is the row's figure over the same units, and ◦ marks a partial blend. A row of them alone reads "No index". Equity savings funds are now hybrid in `holdingBenchmark.ts` (Monitor too).
 - Each record closes the index on its own last value date, as the return does: Sanshi Class E reads N500 −4.78%, the index's 30 Jun → 30 Oct move.
 - The Sector axis keeps its Market return and details; `check-market-returns.mjs` now opens them there. `check-selected-attribution.mjs` asserts the Total row's `data-seg-cell="bench"`. Suite: `lineBenchmark.test.ts`.
+
+### Stage 10mr — Statement-costed holdings dated off the review's purchases (Man Industries, Deepak, Kingfa)
+
+*"If we already have the average cost of an holding, then why we are not showing the invested date? … in this man industries, we have the average cost, but we don't have the dates. Is it correct? Or we are missing out on the dates from the files."* — the family, 11 Nov 2026.
+
+- An average cost is one figure a broker prints; it carries no dates. HDFC Securities 3110320's portfolio prints Man Industries at ₹327.64, and its trade report starts 1 Apr 2026, after every purchase. The dates were in the files all the same: the 30 June review's "Transactions since inception", HDFC Bank block, buys 60,000 on 10 Jan 2025 and 4,57,317 on 25 Jul 2025 (the register prints the second). Cost recovery read those rows only for holdings with no cost.
+- `scripts/lib/reviewPurchaseDates.mjs` dates a statement-costed holding off those rows, for the Invested on column only (`Position.reviewPurchases`, source `review-lots`). The statement's cost stands. Five gates: the review block ties to its own Closing (FIFO); the account's trade window opens by the day after it and agrees where they overlap; the window's trades carry the lots to exactly the units held (5,17,317 − 37,317 sold 23 Sep = 4,80,000); where the window stops before the holding's date, every unit must be long-term on both the dates and the broker's LONG TERM QTY (now read by `hdfcSecurities.mjs` as `longTermQuantity`), since a unit bought in the gap would be short-term; and the lots' cost must be within 0.5% of the statement's.
+- Dated: Man Industries (2 lots, 10 Jan – 25 Jul 2025), Deepak Fertilisers (30 Jul 2024), Kingfa (22 Nov 2024). Manorama (bought Jan 2026) stays undated with the reason: all its units are short-term, so the 31 Oct → 2 Nov gap cannot be closed.
+- Identity is an alias table (`REVIEW_PRODUCT_BY_KEY`, `REVIEW_CUSTODY_BY_ACCOUNT`), never an amount or a date.
+- The client request (Stage 10mq) no longer asks HDFC Securities for these three holdings' dates: 41 named records (was 43).
+- Checks: `reviewPurchaseDates.test.mjs` (each gate broken once).

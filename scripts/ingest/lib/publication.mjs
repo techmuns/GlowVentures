@@ -177,7 +177,10 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
     const other = seenContent.get(contentOf(d));
     if (other && other !== d.docKey) duplicates.push({ document: d.docKey, sameAs: other });
     else seenContent.set(contentOf(d), d.docKey);
-    const sameIssue = baseline.find(x => x.docKey !== d.docKey && identity(x) === identity(d));
+    // A declared twin (HDFC Securities' demat view of its own equity portfolio)
+    // is the same statement's witness, not a second issue of it (Stage 10mr).
+    const sameIssue = baseline.find(x => x.docKey !== d.docKey && identity(x) === identity(d)
+      && x.twinOf !== d.docKey && d.twinOf !== x.docKey);
     if (sameIssue && contentOf(sameIssue) !== contentOf(d)) add('CONFLICTING_ISSUE', d, `A different statement already covers the same account, report and date (${sameIssue.docKey}). A correction requires review.`);
     const previous = baseline.filter(x => accountKey(x) === accountKey(d) && x.reportType === d.reportType && x.asOf && x.asOf <= d.asOf)
       .sort((a, b) => b.asOf.localeCompare(a.asOf))[0];

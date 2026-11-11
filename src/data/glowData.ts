@@ -11075,6 +11075,29 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "reviewPurchases": {
+      "first": "2024-07-30",
+      "last": "2024-07-30",
+      "lots": 1,
+      "units": 10930,
+      "closing": {
+        "date": "2026-06-30",
+        "units": 10930
+      },
+      "through": "2026-10-31",
+      "sales": 0,
+      "longTermUnits": 10930,
+      "lotCost": 10317816.3,
+      "evidence": {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          266,
+          269
+        ]
+      },
+      "reviewAsOf": "2026-06-30"
+    },
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
@@ -11107,6 +11130,29 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "reviewPurchases": {
+      "first": "2024-11-22",
+      "last": "2024-11-22",
+      "lots": 1,
+      "units": 1808,
+      "closing": {
+        "date": "2026-06-30",
+        "units": 1808
+      },
+      "through": "2026-10-31",
+      "sales": 0,
+      "longTermUnits": 1808,
+      "lotCost": 5163949.13,
+      "evidence": {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          308,
+          309
+        ]
+      },
+      "reviewAsOf": "2026-06-30"
+    },
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
@@ -11148,6 +11194,30 @@ export const BOOK_POSITIONS: Position[] = [
       "held": null,
       "reason": "the transaction statements end on 2026-10-31, before this holding's own statement of 2026-11-02, so the trades between the two are not in this drop"
     },
+    "reviewPurchases": {
+      "first": "2025-01-10",
+      "last": "2025-07-25",
+      "lots": 2,
+      "units": 480000,
+      "closing": {
+        "date": "2026-06-30",
+        "units": 517317
+      },
+      "through": "2026-10-31",
+      "sales": 109,
+      "longTermUnits": 480000,
+      "lotCost": 157258536,
+      "evidence": {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          327,
+          328,
+          329
+        ]
+      },
+      "reviewAsOf": "2026-06-30"
+    },
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
@@ -11180,6 +11250,9 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "reviewPurchases": {
+      "reason": "the trade statements end on 2026-10-31, before the holding's 2026-11-02; 4000 of its units are short-term on the broker's own record, so a purchase between the two cannot be ruled out"
+    },
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,

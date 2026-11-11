@@ -115,13 +115,8 @@ const ITEMS = [
   { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "Vantage Oak Fund I, Class A2", units: 2275000, from: "Vantage Oak / fund manager",
     send: "Send the subscription or drawdown record (dates and amounts paid), the latest fund statement showing the NAV and its date, and the fund's SEBI AIF category. Ankita's Motilal demat 1201090012838316 also shows 1,225,000 units of this class; include her records too.",
     check: () => noCost(ICICI, "vof-i-class-a2", 2275000) && !!unvalued(MO_ANKITA, "vof-i-class-a2") },
-  { holder: "Ajay Jaisinghani", account: "HDFC Securities 3110320", what: "Man Industries (India)", units: 480000, from: "HDFC Securities",
-    send: "Send the original purchase dates and quantities for these shares. Purchase cost is already available. The trade details report from April shows only sales (37,317 shares on 23 September), no purchases.",
-    check: () => undated(HDFC_SEC, "man-industries-india", 480000) && pos(HDFC_SEC, "man-industries-india").costBasis != null },
-  { holder: "Ajay Jaisinghani", account: "HDFC Securities 3110320", what: "Deepak Fertilisers and Kingfa Science & Technology",
-    unitsText: "Deepak Fertilisers 10,930; Kingfa 1,808", from: "HDFC Securities",
-    send: "Send the original purchase dates and quantities. Purchase cost is already available; the trade details report shows no purchase of either.",
-    check: () => undated(HDFC_SEC, "deepak-fertilisers-and-petrochemicals", 10930) && undated(HDFC_SEC, "kingfa-science-and-technology-india", 1808) },
+  // Man Industries, Deepak Fertilisers and Kingfa: dated off the 30 June review's
+  // purchases since Stage 10mr — no longer asked of HDFC Securities.
   { holder: "Ajay Jaisinghani", account: "HDFC Securities 3110320", what: "Sterlite Technologies and its demerged shares",
     unitsText: "Sterlite Technologies 1,850; STL Networks 1,850; Sterlite Electric 1,140; Sterlite Grid 5 1,140", from: "HDFC Securities",
     send: "Send the original Sterlite Technologies purchases (date, shares, amount paid) and the cost assigned to each demerged company. Sterlite Electric and Sterlite Grid 5 have no price on the statement yet.",
