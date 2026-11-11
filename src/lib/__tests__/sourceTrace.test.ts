@@ -83,6 +83,7 @@ assert.equal(allocated.derived, true); assert.ok(allocated.sources.some(s => s.n
 // shares off the holding and the review's own note; the full note is kept.
 const nse = BOOK_POSITIONS.find(p => p.securityKey === 'national-stock-exchange-of-india' && p.accountId === 'review-ajay-jaisinghani')!;
 assert.ok(nse, 'Ajay\'s exact NSE holding is present'); assert.equal(nse.quantity, 125000);
+assert.match(nse.reviewNote!, /investment register dates/, 'the register supplies Ankita’s cost; it is no longer allocated by share count');
 const nseReview = holdingSourceTrace([nse], 'quantity').sources.find(s => s.review)!;
 assert.equal(nseReview.note, nse.reviewNote, 'the full audit note stays under Full detail');
 // Ajay's 1,25,000 are on the ICICI NSDL statement of 31 Oct 2026, which marks them at the

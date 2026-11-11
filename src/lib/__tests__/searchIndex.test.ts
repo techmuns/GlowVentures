@@ -265,6 +265,8 @@ console.log("── people, pages and mandates ──");
 
 console.log("── the words people use ──");
 {
+  ok("'home' opens the overview", top("home")?.href === "/home");
+  ok("'dashboard' opens the overview", top("dashboard")?.href === "/home");
   ok("'transactions' opens the Transactions tab", top("transactions")?.href === "/monitor?show=transactions");
   ok("'compare sectors' opens Sector Composition's Compare tab", top("compare sectors")?.href === "/sectors?view=compare",
     top("compare sectors")?.label);

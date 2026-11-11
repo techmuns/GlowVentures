@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+.mobile-nav-toggle, .mobile-nav-backdrop { display: none; }
+@media (max-width: 640px) {
+  .app-sidebar { width: 64px !important; }
+  .app-sidebar [data-sidebar-brand] { justify-content: center; padding-inline: 0; }
+  .app-sidebar [data-sidebar-brand] > div { display: none; }
+  .mobile-nav-toggle {
+    display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0;
+    border: 1px solid var(--chart-tooltip-border); border-radius: 6px;
+    color: var(--chart-tooltip-text); background: var(--chart-tooltip-bg);
+  }
+  .app-sidebar[data-mobile-expanded="false"] [data-nav-entry] { justify-content: center; padding: 10px; gap: 0; }
+  .app-sidebar[data-mobile-expanded="false"] [data-nav-entry] > span,
+  .app-sidebar[data-mobile-expanded="false"] [data-nav-entry] > svg:last-child:not(:first-child),
+  .app-sidebar[data-mobile-expanded="false"] [data-nav-group] > div,
+  .app-sidebar[data-mobile-expanded="false"] [data-nav-group-toggle] > span,
+  .app-sidebar[data-mobile-expanded="false"] [data-sidebar-footer],
+  .app-sidebar > [role="separator"] { display: none; }
+  .app-sidebar[data-mobile-expanded="false"] [data-nav-group-toggle] { justify-content: center; padding-inline: 0; }
+  .app-sidebar[data-mobile-expanded="true"] { position: fixed; inset: 0 auto 0 0; width: 240px !important; z-index: 60; }
+  .app-sidebar[data-mobile-expanded="true"] [data-sidebar-brand] { justify-content: flex-start; padding-inline: 12px; }
+  .app-sidebar[data-mobile-expanded="true"] [data-sidebar-wordmark] { display: block; }
+  .mobile-nav-backdrop { display: block; position: fixed; inset: 0; z-index: 50; background: rgb(14 12 28 / 0.4); }
+}
 /* Report controls borrow the reference PDF's teal. The PDF itself has fixed colours in every theme. */
 .cio-report-export, .cio-report-download {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
