@@ -223,3 +223,47 @@ export function registerReviewFlows(wb, { key, owner, quantity, mopwm }) {
     note: `dated by the family's investment register (${rows[0].sheet} rows ${rows.map((r) => r.row).join(" and ")}: ₹${paid.toLocaleString("en-IN")} for ${spec.shares.toLocaleString("en-IN")} shares), carried to ${quantity.toLocaleString("en-IN")} by the ${spec.custody.bonus.qty.toLocaleString("en-IN")}-share bonus of ${spec.custody.bonus.date} in MOPWM's transaction report`,
   };
 }
+
+// ── 3. A PURCHASE THE REVIEW AND THE REGISTER DATE DIFFERENTLY ──────────────
+//
+//   *"Use register dates"* — the family, 12 Nov 2026, asked which date stands
+//   for Zepto and Transition Venture Capital (Stage 10ne).
+//
+// The review's Transactions tab and the register print the SAME payment — the
+// same amount, and for Zepto the same 4,716 shares at ₹31,810 — on different
+// days: Zepto on 24 Feb 2025 in the review and 13 Nov 2024 in the register;
+// Ankita's ₹25 lakh into Transition on 1 Aug 2025 and 20 Dec 2024. The register
+// is the family's own record of when the money left, so its day moves the
+// review row's date and nothing else: the amount, the units and the cost stay
+// the review's, and a row that no longer matches stops the build.
+export const REGISTER_REDATES = Object.freeze([
+  { key: "zepto", owner: "ajay-jaisinghani", reviewRow: 443,
+    row: { sheet: "AJAY SIR - AARTI", sr: "25", name: /^KIRANAKART TECHNOLOGIES PRIVATE - ZEPTO$/, under: "AJAY", detail: /^4716 SHARES OF RS 31810 EACH$/ },
+    units: 4716 },
+  { key: "transition-venture-capital-fund-i-class-a1", owner: "ankita-jaisinghani", reviewRow: 82,
+    row: { sheet: "FUND HOUSE", sr: "23", name: /^TRANSITION VENTURE CAPITAL FUND - I$/, under: "ANKITA" } },
+]);
+
+/**
+ * The review's dated rows for one holder's line with the register's day on the
+ * purchase both print — or the rows unchanged where no entry covers the line.
+ * `{ flows, date, note }`; the build stops where the two records no longer
+ * describe one payment.
+ */
+export function registerRedate(wb, { key, owner, flows }) {
+  const spec = REGISTER_REDATES.find((s) => s.key === key && s.owner === owner);
+  if (!spec) return null;
+  const r = registerRow(wb, spec.row);
+  if (spec.row.detail && !spec.row.detail.test(r.detail)) fail(`${spec.row.sheet} row ${r.row} reads "${r.detail}", not ${spec.row.detail}`);
+  const hit = flows.filter((f) => f.reviewRow === spec.reviewRow);
+  if (hit.length !== 1 || hit[0].kind !== "purchase") fail(`${key}: review row ${spec.reviewRow} is not one purchase of ${owner}'s`);
+  const f = hit[0];
+  if (Math.abs(f.amount - r.amount) > 1) fail(`${key}: review row ${spec.reviewRow} pays ₹${f.amount}, the register's row ${r.row} ₹${r.amount}`);
+  if (spec.units !== undefined && f.units !== spec.units) fail(`${key}: review row ${spec.reviewRow} buys ${f.units} units, not ${spec.units}`);
+  const moved = flows.map((x) => (x === f ? { ...x, date: r.date, register: { sheet: r.sheet, row: r.row } } : x))
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.reviewRow ?? 0) - (b.reviewRow ?? 0));
+  return {
+    flows: moved, date: r.date,
+    note: `₹${r.amount.toLocaleString("en-IN")} purchase (review Transactions row ${spec.reviewRow}, dated ${f.date}) is dated ${r.date}, the family's investment register's ${r.sheet} row ${r.row} — the family's decision of 12 Nov 2026`,
+  };
+}

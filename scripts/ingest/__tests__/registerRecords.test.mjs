@@ -4,7 +4,7 @@
 // or the reconciliation it rests on is not there.
 import assert from "node:assert/strict";
 import {
-  readRegisterWorkbook, registerInceptions, inceptionMoves, registerAllotment, registerReviewFlows, OPENING_TOLERANCE,
+  readRegisterWorkbook, registerInceptions, inceptionMoves, registerAllotment, registerReviewFlows, registerRedate, OPENING_TOLERANCE,
 } from "../../lib/registerRecords.mjs";
 import { loadMopwmTransactions } from "../../lib/mopwmTransactions.mjs";
 
@@ -60,5 +60,21 @@ assert.equal(registerReviewFlows(wb, { key: "national-stock-exchange-of-india", 
 assert.throws(() => registerReviewFlows(wb, { key: "national-stock-exchange-of-india", owner: "ankita-jaisinghani", quantity: 75000,
   mopwm: { rows: mopwm.rows.filter((r) => !/BONUS/.test(r.ref ?? "")) } }));
 assert.throws(() => registerReviewFlows(cell(copy(), "PVT INV", 75, 5, "36351000"), { key: "national-stock-exchange-of-india", owner: "ankita-jaisinghani", quantity: 75000, mopwm }));
+
+// ── 4. the purchase the review and the register date differently: the register's day (Stage 10ne) ──
+const zepto = [{ date: "2025-02-24", kind: "purchase", amount: 150015960, units: 4716, rate: 31810, reviewRow: 443 }];
+const z = registerRedate(wb, { key: "zepto", owner: "ajay-jaisinghani", flows: zepto });
+assert.deepEqual(z.flows.map((f) => [f.date, f.amount, f.units, f.register.row]), [["2024-11-13", 150015960, 4716, 65]]);
+const tvc = registerRedate(wb, { key: "transition-venture-capital-fund-i-class-a1", owner: "ankita-jaisinghani",
+  flows: [{ date: "2025-08-01", kind: "purchase", amount: 2500000, units: 2500, rate: 1000, reviewRow: 82 }] });
+assert.equal(tvc.date, "2024-12-20");
+assert.equal(registerRedate(wb, { key: "zepto", owner: "ankita-jaisinghani", flows: zepto }), null);
+// …and refuses where the two records stop describing one payment.
+assert.throws(() => registerRedate(wb, { key: "zepto", owner: "ajay-jaisinghani", flows: [{ ...zepto[0], amount: 150000000 }] }));
+assert.throws(() => registerRedate(wb, { key: "zepto", owner: "ajay-jaisinghani", flows: [{ ...zepto[0], units: 4700 }] }));
+assert.throws(() => registerRedate(wb, { key: "zepto", owner: "ajay-jaisinghani", flows: [{ ...zepto[0], reviewRow: 444 }] }));
+assert.throws(() => registerRedate(cell(copy(), "AJAY SIR - AARTI", 65, 6, "4716 SHARES OF RS 31000 EACH"), { key: "zepto", owner: "ajay-jaisinghani", flows: zepto }));
+assert.throws(() => registerRedate(cell(copy(), "FUND HOUSE", 91, 4, "BHARAT"), { key: "transition-venture-capital-fund-i-class-a1", owner: "ankita-jaisinghani",
+  flows: [{ date: "2025-08-01", kind: "purchase", amount: 2500000, units: 2500, rate: 1000, reviewRow: 82 }] }));
 
 console.log("registerRecords: opening payments reconciled to the manager's balance, Sotefin through its bonus, NSE through MOPWM's bonus — and each refusal");

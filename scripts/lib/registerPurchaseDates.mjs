@@ -52,10 +52,10 @@ export const REGISTER_LINES = Object.freeze([
   ["review-bharat-jaisinghani", "everest-fleet", "PVT INV", "15"],
   ["review-bharat-jaisinghani", "fh-enable-llp-aakash-sachdev", "PVT INV", "7"],
   ["review-bharat-jaisinghani", "waterwala-labs-private-limited-drink-prime", "PVT INV", "3"],
-  // Same name, holder and total, but the register's payments fall outside the
-  // review's months — named in the book report for the family, never applied:
-  ["review-ajay-jaisinghani", "zepto", "AJAY SIR - AARTI", "25"],
-  ["review-ankita-jaisinghani", "transition-venture-capital-fund-i-class-a1", "FUND HOUSE", "23"],
+  // Zepto and Transition: the family chose the register's day (12 Nov 2026), now
+  // `REGISTER_REDATES` in registerRecords.mjs. Same name, holder and total, but the
+  // register's payments fall outside the review's months — named in the book
+  // report for the family, never applied:
   ["review-ankita-jaisinghani", "inflexor-technologies", "FUND HOUSE", "4"],
   ["review-bharat-jaisinghani", "hyprkytchen-foodtech-private-limited-mr-bansi", "PVT INV", "12"],
 ]);
