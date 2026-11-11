@@ -180,7 +180,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, e
     'data-market-denominator': marketBase.length, 'data-market-private': marketPrivate };
   const bridgeCard = pool && <CapitalBridge bridge={bridge} total={pool.total}
     typeLabel={pool.total.measured?.shownAs === 'absolute' && selection.type !== 'absolute' ? RETURN_TYPES.find(t => t.key === 'absolute')!.label : type.label}
-    caption={`${periodLabel} · ${dates}`} money={money} />;
+    caption={`${periodLabel} · ${dates}`} money={money} accounts={statementPortfolio?.accounts ?? []} start={selection.start} />;
   const summaryCards = <div className="mb-3" data-return-summary-cards>{bridgeCard}</div>;
   if (sectorAxis && statementPortfolio) return <div className="shrink-0" data-segment-returns data-returns-attribution data-seg-axis={axis} data-seg-period={period} data-seg-type={selection.type}
     data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-status={exposure.status === 'loading' ? 'loading' : 'ready'} {...marketData}>

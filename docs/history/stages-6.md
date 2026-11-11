@@ -1578,7 +1578,13 @@ Codex's review of #352, verified against the code and the book:
 - Classify it as Debt / Stable Growth, matching the review's treatment of the Neo Infra income AIF. Stable Growth is our placement under the current request, not a label claimed from the fund documents or June workbook. Keep provenance `family`, no workbook row, and the Category II AIF wrapper; no source figures change.
 - The existing taxonomy suite checks Franklin's two axes, category and provenance, and now refuses any unclassified fund or company. Only two residual bank balances remain outside a basket in the raw book.
 
-### Stage 10nc — Where the review and the register date one payment differently, the register's day
+### Stage 10nc — Investment performance names how many accounts it covers, of how many
+
+- The client asked what "53 accounts covered" meant when they hold over 100 accounts. The card counted the accounts in the measured total and said nothing about the rest.
+- The face now reads "N of M accounts covered" (`accountCoverage` in `CapitalBridge.tsx`): M is every account holding an investment today plus any measured account that now holds nothing. The new (i) button says what one account is (a demat, a fund folio, a PMS or AIF account, or one owner's MOPWM review block), gives the book's account count, and lists each account left out with its value, holding count and the record it needs, plus the accounts partly included. Handles: `data-bridge-accounts-covered`, `-of`, `data-bridge-account-outside`, `data-bridge-account-partly`.
+- No figure changes. `check-selected-attribution.mjs` passes.
+
+### Stage 10nd — Where the review and the register date one payment differently, the register's day
 
 *"Use register dates"* — the family, 12 Nov 2026, choosing between the two records for Zepto and Transition Venture Capital (Stage 10mx left both on the review's date).
 

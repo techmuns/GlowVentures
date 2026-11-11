@@ -361,7 +361,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued, reviewWorkboo
       if (reg && !near(reg.paid, s.cost)) fail(`${e.name}: ${ownerName(s.owner)}'s cost ${s.cost} is not the ${reg.paid} the register dates`);
       if (reg) { f.dated = reg.flows; notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s line is ${reg.note}`); }
       // …AND WHERE THE TWO RECORDS DATE ONE PAYMENT DIFFERENTLY, THE REGISTER'S
-      // DAY (Stage 10nc, the family's decision): the amount and units stay the review's.
+      // DAY (Stage 10nd, the family's decision): the amount and units stay the review's.
       const redate = registerRedate(register(), { key: e.key, owner: s.owner, flows: f.dated });
       if (redate) { f.dated = redate.flows; notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s ${redate.note}`); }
       if (f.rows) {

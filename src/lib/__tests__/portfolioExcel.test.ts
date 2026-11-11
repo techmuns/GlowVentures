@@ -202,7 +202,7 @@ const DIRECT_ROWS = (() => {
 })();
 const capitalOf = (key: string) => {
   // A row of mixed lines (Transition VC: a review line beside two AIF folios) is
-  // still whole accounts on one dated record where every account is (Stage 10nc).
+  // still whole accounts on one dated record where every account is (Stage 10nd).
   const ps = DIRECT_ROWS.get(key) ?? MIXED_ROWS.get(key);
   return ps ? INDEX.behind(firstOfGroup(ps), UNIVERSE) : null;
 };

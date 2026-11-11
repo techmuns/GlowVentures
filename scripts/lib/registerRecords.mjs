@@ -227,7 +227,7 @@ export function registerReviewFlows(wb, { key, owner, quantity, mopwm }) {
 // ── 3. A PURCHASE THE REVIEW AND THE REGISTER DATE DIFFERENTLY ──────────────
 //
 //   *"Use register dates"* — the family, 12 Nov 2026, asked which date stands
-//   for Zepto and Transition Venture Capital (Stage 10nc).
+//   for Zepto and Transition Venture Capital (Stage 10nd).
 //
 // The review's Transactions tab and the register print the SAME payment — the
 // same amount, and for Zepto the same 4,716 shares at ₹31,810 — on different
