@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { BOOK_POSITIONS } from '../../data/glowData';
 import { benchGapLabel, closeLegsOn, indexCompound, indexMove, indexOnSameMoney, onePaymentLeg, pooledLegs, positionBenchmark, printedBenchmark, rowBenchmark } from '../holdingBenchmark';
 import type { Position } from '../types';
+import { returnGapLabel } from '../returnColumns';
 
 const near = (a: number | null | undefined, b: number) => assert.ok(a != null && Math.abs(a - b) < 1e-6, `${a} != ${b}`);
 // An index at 100 until 30 Jun, 110 after, 121 from 30 Sep.
@@ -98,5 +99,9 @@ assert.equal(label("the index is bought with every row's own dated payments, and
 assert.equal(label("2 of the 2 investments behind this row carry no dated record a money-weighted return can be solved over — x: its capital is known only as a total since inception"), 'No dated capital');
 assert.equal(label("the index is bought with this holding's own dated payments, and its record dates the purchases only as a span, Dec 2022 to Aug 2023, not each payment and what it paid"), 'Range only');
 assert.equal(label('the index has no close on or before 1 May 2024'), 'Index starts later');
+// A review line dated only by months (Stage 10mp): its span, not "No dated capital".
+assert.equal(label("2 of the 2 investments behind this row carry no dated record a money-weighted return can be solved over — x: the family's review dates this investment only as a span — Dec 2022 – Aug 2023 — with one cost for the whole of it, not the amount paid on each day, so there are no dated payments to solve a money-weighted return over"), 'Range only');
+assert.equal(label("the family's review dates this investment only as a month — Feb 2025 — with one cost for the whole of it"), 'Month only');
+assert.equal(returnGapLabel("2 of the 2 investments behind this row carry no dated record a money-weighted return can be solved over — x: the family's review dates this investment only as a span — Dec 2022 – Aug 2023 — with one cost for the whole of it, not the amount paid on each day, so there are no dated payments to solve a money-weighted return over"), 'Date range only');
 
 console.log('holding benchmark: ok');
