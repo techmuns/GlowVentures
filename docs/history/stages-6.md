@@ -1600,3 +1600,9 @@ Codex's review of #352, verified against the code and the book:
 - Inflexor and Hyprkytchen (register payments after the review's span, both at cost) are unchanged; they were not part of the question.
 - Transition's security row (Ankita's line with the two trust folios) now spans more than a year, so it is XIRR (66.1% pooled). `portfolioExcel.test` dropped rows of mixed engagement, so it now holds them to the same whole-accounts rule, re-solved.
 - Checks: `registerRecords.test.mjs` (both redates, and a refusal for each mismatch).
+
+### Stage 10nf — Portfolio Monitor: one row per category, totals on the band
+
+- The family, 12 Nov: the category band was blank across the table and its totals sat on a second "· total" row under it — "you can show the totals in the first one itself."
+- The band is now the totals row: its first cell keeps the heading (name, counts, subtotal, notes, chevron) and the other cells are the category's totals, drawn through `<Tr view>` so each stays under its column when columns are dragged. The row carries both `data-section` and `data-category-total`. A category with no totals still draws a full-width band. Nothing about what any cell computes changed.
+- `check:pages`: `sectionOf` finds the band's totals as the first table row after its count line (innerText breaks after the heading cell), and the tree-state walk counts the band's own totals. On the seven Monitor routes this branch shows the same three findings as a control build of main.

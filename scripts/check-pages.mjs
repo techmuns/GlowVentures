@@ -10769,6 +10769,20 @@ const isDataRow = (line) => (line.match(/\t/g) ?? []).length >= 5;
  */
 const isCategoryTotalRow = (line) => /^[^\t]*·\s*total\t/i.test(line);
 /**
+ * SINCE STAGE 10nf THE TOTALS ARE ON THE BAND ITSELF: the band's first cell is
+ * the heading (its name on one line, `· N holdings · K names · ₹X` on the next)
+ * and its other cells are the totals. `innerText` ends that cell's block with a
+ * line break — as it does every name cell — so the totals are the first table
+ * row after the band's count line, and their Qty cell is the band's em dash
+ * (quantities of different securities do not add).
+ */
+const isBandCountLine = (line) => /^·\s*[\d,]+\s+(?:holdings?|mandates?)\b/i.test(line.trim());
+const bandTotalsAt = (block) => {
+  const c = block.findIndex(isBandCountLine);
+  const i = c < 0 ? -1 : block.findIndex((l, j) => j > c && isDataRow(l));
+  return i >= 0 && block[i].split("\t")[1]?.trim() === "—" ? i : -1;
+};
+/**
  * One section of the holdings table: its heading block, its body, and the data
  * rows drawn inside it. `null` when the heading is not on the page at all —
  * which every caller treats as a FAILURE, never as nothing to check.
@@ -10780,6 +10794,8 @@ function sectionOf(text, label) {
   let end = lines.length;
   for (let i = at + 1; i < lines.length; i++) if (isAnyHeading(lines[i])) { end = i; break; }
   const block = lines.slice(at, end);
+  const bandAt = bandTotalsAt(block);
+  const isTotal = (l, i) => i === bandAt || isCategoryTotalRow(l);
   return {
     // The heading plus its sibling spans (count, subtotal, and the notes about a
     // measured nil or a collapsed duplicate) — never a data row.
@@ -10787,9 +10803,9 @@ function sectionOf(text, label) {
     body: block.join("\n"),
     // THE HOLDINGS, which is what every caller means by "rows" — the category's
     // own totals row is a table row and is not one of them.
-    rows: block.filter((l) => isDataRow(l) && !isCategoryTotalRow(l)),
+    rows: block.filter((l, i) => isDataRow(l) && !isTotal(l, i)),
     /** The category's totals row as rendered, or undefined where none is drawn. */
-    total: block.find(isCategoryTotalRow),
+    total: block.find(isTotal),
   };
 }
 /**
@@ -42509,6 +42525,8 @@ for (const theme of THEMES) {
               if (n.hasAttribute("data-category-total")) totals++;
               else if (n.hasAttribute("data-bucket")) rows++;
             }
+            // Since Stage 10nf the band carries its own totals.
+            if (band.hasAttribute("data-category-total")) totals++;
             return { key: band.getAttribute("data-section"), open: band.getAttribute("data-section-open"), rows, totals };
           }),
           venues: kids.filter((tr) => kindOf(tr) === "venue").length,

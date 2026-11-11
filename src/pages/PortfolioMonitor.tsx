@@ -4317,7 +4317,7 @@ export function PortfolioMonitor() {
                   if (secOpen && !visibleRows.length) return null;
                   return (
                   <Fragment key={grp.key}>
-                    {showBucketSections && (
+                    {showBucketSections && (() => {
                       /*
                         `data-section` IS THE CONTRACT, NOT THE HEADING TEXT.
                         `check:pages` finds where one section ends by finding
@@ -4330,13 +4330,23 @@ export function PortfolioMonitor() {
                         is structural now, exactly as `data-mandate` and
                         `data-row` already are: a claim about structure must not
                         depend on prose a redesign is free to reword.
+
+                        ONE ROW, NOT TWO (Stage 10nf): the band carries its
+                        category's totals in its own cells. "The first one is
+                        blank, and then in the second one we are showing totals —
+                        you can show the totals in the first one itself." So the
+                        band row is also the `data-category-total` row, drawn
+                        through `<Tr view>` so each total stays under its column.
                       */
-                      <tr className={`${TREE_ROW_DENSE.section} cursor-pointer`} data-section={grp.key} data-axis={groupAxis}
-                        data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-names={grp.names} data-lines={grp.lines} data-rule-mv={grp.ruleMV}
-                        data-cash-rule-mv={grp.cashRuleMV} data-moved-rows={grp.movedNames.length}
-                        data-section-open={secOpen ? "open" : "closed"}
-                        {...rowToggle(() => toggleSection(secKey))}>
-                        <TreeSectionCell density="dense" colSpan={COL_COUNT}
+                      const bandAttrs = {
+                        "data-section": grp.key, "data-axis": groupAxis,
+                        "data-subtotal": grp.subtotal, "data-holdings": grp.holdings, "data-names": grp.names, "data-lines": grp.lines, "data-rule-mv": grp.ruleMV,
+                        "data-cash-rule-mv": grp.cashRuleMV, "data-moved-rows": grp.movedNames.length,
+                        "data-section-open": secOpen ? "open" : "closed",
+                        ...rowToggle(() => toggleSection(secKey)),
+                      };
+                      const bandCell = (colSpan?: number) => (
+                        <TreeSectionCell density="dense" colSpan={colSpan}
                           title={groupLabelFor(groupAxis)(grp.key)}
                           marker={groupAxis === "category" && grp.key === AT_COST_BUCKET
                             // THE SAME INVESTMENTS ARE PRIVATE MARKET'S "held at
@@ -4361,7 +4371,7 @@ export function PortfolioMonitor() {
                              band counts its liquid and arbitrage funds AND credits the
                              value the cash instruction placed there, and the two run
                              past a cell's one long name (Stage 10jb). */
-                          sub={<div data-prose-ok={grp.cashRuleMV > 0 ? "the Cash band's counts and the value the family's cash instruction placed in it, both asked for on the heading" : undefined}>
+                          sub={<div className="font-normal" data-prose-ok={grp.cashRuleMV > 0 ? "the Cash band's counts and the value the family's cash instruction placed in it, both asked for on the heading" : undefined}>
                             {/* The count is of HOLDINGS, not of rows: ten mandate
                                 rows stand for 281 of them, and a heading reading
                                 "10 holdings" over ₹138.7 Cr would retire 271
@@ -4480,23 +4490,23 @@ export function PortfolioMonitor() {
                               </span></>
                             )}
                           </div>} />
-                      </tr>
-                    )}
-                    {/*
+                      );
+                    /*
                       ── EVERY METRIC, TOTALLED FOR THE CATEGORY IT HEADS ───────
                       "Show aggregate totals for every metric for each category."
-                      The heading names the category and its size; this row is the
-                      rest of the table's columns, added up over the same set.
+                      The heading cell names the category and its size; the rest
+                      of the band's cells are the table's columns, added up over
+                      the same set.
 
-                      IT SITS UNDER THE BAND, AT THE TOP OF ITS SECTION, which is
-                      where the Private Market page's standard puts a section's
+                      THEY SIT ON THE BAND ITSELF, AT THE TOP OF ITS SECTION, which
+                      is where the Private Market page's standard puts a section's
                       totals: a reader sees what a category adds up to before its
-                      rows, and a CLOSED section still shows its figures — the band
-                      and this row are what remain when its holdings are folded
-                      away. Nothing about what the row carries moved.
+                      rows, and a CLOSED section still shows its figures. Until
+                      Stage 10nf they were a second row under a band that spanned
+                      the table blank; nothing about what the cells carry moved.
 
-                      IT IS A ROW OF CELLS, NOT A WIDENED HEADING, and that is the
-                      whole design: a total belongs UNDER THE COLUMN IT TOTALS.
+                      THE BAND IS A ROW OF CELLS, NOT A WIDENED HEADING, and that is
+                      the whole design: a total belongs UNDER THE COLUMN IT TOTALS.
                       This book has already paid twice for a figure printed under
                       a heading that describes something else — the allocation
                       footer on a different basis from its own column, and the
@@ -4509,14 +4519,15 @@ export function PortfolioMonitor() {
                       one company plus units of a fund is not a quantity, and the
                       reader who scans across an empty cell learns nothing about
                       whether a figure was withheld or never existed.
-                    */}
-                    {showBucketSections && (() => {
+                    */
                       const tot = grp.totals;
                       // Struck over the positions, so it cannot disagree with the
-                      // rows drawn above it — but a category with no partition
-                      // entry has nothing to total and says so rather than
-                      // printing zeros for a row it cannot see.
-                      if (!tot) return null;
+                      // rows drawn below it — but a category with no partition
+                      // entry has nothing to total, and its band spans the table
+                      // rather than printing zeros for a row it cannot see.
+                      if (!tot) return (
+                        <tr className={`${TREE_ROW_DENSE.section} cursor-pointer`} {...bandAttrs}>{bandCell(COL_COUNT)}</tr>
+                      );
                       const weight = weightBase > 0 ? (tot.mv / weightBase) * 100 : null;
                       const uncostedMV = tot.mv - tot.costedMV;
                       /**
@@ -4590,11 +4601,12 @@ export function PortfolioMonitor() {
                         : "";
                       return (
                         /* A `<Tr>` RATHER THAN A `<TrFoot>`, because this row
-                           carries a cell under EVERY column — its label spans
+                           carries a cell under EVERY column — its heading spans
                            one, not the footer's three — so it permutes like an
                            ordinary row and stays cell-for-cell under the
                            headings above it. */
-                        <Tr view={holdView} reviewScope={activeAxis === "basket" ? { basket: grp.key } : activeAxis === "assetClass" ? { category: grp.key } : undefined} className={`${TREE_ROW_DENSE.total} font-semibold`}
+                        <Tr view={holdView} reviewScope={activeAxis === "basket" ? { basket: grp.key } : activeAxis === "assetClass" ? { category: grp.key } : undefined} className={`${TREE_ROW_DENSE.section} cursor-pointer font-semibold`}
+                          {...bandAttrs}
                           data-category-total={grp.key}
                           // ── WHAT A LINE HELD AT COST TAKES OUT OF THE COVERAGE
                           //    (Stage 10dh) ─────────────────────────────────────
@@ -4612,9 +4624,7 @@ export function PortfolioMonitor() {
                           // A holding whose sale cash is unverified refuses the
                           // pooled return whatever the coverage (Stage 10hb).
                           data-cat-hpr-unverified={tot.fifo.hprUnavailableReason || tot.leftOut.length ? "" : undefined}>
-                          <td className="py-1.5 pl-[2.1rem] pr-2 text-slate-200">
-                            {label} <span className="font-normal text-slate-500">· total</span>
-                          </td>
+                          {bandCell()}
                           {/* NOT A BLANK CELL AND NOT A SUM. Adding 1,80,185
                               shares of one company to 3,416,657 units of a fund
                               produces a number with no unit, and it would sit in
@@ -4662,8 +4672,8 @@ export function PortfolioMonitor() {
                               : `${grp.dayPct >= 0 ? "+" : ""}${grp.dayPct.toFixed(2)}%`}
                           </td>
                           {/* `grp.subtotal` IS `tot.mv` — the heading prints the
-                              same field, so the two figures a reader sees three
-                              lines apart are one computation and cannot differ. */}
+                              same field, so the two figures a reader sees on one
+                              row are one computation and cannot differ. */}
                           <td className="px-2 py-1.5 text-right mono text-slate-100 whitespace-nowrap">
                             {fmtFromBase(grp.subtotal, { compact: true })}
                           </td>
