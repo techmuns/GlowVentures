@@ -1577,3 +1577,14 @@ Codex's review of #352, verified against the code and the book:
 - The family's 12 Nov request to research and classify the remaining Franklin holding supersedes Stage 10js's instruction to leave its basket unclassified. The [fund-authored investor deck](https://www.scribd.com/document/1038011103/Franklin-India-Credit-AIF-Scheme-I-Investor-Deck-Regular) describes financial-services private credit and senior securities; [Finnable's issuer document, p. 93](https://assets.stablebonds.in/bonds-assets/Finnable_KID_18thfeb.pdf#page=93) also names the fund among its NCD holders.
 - Classify it as Debt / Stable Growth, matching the review's treatment of the Neo Infra income AIF. Stable Growth is our placement under the current request, not a label claimed from the fund documents or June workbook. Keep provenance `family`, no workbook row, and the Category II AIF wrapper; no source figures change.
 - The existing taxonomy suite checks Franklin's two axes, category and provenance, and now refuses any unclassified fund or company. Only two residual bank balances remain outside a basket in the raw book.
+
+### Stage 10nc — Where the review and the register date one payment differently, the register's day
+
+*"Use register dates"* — the family, 12 Nov 2026, choosing between the two records for Zepto and Transition Venture Capital (Stage 10mx left both on the review's date).
+
+- The review's Transactions tab and the register print the same payment on different days. Zepto: ₹15,00,15,960 for 4,716 shares at ₹31,810, on 24 Feb 2025 in the review and 13 Nov 2024 in the register (`AJAY SIR - AARTI` row 65). Ankita's ₹25 lakh into Transition VC: 1 Aug 2025 against 20 Dec 2024 (`FUND HOUSE` row 91).
+- `REGISTER_REDATES` / `registerRedate` in `scripts/lib/registerRecords.mjs` moves that one review row's date to the register's day. The amount, units and cost stay the review's, and the build stops if the row, holder, amount or units stop matching. Invested on reads the same day.
+- XIRR, on the same valuations: Zepto 165.4% → 80.3% a year, Ankita's Transition 60.5% → 25.8%.
+- Inflexor and Hyprkytchen (register payments after the review's span, both at cost) are unchanged; they were not part of the question.
+- Transition's security row (Ankita's line with the two trust folios) now spans more than a year, so it is XIRR (66.1% pooled). `portfolioExcel.test` dropped rows of mixed engagement, so it now holds them to the same whole-accounts rule, re-solved.
+- Checks: `registerRecords.test.mjs` (both redates, and a refusal for each mismatch).
