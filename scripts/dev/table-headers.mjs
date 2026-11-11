@@ -73,6 +73,24 @@ export async function assertStickyTableHeaders(page, label) {
             port.scrollTop = saved;
             await frame();
           }
+          // A frozen label must cover exactly its column, including the total:
+          // pinning a merged footer label would hide neighbouring figures.
+          if (port && table.dataset.monitorTable === 'holdings' && port.scrollWidth-port.clientWidth > 32) {
+            const security = head.querySelector('[data-col="security"]');
+            const name = table.querySelector(':scope > tbody > tr > td:first-child:is(:not([colspan]), [colspan="1"])');
+            const total = table.tFoot?.rows[0]?.cells[0];
+            if (security && name && total) {
+              const saved = port.scrollLeft;
+              port.scrollLeft = Math.min(150,port.scrollWidth-port.clientWidth);
+              await frame();
+              const box = port.getBoundingClientRect();
+              const origin = box.left + parseFloat(getComputedStyle(port).borderLeftWidth)*box.width/port.offsetWidth;
+              const h = security.getBoundingClientRect(), n = name.getBoundingClientRect(), f = total.getBoundingClientRect();
+              report.frozenLabels = { heading:h.left-origin, name:n.left-origin, total:f.left-origin, width:f.width-h.width };
+              port.scrollLeft = saved;
+              await frame();
+            }
+          }
           reports.push(report);
         }
       }
@@ -83,6 +101,8 @@ export async function assertStickyTableHeaders(page, label) {
     const context = `${label}, ${r.theme}, ${r.heading}`;
     assert.ok(r.sticky, `header is pinned: ${context}`);
     assert.ok(r.opaque && r.aboveRows, `header covers scrolling cells: ${context}`);
+    if (r.frozenLabels) assert.ok(Object.values(r.frozenLabels).every(delta=>Math.abs(delta)<2),
+      `Security and Total stay in one aligned frozen column: ${context}: ${JSON.stringify(r.frozenLabels)}`);
     if ('scrolled' in r) {
       assert.ok(r.scrolled, `body actually scrolls: ${context}`);
       assert.ok(r.pinned && r.groupIntact, `header stays fixed without overlapping header rows: ${context}`);

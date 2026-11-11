@@ -1584,6 +1584,7 @@ Codex's review of #352, verified against the code and the book:
 - Limit the pinned name column to 10rem on phone widths so adjacent figures remain reachable. The horizontal pin applies on screen only; sorting, column order and the export data are unchanged.
 - Validate actual vertical and horizontal scrolling at desktop, tablet and phone widths, both themes, opaque row surfaces and sorting from the pinned heading. Build and delivery evidence are recorded on the PR.
 - Source-preview regression setup opens the quantity source list before recording the arranged background scroll. Otherwise its automated Qty click first scrolls a control out from beneath the frozen Security column, changing the test's starting state before any document opens. The check still requires a nonzero horizontal offset and exact scroll/DOM/filter/expansion restoration.
+- Give the Total label its own Security cell, with a separate blank span for any remaining leading columns, and freeze that one cell. Pinning the old merged label would cover adjacent totals; leaving it scrolling would put figures below the fixed Security heading. The shared browser header check now measures the heading, name and Total against the real scrollport and requires equal column widths.
 
 ### Stage 10nc — Investment performance names how many accounts it covers, of how many
 

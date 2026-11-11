@@ -867,6 +867,12 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
     z-index: 1;
     background-color: inherit;
   }
+  #root [data-monitor-table="holdings"] > tfoot > tr > td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: var(--chart-tooltip-bg);
+  }
 }
 @media screen and (max-width: 640px) {
   #root [data-monitor-table="holdings"] > tbody > tr > td:first-child:is(:not([colspan]), [colspan="1"]) {

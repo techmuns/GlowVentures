@@ -296,7 +296,7 @@ export function Tr({ view, children, reviewScope, sourcePositions, investmentDat
  * The caller supplies whole `<td>` elements, because a footer cell's alignment,
  * colour and popover belong to the table that knows what the figure is.
  */
-export function TrFoot({ view, label, labelTitle, cells, sourcePositions, sourceColumns, className = "", ...rest }: {
+export function TrFoot({ view, label, labelTitle, labelInFirstColumn = false, cells, sourcePositions, sourceColumns, className = "", ...rest }: {
   view: TableView;
   /** The label cell's CONTENT — `TrFoot` computes its `colSpan`. */
   label: ReactNode;
@@ -307,6 +307,8 @@ export function TrFoot({ view, label, labelTitle, cells, sourcePositions, source
    * own totals.
    */
   labelTitle?: string;
+  /** Keep a frozen row label in one column without covering neighbouring totals. */
+  labelInFirstColumn?: boolean;
   /** One `<td>` per column that carries a total, keyed by column id. */
   cells: Record<string, ReactNode>;
   sourcePositions?: readonly TracePosition[];
@@ -322,7 +324,8 @@ export function TrFoot({ view, label, labelTitle, cells, sourcePositions, source
   const span = Math.max(lead, 1);
   return (
     <tr {...rest}>
-      <td colSpan={span} className={className} title={labelTitle}>{label}</td>
+      <td colSpan={labelInFirstColumn ? 1 : span} className={className} title={labelTitle}>{label}</td>
+      {labelInFirstColumn && span > 1 && <td colSpan={span - 1} className={className} />}
       {/* A COLUMN WITH NO TOTAL STILL NEEDS ITS CELL, and it takes the row's
           own class: the footer carries a top rule, and an unstyled filler
           breaks that line across the table. */}
