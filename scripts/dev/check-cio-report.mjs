@@ -49,6 +49,7 @@ try {
   // An unavailable asset must give a retryable error, rather than an empty PDF.
   await page.route('**/report-assets/NotoSans-Bold.ttf', r => r.fulfill({ status: 503, body: 'Unavailable test asset' }));
   await page.getByRole('button', { name: 'Export report', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview report', exact: true }).click();
   await page.getByRole('button', { name: 'Retry report', exact: true }).waitFor();
   await page.unroute('**/report-assets/NotoSans-Bold.ttf');
   await page.getByRole('button', { name: 'Retry report', exact: true }).click();
@@ -65,13 +66,33 @@ try {
   await page.waitForFunction(() => document.querySelector('[data-tile-slot="value"]')?.textContent.includes('$'));
   const usdHeadline = (await value.innerText()).match(/\$[\d,.]+\s*[KMBT]?/)?.[0].trim(); assert.ok(usdHeadline);
   await page.getByRole('button', { name: 'Export report', exact: true }).click();
+  await page.locator('[data-cio-report-period]').selectOption('mtd');
+  await page.getByRole('button', { name: 'Preview report', exact: true }).click();
   const scoped = await downloadReport(); assert.ok(scoped.text.includes(usdHeadline)); assert.ok(scoped.text.includes('Ajay')); assert.ok(scoped.text.includes('USD')); assert.ok(!scoped.text.includes('Whole family'));
+  assert.ok(scoped.text.includes('Month-to-Date Review'));
+  // A trailing multi-year period changes both the dates and the actual return selection.
+  await page.getByRole('button', { name: 'Change period', exact: true }).click();
+  await page.locator('[data-cio-report-period]').selectOption('2y');
+  const trailingFrom = await page.locator('input[aria-label="Report start date"]').inputValue();
+  assert.ok(Number(trailingFrom.slice(0, 4)) < new Date().getFullYear());
+  await page.getByRole('button', { name: 'Preview report', exact: true }).click();
+  const trailing = await downloadReport(); assert.ok(trailing.text.includes('Last 2 years')); assert.ok(trailing.text.includes(trailingFrom.slice(0, 4)));
   await page.setViewportSize({ width: 390, height: 844 });
   assert.ok(await page.locator('[data-cio-report-preview]').evaluate(el => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1; }));
   await page.screenshot({ path: path.join(out, 'mobile-preview.png') });
   await page.getByRole('button', { name: 'Close report preview', exact: true }).click();
+  // No records in 1900: retain the requested dates, omit current allocations and do not invent a value.
+  await page.getByRole('button', { name: 'Export report', exact: true }).click();
+  await page.locator('[data-cio-report-period]').selectOption('custom');
+  await page.locator('input[aria-label="Report start date"]').fill('1900-01-01');
+  await page.locator('input[aria-label="Report end date"]').fill('1900-03-31');
+  await page.getByRole('button', { name: 'Preview report', exact: true }).click();
+  const historical = await downloadReport();
+  assert.ok(historical.text.includes('1900')); assert.ok(historical.text.includes('No supported return records'));
+  assert.ok(!historical.text.includes('Equity Holdings')); assert.ok(!historical.text.includes('Asset Table')); assert.ok(!historical.text.includes(usdHeadline));
+  await page.getByRole('button', { name: 'Close report preview', exact: true }).click();
   assert.deepEqual(errors, []);
-  await fs.writeFile(path.join(out, 'results.json'), JSON.stringify({ base, whole: { file: whole.file, pages: whole.pages, headline }, scoped: { file: scoped.file, pages: scoped.pages, headline: usdHeadline }, assetRetry: true, focusRestored: true, mobile: true, errors }, null, 2));
+  await fs.writeFile(path.join(out, 'results.json'), JSON.stringify({ base, whole: { file: whole.file, pages: whole.pages, headline }, scoped: { file: scoped.file, pages: scoped.pages, headline: usdHeadline }, trailing: { file: trailing.file, from: trailingFrom }, historical: { file: historical.file, pages: historical.pages }, assetRetry: true, focusRestored: true, mobile: true, errors }, null, 2));
   console.log('Colour CIO report: real-book totals, selected member, USD, landscape pages, text bounds, omissions, retry, PDF preview, download and mobile passed.');
 } catch (e) { await page.screenshot({ path: path.join(out, 'failure.png') }).catch(() => {}); throw e; }
 finally { await browser.close(); }

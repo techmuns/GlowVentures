@@ -5,6 +5,8 @@ import { figuresOf } from './privateBook';
 import { accountIndex, engagementOf } from './accounts';
 import { bucketLabel, holdingBucket } from './analytics';
 import { fmtCurrency, fmtDate } from './format';
+import type { ReportPeriod } from './cioReportPeriod';
+import type { cioReportReturns } from './cioReportReturns';
 
 /** The client wordmark already used in Sidebar; Munshot is the report provider. */
 export const REPORT_BRAND = { name: 'Glow Ventures', mark: 'G', provider: 'Munshot AI' } as const;
@@ -22,9 +24,10 @@ export type ReportHolding = { name: string; category: string; sector: string; va
 export type CioReportSnapshot = ReturnType<typeof cioReportSnapshot>;
 
 /** All inputs come from the selected Morning CIO model. No sample figures or DOM scraping. */
-export function cioReportSnapshot({ portfolio, positions, summary, scope, currency, convert, now = new Date() }: {
+export function cioReportSnapshot({ portfolio, positions, summary, scope, currency, convert, period, selected, now = new Date() }: {
   portfolio: Portfolio; positions: readonly Position[]; summary: CioReportSummary; scope: string;
   currency: string; convert: (n: number) => number; now?: Date;
+  period: ReportPeriod; selected: ReturnType<typeof cioReportReturns>;
 }) {
   const accounts = accountIndex(portfolio.accounts);
   const money = (n: number | null | undefined) => n == null || !Number.isFinite(n) ? ''
@@ -63,14 +66,9 @@ export function cioReportSnapshot({ portfolio, positions, summary, scope, curren
   const privateRows = summary.privateFolios.filter(f => f.counted || f.capitalCounted).map(f => ({
     name: f.fundName, owner: f.owner, date: f.asOf, figures: figuresOf([f], true),
   }));
-  const periods = [
-    { label: 'Since investment', card: summary.available.gain },
-    { label: 'Available history', card: summary.available.history },
-    { label: 'Calendar YTD', card: summary.available.ytd },
-    { label: 'Financial YTD', card: summary.available.fytd },
-  ];
+  const periods = [{ label: period.label, card: selected }];
   const allocated = summary.buckets.filter(b => b.count > 0 || b.current !== 0);
-  return { brand: REPORT_BRAND, date, quarter: `Q${Math.floor(now.getMonth() / 3) + 1} ${now.getFullYear()}`,
+  return { brand: REPORT_BRAND, date: period.to, exportedOn: date, period, selected, historical: selected.historical,
     generatedAt: now.toISOString(), scope, currency, money, percent, holdings, positions: [...positions],
     summary, buckets: allocated, privateRows, periods, markDates,
     markSpan: markDates.length ? `${fmtDate(markDates[0])} - ${fmtDate(markDates.at(-1)!)}` : '',

@@ -126,6 +126,8 @@ jobs:
             if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
+          node scripts/dev/test-cio-report-period.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-cio-report.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-statement-drop.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-market-returns.mjs
@@ -147,7 +149,6 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-navigation-state.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-dashboard-navigation.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-etf-unit-continuity.mjs
-          CHROME="$(command -v google-chrome)" node scripts/dev/check-cio-report.mjs
 
       - name: Preserve Morning CIO report evidence
         if: always()

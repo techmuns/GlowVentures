@@ -60,6 +60,7 @@ import { assumedHoldingBook } from "@/lib/assumedHoldingBook";
 import { HoldingAssumptionInfo } from "@/components/HoldingAssumptionInfo";
 import { CioReportExport } from '@/components/CioReportExport';
 import { cioReportSnapshot } from '@/lib/cioReport';
+import { cioReportReturns } from '@/lib/cioReportReturns';
 
 // Morning CIO — the whole book in one screen: invested / current / return per
 // bucket, plus capital deployment, concentration and book performance. Every
@@ -1510,7 +1511,8 @@ export function MorningCIO() {
              to reword. Same contract `data-movers-scope` and `data-alloc-axis`
              already carry on this page. */
           <div className="flex flex-wrap items-center gap-2">
-          <CioReportExport snapshot={() => cioReportSnapshot({ portfolio, positions: m.p, summary: m,
+          <CioReportExport snapshot={period => cioReportSnapshot({ portfolio, positions: m.p, summary: m, period,
+            selected: cioReportReturns({ statement: statementPortfolio ?? portfolio, current: m.p, period, assumptions: assumptionBook }),
             scope: memberScope.label, currency: displayCurrency, convert: convertFromBase })} />
           <div role="tablist" aria-label="Which part of the briefing to show" data-cio-tabs
             className="inline-flex items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">

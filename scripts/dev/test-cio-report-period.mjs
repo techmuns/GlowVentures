@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import ts from 'typescript';
+const source = ts.transpileModule(fs.readFileSync('src/lib/cioReportPeriod.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2020 } }).outputText;
+const { reportPeriod, REPORT_PERIODS } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+const today = '2026-11-12';
+const expect = (key, from, to, options = {}) => {
+  const p = reportPeriod(key, { today, ...options });
+  assert.equal(p.from, from, key); assert.equal(p.to, to, key);
+  if (from) assert.equal(p.opening, new Date(Date.parse(from) - 864e5).toISOString().slice(0, 10), 'Inclusive start uses previous close');
+  assert.ok(p.title && p.label); return p;
+};
+expect('qtd', '2026-10-01', today); expect('mtd', '2026-11-01', today);
+expect('last-quarter', '2026-07-01', '2026-09-30'); expect('last-month', '2026-10-01', '2026-10-31');
+expect('fytd', '2026-04-01', today); expect('last-fy', '2025-04-01', '2026-03-31');
+expect('fy', '2024-04-01', '2025-03-31', { year: 2024 });
+expect('quarter', '2025-04-01', '2025-06-30', { year: 2025, quarter: 2 });
+expect('ytd', '2026-01-01', today); expect('last-year', '2025-01-01', '2025-12-31');
+expect('year', '2024-01-01', '2024-12-31', { year: 2024 });
+expect('3m', '2026-08-13', today); expect('6m', '2026-05-13', today);
+expect('1y', '2025-11-13', today); expect('2y', '2024-11-13', today);
+expect('3y', '2023-11-13', today); expect('5y', '2021-11-13', today);
+expect('history', null, today); expect('custom', today, today, { from: today, to: today });
+expect('last-quarter', '2025-10-01', '2025-12-31', { today: '2026-01-02' });
+expect('fytd', '2025-04-01', '2026-03-31', { today: '2026-03-31' });
+expect('fytd', '2026-04-01', '2026-04-01', { today: '2026-04-01' });
+expect('1y', '2023-03-01', '2024-02-29', { today: '2024-02-29' });
+expect('quarter', '2026-10-01', today, { year: 2026, quarter: 4 });
+for (const options of [{ from: '2026-02-30', to: today }, { from: '2026-12-01', to: today }, { from: today, to: '2026-11-13' }])
+  assert.throws(() => reportPeriod('custom', { today, ...options }));
+assert.throws(() => reportPeriod('quarter', { today, year: 2027, quarter: 1 }));
+assert.equal(REPORT_PERIODS.length, 19);
+console.log('Report periods: quarters, Apr–Mar FYs, calendar years, rolling ranges, leap days, inclusive dates, history, custom dates and future-date rejection passed.');

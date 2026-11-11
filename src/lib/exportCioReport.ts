@@ -38,8 +38,8 @@ export async function exportCioReport(s: CioReportSnapshot) {
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true, putOnlyUsedFonts: true });
   pdf.addFileToVFS('NotoSans-Regular.ttf', a.regular); pdf.addFont('NotoSans-Regular.ttf', 'Noto', 'normal');
   pdf.addFileToVFS('NotoSans-Bold.ttf', a.bold); pdf.addFont('NotoSans-Bold.ttf', 'Noto', 'bold');
-  pdf.setProperties({ title: `${s.brand.name} - Family Office Quarterly Review - ${s.date}`,
-    author: s.brand.provider, subject: `${s.scope} | ${s.currency} | ${s.quarter}`, creator: s.brand.provider });
+  pdf.setProperties({ title: `${s.brand.name} - ${s.period.title} - ${s.date}`,
+    author: s.brand.provider, subject: `${s.scope} | ${s.currency} | ${s.period.label}`, creator: s.brand.provider });
   const entries: Entry[] = [];
   const clean = (v: Cell) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').replace(/\u00a0/g, ' ');
   const text = (v: Cell, x: number, y: number, size = 9, color = INK, bold = false, align: 'left' | 'right' | 'center' = 'left') => {
@@ -64,7 +64,7 @@ export async function exportCioReport(s: CioReportSnapshot) {
   const header = (title: string, continued = false) => {
     logo(M, 23);
     text(s.scope, RIGHT, 33, 8, MUTED, false, 'right');
-    text(`${s.quarter} | Report as at ${fmtDate(s.date)} | ${s.currency}`, RIGHT, 47, 8, MUTED, false, 'right');
+    text(`${s.period.label} | To ${fmtDate(s.date)} | ${s.currency}`, RIGHT, 47, 8, MUTED, false, 'right');
     text(`${title}${continued ? ' (continued)' : ''}`, M, 83, 16, TEAL);
     line(M, 94, RIGHT, 94);
   };
@@ -154,18 +154,19 @@ export async function exportCioReport(s: CioReportSnapshot) {
   pdf.setFillColor('#102522'); pdf.rect(W / 2, 0, W / 2, H, 'F');
   logo(42, 63, true);
   text('Family Office', W / 2 + 32, 105, 29, '#ffffff');
-  text('Quarterly Review', W / 2 + 32, 148, 29, '#ffffff');
+  text(s.period.title, W / 2 + 32, 148, s.period.title.length > 20 ? 24 : 29, '#ffffff');
   para('A clear view of your family office: asset allocation, investment performance and capital deployment, based on the records available for your portfolio.', W / 2 + 32, 205, 320, 11, '#dce7e3');
-  text('REPORTING PERIOD END DATE', W / 2 + 32, 392, 8, '#b9cdca');
-  text(fmtDate(s.date), W / 2 + 32, 414, 14, '#ffffff');
+  text('REPORTING PERIOD', W / 2 + 32, 368, 8, '#b9cdca');
+  text(s.period.label, W / 2 + 32, 390, 13, '#ffffff');
+  text(`${s.period.from ? fmtDate(s.period.from) : 'First available record'} - ${fmtDate(s.date)}`, W / 2 + 32, 414, 11, '#ffffff');
   text(s.scope, W / 2 + 32, 450, 11, '#ffffff', true);
   text(`Prepared by ${s.brand.provider}`, W / 2 + 32, 488, 11, '#d4c28e', true);
-  para(`Confidential | ${s.brand.name}\n${s.quarter} | ${s.currency} | Portfolio snapshot`, W / 2 + 32, 541, 320, 7, '#b9cdca');
+  para(`Confidential | ${s.brand.name} | ${s.currency} | Exported ${fmtDate(s.exportedOn)}`, W / 2 + 32, 541, 320, 7, '#b9cdca');
   pdf.addPage(); header('Table of Contents');
 
+  if (!s.historical) {
   page('Portfolio Overview');
   heading('Portfolio Update', M, 122, 351);
-  const gain = s.summary.available.gain;
   let overviewY = para(`${s.brand.name}' portfolio value is ${s.money(s.summary.totalValue)}, across ${s.accountCount} accounts and ${s.holdings.length} investment lines. ${s.scope}.`, M, 149, 351, 10, INK);
   overviewY = para(`Recorded invested capital: ${s.money(s.summary.totalInvested) || 'not available'}. ${s.summary.noCostCount ? `${s.summary.noCostCount} holdings (${s.money(s.summary.noCostMV)}) have no recorded purchase cost. ` : ''}Invested capital and portfolio value can cover different sets of holdings.`, M, overviewY + 12, 351, 8.5);
   heading('Asset Allocation', M, overviewY + 25, 351);
@@ -180,26 +181,45 @@ export async function exportCioReport(s: CioReportSnapshot) {
   });
   heading('Activity & Returns', 431, 122, RIGHT - 431);
   const metrics: Cell[][] = [['Portfolio value', s.money(s.summary.totalValue)],
-    ['Recorded invested capital', s.money(s.summary.totalInvested)], ['Gain / loss since investment', s.money(gain.total.gain)],
-    ['Return since investment', s.percent(gain.total.returnPct)],
-    [`Calendar YTD${s.summary.available.ytd.total.measured?.basis === 'annual' ? ' (p.a.)' : ''}`, s.percent(s.summary.available.ytd.total.returnPct)],
-    [`Financial YTD${s.summary.available.fytd.total.measured?.basis === 'annual' ? ' (p.a.)' : ''}`, s.percent(s.summary.available.fytd.total.returnPct)]];
+    ['Recorded invested capital', s.money(s.summary.totalInvested)], ['Gain / loss in report period', s.money(s.selected.total.gain)],
+    [`Period return${s.selected.total.measured?.basis === 'annual' ? ' (p.a.)' : ''}`, s.percent(s.selected.total.returnPct)],
+    ['Closing value - covered records', s.money(s.selected.records ? s.selected.closingValue : null)]];
   table('Portfolio Overview', [{ label: 'Measure', width: .64 }, { label: s.currency, width: .36, right: true }], metrics, 153, 431, RIGHT - 431);
   para(`Returns use the same available records and holding assumptions as Morning CIO. Valuation dates: ${s.markSpan}. Exported ${new Date(s.generatedAt).toLocaleString('en-IN')}.`, 431, 350, RIGHT - 431, 8);
   para('Allocation uses positive holding values; any negative balances remain in the asset table and portfolio value. Missing figures are left blank throughout this report.', M, 518, RIGHT - M, 7);
+  page('Asset Table');
+  table('Asset Table', [{ label: 'Asset class / mandate', width: .30 }, { label: 'Recorded invested', width: .21, right: true },
+    { label: 'Current value', width: .21, right: true }, { label: '% of portfolio', width: .17, right: true }, { label: 'Holdings', width: .11, right: true }],
+    s.buckets.map(b => [bucketLabelFor(b.key), s.money(b.invested), s.money(b.current), s.summary.totalValue ? `${(b.current / s.summary.totalValue * 100).toFixed(2)}%` : '', b.count]));
+  } else {
+    page('Period Overview');
+    heading(s.period.label, M, 122, RIGHT - M);
+    para(`Requested period: ${s.period.from ? fmtDate(s.period.from) : 'first available record'} to ${fmtDate(s.period.to)}. ${s.scope}.`, M, 150, RIGHT - M, 11, INK);
+    table('Period Overview', [{ label: 'Measure', width: .65 }, { label: s.currency, width: .35, right: true }], [
+      ['Closing value - covered records only', s.money(s.selected.records ? s.selected.closingValue : null)],
+      ['Gain / loss in report period', s.money(s.selected.total.gain)],
+      [`Period return${s.selected.total.measured?.basis === 'annual' ? ' (p.a.)' : ''}`, s.percent(s.selected.total.returnPct)],
+      ['Supported investment / account records', s.selected.records],
+      ['First measured date', s.selected.from ? fmtDate(s.selected.from) : ''],
+      ['Last measured date', s.selected.to ? fmtDate(s.selected.to) : ''],
+    ], 200);
+    para(s.selected.records
+      ? 'Historical figures cover the supported records only. Records starting later than the requested start or last valued before the end retain their actual dates. Current holdings, live prices and current private capital accounts are excluded from historical allocation pages because they do not establish the portfolio held on that earlier date.'
+      : 'No supported return records are available for this period. The report retains your requested dates; later holdings and today\'s portfolio value have not been substituted for missing historical records.', M, 435, RIGHT - M, 9);
+  }
 
-  page('Performance by Asset Class & Mandate');
-  heading('Return since investment', M, 122, 351);
-  const returns = s.buckets.filter(b => b.retPct != null);
-  bars(returns.map(b => ({ label: bucketLabelFor(b.key), value: b.retPct!, display: s.percent(b.retPct) })), M, 156, 351, 220, true);
-  para('Cumulative holding-period returns, including realised gains and income where the records support them. Whole PMS mandates use capital paid in. These are not quarter-to-date returns.', M, 401, 351, 8);
-  heading('Allocation by current value', 431, 122, RIGHT - 431);
-  bars(s.buckets.map(b => ({ label: bucketLabelFor(b.key), value: b.current, display: s.money(b.current) })), 431, 156, RIGHT - 431, 220);
-  table('Performance by Asset Class & Mandate', [
-    { label: 'Asset class / mandate', width: .29 }, { label: 'Invested', width: .18, right: true },
-    { label: 'Current value', width: .18, right: true }, { label: 'Return', width: .13, right: true, signed: true },
-    { label: '% of portfolio', width: .13, right: true }, { label: 'Holdings', width: .09, right: true },
-  ], s.buckets.map(b => [bucketLabelFor(b.key), s.money(b.invested), s.money(b.current), s.percent(b.retPct), `${(b.current / s.summary.totalValue * 100).toFixed(2)}%`, b.count]), 448);
+  const performance = s.selected.rows.filter(r => r.units.length > 0);
+  if (performance.length) {
+    page('Performance by Asset Class & Mandate');
+    heading('Return over the selected reporting period', M, 122, 351);
+    bars(performance.filter(r => r.returnPct != null).map(r => ({ label: r.label, value: r.returnPct!, display: s.percent(r.returnPct) })), M, 156, 351, 220, true);
+    heading('Gain / loss over the selected period', 431, 122, RIGHT - 431);
+    bars(performance.filter(r => r.gain != null).map(r => ({ label: r.label, value: r.gain!, display: s.money(r.gain) })), 431, 156, RIGHT - 431, 220, true);
+    para('The requested dates filter opening and closing values and dated money movements. Where a complete period is unavailable, the first and last supported values are used and their dates are disclosed. Annualised returns are marked p.a.; returns under one year are shown as period returns.', M, 391, RIGHT - M, 8);
+    table('Performance by Asset Class & Mandate', [{ label: 'Asset class / mandate', width: .29 }, { label: 'Opening + additions', width: .18, right: true },
+      { label: 'Covered closing value', width: .18, right: true }, { label: 'Gain / loss', width: .18, right: true }, { label: 'Return / basis', width: .17, right: true }],
+    performance.map(r => [r.label, s.money(r.invested), s.money(r.units.reduce((t, u) => t + u.close, 0)), s.money(r.gain), `${s.percent(r.returnPct)}${r.measured?.basis === 'annual' ? ' p.a.' : ''}`]), 450);
+  }
 
   // Only draw benchmark comparisons when the same identity-checked history is already available in CIO.
   const index = settledPriceHistory(DEFAULT_BENCHMARK.symbol);
@@ -221,6 +241,7 @@ export async function exportCioReport(s: CioReportSnapshot) {
     }
   }
 
+  if (!s.historical) {
   if (s.equity.length) {
     page('Equity');
     heading('Top 10 Holdings by Value', M, 122, 351);
@@ -266,11 +287,12 @@ export async function exportCioReport(s: CioReportSnapshot) {
     bars(cash.slice(0, 8).map(h => ({ label: h.name, value: h.value, display: s.money(h.value) })), M, 126, RIGHT - M, 192);
     holdingTable('Cash Holdings', cash, 348);
   }
-  const windows = s.summary.available.fytd.total.units.filter(u => u.window).map(u => ({ label: u.label, w: u.window! }));
+  }
+  const windows = s.selected.total.units.filter(u => u.window).map(u => ({ label: u.label, w: u.window! }));
   if (windows.length) {
-    page('Cash Flows - Available Financial YTD Records');
-    para('Only the measured account windows behind the Financial YTD return are shown. Opening value is a valuation, not a cash contribution. Holdings measured by other methods are excluded from this activity table.', M, 120, RIGHT - M, 8);
-    table('Cash Flows - Available Financial YTD Records', [{ label: 'Account / investment', width: .28 }, { label: 'Window', width: .18 },
+    page('Cash Flows - Selected Period');
+    para('Only supported account and holding windows within the selected reporting dates are shown. Opening value is a valuation, not a cash contribution. Holdings measured by other methods are excluded from this activity table.', M, 120, RIGHT - M, 8);
+    table('Cash Flows - Selected Period', [{ label: 'Account / investment', width: .28 }, { label: 'Window', width: .18 },
       { label: 'Opening value', width: .135, right: true }, { label: 'Capital added', width: .135, right: true },
       { label: 'Capital withdrawn', width: .135, right: true }, { label: 'Closing value', width: .135, right: true }],
     windows.map(({ label, w }) => [label, `${fmtDate(w.openDate)} - ${fmtDate(w.closeDate)}`, s.money(w.openValue),
@@ -279,21 +301,21 @@ export async function exportCioReport(s: CioReportSnapshot) {
   page('Returns & Coverage');
   table('Returns & Coverage', [{ label: 'Period', width: .18 }, { label: 'Return', width: .13, right: true },
     { label: 'Gain / loss', width: .15, right: true }, { label: 'Measured dates', width: .22 },
-    { label: 'Holdings covered', width: .14, right: true }, { label: 'Basis', width: .18 }],
+    { label: s.historical ? 'Supported records' : 'Holdings covered', width: .14, right: true }, { label: 'Basis', width: .18 }],
   s.periods.filter(p => p.card.total.returnPct != null).map(({ label, card }) => [label, s.percent(card.total.returnPct), s.money(card.total.gain),
-    card.from && card.to ? `${fmtDate(card.from)} - ${fmtDate(card.to)}` : '', `${card.coveredHoldings} / ${card.totalHoldings}`,
+    card.from && card.to ? `${fmtDate(card.from)} - ${fmtDate(card.to)}` : '', s.historical ? card.records : `${card.coveredHoldings} / ${card.totalHoldings}`,
     card.total.measured?.basis === 'annual' ? 'Annualised' : 'Cumulative / period']), 122);
   heading('What the return covers', M, 315, RIGHT - M);
   let yy = 342;
   for (const { label, card } of s.periods) {
     const assumed = card.total.units.filter(u => u.assumption).length;
     const held = card.total.units.filter(u => u.held).length;
-    yy = para(`${label}: ${card.coveredHoldings} of ${card.totalHoldings} holdings; ${s.money(card.coveredValue)} covered. ${assumed} records assume the holding continues; ${held} records are held flat at their last value. ${card.total.missing.length} return records are unavailable.`, M, yy, RIGHT - M, 8) + 14;
+    yy = para(`${label}: ${s.historical ? `${card.records} supported investment / account records` : `${card.coveredHoldings} of ${card.totalHoldings} holdings`}; ${s.money(card.coveredValue)} covered. ${assumed} records assume the holding continues; ${held} records are held flat at their last value. ${card.total.missing.length} return records are unavailable.`, M, yy, RIGHT - M, 8) + 14;
   }
   page('Report Notes');
   const notes = [
     `${s.brand.name} | ${s.scope}. Prepared by ${s.brand.provider}. All amounts are displayed in ${s.currency}; the source book is recorded in INR and uses the dashboard's selected display exchange rate. Presentation currency does not establish the underlying currency exposure.`,
-    `This is an as-at review for ${fmtDate(s.date)}, rather than a measured full-quarter performance statement. Values use the selected Morning CIO portfolio snapshot: live prices where available and source marks elsewhere. The underlying valuation dates span ${s.markSpan}. Older valuations are not represented as current market prices.`,
+    `Requested reporting period: ${s.period.from ? fmtDate(s.period.from) : 'first available record'} to ${fmtDate(s.date)} (${s.period.label}). Exported ${fmtDate(s.exportedOn)}. ${s.historical ? 'Historical figures use supported records ending on or before the selected end date; later money movements, current holdings and live valuations are excluded.' : `Holdings use the selected Morning CIO snapshot: live prices where available and source marks elsewhere. Valuation dates span ${s.markSpan}.`} Returns measured over a shorter available window retain their actual measurement dates.`,
     'Consolidation follows the dashboard: duplicate reports of the same holding are counted once. Holdings below the dashboard threshold are excluded from the detailed holdings in the same way as Morning CIO. Recorded invested capital includes only supported costs and capital records and may cover a different set from current value; the difference must not be treated as profit.',
     'Returns and gains reuse Morning CIO calculations. Available-history returns, cumulative returns, annualised money-weighted returns and holding-period returns have different bases and are labelled separately. Continuation assumptions and investments held flat are included only under the dashboard rules and disclosed in Returns & Coverage. Holdings detail shows unrealised return on units held, excluding realised gains and income.',
     'Blank cells mean a figure is unavailable or cannot be measured reliably. Sections with no supported holdings or records are omitted. In particular, no geography, underlying currency exposure, duration, projected income, liabilities or historical monthly return is inferred from a current holding statement. Private holdings without a later valuation remain marked at cost.',
@@ -318,6 +340,6 @@ export async function exportCioReport(s: CioReportSnapshot) {
     text(`${i} / ${pdf.getNumberOfPages()}`, RIGHT, H - 17, 7, MUTED, false, 'right');
   }
   return { blob: pdf.output('blob'), pages: pdf.getNumberOfPages(),
-    filename: `${s.brand.name.replace(/\s+/g, '-')}-Quarterly-Review-${s.date}.pdf` };
+    filename: `${s.brand.name.replace(/\s+/g, '-')}-${s.period.title.replace(/\s+/g, '-')}-${s.period.from ?? 'available-history'}-to-${s.date}.pdf` };
 }
 
