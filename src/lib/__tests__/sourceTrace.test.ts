@@ -81,16 +81,19 @@ const allocated = holdingSourceTrace([{ ...bandhan, statementRecord: undefined, 
 assert.equal(allocated.derived, true); assert.ok(allocated.sources.some(s => s.note === 'Allocated to this owner by the review record.'));
 // A review record in plain words (Stage 10jn): its value, date, cost and
 // shares off the holding and the review's own note; the full note is kept.
-const nse = BOOK_POSITIONS.find(p => p.reviewNote?.includes('Now a listed company') && /split by shares/.test(p.reviewNote) && p.quantity === 125000)!;
+const nse = BOOK_POSITIONS.find(p => p.accountId === 'review-ajay-jaisinghani' && p.isin === 'INE721I01024');
+assert.ok(nse, 'Ajay’s NSE review holding exists');
 const nseReview = holdingSourceTrace([nse], 'quantity').sources.find(s => s.review)!;
 assert.equal(nseReview.note, nse.reviewNote, 'the full audit note stays under Full detail');
 // Ajay's 1,25,000 are on the ICICI NSDL statement of 31 Oct 2026, which marks them at the
 // 30 Oct close (Stage 10kn): the record says a newer statement differs, and the popup says so.
 assert.deepEqual(nseReview.review, { value: 259375000, cost: nse.costBasis, units: 125000, unitWord: 'shares', asOf: '30 Jun 2026',
-  atCost: false, splitByShares: true, shared: false, noHolder: false, listed: true, differs: true });
+  atCost: false, splitByShares: false, shared: false, noHolder: false, listed: true, differs: true });
+assert.match(nse.reviewNote!, /investment register dates/, 'the register now supplies the cost split instead of allocating by shares');
 assert.ok(/A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026/.test(nse.reviewNote ?? ''), 'the newer statement is named in the record');
 // Ankita's 75,000 have no newer valued statement, so her half of the same line does not differ.
-const nseAnkita = BOOK_POSITIONS.find(p => p.reviewNote?.includes('Now a listed company') && /split by shares/.test(p.reviewNote) && p.quantity === 75000)!;
+const nseAnkita = BOOK_POSITIONS.find(p => p.accountId === 'review-ankita-jaisinghani' && p.isin === 'INE721I01024');
+assert.ok(nseAnkita, 'Ankita’s NSE review holding exists');
 assert.equal(holdingSourceTrace([nseAnkita], 'quantity').sources.find(s => s.review)!.review!.differs, false);
 const plain = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(SourceDetails, { trace: holdingSourceTrace([nse], 'quantity') })));
 assert.ok(plain.includes('Worth ₹25.94 Cr for 1,25,000 shares on 30 Jun 2026'), plain);
