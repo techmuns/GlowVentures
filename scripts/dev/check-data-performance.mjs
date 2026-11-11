@@ -32,13 +32,18 @@ async function appendByScrolling(table) {
 }
 async function scrollToEnd(table) {
   const end = table.locator('[data-table-scroll-end]');
-  for (let i = 0; i < 200; i++) {
-    const shown = Number(await end.getAttribute('data-loaded-rows'));
-    const total = Number(await end.getAttribute('data-total-rows'));
-    if (shown === total) return total;
+  const total = Number(await end.getAttribute('data-total-rows'));
+  assert.ok(Number.isInteger(total) && total >= 0, 'the table reports a finite row count');
+  let shown = Number(await end.getAttribute('data-loaded-rows'));
+  assert.ok(Number.isInteger(shown) && shown >= 0 && shown <= total, 'the loaded row count is within the total');
+  while (shown < total) {
     await appendByScrolling(table);
+    assert.equal(Number(await end.getAttribute('data-total-rows')), total, 'scrolling retains the full table total');
+    const loaded = Number(await end.getAttribute('data-loaded-rows'));
+    assert.ok(Number.isInteger(loaded) && loaded > shown && loaded <= total, 'each scroll advances towards the final row');
+    shown = loaded;
   }
-  assert.fail('table never reached its final row');
+  return total;
 }
 try {
   await assertTableHeaderFixture(browser,base);
