@@ -147,6 +147,15 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-navigation-state.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-dashboard-navigation.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-etf-unit-continuity.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-cio-report.mjs
+
+      - name: Preserve Morning CIO report evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cio-report-export
+          path: .cache/cio-report-check
+          if-no-files-found: ignore
 
       - name: Preserve return attribution browser evidence
         if: always()
