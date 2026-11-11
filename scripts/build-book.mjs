@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { buildFinancialIntegrity, positionIntegrity } from "./ingest/lib/financial-integrity.mjs";
+import { reconciledWeightedCapital } from "../shared/flowTiming.mjs";
 // Build src/data/glowData.ts from the audit archive.
 //
 //   npm run build-book        (after `npm run inventory && npm run extract`)
@@ -808,7 +810,7 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
     const linkClose = prevDate ? navAt(common, d) : null;
 
     /** Rule 4 — net external capital IN, attributed on each account's own clock. */
-    let flowIn = 0;
+    let flowIn = 0, flowWeighted = 0, flowTimingKnown = true;
     let flowUnknownValue = 0;
     for (const id of common) {
       const snap = at(id, d);
@@ -818,9 +820,16 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
       // change contains.
       if (was.date === snap.date) continue;
       const proof = flowBasis[id].proofs.find((x) => x.from === was.date && x.to === snap.date);
-      if (proof && proof.basis !== "unproven") flowIn += proof.net;
+      if (proof && proof.basis !== "unproven") {
+        flowIn += proof.net;
+        const dated = (accountCashFlows[id] ?? []).filter(f => !/^Opening portfolio value/i.test(f.description ?? "") && f.date > was.date && f.date <= snap.date)
+          .map(f => ({ date: f.date, amount: -f.amount }));
+        const weighted = reconciledWeightedCapital(dated, was.date, snap.date, proof.net);
+        if (weighted === null) flowTimingKnown = false;
+        else flowWeighted += weighted;
+      }
       // What an unproven step cannot show to be performance is its MOVE.
-      else flowUnknownValue += Math.abs(snap.marketValue - was.marketValue);
+      else { flowUnknownValue += Math.abs(snap.marketValue - was.marketValue); flowTimingKnown = false; }
     }
 
     const point = {
@@ -831,6 +840,9 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
       accountsCarried: present.length - onDate,
       /** Net external capital in since the previous point, on each account's own clock. */
       flowIn: prevDate ? r2(flowIn) : 0,
+      flowWeighted: flowTimingKnown ? flowWeighted : null,
+      flowTimingKnown,
+      returnMethod: flowUnknownValue > 0 ? "unproven" : flowTimingKnown ? "modified-dietz" : "end-dated-approximation",
       /** The move, in this interval, of accounts whose capital movement no statement establishes. */
       unreportedFlowValue: prevDate ? r2(flowUnknownValue) : 0,
       linkOpen: linkOpen === null ? null : r2(linkOpen),
@@ -5650,7 +5662,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
 
   const accountReturnRecords = buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
     historicalNavs: references.historicalNavs ?? JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) });
-  return {
+  const result = {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     accountReturnRecords, ...periodEvidence({ byAccount, accounts, positions, accountReturnRecords }),
     capitalMoves, positionTranches, shareMovements, shareRolls: shareRolls.rolls, tapeRows: tapeBoughtRows, advisedBalances: advised.balances, holdingCostRecovery,
@@ -5724,6 +5736,11 @@ function build(archived, archiveCount = archived.length, references = {}) {
     unclassified: [...unclassified.entries()].map(([providerSector, count]) => ({ providerSector, count })),
     notes,
   };
+  const integrity = buildFinancialIntegrity(canonicalBookValues(result), archived, { registry: references.financialRegistry });
+  if (integrity.issues.length) throw Error(`Financial identity/ownership validation failed: ${JSON.stringify(integrity.issues)}`);
+  const positionChecks = positionIntegrity(integrity);
+  for (const p of positions) p.integrity = positionChecks.get(JSON.stringify([p.accountId, p.memberId ?? null, p.securityKey]));
+  return result;
 }
 
 // ── Emit ─────────────────────────────────────────────────────────────────────

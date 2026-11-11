@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { financialUnitIssue } from "./lib/financial-units.mjs";
 // Extraction pass — statements in source/ become a checkable audit archive.
 //
 //   npm run extract
@@ -674,6 +675,10 @@ function noTextLayer(grid) {
   // here: `G100023_100023_PortFolioFactSheet.pdf` prints `Account: 100022`, and
   // keying that document under 100023 files Ankita's fact sheet with Ajay's
   // statements.
+  const unitIssue = financialUnitIssue(doc, grid.pages?.map(p => p.text ?? '').join('\n') ?? '');
+  if (unitIssue && ['holdings', 'transactions', 'cashFlows', 'capitalGains'].some(k => doc[k]?.length) && !doc.excludedFromBook) {
+    doc.status = 'partial'; doc.warnings.push({ code: 'unsupported-financial-units', detail: unitIssue });
+  }
   return assertNormalized(rekey(doc));
 }
 

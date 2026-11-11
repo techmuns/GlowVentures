@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 const SUITES = [
+  { name: "financialIntegrity", file: "financialIntegrity.test.mjs", required: true },
   { name: "bandhan", file: "bandhanFolio.test.mjs", required: true },
   { name: "capitalOrigins", file: "capitalOrigins.test.mjs", required: true },
   // The demat each account's statements name (Stage 10ic, scripts/lib/dematAccounts.mjs).

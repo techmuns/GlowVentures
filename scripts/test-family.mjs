@@ -19,6 +19,8 @@ fs.mkdirSync(TEMP_ROOT, { recursive: true });
 const DIR = fs.mkdtempSync(path.join(TEMP_ROOT, "run-"));
 
 const SUITES = [
+  ["capital integrity", "src/lib/__tests__/capitalIntegrity.test.ts"],
+  ["financial solver integrity", "src/lib/__tests__/xirrIntegrity.test.ts"],
   ["Home dashboard dates and history", "src/lib/__tests__/homeDashboard.test.ts"],
   ["home overview", "src/lib/__tests__/homeOverview.test.ts"],
   ["INR adjusted time-weighted returns", "src/lib/__tests__/adjustedTwr.test.ts"],

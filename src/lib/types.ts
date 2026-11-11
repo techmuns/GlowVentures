@@ -251,7 +251,16 @@ export type RecoveredHoldingCost = {
  */
 export type PolycabHolding = Omit<Position, "marketValue"> & { marketValue: number | null };
 
+export type PositionIntegrity = {
+  positionId: string;
+  quantityAsOf: string;
+  formulaVersion: string;
+  metrics: Record<string, { status: string; basis: string; effectiveDate: string; exceptions: string[] }>;
+};
+
 export type Position = {
+  integrity?: PositionIntegrity;
+  returnInputsUnavailableReason?: string;
   /** Explicit family corrections; original statement records remain separate. */
   enteredNumbers?: string[];
   enteredCapital?: Record<string, number | null>;
@@ -734,6 +743,10 @@ export type NavPoint = {
   accountsOnDate?: number;
   accountsCarried?: number;
   flowIn?: number;
+  /** Sum of dated capital multiplied by its fraction of days invested. Null means dates do not settle the printed net. */
+  flowWeighted?: number | null;
+  flowTimingKnown?: boolean;
+  returnMethod?: "modified-dietz" | "end-dated-approximation" | "unproven";
   unreportedFlowValue?: number;
   /**
    * ── THE LINK, AND WHY THE SERIES CAN START BEFORE THE PANEL IS COMPLETE ────
@@ -749,7 +762,10 @@ export type NavPoint = {
    * — only across each LINK. So each point carries the interval ending at it,
    * struck over the accounts valued at BOTH of its ends:
    *
-   *   r = (linkClose − flowIn) / linkOpen − 1
+   *   r = (linkClose − linkOpen − flowIn) / (linkOpen + flowWeighted)
+   *
+   * The legacy end-dated approximation uses zero weight only where the
+   * dated record is unavailable, with `returnMethod` identifying that basis.
    *
    * An account joining at this date is in neither end of the link that ends
    * here, so its arrival contributes 0.00% rather than a step. Where the panel
@@ -1286,6 +1302,8 @@ export type AdvisedBalance = {
  */
 export type HoldingTrade = {
   date: string;
+  reference?: string;
+  settlementDate?: string;
   side: "buy" | "sell";
   quantity: number | null;
   price: number | null;

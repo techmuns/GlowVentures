@@ -101,6 +101,17 @@ jobs:
 
       # 3. The ingest & reconciliation test suites pass (parseNum, layout,
       #    pipeline, and the golden figures a human read off the real statements).
+      - name: Published financial graph, decimal journal and metric evidence
+        run: npm run check:financial-integrity
+
+      - name: Preserve financial integrity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: financial-integrity-evidence
+          path: .cache/backend-integrity/publication-check.json
+          if-no-files-found: ignore
+
       - name: Ingest tests
         run: npm run test:ingest
 

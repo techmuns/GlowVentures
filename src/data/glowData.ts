@@ -2404,7 +2404,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2021-04",
       "text": "Apr 2021"
     },
-    "reviewNote": "Valued at ₹1,45,80,413 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. One folio under each CRN — two investments, as the family confirmed on 28 Sep 2026. A statement says otherwise: CRN37702's statement of 31 Jul 2026 values the same units at ₹1,46,68,362.66."
+    "reviewNote": "Valued at ₹1,45,80,413 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. One folio under each CRN — two investments, as the family confirmed on 28 Sep 2026. A statement says otherwise: CRN37702's statement of 31 Jul 2026 values the same units at ₹1,46,68,362.66.",
+    "integrity": {
+      "positionId": "position-00bfdd1fcb1e33b063f44266",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
@@ -2451,7 +2482,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2021-04",
       "text": "Apr 2021"
     },
-    "reviewNote": "Valued at ₹1,45,80,412.51 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. One folio under each CRN — two investments, as the family confirmed on 28 Sep 2026."
+    "reviewNote": "Valued at ₹1,45,80,412.51 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. One folio under each CRN — two investments, as the family confirmed on 28 Sep 2026.",
+    "integrity": {
+      "positionId": "position-64a5ecbb7cfa375a5068f02f",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2482,7 +2544,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7662e381680299ab514b453d",
+      "quantityAsOf": "2026-07-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2513,7 +2606,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-9cef94f742ce24feea0bf7c1",
+      "quantityAsOf": "2026-07-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2546,7 +2670,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-20918466d84d0e82150d734e",
+      "quantityAsOf": "2026-07-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2580,7 +2735,38 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": 3739.98,
     "dividendFrom": "2026-09-01",
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-670ba13d0ef3acdcf4d85499",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2613,7 +2799,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-08bfc47a67802bc29ca00f2f",
+      "quantityAsOf": "2026-08-03",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-03",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-03",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2647,7 +2864,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-9b56f1757263b7428da313ff",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2681,7 +2929,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-a7179422b678badf0b339e2e",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2712,7 +2991,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d60a12e4f3e3bd822fb92757",
+      "quantityAsOf": "2026-09-08",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-08",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-08",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-08",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-08",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2743,7 +3053,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-c0ce1c01011b5a124c25eb04",
+      "quantityAsOf": "2026-09-08",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-08",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-08",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-08",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-08",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2777,7 +3118,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-bae0b094dd2135e73786e6a0",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2819,7 +3191,38 @@ export const BOOK_POSITIONS: Position[] = [
       "pointer": "/holdings/1",
       "effectiveOn": "2026-10-07"
     },
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-8b2612c05d3f9f4f87907e58",
+      "quantityAsOf": "2026-10-26",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-26",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-26",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-23",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-23",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2852,7 +3255,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-25",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-fd04bcf115f146677909a8c5",
+      "quantityAsOf": "2026-10-26",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-26",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-26",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-25",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-25",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2885,7 +3319,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-25",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e5cfdf11f71a3cbb2e0459fe",
+      "quantityAsOf": "2026-10-26",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-26",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-26",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-25",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-25",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2927,7 +3392,38 @@ export const BOOK_POSITIONS: Position[] = [
       "pointer": "/holdings/0",
       "effectiveOn": "2026-10-07"
     },
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-0ac68900f74c9d1bccc5bfe1",
+      "quantityAsOf": "2026-10-26",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-26",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-26",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-23",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-23",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2961,7 +3457,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e09fb153c40f544140b86dbc",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -2995,7 +3522,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-b52f311601ad9a480a96bc4f",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "baring-private-equity-india-fund-6-class-a1",
@@ -3042,7 +3600,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-09",
       "text": "Oct 2024 – Sep 2025"
     },
-    "reviewNote": "Valued at ₹1,88,42,208.74 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 9, its closing of 31 Mar 2026. Ankita's folio. A statement says otherwise: Ankita's Motilal Oswal demat records 252.5 units on 31 Jul 2026, against the 202.5 the fund's statement and the review carry; the fund's statement of 31 Mar 2026 prints ₹56,161 paid out (₹18,909 on 30 Sep 2025 and ₹37,252 on 31 Mar 2026) where the review carries ₹1,42,867."
+    "reviewNote": "Valued at ₹1,88,42,208.74 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 9, its closing of 31 Mar 2026. Ankita's folio. A statement says otherwise: Ankita's Motilal Oswal demat records 252.5 units on 31 Jul 2026, against the 202.5 the fund's statement and the review carry; the fund's statement of 31 Mar 2026 prints ₹56,161 paid out (₹18,909 on 30 Sep 2025 and ₹37,252 on 31 Mar 2026) where the review carries ₹1,42,867.",
+    "integrity": {
+      "positionId": "position-5506c70709fedc3cb6a9642f",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3076,7 +3665,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b412523c7429f9d86a277936",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3111,7 +3731,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 58861.66,
     "dividendFrom": "2024-06-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d1fdb7b9223964c32f9d4325",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3152,7 +3803,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-66414b161882ea04131a5746",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3193,7 +3875,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 95958,
     "dividendReceived": 62750,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-78f63b1d273d2b6ed2bd3f79",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3237,7 +3950,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0b111e1d06998f3137e53cd0",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3268,7 +4012,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-4d3ed817e4c1d8bc8fafe666",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3312,7 +4087,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-482da037294182b18e718548",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3357,7 +4163,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 165040,
     "dividendReceived": 165040,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-817cbd2187c043f7704f9a85",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3397,7 +4234,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-8ed57862606ddc48fb07a369",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3438,7 +4306,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 495063,
     "dividendReceived": 306900,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7d0b9651c99ceccdaebf0dcd",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3483,7 +4382,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 146000,
     "dividendReceived": 146000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-aad3f624fd49ca510543e471",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3524,7 +4454,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0c92b4485892ba98d669e709",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3564,7 +4525,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-a806760f2e039d4fb47cf6b5",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3608,7 +4600,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b0df1eb070258b500d188246",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3653,7 +4676,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 2788,
     "dividendReceived": 2787.6,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-59f49308590a6b2975689ae2",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3685,7 +4739,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-78f01b73dc38fa864a416094",
+      "quantityAsOf": "2026-07-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3721,7 +4806,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-afaff40489cf4be3b9622f65",
+      "quantityAsOf": "2026-10-22",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-22",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-22",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-21",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-21",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3762,7 +4878,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 16000,
     "dividendReceived": 16000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 27.18
+    "positionIrrPct": 27.18,
+    "integrity": {
+      "positionId": "position-8dd8ca885c07f9ffdbd0f8fc",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3803,7 +4950,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 3000,
     "dividendReceived": 3000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -32.08
+    "positionIrrPct": -32.08,
+    "integrity": {
+      "positionId": "position-5d6dcea2aed103de5bd587a4",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3844,7 +5022,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 7200,
     "dividendReceived": 7200,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 41.74
+    "positionIrrPct": 41.74,
+    "integrity": {
+      "positionId": "position-5b32e3d629526815134e5d6a",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3885,7 +5094,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 24000,
     "dividendReceived": 24000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -25.72
+    "positionIrrPct": -25.72,
+    "integrity": {
+      "positionId": "position-005698936bf62575e627e81f",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3927,7 +5167,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 3600,
     "dividendReceived": 7200,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 117.67
+    "positionIrrPct": 117.67,
+    "integrity": {
+      "positionId": "position-95e0f42c56a82b8141cf5cff",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -3958,7 +5229,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": 0
+    "positionIrrPct": 0,
+    "integrity": {
+      "positionId": "position-818e9edc94ba3627287d617d",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4003,7 +5305,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 8000,
     "dividendReceived": 8000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 822.66
+    "positionIrrPct": 822.66,
+    "integrity": {
+      "positionId": "position-8fbc870fddf8d3f0d092d244",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4049,7 +5382,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 1600,
     "dividendReceived": 1600,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 179.89
+    "positionIrrPct": 179.89,
+    "integrity": {
+      "positionId": "position-12347245c0af7f3f14a9e096",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4090,7 +5454,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 14250,
     "dividendReceived": 14250,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -21.16
+    "positionIrrPct": -21.16,
+    "integrity": {
+      "positionId": "position-9454231ec797d3d3c0ddab52",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4135,7 +5530,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 28800,
     "dividendReceived": 28800,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 71.99
+    "positionIrrPct": 71.99,
+    "integrity": {
+      "positionId": "position-d50e43520337d1411acdb330",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4176,7 +5602,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 59400,
     "dividendReceived": 59400,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -6.86
+    "positionIrrPct": -6.86,
+    "integrity": {
+      "positionId": "position-9e448394323df4e27f10760d",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4218,7 +5675,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 24000,
     "dividendReceived": 24000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -0.23
+    "positionIrrPct": -0.23,
+    "integrity": {
+      "positionId": "position-05d3429d97f8d71415bd0c45",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4263,7 +5751,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 30000,
     "dividendReceived": 30000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -32.16
+    "positionIrrPct": -32.16,
+    "integrity": {
+      "positionId": "position-236a5e318fbc7de4a669e832",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4304,7 +5823,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 31000,
     "dividendReceived": 31000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -28.68
+    "positionIrrPct": -28.68,
+    "integrity": {
+      "positionId": "position-0d4209d410836d8109991a0e",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4349,7 +5899,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 9750,
     "dividendReceived": 9750,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -7.27
+    "positionIrrPct": -7.27,
+    "integrity": {
+      "positionId": "position-add850c5606f315fbfe5b8a0",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4391,7 +5972,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 22100,
     "dividendReceived": 22100,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 37.52
+    "positionIrrPct": 37.52,
+    "integrity": {
+      "positionId": "position-e5c418e55f3beb78722ae9ab",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4432,7 +6044,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 7500,
     "dividendReceived": 7500,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 4.19
+    "positionIrrPct": 4.19,
+    "integrity": {
+      "positionId": "position-febd1295283b18cc6d3a1a9e",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4473,7 +6116,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 60000,
     "dividendReceived": 60000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -6.86
+    "positionIrrPct": -6.86,
+    "integrity": {
+      "positionId": "position-8a67347a245e871e5519546c",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4518,7 +6192,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 16200,
     "dividendReceived": 16200,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -26.43
+    "positionIrrPct": -26.43,
+    "integrity": {
+      "positionId": "position-b7b5ba3b3ff8f6eb366cba47",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4559,7 +6264,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 26400,
     "dividendReceived": 26400,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -15.87
+    "positionIrrPct": -15.87,
+    "integrity": {
+      "positionId": "position-34268a43f965dafc0ab36d97",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4599,7 +6335,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 13500,
     "dividendReceived": null,
-    "positionIrrPct": 32.86
+    "positionIrrPct": 32.86,
+    "integrity": {
+      "positionId": "position-366ae22cc3e4ad727cb50fa9",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4639,7 +6406,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": 43.15
+    "positionIrrPct": 43.15,
+    "integrity": {
+      "positionId": "position-82636c3d15b0a1a1f353c9c2",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4680,7 +6478,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 6000,
     "dividendReceived": 4000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 27.34
+    "positionIrrPct": 27.34,
+    "integrity": {
+      "positionId": "position-de033572145148120c15d900",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4724,7 +6553,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": 1551.17
+    "positionIrrPct": 1551.17,
+    "integrity": {
+      "positionId": "position-6d122d6ffe955b11ddaccc3d",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4765,7 +6625,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 4500,
     "dividendReceived": 4500,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -19.61
+    "positionIrrPct": -19.61,
+    "integrity": {
+      "positionId": "position-aadae151fd505aa9577b9e80",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4806,7 +6697,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 25000,
     "dividendReceived": 25000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 29.71
+    "positionIrrPct": 29.71,
+    "integrity": {
+      "positionId": "position-77370384b0915f83e915558e",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4847,7 +6769,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 59850,
     "dividendReceived": 48600,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -32.48
+    "positionIrrPct": -32.48,
+    "integrity": {
+      "positionId": "position-79fd5302a49ad21c4aa2f0f7",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4889,7 +6842,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 39038,
     "dividendReceived": 39037.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 1.65
+    "positionIrrPct": 1.65,
+    "integrity": {
+      "positionId": "position-b14e681004b95e579b3718e3",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4930,7 +6914,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 17550,
     "dividendReceived": 12000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 6.66
+    "positionIrrPct": 6.66,
+    "integrity": {
+      "positionId": "position-3e69a88d148b254475a8509d",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -4970,7 +6985,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": -6.98
+    "positionIrrPct": -6.98,
+    "integrity": {
+      "positionId": "position-f2b746960a962246be0fa9ba",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5011,7 +7057,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 37500,
     "dividendReceived": 3750,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -21.2
+    "positionIrrPct": -21.2,
+    "integrity": {
+      "positionId": "position-45bac229c9a1633591376e6e",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5056,7 +7133,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 1000,
     "dividendReceived": 1000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -55.48
+    "positionIrrPct": -55.48,
+    "integrity": {
+      "positionId": "position-9b5791c2a2c828bcc95d0924",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5097,7 +7205,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 2800,
     "dividendReceived": 2800,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 34.88
+    "positionIrrPct": 34.88,
+    "integrity": {
+      "positionId": "position-4e975e0e413e8c0c8b2305d1",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5138,7 +7277,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 40000,
     "dividendReceived": 40000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 27.18
+    "positionIrrPct": 27.18,
+    "integrity": {
+      "positionId": "position-f534a8309b741840b527daa7",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5179,7 +7349,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 6250,
     "dividendReceived": 6250,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -32.08
+    "positionIrrPct": -32.08,
+    "integrity": {
+      "positionId": "position-d662e03fe2413c42764ef062",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5220,7 +7421,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 18000,
     "dividendReceived": 18000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 43.41
+    "positionIrrPct": 43.41,
+    "integrity": {
+      "positionId": "position-01e045776f853b2cb3251abe",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5261,7 +7493,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 56000,
     "dividendReceived": 56000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -25.72
+    "positionIrrPct": -25.72,
+    "integrity": {
+      "positionId": "position-7dae92248f88ab7925c3fefb",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5303,7 +7566,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 8000,
     "dividendReceived": 16000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 117.67
+    "positionIrrPct": 117.67,
+    "integrity": {
+      "positionId": "position-b8cf49b8f6eb3c02a28a7865",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5334,7 +7628,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": 0
+    "positionIrrPct": 0,
+    "integrity": {
+      "positionId": "position-94e75fa0060453cd4e830865",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5379,7 +7704,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 25000,
     "dividendReceived": 25000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 822.66
+    "positionIrrPct": 822.66,
+    "integrity": {
+      "positionId": "position-7be109cb82cb7fdab9c0fc9c",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5425,7 +7781,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 3600,
     "dividendReceived": 3600,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 179.89
+    "positionIrrPct": 179.89,
+    "integrity": {
+      "positionId": "position-b12b7a6dc4e595cf3fb84d4b",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5466,7 +7853,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 30000,
     "dividendReceived": 30000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -21.27
+    "positionIrrPct": -21.27,
+    "integrity": {
+      "positionId": "position-483432dcd18ffa927bb0eec7",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5511,7 +7929,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 72000,
     "dividendReceived": 72000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 71.99
+    "positionIrrPct": 71.99,
+    "integrity": {
+      "positionId": "position-dbc6e81267a7fe25816db276",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5552,7 +8001,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 135000,
     "dividendReceived": 135000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -7.04
+    "positionIrrPct": -7.04,
+    "integrity": {
+      "positionId": "position-58560bc143f47a2db18c89e3",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5594,7 +8074,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 60000,
     "dividendReceived": 60000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -0.23
+    "positionIrrPct": -0.23,
+    "integrity": {
+      "positionId": "position-1bc5a7edeaccbc3e1c6f087d",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5639,7 +8150,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 60000,
     "dividendReceived": 60000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -32.21
+    "positionIrrPct": -32.21,
+    "integrity": {
+      "positionId": "position-b892d5c8a916fe309495148a",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5680,7 +8222,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 70000,
     "dividendReceived": 70000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -29.33
+    "positionIrrPct": -29.33,
+    "integrity": {
+      "positionId": "position-e6f08c986a2fc7c808c43ab4",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5725,7 +8298,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 21000,
     "dividendReceived": 21000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -7.27
+    "positionIrrPct": -7.27,
+    "integrity": {
+      "positionId": "position-106c801928ace364479e53bf",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5767,7 +8371,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 52000,
     "dividendReceived": 52000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 37.52
+    "positionIrrPct": 37.52,
+    "integrity": {
+      "positionId": "position-4c66b644ceb8ddf8af0ceb9f",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5808,7 +8443,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 18000,
     "dividendReceived": 18000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 4.23
+    "positionIrrPct": 4.23,
+    "integrity": {
+      "positionId": "position-57d99a40bb8a8741fe444fa0",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5849,7 +8515,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 164000,
     "dividendReceived": 164000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -6.87
+    "positionIrrPct": -6.87,
+    "integrity": {
+      "positionId": "position-4a478e94e656636f58824b71",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5894,7 +8591,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 36000,
     "dividendReceived": 36000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -26.43
+    "positionIrrPct": -26.43,
+    "integrity": {
+      "positionId": "position-04ac736e06d645d2d5ef7b48",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5935,7 +8663,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 59400,
     "dividendReceived": 59400,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -15.92
+    "positionIrrPct": -15.92,
+    "integrity": {
+      "positionId": "position-58a889b78400f9a77801d940",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -5975,7 +8734,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 30000,
     "dividendReceived": null,
-    "positionIrrPct": 32.86
+    "positionIrrPct": 32.86,
+    "integrity": {
+      "positionId": "position-2e6b4e03c5b660469a33c8cd",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6015,7 +8805,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": 49.1
+    "positionIrrPct": 49.1,
+    "integrity": {
+      "positionId": "position-2f23a286a1f6fa0d81a1c694",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6056,7 +8877,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 13200,
     "dividendReceived": 8800,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 27.34
+    "positionIrrPct": 27.34,
+    "integrity": {
+      "positionId": "position-989693d80b500ed585cb5de1",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6100,7 +8952,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": 1551.17
+    "positionIrrPct": 1551.17,
+    "integrity": {
+      "positionId": "position-4bb079d25b481cbbe760d417",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6141,7 +9024,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 10000,
     "dividendReceived": 10000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -19.61
+    "positionIrrPct": -19.61,
+    "integrity": {
+      "positionId": "position-0c5aeee25f1c967ecc3844cf",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6182,7 +9096,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 60000,
     "dividendReceived": 60000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 28.2
+    "positionIrrPct": 28.2,
+    "integrity": {
+      "positionId": "position-c7f7fa014bb504a9d0717c7b",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6223,7 +9168,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 139650,
     "dividendReceived": 113400,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -32.37
+    "positionIrrPct": -32.37,
+    "integrity": {
+      "positionId": "position-d301361da15327521af694ec",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6265,7 +9241,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 86750,
     "dividendReceived": 86750,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 1.65
+    "positionIrrPct": 1.65,
+    "integrity": {
+      "positionId": "position-a553cc5f4a326172198ce3e6",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6306,7 +9313,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 41250,
     "dividendReceived": 30000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 8.27
+    "positionIrrPct": 8.27,
+    "integrity": {
+      "positionId": "position-c38155fd3e34f0884bb409df",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6346,7 +9384,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": -7.34
+    "positionIrrPct": -7.34,
+    "integrity": {
+      "positionId": "position-36013f41efbafb78e4cd63ad",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6387,7 +9456,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 85000,
     "dividendReceived": 8500,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -21.28
+    "positionIrrPct": -21.28,
+    "integrity": {
+      "positionId": "position-174515d6ebbf6b09f2a24eb4",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6432,7 +9532,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 3000,
     "dividendReceived": 3000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": -55.48
+    "positionIrrPct": -55.48,
+    "integrity": {
+      "positionId": "position-dd9991fbad1e30ce2fb495b0",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6473,7 +9604,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 6000,
     "dividendReceived": 6000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": 34.88
+    "positionIrrPct": 34.88,
+    "integrity": {
+      "positionId": "position-1ac98745e52f429def15397e",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6531,7 +9693,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 5644,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-06531b5619b407a95aa0cfa7",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6589,7 +9782,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 3410,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-9f83a178e6c7de58a6b9d149",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6648,7 +9872,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7488bf4eb512b3df7e69aabd",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6706,7 +9961,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-dd93878386aa7f40761aa63f",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6761,7 +10047,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 17850,
     "dividendReceived": 17850,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-4b6ca14831ff1d92232e5c7c",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6820,7 +10137,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 10763.2,
     "dividendReceived": 10763.2,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b850c6a4c02be6af79a1b435",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6865,7 +10213,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b3a609c2f2bd1de95fa51a9a",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6910,7 +10289,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-8527a394ffc58a9ad33987a3",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -6968,7 +10378,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 56070,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f3a6fb4435fae8e20a5a6ffc",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7027,7 +10468,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 14234,
     "dividendReceived": 14234,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f0304f78603128c9a93c5c21",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7085,7 +10557,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 5100,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-126cde043518108e9a9dd0f5",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7138,7 +10641,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 959,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f7d0c074f9beca0f9ed7321c",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7192,7 +10726,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 12040,
     "dividendReceived": 12040,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-050244ee5b38bb2955e822ae",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7246,7 +10811,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 1789,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-58f6f41a04423d776f5e7063",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7304,7 +10900,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 10150,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d9ea79c71b5a4dfeadf9e273",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7363,7 +10990,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 4360,
     "dividendReceived": 4360,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f2d08df26e4b6e95e7516e01",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7422,7 +11080,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 15302,
     "dividendReceived": 15302,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-377385302809a4240ab595a8",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7480,7 +11169,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 8100,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-5e9ee13d5ab69ae27684cbb5",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7539,7 +11259,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f601c1cd4ec0ce3a88a90004",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7598,7 +11349,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 12900,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-8b4d3949ec3d11317ebdc67f",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7657,7 +11439,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 11673,
     "dividendReceived": 11673.2,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-3fede1bff30b994e9cb8b59c",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7715,7 +11528,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 2947,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7fc83354eeee99bdc72cfb1e",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7773,7 +11617,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 82628,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-67a43d4f063f0454dcb36484",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7832,7 +11707,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 12567,
     "dividendReceived": 12567,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-61569552b3e39e4166f8d795",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7885,7 +11791,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-57f3fb79b9d16b1bf30405b5",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -7943,7 +11880,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 51163,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-51172668f8a989c38ad46576",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8003,7 +11971,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 66228,
     "dividendReceived": 44763,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-fc9ea78c9c2f2685196f5555",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8062,7 +12061,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 27792,
     "dividendReceived": 27792,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-63331c5faa7156bbd6f2fe81",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8120,7 +12150,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-22e59cfc6bd22532ff4e34ae",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8179,7 +12240,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 5680,
     "dividendReceived": 5680,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e69e53b4f1e6f2f20306a067",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8237,7 +12329,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-ff7aa558f77c1f5c702d900f",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8296,7 +12419,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 134933,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-eb85dddf8348f81dc5514ad4",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8369,7 +12523,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-35535ba99ea8b28457d70ca8",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8442,7 +12627,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 2064,
     "dividendReceived": 2064,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-5e440888d299a2a920af8cbd",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8500,7 +12716,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 11140,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0bddaf6e9dcab38abb76cf8f",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8558,7 +12805,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 6720,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-3eacfd81e3fb33b701217594",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8617,7 +12895,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-af579e2e4471f0f1984ced73",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8675,7 +12984,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-4cd8b8a7c7d0e897cda883d9",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8730,7 +13070,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 35400,
     "dividendReceived": 35400,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b4421390ae5b7b07bd3d7947",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8789,7 +13160,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 21270.2,
     "dividendReceived": 21270.2,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-c9e4f0c5cd17a14b4405daa5",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8834,7 +13236,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b591d09c3d2b2b368bc8e6fa",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8879,7 +13312,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-631d48c2e882130a83904f13",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8937,7 +13401,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 110610,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-8536013fe30cecb48e9df02b",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -8996,7 +13491,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 28100,
     "dividendReceived": 28100,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-a95335a37da3650d7ba7624f",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9054,7 +13580,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 10100,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-a4cdc13ad58cdc002fd8909d",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9107,7 +13664,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 1893,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-1a91ef3b47f5e55ba4a58bf7",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9161,7 +13749,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 23758,
     "dividendReceived": 23758,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-2c842cdf12e051ae7ae5a706",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9215,7 +13834,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 3530,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-ac4c8fe9af763d29ac8dca5e",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9273,7 +13923,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 19600,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-682236670c4c3bdacb84791d",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9332,7 +14013,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 8900,
     "dividendReceived": 8900,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0c1738549846d5c2d50eb81e",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9391,7 +14103,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 30275,
     "dividendReceived": 30275,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-40a628994cad9217fce44cb3",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9449,7 +14192,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 15750,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-11c184968fca9180408940c5",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9508,7 +14282,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-53af7f5c266dc4979f46ebad",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9567,7 +14372,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 25480,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-38fb9f99a5c2dd05d186844a",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9626,7 +14462,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 23052,
     "dividendReceived": 23051.6,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-69aa093cea1750b82846e533",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9684,7 +14551,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 5816,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-063151b1ecf6e930834bf393",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9742,7 +14640,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 170684,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-a21ad78195caefe93ba5138d",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9801,7 +14730,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 24813,
     "dividendReceived": 24813,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7c69e0f2e3984fe89f8a2b56",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9854,7 +14814,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-ea5124502a76741c0dedda8e",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9912,7 +14903,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 98261,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-3c8c9d4301307c876f8e3b13",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -9972,7 +14994,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 129334,
     "dividendReceived": 88311.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-906516109d58c67b7fd7a974",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10031,7 +15084,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 55800,
     "dividendReceived": 55800,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-8cae521e34f252bb28e1ca7f",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10089,7 +15173,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-8f63fe1f055e3a4be1acf783",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10148,7 +15263,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 11280,
     "dividendReceived": 11280,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-853ab9f7cef647812475c7a8",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10206,7 +15352,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-31ad3f9669fd2d752c67e6bc",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10265,7 +15442,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 266115,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-24ad03f2f040a0b1bc59f566",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10338,7 +15546,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-9081ef689a429f89b197b0bd",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10411,7 +15650,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 4128,
     "dividendReceived": 4128,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b042366df49fac19254268da",
+      "quantityAsOf": "2026-07-27",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-07-27",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10446,7 +15716,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-4bf9c1844b88f00a4c4a0e66",
+      "quantityAsOf": "2026-10-29",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10481,7 +15782,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-9c601a3b953d6b95091e8812",
+      "quantityAsOf": "2026-10-29",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10516,7 +15848,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-230735daf6942c562b452a9a",
+      "quantityAsOf": "2026-10-29",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10551,7 +15914,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-5d6dee2e9e9b12f44b5bef0f",
+      "quantityAsOf": "2026-10-29",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-29",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10585,7 +15979,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-2af7235acaa03beb9b788980",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10619,7 +16044,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-ed8e706a1c3bd93af2888edc",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10654,7 +16110,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 2184195.27,
     "dividendFrom": "2019-04-17",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-bf47b5177a9704c2793622d3",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10688,7 +16175,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-1666c5929461a4cb0b82716a",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10722,7 +16240,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0934e944b878f457b02b05ee",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10756,7 +16305,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-fd37313050c7c18872472068",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10791,7 +16371,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 807873.77,
     "dividendFrom": "2019-05-08",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-c3b72a1c5840535c92aaee01",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10825,7 +16436,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-07c4df88b45005869106b29f",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10859,7 +16501,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 1675096.28,
     "dividendFrom": "2019-05-08",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-bca229eacfc0fe1e62a573ec",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10894,7 +16567,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-ee424323ef373b40d6473e4d",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10928,7 +16632,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-d796672ee56eddd2f299816e",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10962,7 +16697,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 112557.52,
     "dividendFrom": "2019-07-10",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-6752b853f431ab05a87a4a53",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -10996,7 +16762,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-54cedfcf9e64b5216d6bf75c",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11030,7 +16827,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-fb92ebd2db57f9c1b569c0b8",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11063,7 +16891,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-48abc44562ea2c6d5d594bbb",
+      "quantityAsOf": "2026-10-05",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11096,7 +16955,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-15cd105eef44c7e84e159760",
+      "quantityAsOf": "2026-10-05",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11151,7 +17041,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-035479436a67f4be7c67b622",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11206,7 +17127,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d01c124e67982cbf8f4c183f",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11271,7 +17223,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-51f8db2b213a9511722e9aef",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11306,7 +17289,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-3a2c723525f15a6c4a13eae1",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11339,7 +17353,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-3f7147ab7f5cb902fda957ec",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11372,7 +17417,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b49a8169f6e0bac1228ffca4",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11437,7 +17513,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-4ddd5d4ab8e3c3914afbef6b",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11469,7 +17576,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d9877a06704b2d28f678d6ee",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11503,7 +17641,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-e4fb206974b91cb5d7bb81ed",
+      "quantityAsOf": "2026-11-03",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-03",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-03",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11545,7 +17714,38 @@ export const BOOK_POSITIONS: Position[] = [
       "pointer": "/holdings/0",
       "effectiveOn": "2026-10-06"
     },
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-f9fb362635a3760499e24a8a",
+      "quantityAsOf": "2026-11-03",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-03",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-03",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11587,7 +17787,38 @@ export const BOOK_POSITIONS: Position[] = [
       "pointer": "/holdings/0",
       "effectiveOn": "2026-10-06"
     },
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-09acbc03596cbbb7df188c88",
+      "quantityAsOf": "2026-11-03",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-03",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-03",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11621,7 +17852,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-b997889e197fc5b6f3b3554c",
+      "quantityAsOf": "2026-11-03",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-03",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-03",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11654,7 +17916,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-c1c19b2f437486f5667833f1",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11729,6 +18022,37 @@ export const BOOK_POSITIONS: Position[] = [
         }
       ],
       "notes": []
+    },
+    "integrity": {
+      "positionId": "position-9d27f666b209a810affaa7e8",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "reconciled-acquisition-record",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -11762,7 +18086,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-1eec55024552c9a3a6b72568",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11795,7 +18150,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-5cc5ef677576b2063549e07c",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11828,7 +18214,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-29ca219b4b0f9f936f8ce21e",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -11908,6 +18325,37 @@ export const BOOK_POSITIONS: Position[] = [
         }
       ],
       "notes": []
+    },
+    "integrity": {
+      "positionId": "position-a7a7d99d96a74bd128d29469",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "reconciled-acquisition-record",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -12000,6 +18448,37 @@ export const BOOK_POSITIONS: Position[] = [
       "notes": [
         "row 325: duplicated purchase amount excluded from the noncash split; Closing independently equals purchase cost"
       ]
+    },
+    "integrity": {
+      "positionId": "position-d1299d163e2b6851e949d685",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "reconciled-acquisition-record",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -12033,7 +18512,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-fa4476895d87ae384a1443d9",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12066,7 +18576,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-23ff18068b52a5d40c5fec11",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12151,6 +18692,37 @@ export const BOOK_POSITIONS: Position[] = [
         }
       ],
       "notes": []
+    },
+    "integrity": {
+      "positionId": "position-fe336d7fd3a9240dce1a1a30",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "reconciled-acquisition-record",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -12184,7 +18756,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-2f16c356f87425e942ec41f9",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12259,6 +18862,37 @@ export const BOOK_POSITIONS: Position[] = [
         }
       ],
       "notes": []
+    },
+    "integrity": {
+      "positionId": "position-bb8ddeac64aabc02c9e73daa",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "reconciled-acquisition-record",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -12292,7 +18926,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-64ef4ae6a62c9616c79c78ae",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12384,6 +19049,37 @@ export const BOOK_POSITIONS: Position[] = [
         "Sotefin Bharat Limited, Red Herring Prospectus (BSE, 9 Jul 2026), bonus allotment of 25 Jun 2025: \"Ajay T Jaisinghani 1,13,640\" — https://www.bseindia.com/downloads/ipo/Sotefin%20Bharat%20Ltd%20-%20RHP&GID_150720262012.zip",
         "No complete separate sales/income record is claimed"
       ]
+    },
+    "integrity": {
+      "positionId": "position-caa47d795bd844d5c65aa623",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "reconciled-acquisition-record",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -12417,7 +19113,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-2bb2be2a83af07c2832c694c",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12450,7 +19177,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-a00572c592768bcb56f47737",
+      "quantityAsOf": "2026-10-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12482,7 +19240,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-a3888bacc519a2c30e5e32c4",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12516,7 +19305,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2021-04-15",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d2cc19803aaafac516275b23",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2021-04-15",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2021-04-15",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12551,7 +19371,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 54587.92,
     "dividendFrom": "2019-11-04",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-df82a0f65980eda48ac99b11",
+      "quantityAsOf": "2026-10-01",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2020-02-28",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2020-02-28",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12585,7 +19436,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-f369a51c280fe52fde08cfa0",
+      "quantityAsOf": "2026-10-05",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12619,7 +19501,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-343c8da13880556f991b6da0",
+      "quantityAsOf": "2026-10-05",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-01",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "india-sme-investments-fund-ii-class-a2",
@@ -12666,7 +19579,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-03",
       "text": "Sep 2024 – Mar 2026"
     },
-    "reviewNote": "Valued at ₹9,55,80,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 54,000 units at ₹1,770 a unit; the fund's statement prints the 81,000 units held."
+    "reviewNote": "Valued at ₹9,55,80,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 54,000 units at ₹1,770 a unit; the fund's statement prints the 81,000 units held.",
+    "integrity": {
+      "positionId": "position-fe4eb16c63a393ebe657b2d0",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "india-sme-investments-fund-ii-class-a2",
@@ -12713,7 +19657,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-03",
       "text": "Sep 2024 – Mar 2026"
     },
-    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held."
+    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held.",
+    "integrity": {
+      "positionId": "position-3b1725f77f14da32ae8114fb",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "india-sme-investments-fund-ii-class-a2",
@@ -12760,7 +19735,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-03",
       "text": "Sep 2024 – Mar 2026"
     },
-    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held; the fund's statement dates the ₹50,00,000 call the review puts on 29 Nov 2024 on 14 Jul 2025."
+    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held; the fund's statement dates the ₹50,00,000 call the review puts on 29 Nov 2024 on 14 Jul 2025.",
+    "integrity": {
+      "positionId": "position-f52b51a78f4c691fbae3c339",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12794,7 +19800,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-6754f776b01c3ae841e0dc18",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12828,7 +19865,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-4bc3db36d64236a865edc4a1",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12862,7 +19930,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d271c231dad9865bab5b9402",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12896,7 +19995,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-91074d523c50c341c5f15c05",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12930,7 +20060,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f7dfe45a035cca7cf4951063",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12963,7 +20124,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f1166126ccce4567edebe04a",
+      "quantityAsOf": "2026-10-05",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -12996,7 +20188,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-829e4630a6335e391309c8f7",
+      "quantityAsOf": "2026-10-05",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13030,7 +20253,44 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 12216.17,
     "dividendFrom": "2026-06-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-26a15cd232821c7f0a06c178",
+      "quantityAsOf": "2026-10-05",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "disputed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": [
+            "dd41918b1194c35ec9adc6dc0bac7e81bfd1d549018d18ea79045ed96352f47c",
+            "a14c92c0ba9c77e06a241d3be440605789fcdd2e466c0a0256b1920f5fa9193e"
+          ]
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": [
+            "dd41918b1194c35ec9adc6dc0bac7e81bfd1d549018d18ea79045ed96352f47c",
+            "a14c92c0ba9c77e06a241d3be440605789fcdd2e466c0a0256b1920f5fa9193e"
+          ]
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13063,7 +20323,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-2a6f3f698e2c21296accc46d",
+      "quantityAsOf": "2026-10-05",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13096,7 +20387,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-2c554219f57b2cfef2cde7fb",
+      "quantityAsOf": "2026-10-05",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13129,7 +20451,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-141b79264be4d183d3de45db",
+      "quantityAsOf": "2026-10-05",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13163,7 +20516,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-776ca515ab9aee6292581aa6",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13197,7 +20581,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-ca6e3ef225953bb7153bef01",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13231,7 +20646,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-c761aabf801249cd615a98e6",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13265,7 +20711,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-40502a724df3c863d336d8df",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13299,7 +20776,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b94e3a118afe5e98d0232fd4",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13333,7 +20841,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-5f90c0da02c48535f30312bd",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13366,7 +20905,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-8e974c149156dd88d812a1c0",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13399,7 +20969,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-c7adb0c93804a9e4e3442a3f",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13433,7 +21034,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-8112c45765a1f19e9df9b7c3",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13467,7 +21099,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-6be792a98231daf4f90f7c6e",
+      "quantityAsOf": "2026-10-05",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-05",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13501,7 +21164,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d219d7a7b54d420cc7c4f492",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13534,7 +21228,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f00bcb6945dabe596851dbfb",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13567,7 +21292,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e748e799054b646b5b9d4209",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13600,7 +21356,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-6a83158cadc73a3a4f9ce53a",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13633,7 +21420,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-6d26998f30a799b0a805ba5a",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-10-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13666,7 +21484,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-11-01",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-57cd602caaf4ba5dca2548fa",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-01",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-11-01",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13710,7 +21559,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-e2577ac6eea1b8ef2d7a03ab",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13754,7 +21634,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-e67b70a6aa8f4f77146b3c82",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13789,7 +21700,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-0d0a59997eb44bb55db13d6f",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13833,7 +21775,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-6f91610f372eddc8d51baa35",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13877,7 +21850,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-75045c8ede7d3f3d293fdbd3",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13912,7 +21916,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-fc8be4d706a61faff17c1427",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13945,7 +21980,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-59dbd87511bd1e21d2cb37d9",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -13988,7 +22054,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-60f47684da8927fdc86e213d",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14023,7 +22120,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-783db54847169e8bffcdb1f3",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14067,7 +22195,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-e36499c0dd382f7a4e6e3991",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14101,7 +22260,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-523806db4fabe3732b7281d0",
+      "quantityAsOf": "2026-10-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14145,7 +22335,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 12800,
     "dividendReceived": null,
-    "positionIrrPct": -19.92
+    "positionIrrPct": -19.92,
+    "integrity": {
+      "positionId": "position-d00795baeca2b24c809f745e",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14176,7 +22397,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": 0
+    "positionIrrPct": 0,
+    "integrity": {
+      "positionId": "position-e92cd956a9aed6a376600ff5",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14220,7 +22472,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 2500,
     "dividendReceived": null,
-    "positionIrrPct": -45.69
+    "positionIrrPct": -45.69,
+    "integrity": {
+      "positionId": "position-8027995c6c0c54e32dcc581f",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14264,7 +22547,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 1200,
     "dividendReceived": null,
-    "positionIrrPct": -29.78
+    "positionIrrPct": -29.78,
+    "integrity": {
+      "positionId": "position-1e65f9941a33acfd262f4be5",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14308,7 +22622,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": -71.74
+    "positionIrrPct": -71.74,
+    "integrity": {
+      "positionId": "position-39e625aa67fa6c798f53f2f1",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14352,7 +22697,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 1000,
     "dividendReceived": null,
-    "positionIrrPct": -33.38
+    "positionIrrPct": -33.38,
+    "integrity": {
+      "positionId": "position-bd026ad80f6fea5a9d07c14d",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14397,7 +22773,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 48750,
     "dividendReceived": 11250,
     "dividendFrom": "2026-07-01",
-    "positionIrrPct": 51.89
+    "positionIrrPct": 51.89,
+    "integrity": {
+      "positionId": "position-c95dbf4cd864edde5ed66d31",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14441,7 +22848,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": 23.56
+    "positionIrrPct": 23.56,
+    "integrity": {
+      "positionId": "position-93713046a1f023f14eda7638",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14486,7 +22924,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 34120,
     "dividendReceived": 8901,
     "dividendFrom": "2026-07-01",
-    "positionIrrPct": -14.31
+    "positionIrrPct": -14.31,
+    "integrity": {
+      "positionId": "position-aad0ecb9fbafbce674e90b24",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14530,7 +22999,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 10000,
     "dividendReceived": null,
-    "positionIrrPct": 4.97
+    "positionIrrPct": 4.97,
+    "integrity": {
+      "positionId": "position-1c32e331e9ffdb1e70c35f31",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14574,7 +23074,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 800,
     "dividendReceived": null,
-    "positionIrrPct": 246.33
+    "positionIrrPct": 246.33,
+    "integrity": {
+      "positionId": "position-d8dc2e9ecfb1fa60c968c741",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14619,7 +23150,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 1300,
     "dividendReceived": 1300,
     "dividendFrom": "2026-07-01",
-    "positionIrrPct": -61.64
+    "positionIrrPct": -61.64,
+    "integrity": {
+      "positionId": "position-b6e8ad963709b0a2cea0d7e8",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14650,7 +23212,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": 0
+    "positionIrrPct": 0,
+    "integrity": {
+      "positionId": "position-79a4f4b1e9691a7a6698519d",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14694,7 +23287,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": -24.92
+    "positionIrrPct": -24.92,
+    "integrity": {
+      "positionId": "position-973c31903bc1dd7f6a623d16",
+      "quantityAsOf": "2026-11-02",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-02",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14727,7 +23351,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-bd3defb684ed070f0a14f8e5",
+      "quantityAsOf": "2026-08-06",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-06",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-06",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-06",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-06",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14769,7 +23424,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-fce5975f01dcb4cf90df8a69",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14803,7 +23489,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-f8490e197fc83ae0ff2aa6b7",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14837,7 +23554,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-009870a811506306db558a35",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14869,7 +23617,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e60d38b66eca83dfacbf7034",
+      "quantityAsOf": "2026-07-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14902,7 +23681,38 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2025-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f7136dcf7c035f0c15cb0b2a",
+      "quantityAsOf": "2026-07-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-07-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2025-07-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2025-07-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14934,7 +23744,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-725468cab2d16730714e98a4",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14966,7 +23807,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0af320ab3cd3e45352d1bfe7",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -14998,7 +23870,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0b072b3aa6d3e1e8351aa93a",
+      "quantityAsOf": "2026-09-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "missing",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-09-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -15032,7 +23935,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 3688118,
     "dividendFrom": "2023-10-04",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-44113eb9a3cba44c3e55bd1d",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "assetgro-fintech-private-limited-1-series-b-pref-25nv44",
@@ -15094,6 +24028,37 @@ export const BOOK_POSITIONS: Position[] = [
           81
         ]
       }
+    },
+    "integrity": {
+      "positionId": "position-f51c8b576f1a4a0705de6312",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -15141,7 +24106,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-09-09",
       "text": "9 Sep 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 20 — Ajay Jaisinghani's ₹3,02,40,000 of the line. Two holders; the family's investment register records each one's payment."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 20 — Ajay Jaisinghani's ₹3,02,40,000 of the line. Two holders; the family's investment register records each one's payment.",
+    "integrity": {
+      "positionId": "position-03a24f6b0fbf1f799ca64e06",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "blue-ashva-india-pool-account",
@@ -15187,7 +24183,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-08-20",
       "text": "20 Aug 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Ajay Jaisinghani's ₹51,08,000 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Ajay Jaisinghani's ₹51,08,000 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder.",
+    "integrity": {
+      "positionId": "position-2d26085f7a5ac29a52d576f4",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability",
@@ -15234,7 +24261,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-08-20",
       "text": "20 Aug 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ajay Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each. A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 values Ajay's 856.736 units at ₹84,595.83."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ajay Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each. A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 values Ajay's 856.736 units at ₹84,595.83.",
+    "integrity": {
+      "positionId": "position-3a3b0fb725c9fc2e68ac9509",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited",
@@ -15281,7 +24339,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-02-12",
       "text": "12 Feb 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 19. One holder on the review's own Transactions and on the register. A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 holds 2,83,018 equity shares (IN8666D01021, a preferential allotment awaiting listing, locked in to 7 May 2027) where the review carries the warrants, at their ₹1 face value; the payment that converted them is on no statement in this book."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 19. One holder on the review's own Transactions and on the register. A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 holds 2,83,018 equity shares (IN8666D01021, a preferential allotment awaiting listing, locked in to 7 May 2027) where the review carries the warrants, at their ₹1 face value; the payment that converted them is on no statement in this book.",
+    "integrity": {
+      "positionId": "position-c76ec3c955c0f7cbef3c93ba",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "edugorilla-community",
@@ -15327,7 +24416,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-08-20",
       "text": "20 Aug 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 66. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 66. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-0d0bfb810661c764d18fc4b3",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "electromech-infraprojects",
@@ -15374,7 +24494,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-08-06",
       "text": "6 Aug 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 61. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 61. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-b22c4f09799e242a73f36a42",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "ema-preferred-shares",
@@ -15420,7 +24571,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-08-30",
       "text": "30 Aug 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 40. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 40. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-8dd9ee4a48f8dccd08999f7c",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "everest-fleet",
@@ -15492,6 +24674,37 @@ export const BOOK_POSITIONS: Position[] = [
           12
         ]
       }
+    },
+    "integrity": {
+      "positionId": "position-99082d0b39ac3c2bafa65600",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -15538,7 +24751,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2021-12-24",
       "text": "24 Dec 2021"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 17 — Ajay Jaisinghani's ₹1,49,99,980.38 of the line. Two holders; the family's investment register records each one's payment."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 17 — Ajay Jaisinghani's ₹1,49,99,980.38 of the line. Two holders; the family's investment register records each one's payment.",
+    "integrity": {
+      "positionId": "position-0d16424bb39cf27dee0fab9b",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "integris-medtech",
@@ -15585,7 +24829,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-12-05",
       "text": "5 Dec 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Ajay Jaisinghani's ₹9,99,98,625 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Ajay Jaisinghani's ₹9,99,98,625 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for.",
+    "integrity": {
+      "positionId": "position-e0f2a93c6a450bc97ca5c18d",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "landcraft-retail-pvt-ltd-food-square",
@@ -15631,7 +24906,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-08-20",
       "text": "20 Aug 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 56. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 56. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-950ccd1b30ba7faf698dbdcd",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "matrix-gas-and-renewables",
@@ -15678,7 +24984,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-03-01",
       "text": "1 Mar 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 14 — Ajay Jaisinghani's ₹3,00,00,000 of the line. Two holders; the family's investment register records each one's payment."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 14 — Ajay Jaisinghani's ₹3,00,00,000 of the line. Two holders; the family's investment register records each one's payment.",
+    "integrity": {
+      "positionId": "position-137e875f4b20f228df0b8a5c",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "mother-india-forming",
@@ -15724,7 +25061,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-01-24",
       "text": "24 Jan 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 8. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 8. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-c0acc9bc58a655a4abb3326b",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "national-stock-exchange-of-india",
@@ -15770,7 +25138,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-08",
       "text": "Dec 2022 – Aug 2023"
     },
-    "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat. The review prints one cost, ₹12.085 Cr, for the 2,00,000: Ankita's ₹4,27,63,713 is the two payments the family's investment register dates for her 15,000 shares (75,000 after the 2024 bonus), and Ajay's is the rest. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13). A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 marks Ajay's 1,25,000 shares at ₹22,27,62,500 (the 30 Oct close)."
+    "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat. The review prints one cost, ₹12.085 Cr, for the 2,00,000: Ankita's ₹4,27,63,713 is the two payments the family's investment register dates for her 15,000 shares (75,000 after the 2024 bonus), and Ajay's is the rest. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13). A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 marks Ajay's 1,25,000 shares at ₹22,27,62,500 (the 30 Oct close).",
+    "integrity": {
+      "positionId": "position-91e87e3dbb24eb330f5af19b",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "oilmax-energy",
@@ -15817,7 +25216,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-02-12",
       "text": "12 Feb 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 18. The ICICI Bank NSDL statement holds the 17,000 shares in Ajay's account."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 18. The ICICI Bank NSDL statement holds the 17,000 shares in Ajay's account.",
+    "integrity": {
+      "positionId": "position-404ae4c84a73ea97540da6f8",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "onix-renewable",
@@ -15864,7 +25294,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-02-01",
       "text": "1 Feb 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 67. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 67. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-8c19da51ab80afed72eed05c",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "radiant-innovative-manufacturing",
@@ -15911,7 +25372,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-07-18",
       "text": "18 Jul 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 31. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 31. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-84a21583dd28a929e33d466d",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "rays-power-experts",
@@ -15958,7 +25450,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-06-19",
       "text": "19 Jun 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 21. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 21. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-95c41327e8023be8516c7cca",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "sks-fasteners",
@@ -16005,7 +25528,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-03-25",
       "text": "25 Mar 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 9. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 9. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-e05fda86977e4333d4bd3aa2",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "spray-engineering-devices",
@@ -16052,7 +25606,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-05-08",
       "text": "8 May 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 13. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 13. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-c4981cf2a84674798e44c846",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "telawne-power",
@@ -16098,7 +25683,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-12-24",
       "text": "24 Dec 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 15. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 15. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-c14ac4f1cfac908782dd9b63",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "urb-ventures",
@@ -16165,6 +25781,37 @@ export const BOOK_POSITIONS: Position[] = [
           5
         ]
       }
+    },
+    "integrity": {
+      "positionId": "position-8a6792c0956825679cdd1677",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -16211,7 +25858,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-09-09",
       "text": "9 Sep 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 29. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 29. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-f048f8ae037197da72ab280f",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "zenith-leisure-holidays",
@@ -16258,7 +25936,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-07-18",
       "text": "18 Jul 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 30. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 30. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-a93604610b21d8bc6fd13df9",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "zepto",
@@ -16303,7 +26012,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-02",
       "text": "Feb 2025"
     },
-    "reviewNote": "Valued at ₹22,82,85,156.52 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 70, its closing of 31 Jul 2025. The review's own Transactions rows — 4,716 bought on 24 Feb 2025, closing at ₹22.83 Cr on 31 Jul 2025. A statement says otherwise: Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026."
+    "reviewNote": "Valued at ₹22,82,85,156.52 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 70, its closing of 31 Jul 2025. The review's own Transactions rows — 4,716 bought on 24 Feb 2025, closing at ₹22.83 Cr on 31 Jul 2025. A statement says otherwise: Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026.",
+    "integrity": {
+      "positionId": "position-4771bfd33a974172083abea6",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2025-07-31",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2025-07-31",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "al-trust-collabmates-pvt-ltd-angellist-likeminds",
@@ -16349,7 +26089,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-02-14",
       "text": "14 Feb 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 49. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 49. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-8c129e2e6b40f3f2680a7a85",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "blue-ashva-india-pool-account",
@@ -16395,7 +26166,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-08-20",
       "text": "20 Aug 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Ankita Jaisinghani's ₹1,52,51,640 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Ankita Jaisinghani's ₹1,52,51,640 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder.",
+    "integrity": {
+      "positionId": "position-3244cb2a70ff6770a7ce1150",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability",
@@ -16442,7 +26244,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-08-20",
       "text": "20 Aug 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ankita Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ankita Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each.",
+    "integrity": {
+      "positionId": "position-3bf391f85ef71460124e1e3e",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "everest-fleet",
@@ -16509,6 +26342,37 @@ export const BOOK_POSITIONS: Position[] = [
           53
         ]
       }
+    },
+    "integrity": {
+      "positionId": "position-59566f4e9a9c485adcea1f3c",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -16555,7 +26419,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2022-11",
       "text": "Nov 2020 – Nov 2022"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 35. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 35. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-6a22c06ebca3124b2378c0d5",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "national-stock-exchange-of-india",
@@ -16601,7 +26496,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-08",
       "text": "Dec 2022 – Aug 2023"
     },
-    "reviewNote": "Valued at ₹15,56,25,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat. The review prints one cost, ₹12.085 Cr, for the 2,00,000: Ankita's ₹4,27,63,713 is the two payments the family's investment register dates for her 15,000 shares (75,000 after the 2024 bonus), and Ajay's is the rest. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13)."
+    "reviewNote": "Valued at ₹15,56,25,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat. The review prints one cost, ₹12.085 Cr, for the 2,00,000: Ankita's ₹4,27,63,713 is the two payments the family's investment register dates for her 15,000 shares (75,000 after the 2024 bonus), and Ajay's is the rest. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13).",
+    "integrity": {
+      "positionId": "position-8eecf5a0ac11515b1c7d104c",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "pvc-ii-class-a1",
@@ -16673,6 +26599,37 @@ export const BOOK_POSITIONS: Position[] = [
           8
         ]
       }
+    },
+    "integrity": {
+      "positionId": "position-e42e4c4efa666b8abec86c43",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -16719,7 +26676,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-03-21",
       "text": "21 Mar 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 39. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 39. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-340cf385efecc4efe01f221e",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "sky-vision-cure",
@@ -16765,7 +26753,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-03-27",
       "text": "27 Mar 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 57. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 57. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-c841a647310c1e33f9752ada",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "tocf-i-class-a2",
@@ -16812,7 +26831,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-03",
       "text": "Sep 2021 – Mar 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 27. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 27. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-277bd94b5942968f6c672d0b",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "transition-venture-capital-fund-i-class-a1",
@@ -16858,7 +26908,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-10",
       "text": "Aug 2025 – Oct 2025"
     },
-    "reviewNote": "Valued at ₹32,85,877 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions."
+    "reviewNote": "Valued at ₹32,85,877 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions.",
+    "integrity": {
+      "positionId": "position-80715ded83cb21d3209831ae",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-02-28",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-02-28",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "urb-ventures",
@@ -16925,6 +27006,37 @@ export const BOOK_POSITIONS: Position[] = [
           68
         ]
       }
+    },
+    "integrity": {
+      "positionId": "position-0d3f16a7bfe1daaf8f3156fd",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -16971,7 +27083,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2020-03-01",
       "text": "1 Mar 2020"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 37. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 37. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-c732edcf67d81cf2d5cc125d",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "ajay-jain-drink-prime",
@@ -17017,7 +27160,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-06-08",
       "text": "8 Jun 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 42. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 42. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-f6b60f790bb0fd6e1c9fb849",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "aksum-trademart-pvt-ltd-ankit-jain",
@@ -17063,7 +27237,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-05-15",
       "text": "15 May 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 50. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 50. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-a2f7abf1b4e583dae79e74a9",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "al-trust-karban-envirotech-ruv-nilesh-angelist",
@@ -17109,7 +27314,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-12-12",
       "text": "12 Dec 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 51. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 51. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-8cdb6b70b98d3c4463d31a69",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "autocracy-machinery",
@@ -17175,6 +27411,37 @@ export const BOOK_POSITIONS: Position[] = [
           84
         ]
       }
+    },
+    "integrity": {
+      "positionId": "position-1acb2bcca5e82a9e9830fb74",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -17222,7 +27489,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-09-09",
       "text": "9 Sep 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 20 — Bharat Jaisinghani's ₹1,00,80,000 of the line. Two holders; the family's investment register records each one's payment."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 20 — Bharat Jaisinghani's ₹1,00,80,000 of the line. Two holders; the family's investment register records each one's payment.",
+    "integrity": {
+      "positionId": "position-3977443846989aa8771ddec3",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "everest-fleet",
@@ -17289,6 +27587,37 @@ export const BOOK_POSITIONS: Position[] = [
           50
         ]
       }
+    },
+    "integrity": {
+      "positionId": "position-ac08d12664424c14d4904946",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -17335,7 +27664,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2021-06-28",
       "text": "28 Jun 2021"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 47. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 47. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-779c090fc86012370a98859f",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "fh-enable-llp-aakash-sachdev",
@@ -17421,6 +27781,37 @@ export const BOOK_POSITIONS: Position[] = [
           29
         ]
       }
+    },
+    "integrity": {
+      "positionId": "position-344b591449495646bda948c4",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -17467,7 +27858,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2020-04-01",
       "text": "1 Apr 2020"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 43. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 43. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-83deaebc67d1a588cfaac00d",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "home-pecked-e-marketplace-services",
@@ -17513,7 +27935,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2021-12-01",
       "text": "1 Dec 2021"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 48. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 48. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-28e485cdc7d18d12b0e827f9",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "hyprkytchen-foodtech-private-limited-mr-bansi",
@@ -17559,7 +28012,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2021-12",
       "text": "Dec 2020 – Dec 2021"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 34. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 34. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-feea3553315b34b758899664",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "incred-holdings",
@@ -17605,7 +28089,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-11-30",
       "text": "30 Nov 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 25. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 25. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-8e25824f35168c4bbaef6b9a",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "innoviti-payment-solutions-private-ltd-pranav-koranne",
@@ -17651,7 +28166,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2021-12-24",
       "text": "24 Dec 2021"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 17 — Bharat Jaisinghani's ₹49,99,993.46 of the line. Two holders; the family's investment register records each one's payment."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 17 — Bharat Jaisinghani's ₹49,99,993.46 of the line. Two holders; the family's investment register records each one's payment.",
+    "integrity": {
+      "positionId": "position-77d119db7d9804f3cf4a77bd",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "integris-medtech",
@@ -17698,7 +28244,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-12-05",
       "text": "5 Dec 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Bharat Jaisinghani's ₹2,99,99,419 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Bharat Jaisinghani's ₹2,99,99,419 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for.",
+    "integrity": {
+      "positionId": "position-c16f8d602a24e1cc85196d5e",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "k-m-global-credit",
@@ -17743,7 +28320,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-03",
       "text": "Sep 2020 – Mar 2024"
     },
-    "reviewNote": "Valued at ₹1,04,34,584.46 on the family's consolidated review (MOPWM, 30 Jun 2026), Debt row 11, its closing of 30 Jun 2026. Bharat's, on the review's own Transactions; the Private Investments tab's ₹20 L Credit Fair-K M Global line is the same loan, counted here once."
+    "reviewNote": "Valued at ₹1,04,34,584.46 on the family's consolidated review (MOPWM, 30 Jun 2026), Debt row 11, its closing of 30 Jun 2026. Bharat's, on the review's own Transactions; the Private Investments tab's ₹20 L Credit Fair-K M Global line is the same loan, counted here once.",
+    "integrity": {
+      "positionId": "position-757eab433bda2f81661264b1",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "lv-angel-fund-lets-venture-hoopr-vaibhav-karnavat",
@@ -17789,7 +28397,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2022-02-18",
       "text": "18 Feb 2022"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 53. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 53. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-71656d8e0a053457a647ba0b",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "matrix-gas-and-renewables",
@@ -17836,7 +28475,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-03-01",
       "text": "1 Mar 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 14 — Bharat Jaisinghani's ₹1,50,00,000 of the line. Two holders; the family's investment register records each one's payment."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 14 — Bharat Jaisinghani's ₹1,50,00,000 of the line. Two holders; the family's investment register records each one's payment.",
+    "integrity": {
+      "positionId": "position-c76b127ebf0697a3de279c61",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "nopo-nanotechnologies-india-pvt-ltd-gadhadar-reddy",
@@ -17882,7 +28552,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-01-04",
       "text": "4 Jan 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 45. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 45. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-458b8e2ed5962b881dd8c3b4",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "procyon-enterprise-llp-abhishek-murarka",
@@ -17928,7 +28629,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-08",
       "text": "May 2023 – Aug 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 12. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 12. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-36f5a3e4bc0b7d403a7ce596",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "rurash-financials-private-ltd-reliance-retail",
@@ -17974,7 +28706,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2020-08-18",
       "text": "18 Aug 2020"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 54. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 54. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-78146f18cf309ebe9716c8c5",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "sky-enable-tech",
@@ -18020,7 +28783,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-02-15",
       "text": "15 Feb 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 38. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 38. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-55aba1e05104e41253039ede",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "stay-vista-private-limited-anandkumar-radhakrishna-ladsariya",
@@ -18066,7 +28860,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-02-06",
       "text": "6 Feb 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 41. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 41. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-b077d0258cad824ce55050a2",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "stay-vista-private-limited-artha-energy-projects",
@@ -18112,7 +28937,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2021-02-09",
       "text": "9 Feb 2021"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 23. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 23. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-ae2ae73f4f27c865aecaddd6",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "swapeco-solutions-private-limited-scrap-uncle-mukul-chabra",
@@ -18158,7 +29014,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-08-22",
       "text": "22 Aug 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 36. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 36. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-dcafa7d4dbc14288a2b68a98",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "third-eye-distillery-holdings-pvt-ltd-skyventures-lv-angel-fund-aakash-sachdev",
@@ -18204,7 +29091,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2022-05-09",
       "text": "9 May 2022"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 33. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 33. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-b8ba296d1e2c7b16ae3f06a4",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "transigo-fleet",
@@ -18250,7 +29168,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-01",
       "text": "May 2021 – Jan 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 10. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 10. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-8179f838f203174c2cf24c6f",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "variance-pt-ventures-llp-romil-kapadia",
@@ -18296,7 +29245,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2022-02-18",
       "text": "18 Feb 2022"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 55. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 55. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-9946fb4903967608f0ec4463",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "vineet-sethia-drink-prime",
@@ -18342,7 +29322,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-06-08",
       "text": "8 Jun 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 32. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 32. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-e65293c9292c0579a3de28bc",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "waterwala-labs-private-limited-drink-prime",
@@ -18438,6 +29449,37 @@ export const BOOK_POSITIONS: Position[] = [
           11
         ]
       }
+    },
+    "integrity": {
+      "positionId": "position-43aa9175998abe9106ad559a",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
     }
   },
   {
@@ -18484,7 +29526,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2022-02-10",
       "text": "10 Feb 2022"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 52. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 52. One holder on the review's own Transactions and on the register.",
+    "integrity": {
+      "positionId": "position-a82052c9c40f293d3266e806",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "swapeco-solutions",
@@ -18531,7 +29604,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-08-31",
       "text": "31 Aug 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 62 — Bharat Jaisinghani Family Trust 2's ₹1,35,00,875 of the line. 347 CCPS per family trust on both trusts' HDFC Bank NSDL statements, ₹1,35,00,875 each on the review's own member summary."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 62 — Bharat Jaisinghani Family Trust 2's ₹1,35,00,875 of the line. 347 CCPS per family trust on both trusts' HDFC Bank NSDL statements, ₹1,35,00,875 each on the review's own member summary.",
+    "integrity": {
+      "positionId": "position-1daef9422506bd486f906069",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "swapeco-solutions",
@@ -18578,7 +29682,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-08-31",
       "text": "31 Aug 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 62 — Bharat Jaisinghani Family Trust 3's ₹1,35,00,875 of the line. 347 CCPS per family trust on both trusts' HDFC Bank NSDL statements, ₹1,35,00,875 each on the review's own member summary."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 62 — Bharat Jaisinghani Family Trust 3's ₹1,35,00,875 of the line. 347 CCPS per family trust on both trusts' HDFC Bank NSDL statements, ₹1,35,00,875 each on the review's own member summary.",
+    "integrity": {
+      "positionId": "position-03fe90e4d4e4dd8fa2ebedee",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "blue-ashva-india-pool-account",
@@ -18624,7 +29759,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-08-20",
       "text": "20 Aug 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Not attributed to a member's ₹1,70,48,360 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Not attributed to a member's ₹1,70,48,360 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder.",
+    "integrity": {
+      "positionId": "position-25f7e05724b445d480054b0e",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "head-infotech",
@@ -18670,7 +29836,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2022-02-10",
       "text": "10 Feb 2022"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 44. No document in the drop names its holder."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 44. No document in the drop names its holder.",
+    "integrity": {
+      "positionId": "position-b129f8174f643cb06a7e171a",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "integris-medtech",
@@ -18717,7 +29914,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-12-05",
       "text": "5 Dec 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Not attributed to a member's ₹2,99,99,418.8 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Not attributed to a member's ₹2,99,99,418.8 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for.",
+    "integrity": {
+      "positionId": "position-6683d916cb11aaffc8cead5b",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "perplexity-investment",
@@ -18763,7 +29991,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-07-16",
       "text": "16 Jul 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 63. No document in the drop names its holder."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 63. No document in the drop names its holder.",
+    "integrity": {
+      "positionId": "position-db841559f898f30b8ae0edac",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "runable-investment",
@@ -18809,7 +30068,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-07-22",
       "text": "22 Jul 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 64. No document in the drop names its holder."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 64. No document in the drop names its holder.",
+    "integrity": {
+      "positionId": "position-5a736f03ec4ec9dbd2ef6c58",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -18843,7 +30133,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-3c867bd50fbe4f3576041367",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -18877,7 +30198,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-4419fbca2718ece1f91d0b2f",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -18911,7 +30263,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-3f62c147dee709069cf88ee6",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -18945,7 +30328,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-ed2bbd97781d1039e83652aa",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -18979,7 +30393,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
-    "avgCostDerived": true
+    "avgCostDerived": true,
+    "integrity": {
+      "positionId": "position-10afdb781a290bc7463ec50b",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "sky-capital-rising-titans-fund-i",
@@ -19025,7 +30470,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-02",
       "text": "May 2025 – Feb 2026"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement. A statement says otherwise: SKY003's statement of 31 Jul 2026 prints ₹1,72,85,000 drawn — its 22 Apr 2026 call of ₹1,35,000 is on no row of the review."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement. A statement says otherwise: SKY003's statement of 31 Jul 2026 prints ₹1,72,85,000 drawn — its 22 Apr 2026 call of ₹1,35,000 is on no row of the review.",
+    "integrity": {
+      "positionId": "position-be30db97092da2e288dde11f",
+      "quantityAsOf": "2026-08-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "sky-capital-rising-titans-fund-i",
@@ -19071,7 +30547,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-02",
       "text": "May 2025 – Feb 2026"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement.",
+    "integrity": {
+      "positionId": "position-7000f595546ebeef749ecad1",
+      "quantityAsOf": "2026-08-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "sky-capital-rising-titans-fund-i",
@@ -19117,7 +30624,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-02",
       "text": "May 2025 – Feb 2026"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement.",
+    "integrity": {
+      "positionId": "position-09338991890d5c18f9ffbe5b",
+      "quantityAsOf": "2026-08-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "sky-capital-rising-titans-fund-i",
@@ -19163,7 +30701,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-02",
       "text": "May 2025 – Feb 2026"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement.",
+    "integrity": {
+      "positionId": "position-7c2eb6269edbeb2f618e834a",
+      "quantityAsOf": "2026-08-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19207,7 +30776,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-5a551988927c68a42f752534",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19252,7 +30852,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 14976,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-79313a8ba5f34cf59565a38a",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19297,7 +30928,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 40440,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-3281a24216f2214011a60f1f",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19341,7 +31003,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-9903dae6777719d5dfe4917e",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19387,7 +31080,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 19720,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d30b65eccae073dbbab3101f",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19418,7 +31142,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-92733f47dfe2912cb6ed1eec",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19449,7 +31204,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-72df322192c8078fd8e6b302",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19495,7 +31281,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 55650,
     "dividendReceived": 55650,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-3a276e6f0f2b3c16dd24b257",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19540,7 +31357,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 20760,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-6acc034aabe69bd3f5602918",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19585,7 +31433,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 1927.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-56cdc40330948a3310f4f9b7",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19629,7 +31508,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-573219812bc84efcdd3a7dc3",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19674,7 +31584,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 6460,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e84d032e49579520e468a324",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19719,7 +31660,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 44782.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e38b69e2878d6ebfce05e2cc",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19764,7 +31736,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 7772.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-a37ed1d3a5d4892d34b0fad6",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19808,7 +31811,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-5768bdfc90ef242015307c6b",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19853,7 +31887,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 73020,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0f93a41d3ff41ca582bd07fc",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19898,7 +31963,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 11910,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0bc2a2827e8ad46e56e3dc55",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19943,7 +32039,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 26000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-bc1640991b75c00cc10aa87e",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -19987,7 +32114,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-cddc766d9bb4a5e6ff593b0b",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20054,7 +32212,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b6e8990bb25e2f814522987b",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20098,7 +32287,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-ecaea5a892e577707bc11265",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20143,7 +32363,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 24150,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-4c416488e46ad9ffedf211bd",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20187,7 +32438,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 32940,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-3c90db45fd70287043e59b92",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20231,7 +32513,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b4af39becf09d538aa044601",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20276,7 +32589,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 7200,
     "dividendReceived": 7200,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-af182a935d250a58c38c8713",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20321,7 +32665,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 32080,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-8fad1577c3555cf1b24f6c74",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20367,7 +32742,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 10200,
     "dividendReceived": 10200,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-bc00153fc5f1f838165b0813",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20412,7 +32818,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 28740,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-21c42af239a91b9e614490ae",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20457,7 +32894,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 2430,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-277f6d529dd1c63a6a38d232",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20502,7 +32970,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 2502,
     "dividendReceived": 2502,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-eb9d2f0eb81857009d4996c5",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20547,7 +33046,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 2515,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-53bc2e35b6351b0a0d9f8e15",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20592,7 +33122,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 8745,
     "dividendReceived": 8745,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-8f14b27e53c207948d562f5f",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20636,7 +33197,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e2fc2c31f39657235f042a80",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20681,7 +33273,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b92bd039d24e8a9d91dcd273",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20726,7 +33349,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 1350,
     "dividendReceived": 1350,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-1b5f0810eb7f89a08919d476",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20794,7 +33448,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 18300,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d81e6527e2868791bfa87e0b",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20839,7 +33524,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 17280,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b752a25eec4b9c56696aed3b",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20898,7 +33614,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 67000,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f5dd654d6e55e8f91d91e2b7",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20943,7 +33690,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 13772.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b00affe786a75ef1ba943221",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -20988,7 +33766,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 3825,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d2f4c7f662eb4c91d0d11320",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21047,7 +33856,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 16350,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-9f8725d2b9f7a7526fff7098",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21105,7 +33945,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-c0f92f07af84679d88b30695",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21150,7 +34021,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 13800,
     "dividendReceived": 27600,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-6ea30dbe098dc323a4300970",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21195,7 +34097,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 8895,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-27ad777e8da7bd37be6b5793",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21239,7 +34172,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-a2c160029e71c1b6495e62b2",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21283,7 +34247,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-728152af4dd202be5847fc9a",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21328,7 +34323,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 8490,
     "dividendReceived": 8490,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-ea8fea5ba01b7fae9b2f98c6",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21373,7 +34399,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 64134,
     "dividendReceived": 64134,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-6398d7339ffb215d5cbdb1c9",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21417,7 +34474,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-42a3632a566ccff1df57ac6a",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21462,7 +34550,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 10656,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-964067e73ef29811bd177a15",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21507,7 +34626,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 26240,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-1b34726096adef26cd1b6b78",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21551,7 +34701,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-5160f7e2920a9ca7a42a8b55",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21597,7 +34778,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 6400,
     "dividendReceived": 12800,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d2e561b93eba7ee72934cb6b",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21628,7 +34840,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7adbf89414f00c0e2faff8b3",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21659,7 +34902,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-6f63a8251f94bdd07d18c263",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21705,7 +34979,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 36400,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-aa528d4d53e4342bc6cc3898",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21750,7 +35055,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 13480,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d9c00d46d688366541fb5671",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21795,7 +35131,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 1252.5,
     "dividendReceived": 1252.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-c37298130ebf065f66c1d5ba",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21839,7 +35206,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-11dbb09b9581349ec2983c55",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21884,7 +35282,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 4215,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-885e49c81b447a4326cd7a0c",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21929,7 +35358,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 29122.5,
     "dividendReceived": 29122.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-c3ea3286cb713d3dd918b3a6",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -21974,7 +35434,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 4921.25,
     "dividendReceived": 4921.25,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b58001809bba6c3ea4440068",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22018,7 +35509,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7a499471b86729eb7f979e3f",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22063,7 +35585,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 47640,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0b5a64535ad4b8f5dea899c9",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22108,7 +35661,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 7773,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-77de36e46f97fb407bee5bfc",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22153,7 +35737,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 16900,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-53ab36fe31636f3093487d50",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22197,7 +35812,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7b4a776709de9cf54ba0f5a4",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22256,7 +35902,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-51df72309a6be420876d96a7",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22300,7 +35977,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f020ff8ba03d101f8211e434",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22345,7 +36053,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 15757.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e7abf0132bb12dbcc8e3c640",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22389,7 +36128,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 22800,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-a1288c9b898c5b3992579530",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22433,7 +36203,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-247b72810c3f56f850f09ff5",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22478,7 +36279,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 4698,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-c1ac7b86ba471187f2192a4f",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22523,7 +36355,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 20960,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-2f15a329e29caf64108bb08e",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22569,7 +36432,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 6630,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-407e15c474a7c5969d251770",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22614,7 +36508,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 18720,
     "dividendReceived": 18720,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7839933cacb76b070a6559e9",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22659,7 +36584,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 1575,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-32f521f459e158185ce43929",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22704,7 +36660,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 1731,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7804bef03b25cc660f6f633f",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22749,7 +36736,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 1640,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-592f487ff5306c914a88e492",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22794,7 +36812,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 6225,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-94898bbfd1f4769098106ea0",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22838,7 +36887,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-4350783a5b1ef85bdf2c5ada",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22883,7 +36963,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-c1d5f21a33a74ba33a84c612",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22928,7 +37039,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 980,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d677c3a609b64ebf2ab9c355",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -22996,7 +37138,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 11900,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-34e3de8900bdb1055e081a61",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23041,7 +37214,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 11205,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-56be98b444ecd450a51d0255",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23100,7 +37304,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 47800,
     "dividendReceived": 47800,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-857d725164574ae4d09f183a",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23145,7 +37380,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 8995,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-f94c12fb79fc8f720662b617",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23190,7 +37456,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 2482.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-5867d2057d67df164029fc99",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23249,7 +37546,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 11640,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e4fd81f4b9c2558f4db873be",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23307,7 +37635,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7efbc52a4240e27ca75f8a69",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23352,7 +37711,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 9007.5,
     "dividendReceived": 18015,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7b2bc3362f065880cdff2a47",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23397,7 +37787,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 6465,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-438f9968467a20625acdfdd0",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23441,7 +37862,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-9eed3699f0822706650942b8",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23485,7 +37937,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-569198937d6d84811f53a0cb",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23530,7 +38013,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 6180,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0a9793e7fd0542a50c5b6550",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23575,7 +38089,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 41832,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e7a3a908a1d53eac68e26b03",
+      "quantityAsOf": "2026-11-04",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-11-04",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "transition-venture-capital-fund-i-class-a1",
@@ -23621,7 +38166,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-10",
       "text": "Aug 2025 – Oct 2025"
     },
-    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
+    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark.",
+    "integrity": {
+      "positionId": "position-7d73ad1af3a70ea720a11132",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-02-28",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-02-28",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "securityKey": "transition-venture-capital-fund-i-class-a1",
@@ -23667,7 +38243,38 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-10",
       "text": "Aug 2025 – Oct 2025"
     },
-    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
+    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark.",
+    "integrity": {
+      "positionId": "position-8103d65bdb22638dfbfbd9ba",
+      "quantityAsOf": "2026-03-31",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-03-31",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-02-28",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-02-28",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23713,7 +38320,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 15764.4,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-55ef86d4daff2c6aa38b3b51",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23759,7 +38397,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-586410a6c7b7451959a4202c",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23790,7 +38459,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-be0addf52714c3713fe9b13a",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23821,7 +38521,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-ada52135af9908fda4bbc637",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23866,7 +38597,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-025ec0a103d2225f73d62ab5",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23912,7 +38674,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 91032.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-46007767d60fc4bf30aceca7",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -23958,7 +38751,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 50556,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d96935e229948b4a333785ed",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24003,7 +38827,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-73cb547c9010243dcbb0dcdb",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24049,7 +38904,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 25189.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-0d2347ff01ceb6cfd68a944d",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24109,7 +38995,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 24710,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-52c74af40573aac3d676654e",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24154,7 +39071,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-501c15757b3894f6c71029c9",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24199,7 +39147,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-9f814605676e5737bb822ae3",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24244,7 +39223,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-5bec28b2a1728c96ba3be6e6",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24290,7 +39300,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 29511,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-dbd5a8029b306fdc8dac4376",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24335,7 +39376,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-1050cb671e087315d1b55033",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24380,7 +39452,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-3dc1984f23fc5d7530ab52a3",
+      "quantityAsOf": "2026-10-07",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-10-07",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24420,7 +39523,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7b1602d637e411f4ea738de7",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24461,7 +39595,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-7b06e59e38b18fe0e86d37cb",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24492,7 +39657,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-3c8e0c070eeb142776f5336d",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24523,7 +39719,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e527d9041128f9a5a16ce0a9",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24565,7 +39792,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 66573,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-778405e0784aaa93eb519007",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24605,7 +39863,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-68580b1fed89f2d9d650aa2e",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24646,7 +39935,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 200920,
     "dividendReceived": 200920,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-b3f7757330c05dd3ba0f8c62",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24687,7 +40007,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 77208,
     "dividendReceived": 77208,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-85c1479fe7a1f372b01e11e1",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24727,7 +40078,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-2d638040baa55c1cee9f9ffb",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24768,7 +40150,38 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": 25036.5,
     "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-607614f3bf0c6b18a90c8632",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24812,7 +40225,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-e7def083e7c85523340c24c0",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24852,7 +40296,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-88158a5e7e79466a90b554b3",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24896,7 +40371,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-994dd21f2e32a002a021203b",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24936,7 +40442,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-15f464bfe8639c0eaf594100",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -24976,7 +40513,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-a6b09800368ffd724ce25eed",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -25020,7 +40588,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-d8a76a8a6fc11b92fdde464e",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -25060,7 +40659,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-5719ecd7eef8b94e5c6c860a",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -25100,7 +40730,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-fc0b56ed5c79108cf7659a22",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   },
   {
     "statementRecord": {
@@ -25140,7 +40801,38 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "integrity": {
+      "positionId": "position-ec72471abd7a3c90af212e40",
+      "quantityAsOf": "2026-08-13",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "source-backed",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "source-backed",
+          "basis": "statement-valuation",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "source-backed",
+          "basis": "derived",
+          "effectiveDate": "2026-08-13",
+          "exceptions": []
+        }
+      }
+    }
   }
 ];
 
@@ -31956,6 +47648,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 7,
     "accountsCarried": 0,
     "flowIn": 0,
+    "flowWeighted": 0,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": null,
     "linkClose": null,
@@ -31969,6 +47664,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 7,
     "flowIn": 0,
+    "flowWeighted": 0,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 788267717.39,
     "linkClose": 788267717.39,
@@ -31982,6 +47680,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 4,
     "accountsCarried": 7,
     "flowIn": 0,
+    "flowWeighted": 0,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 1025828638.74,
     "linkClose": 1032376673.1,
@@ -31995,6 +47696,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 9,
     "flowIn": -40738,
+    "flowWeighted": -20515.209302325584,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 1061193620.92,
     "linkClose": 1088896834.7,
@@ -32008,6 +47712,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 6,
     "accountsCarried": 6,
     "flowIn": -986,
+    "flowWeighted": -657.3333333333334,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 1088896834.7,
     "linkClose": 1108628804.59,
@@ -32021,6 +47728,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 4,
     "accountsCarried": 12,
     "flowIn": 0,
+    "flowWeighted": 0,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 1119877053.25,
     "linkClose": 1119877053.25,
@@ -32034,6 +47744,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 1,
     "accountsCarried": 16,
     "flowIn": 0,
+    "flowWeighted": 0,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 1122211497.89,
     "linkClose": 1122211497.89,
@@ -32047,6 +47760,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 15,
     "flowIn": -7494,
+    "flowWeighted": -2106.422680412371,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 1123147884.71,
     "linkClose": 1176282341.76,
@@ -32060,6 +47776,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 3,
     "accountsCarried": 14,
     "flowIn": -142601,
+    "flowWeighted": -14138.009900990099,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 1176282341.76,
     "linkClose": 1300206253.15,
@@ -32073,6 +47792,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 15,
     "flowIn": -9559,
+    "flowWeighted": -1634.3148148148148,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 1300206253.15,
     "linkClose": 1296533751.87,
@@ -32086,6 +47808,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 8,
     "accountsCarried": 13,
     "flowIn": -22945,
+    "flowWeighted": -13727.612903225807,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 1296533751.87,
     "linkClose": 1304898361,
@@ -32099,6 +47824,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 3,
     "accountsCarried": 18,
     "flowIn": 0,
+    "flowWeighted": null,
+    "flowTimingKnown": false,
+    "returnMethod": "unproven",
     "unreportedFlowValue": 7201.78,
     "linkOpen": 2402912880.08,
     "linkClose": 2402924233.33,
@@ -32112,6 +47840,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 19,
     "flowIn": 0,
+    "flowWeighted": 0,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 2402924233.33,
     "linkClose": 2402928953.22,
@@ -32125,6 +47856,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 1,
     "accountsCarried": 21,
     "flowIn": 0,
+    "flowWeighted": 0,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 2402928953.22,
     "linkClose": 2402928953.22,
@@ -32138,6 +47872,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 1,
     "accountsCarried": 21,
     "flowIn": -30690,
+    "flowWeighted": -20790,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 2712913453.99,
     "linkClose": 2708145042.91,
@@ -32151,6 +47888,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 20,
     "flowIn": -65735,
+    "flowWeighted": -17060.625,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 2708145042.91,
     "linkClose": 2717643930.67,
@@ -32164,6 +47904,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 20,
     "flowIn": 112393342,
+    "flowWeighted": 47170527.00000001,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 2717643930.67,
     "linkClose": 2827568440.85,
@@ -32177,6 +47920,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 3,
     "accountsCarried": 19,
     "flowIn": -14984.6,
+    "flowWeighted": null,
+    "flowTimingKnown": false,
+    "returnMethod": "unproven",
     "unreportedFlowValue": 5781806.04,
     "linkOpen": 2827568440.85,
     "linkClose": 2847785105.1,
@@ -32190,6 +47936,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 20,
     "flowIn": 0,
+    "flowWeighted": 0,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 2847785105.1,
     "linkClose": 2812340110.2,
@@ -32203,6 +47952,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 9,
     "accountsCarried": 13,
     "flowIn": -81004.8,
+    "flowWeighted": -38556.00372870459,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 2812340110.2,
     "linkClose": 2791965958.88,
@@ -32216,6 +47968,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 20,
     "flowIn": 0,
+    "flowWeighted": null,
+    "flowTimingKnown": false,
+    "returnMethod": "unproven",
     "unreportedFlowValue": 7781.96,
     "linkOpen": 2791965958.88,
     "linkClose": 2791973740.84,
@@ -32229,6 +47984,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 4,
     "accountsCarried": 18,
     "flowIn": -70005,
+    "flowWeighted": null,
+    "flowTimingKnown": false,
+    "returnMethod": "unproven",
     "unreportedFlowValue": 7138.6,
     "linkOpen": 2791973740.84,
     "linkClose": 2780849110.89,
@@ -32242,6 +48000,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 20,
     "flowIn": -18689,
+    "flowWeighted": -12193.527272727273,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 2780849110.89,
     "linkClose": 2780478415.54,
@@ -32255,6 +48016,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 1,
     "accountsCarried": 22,
     "flowIn": 0,
+    "flowWeighted": 0,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 2780478415.54,
     "linkClose": 2780478415.54,
@@ -32268,6 +48032,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 3,
     "accountsCarried": 21,
     "flowIn": 0,
+    "flowWeighted": 0,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 3211782792.15,
     "linkClose": 3169152612.82,
@@ -32281,6 +48048,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 1,
     "accountsCarried": 23,
     "flowIn": -1765,
+    "flowWeighted": -1276.8085106382978,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 3217280140.16,
     "linkClose": 3217090113.17,
@@ -32294,6 +48064,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 22,
     "flowIn": 0,
+    "flowWeighted": 0,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 3217090113.17,
     "linkClose": 3235208454.85,
@@ -32307,6 +48080,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "accountsOnDate": 2,
     "accountsCarried": 22,
     "flowIn": -25884,
+    "flowWeighted": -22698.285714285714,
+    "flowTimingKnown": true,
+    "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
     "linkOpen": 3235208454.85,
     "linkClose": 3222686850.59,
@@ -53819,6 +69595,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383|aditya-birla-capital": [
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-11",
       "side": "sell",
       "quantity": 50369,
       "price": 407.75,
@@ -53829,6 +69606,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-11",
+      "settlementDate": "2026-08-12",
       "side": "sell",
       "quantity": 14174,
       "price": 403.7113,
@@ -53841,6 +69619,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383|caliber-mining-and-logistics": [
     {
       "date": "2026-07-24",
+      "settlementDate": "2026-07-24",
       "side": "buy",
       "quantity": 38660,
       "price": 494.8501,
@@ -53850,6 +69629,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383|cyient": [
     {
       "date": "2026-08-25",
+      "settlementDate": "2026-08-25",
       "side": "buy",
       "quantity": 6246,
       "price": 926.8642,
@@ -53857,6 +69637,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-25",
+      "settlementDate": "2026-08-25",
       "side": "buy",
       "quantity": 18596,
       "price": 911.9746,
@@ -53866,6 +69647,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383|gland-pharma": [
     {
       "date": "2026-06-30",
+      "settlementDate": "2026-06-30",
       "side": "buy",
       "quantity": 3618,
       "price": 2477.0019,
@@ -53873,6 +69655,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-01",
+      "settlementDate": "2026-07-01",
       "side": "buy",
       "quantity": 1255,
       "price": 2450.8682,
@@ -53880,6 +69663,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-02",
+      "settlementDate": "2026-07-02",
       "side": "buy",
       "quantity": 2750,
       "price": 2445.1669,
@@ -53887,6 +69671,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-22",
+      "settlementDate": "2026-07-22",
       "side": "buy",
       "quantity": 300,
       "price": 2435.9998,
@@ -53894,6 +69679,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-22",
+      "settlementDate": "2026-07-22",
       "side": "buy",
       "quantity": 329,
       "price": 2428.5003,
@@ -53903,6 +69689,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383|kalyan-jewellers-india": [
     {
       "date": "2026-07-13",
+      "settlementDate": "2026-07-13",
       "side": "buy",
       "quantity": 14600,
       "price": 484.0715,
@@ -53910,6 +69697,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-13",
+      "settlementDate": "2026-07-13",
       "side": "buy",
       "quantity": 43800,
       "price": 493.4852,
@@ -53919,6 +69707,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383|pvr-inox": [
     {
       "date": "2026-09-23",
+      "settlementDate": "2026-09-24",
       "side": "sell",
       "quantity": 882,
       "price": 1450,
@@ -53931,6 +69720,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383|tata-technologies": [
     {
       "date": "2026-08-07",
+      "settlementDate": "2026-08-07",
       "side": "buy",
       "quantity": 18902,
       "price": 853.5526,
@@ -53940,6 +69730,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383|vishnu-chemicals": [
     {
       "date": "2026-08-11",
+      "settlementDate": "2026-08-11",
       "side": "buy",
       "quantity": 1132,
       "price": 588.857,
@@ -53947,6 +69738,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-12",
+      "settlementDate": "2026-08-12",
       "side": "buy",
       "quantity": 3050,
       "price": 588.159,
@@ -53954,6 +69746,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-13",
+      "settlementDate": "2026-08-13",
       "side": "buy",
       "quantity": 2021,
       "price": 599.97,
@@ -53961,6 +69754,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-14",
+      "settlementDate": "2026-08-14",
       "side": "buy",
       "quantity": 2517,
       "price": 606.7547,
@@ -53968,6 +69762,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-20",
+      "settlementDate": "2026-08-20",
       "side": "buy",
       "quantity": 572,
       "price": 624.864,
@@ -53975,6 +69770,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-21",
+      "settlementDate": "2026-08-21",
       "side": "buy",
       "quantity": 175,
       "price": 625,
@@ -53984,6 +69780,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100022|deep-industries": [
     {
       "date": "2026-07-24",
+      "settlementDate": "2026-07-24",
       "side": "buy",
       "quantity": 3200,
       "price": 477.5,
@@ -53993,6 +69790,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100022|eclerx-services": [
     {
       "date": "2026-06-24",
+      "settlementDate": "2026-06-24",
       "side": "buy",
       "quantity": 1600,
       "price": 1404.7669,
@@ -54002,6 +69800,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100022|great-eastern-shipping": [
     {
       "date": "2026-08-04",
+      "settlementDate": "2026-08-04",
       "side": "buy",
       "quantity": 464,
       "price": 1432.5,
@@ -54009,6 +69808,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-04",
+      "settlementDate": "2026-08-04",
       "side": "buy",
       "quantity": 1536,
       "price": 1432.4281,
@@ -54018,6 +69818,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100022|indian-energy-exchange": [
     {
       "date": "2026-04-09",
+      "settlementDate": "2026-04-09",
       "side": "buy",
       "quantity": 10536,
       "price": 128.8256,
@@ -54025,6 +69826,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-10",
+      "settlementDate": "2026-04-10",
       "side": "buy",
       "quantity": 6,
       "price": 129,
@@ -54032,6 +69834,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-21",
+      "settlementDate": "2026-04-21",
       "side": "buy",
       "quantity": 4458,
       "price": 126.25,
@@ -54041,6 +69844,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100022|jindal-stainless": [
     {
       "date": "2026-05-07",
+      "settlementDate": "2026-05-07",
       "side": "buy",
       "quantity": 2257,
       "price": 768,
@@ -54048,6 +69852,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-07",
+      "settlementDate": "2026-05-07",
       "side": "buy",
       "quantity": 993,
       "price": 768,
@@ -54057,6 +69862,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100022|lupin": [
     {
       "date": "2026-05-29",
+      "settlementDate": "2026-05-29",
       "side": "buy",
       "quantity": 220,
       "price": 2260,
@@ -54064,6 +69870,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-01",
+      "settlementDate": "2026-06-01",
       "side": "buy",
       "quantity": 680,
       "price": 2254.4413,
@@ -54073,6 +69880,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100022|poojaa-precision-engineering": [
     {
       "date": "2026-08-11",
+      "settlementDate": "2026-08-11",
       "side": "buy",
       "quantity": 2550,
       "price": 498.5633,
@@ -54082,6 +69890,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100022|suprajit-engineering": [
     {
       "date": "2026-04-21",
+      "settlementDate": "2026-04-21",
       "side": "buy",
       "quantity": 2300,
       "price": 417.7706,
@@ -54089,6 +69898,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-15",
+      "settlementDate": "2026-06-16",
       "side": "sell",
       "quantity": 2800,
       "price": 473.5,
@@ -54098,6 +69908,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100022|waaree-energies": [
     {
       "date": "2026-05-29",
+      "settlementDate": "2026-05-29",
       "side": "buy",
       "quantity": 500,
       "price": 3129.9998,
@@ -54107,6 +69918,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100023|deep-industries": [
     {
       "date": "2026-07-24",
+      "settlementDate": "2026-07-24",
       "side": "buy",
       "quantity": 10000,
       "price": 477.5,
@@ -54116,6 +69928,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100023|eclerx-services": [
     {
       "date": "2026-06-24",
+      "settlementDate": "2026-06-24",
       "side": "buy",
       "quantity": 3600,
       "price": 1404.7669,
@@ -54125,6 +69938,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100023|great-eastern-shipping": [
     {
       "date": "2026-08-04",
+      "settlementDate": "2026-08-04",
       "side": "buy",
       "quantity": 1158,
       "price": 1432.5,
@@ -54132,6 +69946,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-04",
+      "settlementDate": "2026-08-04",
       "side": "buy",
       "quantity": 3842,
       "price": 1432.4281,
@@ -54141,6 +69956,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100023|indian-energy-exchange": [
     {
       "date": "2026-04-09",
+      "settlementDate": "2026-04-09",
       "side": "buy",
       "quantity": 22476,
       "price": 128.8256,
@@ -54148,6 +69964,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-10",
+      "settlementDate": "2026-04-10",
       "side": "buy",
       "quantity": 15,
       "price": 129,
@@ -54155,6 +69972,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-21",
+      "settlementDate": "2026-04-21",
       "side": "buy",
       "quantity": 7509,
       "price": 126.25,
@@ -54164,6 +69982,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100023|jindal-stainless": [
     {
       "date": "2026-05-07",
+      "settlementDate": "2026-05-07",
       "side": "buy",
       "quantity": 4863,
       "price": 768,
@@ -54171,6 +69990,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-07",
+      "settlementDate": "2026-05-07",
       "side": "buy",
       "quantity": 2137,
       "price": 768,
@@ -54180,6 +70000,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100023|lupin": [
     {
       "date": "2026-05-29",
+      "settlementDate": "2026-05-29",
       "side": "buy",
       "quantity": 488,
       "price": 2260,
@@ -54187,6 +70008,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-01",
+      "settlementDate": "2026-06-01",
       "side": "buy",
       "quantity": 1512,
       "price": 2254.4413,
@@ -54196,6 +70018,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100023|poojaa-precision-engineering": [
     {
       "date": "2026-08-11",
+      "settlementDate": "2026-08-11",
       "side": "buy",
       "quantity": 6376,
       "price": 498.5633,
@@ -54205,6 +70028,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100023|suprajit-engineering": [
     {
       "date": "2026-04-21",
+      "settlementDate": "2026-04-21",
       "side": "buy",
       "quantity": 6500,
       "price": 417.7706,
@@ -54212,6 +70036,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-15",
+      "settlementDate": "2026-06-16",
       "side": "sell",
       "quantity": 7500,
       "price": 473.5,
@@ -54221,6 +70046,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "goldstandard-wealth-private-limited-100023|waaree-energies": [
     {
       "date": "2026-05-29",
+      "settlementDate": "2026-05-29",
       "side": "buy",
       "quantity": 1500,
       "price": 3129.9998,
@@ -54230,6 +70056,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|aarti-drugs": [
     {
       "date": "2025-05-02",
+      "settlementDate": "2025-05-02",
       "side": "buy",
       "quantity": 310,
       "price": 348.5822,
@@ -54237,6 +70064,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-05",
+      "settlementDate": "2025-05-05",
       "side": "buy",
       "quantity": 430,
       "price": 354.6344,
@@ -54244,6 +70072,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-06",
+      "settlementDate": "2025-05-06",
       "side": "buy",
       "quantity": 840,
       "price": 350.7335,
@@ -54251,6 +70080,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-07",
+      "settlementDate": "2025-05-07",
       "side": "buy",
       "quantity": 240,
       "price": 382.021,
@@ -54258,6 +70088,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-13",
+      "settlementDate": "2025-05-13",
       "side": "buy",
       "quantity": 100,
       "price": 458.8325,
@@ -54265,6 +70096,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-11",
+      "settlementDate": "2025-06-11",
       "side": "buy",
       "quantity": 100,
       "price": 473.7151,
@@ -54272,6 +70104,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-21",
+      "settlementDate": "2025-07-21",
       "side": "buy",
       "quantity": 60,
       "price": 536.2308,
@@ -54279,6 +70112,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-22",
+      "settlementDate": "2025-08-22",
       "side": "buy",
       "quantity": 47,
       "price": 475.5889,
@@ -54286,6 +70120,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-26",
+      "settlementDate": "2025-08-26",
       "side": "buy",
       "quantity": 49,
       "price": 474.7982,
@@ -54293,6 +70128,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-28",
+      "settlementDate": "2025-08-28",
       "side": "buy",
       "quantity": 37,
       "price": 470.4927,
@@ -54300,6 +70136,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-08",
+      "settlementDate": "2025-09-08",
       "side": "buy",
       "quantity": 92,
       "price": 475.7038,
@@ -54307,6 +70144,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-09",
+      "settlementDate": "2025-09-09",
       "side": "buy",
       "quantity": 29,
       "price": 491.4748,
@@ -54314,6 +70152,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-11",
+      "settlementDate": "2025-11-11",
       "side": "buy",
       "quantity": 92,
       "price": 484.8172,
@@ -54321,6 +70160,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-09",
+      "settlementDate": "2025-12-09",
       "side": "buy",
       "quantity": 272,
       "price": 399.5783,
@@ -54328,6 +70168,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-22",
+      "settlementDate": "2025-12-22",
       "side": "buy",
       "quantity": 124,
       "price": 391.4467,
@@ -54337,6 +70178,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|alivus-life-sciences": [
     {
       "date": "2025-01-14",
+      "settlementDate": "2025-01-14",
       "side": "buy",
       "quantity": 510,
       "price": 992.0417,
@@ -54344,6 +70186,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-11",
+      "settlementDate": "2025-06-11",
       "side": "buy",
       "quantity": 50,
       "price": 1015.734,
@@ -54351,6 +70194,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-12",
+      "settlementDate": "2025-06-12",
       "side": "buy",
       "quantity": 110,
       "price": 1063.4372,
@@ -54358,6 +70202,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-28",
+      "settlementDate": "2025-08-28",
       "side": "buy",
       "quantity": 12,
       "price": 948.945,
@@ -54365,6 +70210,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-01",
+      "settlementDate": "2025-09-01",
       "side": "buy",
       "quantity": 16,
       "price": 939.1475,
@@ -54372,6 +70218,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-02",
+      "settlementDate": "2025-09-02",
       "side": "buy",
       "quantity": 11,
       "price": 938.4473,
@@ -54379,6 +70226,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-05",
+      "settlementDate": "2025-09-05",
       "side": "buy",
       "quantity": 17,
       "price": 926.0747,
@@ -54386,6 +70234,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-08",
+      "settlementDate": "2025-09-08",
       "side": "buy",
       "quantity": 26,
       "price": 922.0158,
@@ -54393,6 +70242,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-10",
+      "settlementDate": "2025-09-10",
       "side": "buy",
       "quantity": 31,
       "price": 952.0097,
@@ -54400,6 +70250,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-17",
+      "settlementDate": "2025-11-17",
       "side": "buy",
       "quantity": 95,
       "price": 944.4024,
@@ -54407,6 +70258,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-18",
+      "settlementDate": "2025-11-18",
       "side": "buy",
       "quantity": 67,
       "price": 926.6691,
@@ -54414,6 +70266,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-19",
+      "settlementDate": "2025-11-19",
       "side": "buy",
       "quantity": 557,
       "price": 911.9747,
@@ -54421,6 +70274,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-04",
+      "settlementDate": "2025-12-04",
       "side": "buy",
       "quantity": 43,
       "price": 878.7347,
@@ -54428,6 +70282,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 208,
       "price": 934.4768,
@@ -54435,6 +70290,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-20",
+      "settlementDate": "2026-03-20",
       "side": "buy",
       "quantity": 20,
       "price": 946.015,
@@ -54442,6 +70298,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-23",
+      "settlementDate": "2026-03-23",
       "side": "buy",
       "quantity": 13,
       "price": 928.1477,
@@ -54449,6 +70306,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 29,
       "price": 967.1869,
@@ -54456,6 +70314,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-30",
+      "settlementDate": "2026-03-30",
       "side": "buy",
       "quantity": 16,
       "price": 970.4744,
@@ -54463,6 +70322,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 85,
       "price": 996.1898,
@@ -54470,6 +70330,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-06",
+      "settlementDate": "2026-04-06",
       "side": "buy",
       "quantity": 82,
       "price": 1000.9552,
@@ -54477,6 +70338,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-07",
+      "settlementDate": "2026-04-07",
       "side": "buy",
       "quantity": 86,
       "price": 1039.522,
@@ -54484,6 +70346,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-17",
+      "settlementDate": "2026-04-17",
       "side": "buy",
       "quantity": 56,
       "price": 1071.6538,
@@ -54491,6 +70354,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-07",
+      "settlementDate": "2026-08-07",
       "side": "buy",
       "quantity": 16,
       "price": 1338.2788,
@@ -54498,6 +70362,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-10",
       "side": "buy",
       "quantity": 85,
       "price": 1368.7795,
@@ -54505,6 +70370,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-13",
+      "settlementDate": "2026-08-13",
       "side": "buy",
       "quantity": 35,
       "price": 1376.6094,
@@ -54512,6 +70378,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-14",
+      "settlementDate": "2026-08-14",
       "side": "buy",
       "quantity": 3,
       "price": 1366.2267,
@@ -54519,6 +70386,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-18",
+      "settlementDate": "2026-08-18",
       "side": "buy",
       "quantity": 75,
       "price": 1397.346,
@@ -54526,6 +70394,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-11",
+      "settlementDate": "2026-09-11",
       "side": "buy",
       "quantity": 9,
       "price": 1385.3022,
@@ -54533,6 +70402,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-21",
+      "settlementDate": "2026-09-21",
       "side": "buy",
       "quantity": 27,
       "price": 1416.0922,
@@ -54542,6 +70412,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|aurobindo-pharma": [
     {
       "date": "2025-10-10",
+      "settlementDate": "2025-10-10",
       "side": "buy",
       "quantity": 519,
       "price": 1138.4018,
@@ -54549,6 +70420,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-13",
+      "settlementDate": "2025-10-13",
       "side": "buy",
       "quantity": 47,
       "price": 1136.9334,
@@ -54556,6 +70428,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-14",
+      "settlementDate": "2025-10-14",
       "side": "buy",
       "quantity": 126,
       "price": 1123.6939,
@@ -54563,6 +70436,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-16",
+      "settlementDate": "2025-10-16",
       "side": "buy",
       "quantity": 41,
       "price": 1105.2859,
@@ -54570,6 +70444,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-20",
+      "settlementDate": "2025-10-20",
       "side": "buy",
       "quantity": 49,
       "price": 1104.7969,
@@ -54577,6 +70452,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-27",
+      "settlementDate": "2025-10-27",
       "side": "buy",
       "quantity": 189,
       "price": 1090.7865,
@@ -54584,6 +70460,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-09",
+      "settlementDate": "2025-12-09",
       "side": "buy",
       "quantity": 138,
       "price": 1170.7953,
@@ -54591,6 +70468,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-15",
+      "settlementDate": "2025-12-15",
       "side": "buy",
       "quantity": 47,
       "price": 1185.6591,
@@ -54598,6 +70476,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-17",
+      "settlementDate": "2025-12-17",
       "side": "buy",
       "quantity": 100,
       "price": 1192.0662,
@@ -54605,6 +70484,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-19",
+      "settlementDate": "2025-12-19",
       "side": "buy",
       "quantity": 47,
       "price": 1219.9645,
@@ -54612,6 +70492,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-30",
+      "settlementDate": "2025-12-30",
       "side": "buy",
       "quantity": 92,
       "price": 1187.7243,
@@ -54619,6 +70500,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-31",
+      "settlementDate": "2025-12-31",
       "side": "buy",
       "quantity": 45,
       "price": 1189.7307,
@@ -54626,6 +70508,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-01",
+      "settlementDate": "2026-01-01",
       "side": "buy",
       "quantity": 182,
       "price": 1185.6644,
@@ -54633,6 +70516,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-06",
+      "settlementDate": "2026-01-06",
       "side": "buy",
       "quantity": 70,
       "price": 1232.5274,
@@ -54640,6 +70524,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-07",
+      "settlementDate": "2026-01-07",
       "side": "buy",
       "quantity": 68,
       "price": 1249.7757,
@@ -54647,6 +70532,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-07",
+      "settlementDate": "2026-05-08",
       "side": "sell",
       "quantity": 104,
       "price": 1475,
@@ -54657,6 +70543,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-17",
+      "settlementDate": "2026-09-18",
       "side": "sell",
       "quantity": 192,
       "price": 1671.4693,
@@ -54664,6 +70551,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-21",
+      "settlementDate": "2026-09-22",
       "side": "sell",
       "quantity": 48,
       "price": 1714.1527,
@@ -54671,6 +70559,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-22",
+      "settlementDate": "2026-09-23",
       "side": "sell",
       "quantity": 96,
       "price": 1693.0046,
@@ -54678,6 +70567,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-23",
+      "settlementDate": "2026-09-24",
       "side": "sell",
       "quantity": 143,
       "price": 1703.5019,
@@ -54687,6 +70577,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|axis-liquid-fund-direct-plan-growth-option": [
     {
       "date": "2025-01-16",
+      "settlementDate": "2025-01-16",
       "side": "buy",
       "quantity": 10151.771,
       "price": 2839.4621,
@@ -54694,6 +70585,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 1206.872,
       "price": 2841.7324,
@@ -54701,6 +70593,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-21",
+      "settlementDate": "2025-01-21",
       "side": "buy",
       "quantity": 15.727,
       "price": 2842.2586,
@@ -54708,6 +70601,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-23",
+      "settlementDate": "2025-01-24",
       "side": "sell",
       "quantity": 696,
       "price": 2843.6666,
@@ -54715,6 +70609,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-31",
+      "settlementDate": "2025-01-31",
       "side": "buy",
       "quantity": 83.885,
       "price": 2847.696,
@@ -54722,6 +70617,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-03",
+      "settlementDate": "2025-04-04",
       "side": "sell",
       "quantity": 350,
       "price": 2887.181,
@@ -54729,6 +70625,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-07",
+      "settlementDate": "2025-04-08",
       "side": "sell",
       "quantity": 1300,
       "price": 2889.1239,
@@ -54736,6 +70633,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-07",
+      "settlementDate": "2025-05-08",
       "side": "sell",
       "quantity": 450,
       "price": 2904.3552,
@@ -54743,6 +70641,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-14",
+      "settlementDate": "2025-05-15",
       "side": "sell",
       "quantity": 470,
       "price": 2907.9723,
@@ -54750,6 +70649,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-11",
+      "settlementDate": "2025-06-12",
       "side": "sell",
       "quantity": 1570,
       "price": 2923.6389,
@@ -54757,6 +70657,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-27",
+      "settlementDate": "2025-06-27",
       "side": "buy",
       "quantity": 143.268,
       "price": 2930.3198,
@@ -54764,6 +70665,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-30",
+      "settlementDate": "2025-06-30",
       "side": "buy",
       "quantity": 428.601,
       "price": 2931.5607,
@@ -54771,6 +70673,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-15",
+      "settlementDate": "2025-07-16",
       "side": "sell",
       "quantity": 250,
       "price": 2939.8451,
@@ -54778,6 +70681,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-19",
+      "settlementDate": "2025-08-20",
       "side": "sell",
       "quantity": 280,
       "price": 2955.5553,
@@ -54785,6 +70689,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-04",
+      "settlementDate": "2025-09-05",
       "side": "sell",
       "quantity": 520,
       "price": 2964.5601,
@@ -54792,6 +70697,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-10",
+      "settlementDate": "2025-09-11",
       "side": "sell",
       "quantity": 690,
       "price": 2965.3036,
@@ -54799,6 +70705,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-15",
+      "settlementDate": "2025-09-16",
       "side": "sell",
       "quantity": 60,
       "price": 2967.6201,
@@ -54806,6 +70713,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-24",
+      "settlementDate": "2025-09-25",
       "side": "sell",
       "quantity": 230,
       "price": 2971.9175,
@@ -54813,6 +70721,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-09",
+      "settlementDate": "2025-10-10",
       "side": "sell",
       "quantity": 390,
       "price": 2979.5767,
@@ -54820,6 +70729,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-28",
+      "settlementDate": "2025-10-29",
       "side": "sell",
       "quantity": 580,
       "price": 2988.3054,
@@ -54827,6 +70737,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-05",
+      "settlementDate": "2025-11-06",
       "side": "sell",
       "quantity": 390,
       "price": 2992.2039,
@@ -54834,6 +70745,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-30",
+      "settlementDate": "2025-12-01",
       "side": "sell",
       "quantity": 590,
       "price": 3004.1823,
@@ -54841,6 +70753,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-06",
+      "settlementDate": "2026-01-07",
       "side": "sell",
       "quantity": 389,
       "price": 3022.4959,
@@ -54848,6 +70761,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-09",
+      "settlementDate": "2026-01-09",
       "side": "buy",
       "quantity": 11.421,
       "price": 3023.0386,
@@ -54855,6 +70769,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-09",
+      "settlementDate": "2026-02-09",
       "side": "buy",
       "quantity": 406.825,
       "price": 3038.7899,
@@ -54862,6 +70777,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-10",
       "side": "sell",
       "quantity": 650,
       "price": 3052.9241,
@@ -54869,6 +70785,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-16",
+      "settlementDate": "2026-03-17",
       "side": "sell",
       "quantity": 147.49,
       "price": 3055.4363,
@@ -54876,6 +70793,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-25",
       "side": "sell",
       "quantity": 671,
       "price": 3059.2254,
@@ -54883,6 +70801,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-05",
+      "settlementDate": "2026-04-06",
       "side": "sell",
       "quantity": 573,
       "price": 3071.3921,
@@ -54890,6 +70809,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-12",
+      "settlementDate": "2026-04-13",
       "side": "sell",
       "quantity": 333.69,
       "price": 3077.148,
@@ -54897,6 +70817,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-16",
+      "settlementDate": "2026-04-17",
       "side": "sell",
       "quantity": 736,
       "price": 3079.9851,
@@ -54904,6 +70825,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-03",
+      "settlementDate": "2026-05-04",
       "side": "sell",
       "quantity": 130,
       "price": 3086.8753,
@@ -54911,6 +70833,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-16",
+      "settlementDate": "2026-09-16",
       "side": "buy",
       "quantity": 895.59,
       "price": 3163.4186,
@@ -54918,6 +70841,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-18",
+      "settlementDate": "2026-09-18",
       "side": "buy",
       "quantity": 707.944,
       "price": 3164.3213,
@@ -54927,6 +70851,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|bajaj-auto": [
     {
       "date": "2025-07-18",
+      "settlementDate": "2025-07-18",
       "side": "buy",
       "quantity": 50,
       "price": 8344.2376,
@@ -54934,6 +70859,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-21",
+      "settlementDate": "2025-07-21",
       "side": "buy",
       "quantity": 30,
       "price": 8426.3677,
@@ -54941,6 +70867,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-18",
+      "settlementDate": "2025-08-18",
       "side": "buy",
       "quantity": 6,
       "price": 8592.3367,
@@ -54948,6 +70875,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-25",
+      "settlementDate": "2025-09-25",
       "side": "buy",
       "quantity": 33,
       "price": 8847.5739,
@@ -54955,6 +70883,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-14",
+      "settlementDate": "2026-07-14",
       "side": "sell",
       "quantity": 16,
       "price": 12000,
@@ -54965,6 +70894,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-11",
+      "settlementDate": "2026-09-15",
       "side": "sell",
       "quantity": 42,
       "price": 11657.485,
@@ -54972,6 +70902,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-15",
+      "settlementDate": "2026-09-16",
       "side": "sell",
       "quantity": 40,
       "price": 11487.3228,
@@ -54979,6 +70910,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-16",
+      "settlementDate": "2026-09-17",
       "side": "sell",
       "quantity": 20,
       "price": 11502.407,
@@ -54986,6 +70918,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-17",
+      "settlementDate": "2026-09-18",
       "side": "sell",
       "quantity": 1,
       "price": 11470.91,
@@ -54995,6 +70928,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|bharat-heavy-electricals": [
     {
       "date": "2025-01-14",
+      "settlementDate": "2025-01-14",
       "side": "buy",
       "quantity": 5130,
       "price": 195.0574,
@@ -55002,6 +70936,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-04",
+      "settlementDate": "2026-03-04",
       "side": "buy",
       "quantity": 295,
       "price": 249.4478,
@@ -55009,6 +70944,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-05",
+      "settlementDate": "2026-03-05",
       "side": "buy",
       "quantity": 175,
       "price": 254.5104,
@@ -55016,6 +70952,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-10",
+      "settlementDate": "2026-03-10",
       "side": "buy",
       "quantity": 30,
       "price": 257.6943,
@@ -55023,6 +70960,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-13",
+      "settlementDate": "2026-03-13",
       "side": "buy",
       "quantity": 180,
       "price": 261.8666,
@@ -55030,6 +70968,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-23",
+      "settlementDate": "2026-03-23",
       "side": "buy",
       "quantity": 288,
       "price": 251.3576,
@@ -55037,6 +70976,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 235,
       "price": 258.4251,
@@ -55044,6 +70984,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-27",
+      "settlementDate": "2026-03-27",
       "side": "buy",
       "quantity": 102,
       "price": 256.329,
@@ -55051,6 +70992,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-30",
+      "settlementDate": "2026-03-30",
       "side": "buy",
       "quantity": 219,
       "price": 247.7253,
@@ -55058,6 +71000,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 218,
       "price": 254.8849,
@@ -55065,6 +71008,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-09",
+      "settlementDate": "2026-04-09",
       "side": "buy",
       "quantity": 816,
       "price": 277.1045,
@@ -55074,6 +71018,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|engineers-india": [
     {
       "date": "2025-04-04",
+      "settlementDate": "2025-04-04",
       "side": "buy",
       "quantity": 31,
       "price": 162.799,
@@ -55081,6 +71026,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-04",
+      "settlementDate": "2025-04-04",
       "side": "buy",
       "quantity": 2488,
       "price": 163.0468,
@@ -55088,6 +71034,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-07",
+      "settlementDate": "2025-04-07",
       "side": "buy",
       "quantity": 2530,
       "price": 153.445,
@@ -55095,6 +71042,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-08",
+      "settlementDate": "2025-04-08",
       "side": "buy",
       "quantity": 1900,
       "price": 163.6537,
@@ -55102,6 +71050,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-09",
+      "settlementDate": "2025-04-09",
       "side": "buy",
       "quantity": 661,
       "price": 160.4982,
@@ -55109,6 +71058,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-15",
+      "settlementDate": "2025-04-15",
       "side": "buy",
       "quantity": 1200,
       "price": 168.0658,
@@ -55116,6 +71066,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-16",
+      "settlementDate": "2025-04-16",
       "side": "buy",
       "quantity": 2040,
       "price": 175.6045,
@@ -55123,6 +71074,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-24",
+      "settlementDate": "2025-04-24",
       "side": "buy",
       "quantity": 1610,
       "price": 184.7488,
@@ -55130,6 +71082,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 183,
       "price": 189.6254,
@@ -55139,6 +71092,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|exide-industries": [
     {
       "date": "2025-08-04",
+      "settlementDate": "2025-08-04",
       "side": "buy",
       "quantity": 1490,
       "price": 386.2613,
@@ -55146,6 +71100,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-05",
+      "settlementDate": "2025-08-05",
       "side": "buy",
       "quantity": 1070,
       "price": 389.0493,
@@ -55153,6 +71108,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-07",
+      "settlementDate": "2025-08-07",
       "side": "buy",
       "quantity": 190,
       "price": 375.7977,
@@ -55160,6 +71116,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-18",
+      "settlementDate": "2025-08-18",
       "side": "buy",
       "quantity": 980,
       "price": 378,
@@ -55167,6 +71124,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-19",
+      "settlementDate": "2025-08-19",
       "side": "buy",
       "quantity": 1130,
       "price": 383.3964,
@@ -55174,6 +71132,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-17",
+      "settlementDate": "2025-09-17",
       "side": "buy",
       "quantity": 192,
       "price": 420.0637,
@@ -55181,6 +71140,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-16",
+      "settlementDate": "2026-03-16",
       "side": "buy",
       "quantity": 375,
       "price": 298.182,
@@ -55188,6 +71148,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 473,
       "price": 301.1032,
@@ -55195,6 +71156,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-18",
+      "settlementDate": "2026-03-18",
       "side": "buy",
       "quantity": 220,
       "price": 308.6386,
@@ -55202,6 +71164,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-19",
+      "settlementDate": "2026-03-19",
       "side": "buy",
       "quantity": 227,
       "price": 303.8163,
@@ -55209,6 +71172,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-20",
+      "settlementDate": "2026-03-20",
       "side": "buy",
       "quantity": 219,
       "price": 305.8746,
@@ -55216,6 +71180,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-23",
+      "settlementDate": "2026-03-23",
       "side": "buy",
       "quantity": 112,
       "price": 294.7194,
@@ -55223,6 +71188,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 219,
       "price": 298.5559,
@@ -55230,6 +71196,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-25",
+      "settlementDate": "2026-03-25",
       "side": "buy",
       "quantity": 220,
       "price": 307.8504,
@@ -55239,6 +71206,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|glenmark-pharmaceuticals": [
     {
       "date": "2025-01-23",
+      "settlementDate": "2025-01-23",
       "side": "buy",
       "quantity": 1430,
       "price": 1522.4094,
@@ -55246,6 +71214,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-16",
+      "settlementDate": "2025-07-17",
       "side": "sell",
       "quantity": 130,
       "price": 2200.3639,
@@ -55253,6 +71222,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-17",
+      "settlementDate": "2025-07-18",
       "side": "sell",
       "quantity": 70,
       "price": 2198.8021,
@@ -55260,6 +71230,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-28",
+      "settlementDate": "2025-07-29",
       "side": "sell",
       "quantity": 140,
       "price": 2155.869,
@@ -55267,6 +71238,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-04",
+      "settlementDate": "2025-08-05",
       "side": "sell",
       "quantity": 70,
       "price": 2090.3799,
@@ -55276,6 +71248,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|gmm-pfaudler": [
     {
       "date": "2025-11-03",
+      "settlementDate": "2025-11-03",
       "side": "buy",
       "quantity": 382,
       "price": 1299.2804,
@@ -55283,6 +71256,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-04",
+      "settlementDate": "2025-11-04",
       "side": "buy",
       "quantity": 235,
       "price": 1269.9201,
@@ -55290,6 +71264,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-06",
+      "settlementDate": "2025-11-06",
       "side": "buy",
       "quantity": 3,
       "price": 1277.9467,
@@ -55297,6 +71272,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-07",
+      "settlementDate": "2025-11-07",
       "side": "buy",
       "quantity": 47,
       "price": 1221.783,
@@ -55304,6 +71280,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-10",
+      "settlementDate": "2025-11-10",
       "side": "buy",
       "quantity": 55,
       "price": 1245.8722,
@@ -55311,6 +71288,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-13",
+      "settlementDate": "2025-11-13",
       "side": "buy",
       "quantity": 237,
       "price": 1260.0005,
@@ -55318,6 +71296,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-17",
+      "settlementDate": "2025-11-17",
       "side": "buy",
       "quantity": 121,
       "price": 1213.0283,
@@ -55325,6 +71304,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-18",
+      "settlementDate": "2025-11-18",
       "side": "buy",
       "quantity": 46,
       "price": 1239.1976,
@@ -55332,6 +71312,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-09",
+      "settlementDate": "2025-12-09",
       "side": "buy",
       "quantity": 36,
       "price": 1076.5464,
@@ -55339,6 +71320,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-06",
+      "settlementDate": "2026-08-07",
       "side": "sell",
       "quantity": 856,
       "price": 982.318,
@@ -55346,6 +71328,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-07",
+      "settlementDate": "2026-08-10",
       "side": "sell",
       "quantity": 98,
       "price": 964.9778,
@@ -55353,6 +71336,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-11",
       "side": "sell",
       "quantity": 208,
       "price": 969.7586,
@@ -55362,6 +71346,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|graphite-india": [
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 663,
       "price": 640.3552,
@@ -55369,6 +71354,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-31",
+      "settlementDate": "2025-10-31",
       "side": "buy",
       "quantity": 155,
       "price": 626.5875,
@@ -55376,6 +71362,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-03",
+      "settlementDate": "2025-11-03",
       "side": "buy",
       "quantity": 120,
       "price": 619.7783,
@@ -55383,6 +71370,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-06",
+      "settlementDate": "2025-11-06",
       "side": "buy",
       "quantity": 136,
       "price": 601.8221,
@@ -55390,6 +71378,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-07",
+      "settlementDate": "2025-11-07",
       "side": "buy",
       "quantity": 94,
       "price": 584.77,
@@ -55397,6 +71386,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-10",
+      "settlementDate": "2025-11-10",
       "side": "buy",
       "quantity": 142,
       "price": 539.6526,
@@ -55404,6 +71394,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-09",
+      "settlementDate": "2025-12-09",
       "side": "buy",
       "quantity": 139,
       "price": 538.0199,
@@ -55411,6 +71402,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-30",
+      "settlementDate": "2025-12-30",
       "side": "buy",
       "quantity": 135,
       "price": 592.7595,
@@ -55418,6 +71410,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-02",
+      "settlementDate": "2026-01-02",
       "side": "buy",
       "quantity": 136,
       "price": 658.1401,
@@ -55425,6 +71418,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-04",
+      "settlementDate": "2026-08-05",
       "side": "sell",
       "quantity": 402,
       "price": 710.8751,
@@ -55432,6 +71426,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-05",
+      "settlementDate": "2026-08-06",
       "side": "sell",
       "quantity": 402,
       "price": 713.4172,
@@ -55439,6 +71434,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-06",
+      "settlementDate": "2026-08-07",
       "side": "sell",
       "quantity": 80,
       "price": 711.0761,
@@ -55446,6 +71442,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-14",
+      "settlementDate": "2026-08-17",
       "side": "sell",
       "quantity": 41,
       "price": 721.0824,
@@ -55453,6 +71450,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-21",
+      "settlementDate": "2026-08-24",
       "side": "sell",
       "quantity": 243,
       "price": 715.1422,
@@ -55460,6 +71458,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-24",
+      "settlementDate": "2026-08-25",
       "side": "sell",
       "quantity": 81,
       "price": 720.2501,
@@ -55467,6 +71466,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-25",
+      "settlementDate": "2026-08-27",
       "side": "sell",
       "quantity": 81,
       "price": 711.4128,
@@ -55474,6 +71474,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-26",
+      "settlementDate": "2026-08-27",
       "side": "sell",
       "quantity": 20,
       "price": 684.1045,
@@ -55481,6 +71482,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-27",
+      "settlementDate": "2026-08-28",
       "side": "sell",
       "quantity": 41,
       "price": 692.238,
@@ -55488,6 +71490,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-01",
+      "settlementDate": "2026-09-02",
       "side": "sell",
       "quantity": 41,
       "price": 742.9,
@@ -55495,6 +71498,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-09",
+      "settlementDate": "2026-09-10",
       "side": "sell",
       "quantity": 41,
       "price": 823.0002,
@@ -55502,6 +71506,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-16",
+      "settlementDate": "2026-09-17",
       "side": "sell",
       "quantity": 204,
       "price": 803.8101,
@@ -55509,6 +71514,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-17",
+      "settlementDate": "2026-09-18",
       "side": "sell",
       "quantity": 43,
       "price": 812.1126,
@@ -55518,6 +71524,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|gujarat-ambuja-exports": [
     {
       "date": "2025-04-03",
+      "settlementDate": "2025-04-03",
       "side": "buy",
       "quantity": 240,
       "price": 110.0007,
@@ -55525,6 +71532,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-04",
+      "settlementDate": "2025-04-04",
       "side": "buy",
       "quantity": 6300,
       "price": 114.414,
@@ -55532,6 +71540,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-07",
+      "settlementDate": "2025-04-07",
       "side": "buy",
       "quantity": 1820,
       "price": 111.0588,
@@ -55539,6 +71548,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-08",
+      "settlementDate": "2025-04-08",
       "side": "buy",
       "quantity": 5070,
       "price": 120.388,
@@ -55546,6 +71556,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-09",
+      "settlementDate": "2025-04-09",
       "side": "buy",
       "quantity": 2530,
       "price": 116.0671,
@@ -55553,6 +71564,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-15",
+      "settlementDate": "2025-04-15",
       "side": "buy",
       "quantity": 1170,
       "price": 119.2346,
@@ -55560,6 +71572,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-16",
+      "settlementDate": "2025-04-16",
       "side": "buy",
       "quantity": 1440,
       "price": 124.9636,
@@ -55567,6 +71580,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-17",
+      "settlementDate": "2025-04-17",
       "side": "buy",
       "quantity": 960,
       "price": 128.0154,
@@ -55574,6 +71588,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-15",
+      "settlementDate": "2025-05-15",
       "side": "buy",
       "quantity": 290,
       "price": 123.3346,
@@ -55581,6 +71596,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-16",
+      "settlementDate": "2025-05-16",
       "side": "buy",
       "quantity": 580,
       "price": 124.6352,
@@ -55588,6 +71604,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-29",
+      "settlementDate": "2026-06-30",
       "side": "sell",
       "quantity": 1584,
       "price": 163.0827,
@@ -55599,6 +71616,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-30",
+      "settlementDate": "2026-07-01",
       "side": "sell",
       "quantity": 367,
       "price": 165.5835,
@@ -55609,6 +71627,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-07",
+      "settlementDate": "2026-07-08",
       "side": "sell",
       "quantity": 105,
       "price": 161.0653,
@@ -55619,6 +71638,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-08",
+      "settlementDate": "2026-07-09",
       "side": "sell",
       "quantity": 211,
       "price": 161.1683,
@@ -55629,6 +71649,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-09",
+      "settlementDate": "2026-07-10",
       "side": "sell",
       "quantity": 136,
       "price": 159.2417,
@@ -55639,6 +71660,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-13",
+      "settlementDate": "2026-07-14",
       "side": "sell",
       "quantity": 2250,
       "price": 148.1992,
@@ -55649,6 +71671,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-14",
+      "settlementDate": "2026-07-15",
       "side": "sell",
       "quantity": 596,
       "price": 149.2678,
@@ -55659,6 +71682,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-15",
+      "settlementDate": "2026-07-16",
       "side": "sell",
       "quantity": 410,
       "price": 149.5837,
@@ -55669,6 +71693,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-16",
+      "settlementDate": "2026-07-17",
       "side": "sell",
       "quantity": 722,
       "price": 148.9945,
@@ -55679,6 +71704,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-17",
+      "settlementDate": "2026-07-20",
       "side": "sell",
       "quantity": 282,
       "price": 146.2945,
@@ -55690,6 +71716,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-20",
+      "settlementDate": "2026-07-21",
       "side": "sell",
       "quantity": 372,
       "price": 144.7933,
@@ -55700,6 +71727,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-21",
+      "settlementDate": "2026-07-22",
       "side": "sell",
       "quantity": 84,
       "price": 144.9488,
@@ -55710,6 +71738,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-22",
+      "settlementDate": "2026-07-23",
       "side": "sell",
       "quantity": 1047,
       "price": 144.2245,
@@ -55720,6 +71749,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-23",
+      "settlementDate": "2026-07-24",
       "side": "sell",
       "quantity": 567,
       "price": 140.4105,
@@ -55731,6 +71761,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-24",
+      "settlementDate": "2026-07-27",
       "side": "sell",
       "quantity": 4118,
       "price": 147.3698,
@@ -55741,6 +71772,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-27",
+      "settlementDate": "2026-07-28",
       "side": "sell",
       "quantity": 393,
       "price": 157.2506,
@@ -55751,6 +71783,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-03",
+      "settlementDate": "2026-08-04",
       "side": "sell",
       "quantity": 586,
       "price": 176.0455,
@@ -55758,6 +71791,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-04",
+      "settlementDate": "2026-08-05",
       "side": "sell",
       "quantity": 396,
       "price": 178.1345,
@@ -55765,6 +71799,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-05",
+      "settlementDate": "2026-08-06",
       "side": "sell",
       "quantity": 579,
       "price": 177.0649,
@@ -55772,6 +71807,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-06",
+      "settlementDate": "2026-08-07",
       "side": "sell",
       "quantity": 579,
       "price": 176.1816,
@@ -55779,6 +71815,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-07",
+      "settlementDate": "2026-08-10",
       "side": "sell",
       "quantity": 773,
       "price": 170.5094,
@@ -55786,6 +71823,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-11",
       "side": "sell",
       "quantity": 97,
       "price": 170.1473,
@@ -55793,6 +71831,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-11",
+      "settlementDate": "2026-08-12",
       "side": "sell",
       "quantity": 224,
       "price": 170.2936,
@@ -55800,6 +71839,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-12",
+      "settlementDate": "2026-08-13",
       "side": "sell",
       "quantity": 291,
       "price": 167.0661,
@@ -55807,6 +71847,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-13",
+      "settlementDate": "2026-08-14",
       "side": "sell",
       "quantity": 79,
       "price": 167.2303,
@@ -55814,6 +71855,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-21",
+      "settlementDate": "2026-08-24",
       "side": "sell",
       "quantity": 388,
       "price": 178.9813,
@@ -55821,6 +71863,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-24",
+      "settlementDate": "2026-08-25",
       "side": "sell",
       "quantity": 583,
       "price": 180.7317,
@@ -55828,6 +71871,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-25",
+      "settlementDate": "2026-08-27",
       "side": "sell",
       "quantity": 970,
       "price": 179.4804,
@@ -55835,6 +71879,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-26",
+      "settlementDate": "2026-08-27",
       "side": "sell",
       "quantity": 975,
       "price": 174.6701,
@@ -55842,6 +71887,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-27",
+      "settlementDate": "2026-08-28",
       "side": "sell",
       "quantity": 195,
       "price": 168.6679,
@@ -55849,6 +71895,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-28",
+      "settlementDate": "2026-08-31",
       "side": "sell",
       "quantity": 429,
       "price": 167.4136,
@@ -55856,6 +71903,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-31",
+      "settlementDate": "2026-09-01",
       "side": "sell",
       "quantity": 12,
       "price": 171.8592,
@@ -55865,6 +71913,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|hindustan-aeronautics": [
     {
       "date": "2025-09-12",
+      "settlementDate": "2025-09-12",
       "side": "buy",
       "quantity": 117,
       "price": 4740.9582,
@@ -55872,6 +71921,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-22",
+      "settlementDate": "2025-09-22",
       "side": "buy",
       "quantity": 48,
       "price": 4862.579,
@@ -55879,6 +71929,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-23",
+      "settlementDate": "2025-09-23",
       "side": "buy",
       "quantity": 48,
       "price": 4784.6538,
@@ -55886,6 +71937,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-25",
+      "settlementDate": "2025-09-25",
       "side": "buy",
       "quantity": 46,
       "price": 4771.1,
@@ -55893,6 +71945,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-14",
+      "settlementDate": "2025-10-14",
       "side": "buy",
       "quantity": 31,
       "price": 4745.0774,
@@ -55900,6 +71953,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-09",
       "side": "buy",
       "quantity": 48,
       "price": 3987.3262,
@@ -55907,6 +71961,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-12",
+      "settlementDate": "2026-03-12",
       "side": "buy",
       "quantity": 21,
       "price": 4013.3886,
@@ -55914,6 +71969,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 39,
       "price": 3947.8177,
@@ -55921,6 +71977,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 6,
       "price": 3687.5,
@@ -55928,6 +71985,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 21,
       "price": 3643.2748,
@@ -55937,6 +71995,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|ingersollrand-india": [
     {
       "date": "2026-04-13",
+      "settlementDate": "2026-04-13",
       "side": "buy",
       "quantity": 139,
       "price": 3967.8186,
@@ -55944,6 +72003,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-17",
+      "settlementDate": "2026-04-17",
       "side": "buy",
       "quantity": 79,
       "price": 4100,
@@ -55953,6 +72013,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|intellect-design-arena": [
     {
       "date": "2025-08-26",
+      "settlementDate": "2025-08-26",
       "side": "buy",
       "quantity": 218,
       "price": 983.7486,
@@ -55960,6 +72021,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-28",
+      "settlementDate": "2025-08-28",
       "side": "buy",
       "quantity": 218,
       "price": 974.7571,
@@ -55967,6 +72029,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-01",
+      "settlementDate": "2025-09-01",
       "side": "buy",
       "quantity": 24,
       "price": 988.2783,
@@ -55974,6 +72037,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-02",
+      "settlementDate": "2025-09-02",
       "side": "buy",
       "quantity": 28,
       "price": 989.9971,
@@ -55981,6 +72045,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-03",
+      "settlementDate": "2025-09-03",
       "side": "buy",
       "quantity": 110,
       "price": 960.4266,
@@ -55988,6 +72053,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-08",
+      "settlementDate": "2025-09-08",
       "side": "buy",
       "quantity": 48,
       "price": 909.1971,
@@ -55995,6 +72061,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-09",
+      "settlementDate": "2025-09-09",
       "side": "buy",
       "quantity": 73,
       "price": 943.2505,
@@ -56002,6 +72069,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-10",
+      "settlementDate": "2025-09-10",
       "side": "buy",
       "quantity": 95,
       "price": 995.8658,
@@ -56009,6 +72077,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-11",
+      "settlementDate": "2025-09-11",
       "side": "buy",
       "quantity": 22,
       "price": 1013.8782,
@@ -56016,6 +72085,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-12",
+      "settlementDate": "2025-09-12",
       "side": "buy",
       "quantity": 62,
       "price": 1023.0394,
@@ -56023,6 +72093,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-16",
+      "settlementDate": "2025-09-16",
       "side": "buy",
       "quantity": 52,
       "price": 1040.0254,
@@ -56030,6 +72101,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-17",
+      "settlementDate": "2025-09-17",
       "side": "buy",
       "quantity": 169,
       "price": 1045.9055,
@@ -56037,6 +72109,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-10",
+      "settlementDate": "2025-10-10",
       "side": "buy",
       "quantity": 36,
       "price": 989.5928,
@@ -56044,6 +72117,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-13",
+      "settlementDate": "2025-10-13",
       "side": "buy",
       "quantity": 55,
       "price": 990.3293,
@@ -56051,6 +72125,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-14",
+      "settlementDate": "2025-10-14",
       "side": "buy",
       "quantity": 60,
       "price": 966.4432,
@@ -56058,6 +72133,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-20",
+      "settlementDate": "2025-10-20",
       "side": "buy",
       "quantity": 47,
       "price": 950.8236,
@@ -56065,6 +72141,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-18",
+      "settlementDate": "2025-11-18",
       "side": "buy",
       "quantity": 87,
       "price": 1101.8285,
@@ -56072,6 +72149,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-20",
+      "settlementDate": "2025-11-20",
       "side": "buy",
       "quantity": 24,
       "price": 1098.6329,
@@ -56079,6 +72157,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-02",
+      "settlementDate": "2025-12-02",
       "side": "buy",
       "quantity": 7,
       "price": 1094.9129,
@@ -56086,6 +72165,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-30",
+      "settlementDate": "2025-12-30",
       "side": "buy",
       "quantity": 93,
       "price": 950.6508,
@@ -56093,6 +72173,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-05",
+      "settlementDate": "2026-01-05",
       "side": "buy",
       "quantity": 23,
       "price": 972.2552,
@@ -56100,6 +72181,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-13",
+      "settlementDate": "2026-01-13",
       "side": "buy",
       "quantity": 22,
       "price": 926.9214,
@@ -56107,6 +72189,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-20",
+      "settlementDate": "2026-01-20",
       "side": "buy",
       "quantity": 91,
       "price": 905.2729,
@@ -56114,6 +72197,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-09",
       "side": "buy",
       "quantity": 130,
       "price": 673.1015,
@@ -56121,6 +72205,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-10",
+      "settlementDate": "2026-03-10",
       "side": "buy",
       "quantity": 87,
       "price": 678.8418,
@@ -56128,6 +72213,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-11",
+      "settlementDate": "2026-03-11",
       "side": "buy",
       "quantity": 45,
       "price": 676.8349,
@@ -56135,6 +72221,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-13",
+      "settlementDate": "2026-03-13",
       "side": "buy",
       "quantity": 43,
       "price": 662.856,
@@ -56142,6 +72229,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 176,
       "price": 650.1891,
@@ -56149,6 +72237,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-07",
+      "settlementDate": "2026-04-07",
       "side": "buy",
       "quantity": 41,
       "price": 667.8622,
@@ -56158,6 +72247,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|isgec-heavy-engineering": [
     {
       "date": "2025-01-14",
+      "settlementDate": "2025-01-14",
       "side": "buy",
       "quantity": 1620,
       "price": 1235.0782,
@@ -56165,6 +72255,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-04",
+      "settlementDate": "2026-03-04",
       "side": "buy",
       "quantity": 18,
       "price": 856.9989,
@@ -56172,6 +72263,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 38,
       "price": 898.1342,
@@ -56179,6 +72271,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-23",
+      "settlementDate": "2026-03-23",
       "side": "buy",
       "quantity": 73,
       "price": 879.7399,
@@ -56186,6 +72279,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 447,
       "price": 893,
@@ -56193,6 +72287,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-27",
+      "settlementDate": "2026-03-27",
       "side": "buy",
       "quantity": 52,
       "price": 894.7048,
@@ -56200,6 +72295,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-30",
+      "settlementDate": "2026-03-30",
       "side": "buy",
       "quantity": 112,
       "price": 869.6933,
@@ -56207,6 +72303,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-09",
+      "settlementDate": "2026-04-09",
       "side": "buy",
       "quantity": 53,
       "price": 959.8238,
@@ -56214,6 +72311,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-28",
+      "settlementDate": "2026-04-28",
       "side": "buy",
       "quantity": 203,
       "price": 1093,
@@ -56223,6 +72321,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|jamna-auto-ind": [
     {
       "date": "2025-12-01",
+      "settlementDate": "2025-12-01",
       "side": "buy",
       "quantity": 3616,
       "price": 115.8538,
@@ -56230,6 +72329,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-20",
+      "settlementDate": "2026-02-20",
       "side": "buy",
       "quantity": 3512,
       "price": 143.949,
@@ -56237,6 +72337,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-04",
+      "settlementDate": "2026-03-04",
       "side": "buy",
       "quantity": 4242,
       "price": 139.585,
@@ -56244,6 +72345,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-09",
       "side": "buy",
       "quantity": 1323,
       "price": 122.8192,
@@ -56251,6 +72353,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-13",
+      "settlementDate": "2026-03-13",
       "side": "buy",
       "quantity": 423,
       "price": 117.2678,
@@ -56258,6 +72361,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-25",
+      "settlementDate": "2026-03-25",
       "side": "buy",
       "quantity": 847,
       "price": 121.4515,
@@ -56265,6 +72369,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-14",
+      "settlementDate": "2026-07-15",
       "side": "sell",
       "quantity": 405,
       "price": 131.0032,
@@ -56275,6 +72380,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-15",
+      "settlementDate": "2026-07-16",
       "side": "sell",
       "quantity": 1014,
       "price": 131.1288,
@@ -56285,6 +72391,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-16",
+      "settlementDate": "2026-07-17",
       "side": "sell",
       "quantity": 405,
       "price": 134.4429,
@@ -56295,6 +72402,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-17",
+      "settlementDate": "2026-07-20",
       "side": "sell",
       "quantity": 250,
       "price": 131.8696,
@@ -56305,6 +72413,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-20",
+      "settlementDate": "2026-07-21",
       "side": "sell",
       "quantity": 254,
       "price": 134.0114,
@@ -56315,6 +72424,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-21",
+      "settlementDate": "2026-07-22",
       "side": "sell",
       "quantity": 939,
       "price": 135.3749,
@@ -56325,6 +72435,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-22",
+      "settlementDate": "2026-07-23",
       "side": "sell",
       "quantity": 555,
       "price": 132.4309,
@@ -56336,6 +72447,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-23",
+      "settlementDate": "2026-07-24",
       "side": "sell",
       "quantity": 858,
       "price": 131.8436,
@@ -56346,6 +72458,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-24",
+      "settlementDate": "2026-07-27",
       "side": "sell",
       "quantity": 1283,
       "price": 129.7253,
@@ -56356,6 +72469,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-27",
+      "settlementDate": "2026-07-28",
       "side": "sell",
       "quantity": 603,
       "price": 133.7064,
@@ -56366,6 +72480,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-28",
+      "settlementDate": "2026-07-29",
       "side": "sell",
       "quantity": 201,
       "price": 132.7115,
@@ -56375,6 +72490,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|kaveri-seed": [
     {
       "date": "2025-01-14",
+      "settlementDate": "2025-01-14",
       "side": "buy",
       "quantity": 2250,
       "price": 898.6636,
@@ -56382,6 +72498,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-23",
+      "settlementDate": "2025-01-23",
       "side": "buy",
       "quantity": 90,
       "price": 923.8299,
@@ -56389,6 +72506,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-21",
+      "settlementDate": "2025-02-21",
       "side": "buy",
       "quantity": 10,
       "price": 983.261,
@@ -56396,6 +72514,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-27",
+      "settlementDate": "2025-02-27",
       "side": "buy",
       "quantity": 60,
       "price": 1028.7477,
@@ -56403,6 +72522,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-10",
+      "settlementDate": "2025-03-10",
       "side": "buy",
       "quantity": 270,
       "price": 1078.1928,
@@ -56410,6 +72530,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-22",
+      "settlementDate": "2026-06-23",
       "side": "sell",
       "quantity": 100,
       "price": 944.9592,
@@ -56422,6 +72543,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|ksb": [
     {
       "date": "2026-03-04",
+      "settlementDate": "2026-03-04",
       "side": "buy",
       "quantity": 36,
       "price": 735.1864,
@@ -56429,6 +72551,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-05",
+      "settlementDate": "2026-03-05",
       "side": "buy",
       "quantity": 26,
       "price": 738.655,
@@ -56436,6 +72559,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-09",
       "side": "buy",
       "quantity": 199,
       "price": 744.9665,
@@ -56443,6 +72567,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-10",
+      "settlementDate": "2026-03-10",
       "side": "buy",
       "quantity": 49,
       "price": 757.3673,
@@ -56450,6 +72575,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-11",
+      "settlementDate": "2026-03-11",
       "side": "buy",
       "quantity": 205,
       "price": 760.196,
@@ -56457,6 +72583,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-12",
+      "settlementDate": "2026-03-12",
       "side": "buy",
       "quantity": 124,
       "price": 758.1505,
@@ -56464,6 +72591,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-13",
+      "settlementDate": "2026-03-13",
       "side": "buy",
       "quantity": 71,
       "price": 749.8941,
@@ -56471,6 +72599,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-16",
+      "settlementDate": "2026-03-16",
       "side": "buy",
       "quantity": 74,
       "price": 745.1323,
@@ -56478,6 +72607,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-20",
+      "settlementDate": "2026-03-20",
       "side": "buy",
       "quantity": 86,
       "price": 797.4887,
@@ -56485,6 +72615,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-23",
+      "settlementDate": "2026-03-23",
       "side": "buy",
       "quantity": 542,
       "price": 767.4802,
@@ -56492,6 +72623,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 45,
       "price": 803.4389,
@@ -56499,6 +72631,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-25",
+      "settlementDate": "2026-03-25",
       "side": "buy",
       "quantity": 218,
       "price": 812.2954,
@@ -56506,6 +72639,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 43,
       "price": 833.9333,
@@ -56513,6 +72647,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-02",
+      "settlementDate": "2026-04-02",
       "side": "buy",
       "quantity": 21,
       "price": 823.0657,
@@ -56520,6 +72655,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-02",
+      "settlementDate": "2026-04-02",
       "side": "buy",
       "quantity": 21,
       "price": 823.0657,
@@ -56527,6 +72663,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-09",
+      "settlementDate": "2026-04-09",
       "side": "buy",
       "quantity": 32,
       "price": 872.9797,
@@ -56534,6 +72671,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-13",
+      "settlementDate": "2026-04-13",
       "side": "buy",
       "quantity": 68,
       "price": 908.1179,
@@ -56541,6 +72679,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-15",
+      "settlementDate": "2026-04-15",
       "side": "buy",
       "quantity": 463,
       "price": 932.5,
@@ -56548,6 +72687,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-17",
+      "settlementDate": "2026-04-17",
       "side": "buy",
       "quantity": 186,
       "price": 952.641,
@@ -56555,6 +72695,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-04",
+      "settlementDate": "2026-05-04",
       "side": "buy",
       "quantity": 144,
       "price": 899.4131,
@@ -56562,6 +72703,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-04",
+      "settlementDate": "2026-06-04",
       "side": "buy",
       "quantity": 37,
       "price": 788.9365,
@@ -56569,6 +72711,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-05",
+      "settlementDate": "2026-06-05",
       "side": "buy",
       "quantity": 43,
       "price": 808.9874,
@@ -56576,6 +72719,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-08",
+      "settlementDate": "2026-06-08",
       "side": "buy",
       "quantity": 42,
       "price": 820.4995,
@@ -56583,6 +72727,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-09",
+      "settlementDate": "2026-06-09",
       "side": "buy",
       "quantity": 45,
       "price": 804.4991,
@@ -56592,6 +72737,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|mishra-dhatu-nigam": [
     {
       "date": "2025-04-25",
+      "settlementDate": "2025-04-25",
       "side": "buy",
       "quantity": 940,
       "price": 291.2143,
@@ -56599,6 +72745,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-28",
+      "settlementDate": "2025-04-28",
       "side": "buy",
       "quantity": 600,
       "price": 304.2576,
@@ -56606,6 +72753,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-30",
+      "settlementDate": "2025-04-30",
       "side": "buy",
       "quantity": 290,
       "price": 314.733,
@@ -56613,6 +72761,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-06",
+      "settlementDate": "2025-05-06",
       "side": "buy",
       "quantity": 220,
       "price": 307.1868,
@@ -56620,6 +72769,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-08",
+      "settlementDate": "2025-05-08",
       "side": "buy",
       "quantity": 450,
       "price": 309.507,
@@ -56627,6 +72777,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-09",
+      "settlementDate": "2025-05-09",
       "side": "buy",
       "quantity": 190,
       "price": 318.6558,
@@ -56634,6 +72785,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-13",
+      "settlementDate": "2025-05-13",
       "side": "buy",
       "quantity": 40,
       "price": 344.429,
@@ -56641,6 +72793,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-29",
+      "settlementDate": "2025-10-29",
       "side": "buy",
       "quantity": 131,
       "price": 385.8853,
@@ -56648,6 +72801,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-11",
+      "settlementDate": "2025-11-11",
       "side": "buy",
       "quantity": 66,
       "price": 388.4162,
@@ -56655,6 +72809,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-14",
+      "settlementDate": "2025-11-14",
       "side": "buy",
       "quantity": 181,
       "price": 369.8914,
@@ -56662,6 +72817,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-08",
+      "settlementDate": "2025-12-08",
       "side": "buy",
       "quantity": 53,
       "price": 296.844,
@@ -56669,6 +72825,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-09",
+      "settlementDate": "2025-12-09",
       "side": "buy",
       "quantity": 114,
       "price": 299.6846,
@@ -56676,6 +72833,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-22",
+      "settlementDate": "2025-12-22",
       "side": "buy",
       "quantity": 192,
       "price": 310.2328,
@@ -56683,6 +72841,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 230,
       "price": 289.8124,
@@ -56690,6 +72849,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-18",
+      "settlementDate": "2026-06-18",
       "side": "buy",
       "quantity": 92,
       "price": 430.8276,
@@ -56699,6 +72859,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|power-finance": [
     {
       "date": "2025-01-14",
+      "settlementDate": "2025-01-14",
       "side": "buy",
       "quantity": 2480,
       "price": 410.35,
@@ -56706,6 +72867,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-13",
+      "settlementDate": "2025-05-13",
       "side": "buy",
       "quantity": 960,
       "price": 413.7536,
@@ -56713,6 +72875,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-10",
+      "settlementDate": "2025-06-10",
       "side": "buy",
       "quantity": 220,
       "price": 431.8385,
@@ -56720,6 +72883,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-11",
+      "settlementDate": "2025-06-11",
       "side": "buy",
       "quantity": 260,
       "price": 434.7008,
@@ -56727,6 +72891,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-09",
+      "settlementDate": "2026-04-09",
       "side": "buy",
       "quantity": 255,
       "price": 426.3061,
@@ -56736,6 +72901,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|punjab-national-bank": [
     {
       "date": "2025-06-30",
+      "settlementDate": "2025-06-30",
       "side": "buy",
       "quantity": 2680,
       "price": 109.6353,
@@ -56743,6 +72909,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-01",
+      "settlementDate": "2025-07-01",
       "side": "buy",
       "quantity": 500,
       "price": 109.7868,
@@ -56750,6 +72917,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-03",
+      "settlementDate": "2025-07-03",
       "side": "buy",
       "quantity": 3730,
       "price": 111.1412,
@@ -56757,6 +72925,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-18",
+      "settlementDate": "2025-07-18",
       "side": "buy",
       "quantity": 1040,
       "price": 113.4196,
@@ -56764,6 +72933,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-09",
+      "settlementDate": "2025-10-09",
       "side": "buy",
       "quantity": 1191,
       "price": 114.1466,
@@ -56771,6 +72941,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-23",
+      "settlementDate": "2025-10-23",
       "side": "buy",
       "quantity": 1233,
       "price": 119.2496,
@@ -56778,6 +72949,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-27",
+      "settlementDate": "2025-10-27",
       "side": "buy",
       "quantity": 463,
       "price": 118.3949,
@@ -56785,6 +72957,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-04",
+      "settlementDate": "2026-02-05",
       "side": "sell",
       "quantity": 2411,
       "price": 123.6257,
@@ -56792,6 +72965,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-05",
+      "settlementDate": "2026-02-06",
       "side": "sell",
       "quantity": 1808,
       "price": 123.7137,
@@ -56799,6 +72973,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-09",
+      "settlementDate": "2026-02-10",
       "side": "sell",
       "quantity": 603,
       "price": 123.5512,
@@ -56806,6 +72981,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-23",
+      "settlementDate": "2026-02-24",
       "side": "sell",
       "quantity": 1826,
       "price": 130.8836,
@@ -56815,6 +72991,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|ratnamani-metals-and-tubes": [
     {
       "date": "2026-04-27",
+      "settlementDate": "2026-04-27",
       "side": "buy",
       "quantity": 95,
       "price": 2688.8036,
@@ -56822,6 +72999,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-28",
+      "settlementDate": "2026-04-28",
       "side": "buy",
       "quantity": 81,
       "price": 2709.9907,
@@ -56829,6 +73007,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-29",
+      "settlementDate": "2026-04-29",
       "side": "buy",
       "quantity": 79,
       "price": 2650,
@@ -56836,6 +73015,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-30",
+      "settlementDate": "2026-04-30",
       "side": "buy",
       "quantity": 33,
       "price": 2646.2221,
@@ -56843,6 +73023,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-04",
+      "settlementDate": "2026-05-04",
       "side": "buy",
       "quantity": 15,
       "price": 2670.0827,
@@ -56850,6 +73031,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-05",
+      "settlementDate": "2026-05-05",
       "side": "buy",
       "quantity": 12,
       "price": 2709.41,
@@ -56857,6 +73039,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-07",
+      "settlementDate": "2026-05-07",
       "side": "buy",
       "quantity": 21,
       "price": 2820.149,
@@ -56864,6 +73047,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-08",
+      "settlementDate": "2026-05-08",
       "side": "buy",
       "quantity": 16,
       "price": 2868.4781,
@@ -56871,6 +73055,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-15",
+      "settlementDate": "2026-05-15",
       "side": "buy",
       "quantity": 18,
       "price": 2720.5817,
@@ -56878,6 +73063,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-03",
+      "settlementDate": "2026-06-03",
       "side": "buy",
       "quantity": 25,
       "price": 2566.7492,
@@ -56885,6 +73071,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-04",
+      "settlementDate": "2026-06-04",
       "side": "buy",
       "quantity": 6,
       "price": 2639.9817,
@@ -56892,6 +73079,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-08",
+      "settlementDate": "2026-06-08",
       "side": "buy",
       "quantity": 12,
       "price": 2569.295,
@@ -56899,6 +73087,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-09",
+      "settlementDate": "2026-06-09",
       "side": "buy",
       "quantity": 4,
       "price": 2561.75,
@@ -56906,6 +73095,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-12",
+      "settlementDate": "2026-06-12",
       "side": "buy",
       "quantity": 9,
       "price": 2568.1433,
@@ -56913,6 +73103,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-15",
+      "settlementDate": "2026-06-15",
       "side": "buy",
       "quantity": 21,
       "price": 2600.3319,
@@ -56920,6 +73111,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-17",
+      "settlementDate": "2026-06-17",
       "side": "buy",
       "quantity": 37,
       "price": 2648.0024,
@@ -56927,6 +73119,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-21",
+      "settlementDate": "2026-07-22",
       "side": "sell",
       "quantity": 34,
       "price": 2546.135,
@@ -56937,6 +73130,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-22",
+      "settlementDate": "2026-07-23",
       "side": "sell",
       "quantity": 61,
       "price": 2472.3772,
@@ -56947,6 +73141,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-23",
+      "settlementDate": "2026-07-24",
       "side": "sell",
       "quantity": 43,
       "price": 2422.2572,
@@ -56957,6 +73152,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-24",
+      "settlementDate": "2026-07-27",
       "side": "sell",
       "quantity": 45,
       "price": 2403.7827,
@@ -56968,6 +73164,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-28",
+      "settlementDate": "2026-07-29",
       "side": "sell",
       "quantity": 24,
       "price": 2374.0804,
@@ -56975,6 +73172,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-06",
+      "settlementDate": "2026-08-07",
       "side": "sell",
       "quantity": 13,
       "price": 2386.6869,
@@ -56982,6 +73180,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-07",
+      "settlementDate": "2026-08-10",
       "side": "sell",
       "quantity": 78,
       "price": 2269.5847,
@@ -56989,6 +73188,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-11",
       "side": "sell",
       "quantity": 25,
       "price": 2266.9456,
@@ -56996,6 +73196,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-24",
+      "settlementDate": "2026-08-25",
       "side": "sell",
       "quantity": 26,
       "price": 2636.6188,
@@ -57003,6 +73204,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-25",
+      "settlementDate": "2026-08-27",
       "side": "sell",
       "quantity": 135,
       "price": 2712.1985,
@@ -57012,6 +73214,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|rural-electrification": [
     {
       "date": "2025-01-14",
+      "settlementDate": "2025-01-14",
       "side": "buy",
       "quantity": 1090,
       "price": 472.4661,
@@ -57019,6 +73222,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-27",
+      "settlementDate": "2025-06-27",
       "side": "buy",
       "quantity": 1081,
       "price": 403.3927,
@@ -57028,6 +73232,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|state-bank-of-india": [
     {
       "date": "2025-01-14",
+      "settlementDate": "2025-01-14",
       "side": "buy",
       "quantity": 1350,
       "price": 748.5,
@@ -57035,6 +73240,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-25",
+      "settlementDate": "2025-06-25",
       "side": "buy",
       "quantity": 1230,
       "price": 801.1558,
@@ -57044,6 +73250,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|tech-mahindra": [
     {
       "date": "2026-04-15",
+      "settlementDate": "2026-04-15",
       "side": "buy",
       "quantity": 587,
       "price": 1471.6891,
@@ -57051,6 +73258,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-16",
+      "settlementDate": "2026-04-16",
       "side": "buy",
       "quantity": 185,
       "price": 1489.0082,
@@ -57060,6 +73268,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|the-anup-engineering": [
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 52,
       "price": 1712.9956,
@@ -57067,6 +73276,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-02",
+      "settlementDate": "2026-04-02",
       "side": "buy",
       "quantity": 39,
       "price": 1732.6818,
@@ -57074,6 +73284,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-02",
+      "settlementDate": "2026-04-02",
       "side": "buy",
       "quantity": 39,
       "price": 1732.6818,
@@ -57081,6 +73292,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-06",
+      "settlementDate": "2026-04-06",
       "side": "buy",
       "quantity": 23,
       "price": 1708.0587,
@@ -57088,6 +73300,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-07",
+      "settlementDate": "2026-04-07",
       "side": "buy",
       "quantity": 74,
       "price": 1734.0711,
@@ -57095,6 +73308,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-13",
+      "settlementDate": "2026-04-13",
       "side": "buy",
       "quantity": 21,
       "price": 1934.3167,
@@ -57102,6 +73316,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-15",
+      "settlementDate": "2026-04-15",
       "side": "buy",
       "quantity": 11,
       "price": 2018.0164,
@@ -57109,6 +73324,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-16",
+      "settlementDate": "2026-04-16",
       "side": "buy",
       "quantity": 37,
       "price": 2064.09,
@@ -57116,6 +73332,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-20",
+      "settlementDate": "2026-04-20",
       "side": "buy",
       "quantity": 32,
       "price": 2047.1769,
@@ -57123,6 +73340,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-27",
+      "settlementDate": "2026-04-27",
       "side": "buy",
       "quantity": 28,
       "price": 2204.7896,
@@ -57130,6 +73348,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-30",
+      "settlementDate": "2026-04-30",
       "side": "buy",
       "quantity": 26,
       "price": 2035.3415,
@@ -57137,6 +73356,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-21",
+      "settlementDate": "2026-05-21",
       "side": "buy",
       "quantity": 25,
       "price": 1967.7788,
@@ -57144,6 +73364,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-22",
+      "settlementDate": "2026-05-22",
       "side": "buy",
       "quantity": 42,
       "price": 1982.9488,
@@ -57151,6 +73372,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-25",
+      "settlementDate": "2026-05-25",
       "side": "buy",
       "quantity": 7,
       "price": 1982.0829,
@@ -57158,6 +73380,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-26",
+      "settlementDate": "2026-05-26",
       "side": "buy",
       "quantity": 35,
       "price": 1983.9751,
@@ -57165,6 +73388,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-27",
+      "settlementDate": "2026-05-27",
       "side": "buy",
       "quantity": 3,
       "price": 1949.9633,
@@ -57172,6 +73396,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-29",
+      "settlementDate": "2026-05-29",
       "side": "buy",
       "quantity": 34,
       "price": 1820.9371,
@@ -57179,6 +73404,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-01",
+      "settlementDate": "2026-06-01",
       "side": "buy",
       "quantity": 8,
       "price": 1818.4538,
@@ -57186,6 +73412,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-02",
+      "settlementDate": "2026-06-02",
       "side": "buy",
       "quantity": 15,
       "price": 1831.5073,
@@ -57193,6 +73420,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-03",
+      "settlementDate": "2026-06-03",
       "side": "buy",
       "quantity": 30,
       "price": 1948.393,
@@ -57200,6 +73428,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-04",
+      "settlementDate": "2026-06-04",
       "side": "buy",
       "quantity": 4,
       "price": 1909.5775,
@@ -57207,6 +73436,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-05",
+      "settlementDate": "2026-06-05",
       "side": "buy",
       "quantity": 10,
       "price": 1918.12,
@@ -57214,6 +73444,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-08",
+      "settlementDate": "2026-06-08",
       "side": "buy",
       "quantity": 13,
       "price": 1912.5346,
@@ -57221,6 +73452,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-09",
+      "settlementDate": "2026-06-09",
       "side": "buy",
       "quantity": 8,
       "price": 1862.2638,
@@ -57228,6 +73460,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-15",
+      "settlementDate": "2026-06-15",
       "side": "buy",
       "quantity": 21,
       "price": 1950,
@@ -57237,6 +73470,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|thermax": [
     {
       "date": "2026-04-08",
+      "settlementDate": "2026-04-08",
       "side": "buy",
       "quantity": 154,
       "price": 3274.6295,
@@ -57244,6 +73478,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-09",
+      "settlementDate": "2026-04-09",
       "side": "buy",
       "quantity": 129,
       "price": 3435.8768,
@@ -57251,6 +73486,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-05",
+      "settlementDate": "2026-05-05",
       "side": "buy",
       "quantity": 1,
       "price": 4108.06,
@@ -57260,6 +73496,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|triveni-turbine": [
     {
       "date": "2026-04-17",
+      "settlementDate": "2026-04-17",
       "side": "buy",
       "quantity": 688,
       "price": 515.7641,
@@ -57267,6 +73504,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-20",
+      "settlementDate": "2026-04-20",
       "side": "buy",
       "quantity": 39,
       "price": 569.6,
@@ -57274,6 +73512,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-21",
+      "settlementDate": "2026-04-21",
       "side": "buy",
       "quantity": 100,
       "price": 567.5886,
@@ -57281,6 +73520,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-22",
+      "settlementDate": "2026-04-22",
       "side": "buy",
       "quantity": 70,
       "price": 571.9831,
@@ -57288,6 +73528,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-23",
+      "settlementDate": "2026-04-23",
       "side": "buy",
       "quantity": 79,
       "price": 578.7959,
@@ -57295,6 +73536,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-24",
+      "settlementDate": "2026-04-24",
       "side": "buy",
       "quantity": 56,
       "price": 563.8184,
@@ -57302,6 +73544,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-27",
+      "settlementDate": "2026-04-27",
       "side": "buy",
       "quantity": 504,
       "price": 579.1213,
@@ -57309,6 +73552,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-29",
+      "settlementDate": "2026-04-29",
       "side": "buy",
       "quantity": 133,
       "price": 585.3915,
@@ -57316,6 +73560,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-30",
+      "settlementDate": "2026-04-30",
       "side": "buy",
       "quantity": 74,
       "price": 567.8668,
@@ -57323,6 +73568,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-05",
+      "settlementDate": "2026-05-05",
       "side": "buy",
       "quantity": 83,
       "price": 559.5941,
@@ -57330,6 +73576,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-08",
+      "settlementDate": "2026-05-08",
       "side": "buy",
       "quantity": 318,
       "price": 595.6722,
@@ -57337,6 +73584,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-19",
+      "settlementDate": "2026-05-19",
       "side": "buy",
       "quantity": 47,
       "price": 591.9077,
@@ -57346,6 +73594,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|vedanta": [
     {
       "date": "2025-01-14",
+      "settlementDate": "2025-01-14",
       "side": "buy",
       "quantity": 4670,
       "price": 430.9922,
@@ -57353,6 +73602,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-11",
+      "settlementDate": "2025-06-11",
       "side": "buy",
       "quantity": 243,
       "price": 464.2356,
@@ -57360,6 +73610,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-09",
+      "settlementDate": "2025-10-09",
       "side": "buy",
       "quantity": 549,
       "price": 477.6076,
@@ -57367,6 +73618,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-05",
+      "settlementDate": "2026-02-06",
       "side": "sell",
       "quantity": 883,
       "price": 648.885,
@@ -57374,6 +73626,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-17",
+      "settlementDate": "2026-02-18",
       "side": "sell",
       "quantity": 239,
       "price": 667.0506,
@@ -57383,6 +73636,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510854|zf-commercial-vehicle-control-systems-india": [
     {
       "date": "2025-05-30",
+      "settlementDate": "2025-05-30",
       "side": "buy",
       "quantity": 20,
       "price": 13163.9855,
@@ -57390,6 +73644,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-01",
+      "settlementDate": "2025-12-01",
       "side": "buy",
       "quantity": 39,
       "price": 13852.9923,
@@ -57397,6 +73652,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-04",
+      "settlementDate": "2026-03-04",
       "side": "buy",
       "quantity": 5,
       "price": 14245.612,
@@ -57404,6 +73660,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-09",
       "side": "buy",
       "quantity": 5,
       "price": 13949.968,
@@ -57411,6 +73668,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-10",
+      "settlementDate": "2026-03-10",
       "side": "buy",
       "quantity": 5,
       "price": 14000,
@@ -57418,6 +73676,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-18",
+      "settlementDate": "2026-03-18",
       "side": "buy",
       "quantity": 12,
       "price": 13859.9825,
@@ -57427,6 +73686,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|aarti-drugs": [
     {
       "date": "2025-05-02",
+      "settlementDate": "2025-05-02",
       "side": "buy",
       "quantity": 600,
       "price": 348.5822,
@@ -57434,6 +73694,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-05",
+      "settlementDate": "2025-05-05",
       "side": "buy",
       "quantity": 850,
       "price": 354.6344,
@@ -57441,6 +73702,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-06",
+      "settlementDate": "2025-05-06",
       "side": "buy",
       "quantity": 1670,
       "price": 350.7335,
@@ -57448,6 +73710,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-07",
+      "settlementDate": "2025-05-07",
       "side": "buy",
       "quantity": 470,
       "price": 382.021,
@@ -57455,6 +73718,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-13",
+      "settlementDate": "2025-05-13",
       "side": "buy",
       "quantity": 210,
       "price": 458.8325,
@@ -57462,6 +73726,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-11",
+      "settlementDate": "2025-06-11",
       "side": "buy",
       "quantity": 190,
       "price": 473.7151,
@@ -57469,6 +73734,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-21",
+      "settlementDate": "2025-07-21",
       "side": "buy",
       "quantity": 110,
       "price": 536.2308,
@@ -57476,6 +73742,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-22",
+      "settlementDate": "2025-08-22",
       "side": "buy",
       "quantity": 92,
       "price": 475.589,
@@ -57483,6 +73750,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-26",
+      "settlementDate": "2025-08-26",
       "side": "buy",
       "quantity": 96,
       "price": 474.7982,
@@ -57490,6 +73758,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-28",
+      "settlementDate": "2025-08-28",
       "side": "buy",
       "quantity": 74,
       "price": 470.4927,
@@ -57497,6 +73766,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-08",
+      "settlementDate": "2025-09-08",
       "side": "buy",
       "quantity": 189,
       "price": 475.7038,
@@ -57504,6 +73774,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-09",
+      "settlementDate": "2025-09-09",
       "side": "buy",
       "quantity": 55,
       "price": 491.4749,
@@ -57511,6 +73782,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-11",
+      "settlementDate": "2025-11-11",
       "side": "buy",
       "quantity": 181,
       "price": 484.8172,
@@ -57518,6 +73790,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-09",
+      "settlementDate": "2025-12-09",
       "side": "buy",
       "quantity": 539,
       "price": 399.5783,
@@ -57525,6 +73798,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-22",
+      "settlementDate": "2025-12-22",
       "side": "buy",
       "quantity": 244,
       "price": 391.4467,
@@ -57534,6 +73808,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|alivus-life-sciences": [
     {
       "date": "2025-01-20",
+      "settlementDate": "2025-01-20",
       "side": "buy",
       "quantity": 910,
       "price": 1102.9627,
@@ -57541,6 +73816,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-11",
+      "settlementDate": "2025-06-11",
       "side": "buy",
       "quantity": 90,
       "price": 1015.734,
@@ -57548,6 +73824,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-12",
+      "settlementDate": "2025-06-12",
       "side": "buy",
       "quantity": 320,
       "price": 1063.4372,
@@ -57555,6 +73832,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-28",
+      "settlementDate": "2025-08-28",
       "side": "buy",
       "quantity": 24,
       "price": 948.945,
@@ -57562,6 +73840,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-01",
+      "settlementDate": "2025-09-01",
       "side": "buy",
       "quantity": 35,
       "price": 939.1477,
@@ -57569,6 +73848,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-02",
+      "settlementDate": "2025-09-02",
       "side": "buy",
       "quantity": 12,
       "price": 938.4475,
@@ -57576,6 +73856,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-05",
+      "settlementDate": "2025-09-05",
       "side": "buy",
       "quantity": 33,
       "price": 926.0745,
@@ -57583,6 +73864,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-08",
+      "settlementDate": "2025-09-08",
       "side": "buy",
       "quantity": 60,
       "price": 922.0158,
@@ -57590,6 +73872,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-10",
+      "settlementDate": "2025-09-10",
       "side": "buy",
       "quantity": 62,
       "price": 952.0098,
@@ -57597,6 +73880,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-17",
+      "settlementDate": "2025-11-17",
       "side": "buy",
       "quantity": 200,
       "price": 944.4024,
@@ -57604,6 +73888,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-18",
+      "settlementDate": "2025-11-18",
       "side": "buy",
       "quantity": 120,
       "price": 926.6691,
@@ -57611,6 +73896,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-19",
+      "settlementDate": "2025-11-19",
       "side": "buy",
       "quantity": 1098,
       "price": 911.9747,
@@ -57618,6 +73904,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-04",
+      "settlementDate": "2025-12-04",
       "side": "buy",
       "quantity": 85,
       "price": 878.7347,
@@ -57625,6 +73912,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 425,
       "price": 934.4768,
@@ -57632,6 +73920,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-20",
+      "settlementDate": "2026-03-20",
       "side": "buy",
       "quantity": 27,
       "price": 946.0148,
@@ -57639,6 +73928,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-23",
+      "settlementDate": "2026-03-23",
       "side": "buy",
       "quantity": 28,
       "price": 928.1479,
@@ -57646,6 +73936,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 66,
       "price": 967.187,
@@ -57653,6 +73944,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-30",
+      "settlementDate": "2026-03-30",
       "side": "buy",
       "quantity": 21,
       "price": 970.4743,
@@ -57660,6 +73952,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 169,
       "price": 996.1898,
@@ -57667,6 +73960,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-06",
+      "settlementDate": "2026-04-06",
       "side": "buy",
       "quantity": 160,
       "price": 1000.9553,
@@ -57674,6 +73968,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-07",
+      "settlementDate": "2026-04-07",
       "side": "buy",
       "quantity": 170,
       "price": 1039.522,
@@ -57681,6 +73976,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-17",
+      "settlementDate": "2026-04-17",
       "side": "buy",
       "quantity": 117,
       "price": 1071.6538,
@@ -57688,6 +73984,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-07",
+      "settlementDate": "2026-08-07",
       "side": "buy",
       "quantity": 27,
       "price": 1338.2785,
@@ -57695,6 +73992,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-10",
       "side": "buy",
       "quantity": 167,
       "price": 1368.7795,
@@ -57702,6 +74000,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-13",
+      "settlementDate": "2026-08-13",
       "side": "buy",
       "quantity": 68,
       "price": 1376.6093,
@@ -57709,6 +74008,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-14",
+      "settlementDate": "2026-08-14",
       "side": "buy",
       "quantity": 8,
       "price": 1366.2262,
@@ -57716,6 +74016,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-18",
+      "settlementDate": "2026-08-18",
       "side": "buy",
       "quantity": 147,
       "price": 1397.346,
@@ -57723,6 +74024,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-11",
+      "settlementDate": "2026-09-11",
       "side": "buy",
       "quantity": 18,
       "price": 1385.3017,
@@ -57730,6 +74032,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-21",
+      "settlementDate": "2026-09-21",
       "side": "buy",
       "quantity": 53,
       "price": 1416.0925,
@@ -57739,6 +74042,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|aurobindo-pharma": [
     {
       "date": "2025-10-10",
+      "settlementDate": "2025-10-10",
       "side": "buy",
       "quantity": 1026,
       "price": 1138.4018,
@@ -57746,6 +74050,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-13",
+      "settlementDate": "2025-10-13",
       "side": "buy",
       "quantity": 94,
       "price": 1136.9333,
@@ -57753,6 +74058,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-14",
+      "settlementDate": "2025-10-14",
       "side": "buy",
       "quantity": 248,
       "price": 1123.6939,
@@ -57760,6 +74066,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-16",
+      "settlementDate": "2025-10-16",
       "side": "buy",
       "quantity": 80,
       "price": 1105.2858,
@@ -57767,6 +74074,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-20",
+      "settlementDate": "2025-10-20",
       "side": "buy",
       "quantity": 94,
       "price": 1104.797,
@@ -57774,6 +74082,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-27",
+      "settlementDate": "2025-10-27",
       "side": "buy",
       "quantity": 375,
       "price": 1090.7865,
@@ -57781,6 +74090,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-09",
+      "settlementDate": "2025-12-09",
       "side": "buy",
       "quantity": 273,
       "price": 1170.7953,
@@ -57788,6 +74098,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-15",
+      "settlementDate": "2025-12-15",
       "side": "buy",
       "quantity": 91,
       "price": 1185.6592,
@@ -57795,6 +74106,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-17",
+      "settlementDate": "2025-12-17",
       "side": "buy",
       "quantity": 197,
       "price": 1192.0662,
@@ -57802,6 +74114,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-19",
+      "settlementDate": "2025-12-19",
       "side": "buy",
       "quantity": 93,
       "price": 1219.9644,
@@ -57809,6 +74122,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-30",
+      "settlementDate": "2025-12-30",
       "side": "buy",
       "quantity": 181,
       "price": 1187.7243,
@@ -57816,6 +74130,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-31",
+      "settlementDate": "2025-12-31",
       "side": "buy",
       "quantity": 90,
       "price": 1189.7307,
@@ -57823,6 +74138,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-01",
+      "settlementDate": "2026-01-01",
       "side": "buy",
       "quantity": 359,
       "price": 1185.6644,
@@ -57830,6 +74146,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-06",
+      "settlementDate": "2026-01-06",
       "side": "buy",
       "quantity": 138,
       "price": 1232.5274,
@@ -57837,6 +74154,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-07",
+      "settlementDate": "2026-01-07",
       "side": "buy",
       "quantity": 134,
       "price": 1249.7758,
@@ -57844,6 +74162,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-07",
+      "settlementDate": "2026-05-08",
       "side": "sell",
       "quantity": 205,
       "price": 1475,
@@ -57854,6 +74173,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-17",
+      "settlementDate": "2026-09-18",
       "side": "sell",
       "quantity": 383,
       "price": 1671.4693,
@@ -57861,6 +74181,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-21",
+      "settlementDate": "2026-09-22",
       "side": "sell",
       "quantity": 100,
       "price": 1714.1528,
@@ -57868,6 +74189,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-22",
+      "settlementDate": "2026-09-23",
       "side": "sell",
       "quantity": 210,
       "price": 1693.0046,
@@ -57877,6 +74199,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|axis-liquid-fund-direct-plan-growth-option": [
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 19126.812,
       "price": 2841.7324,
@@ -57884,6 +74207,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-21",
+      "settlementDate": "2025-01-21",
       "side": "buy",
       "quantity": 4284.286,
       "price": 2842.2586,
@@ -57891,6 +74215,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-23",
+      "settlementDate": "2025-01-24",
       "side": "sell",
       "quantity": 1259,
       "price": 2843.6666,
@@ -57898,6 +74223,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-03",
+      "settlementDate": "2025-04-04",
       "side": "sell",
       "quantity": 560,
       "price": 2887.181,
@@ -57905,6 +74231,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-07",
+      "settlementDate": "2025-04-08",
       "side": "sell",
       "quantity": 2560,
       "price": 2889.1239,
@@ -57912,6 +74239,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-04",
+      "settlementDate": "2025-05-05",
       "side": "sell",
       "quantity": 1160,
       "price": 2902.8852,
@@ -57919,6 +74247,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-07",
+      "settlementDate": "2025-05-08",
       "side": "sell",
       "quantity": 400,
       "price": 2904.3552,
@@ -57926,6 +74255,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-14",
+      "settlementDate": "2025-05-15",
       "side": "sell",
       "quantity": 980,
       "price": 2907.9723,
@@ -57933,6 +74263,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-11",
+      "settlementDate": "2025-06-12",
       "side": "sell",
       "quantity": 3130,
       "price": 2923.6389,
@@ -57940,6 +74271,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-27",
+      "settlementDate": "2025-06-27",
       "side": "buy",
       "quantity": 176.179,
       "price": 2930.3198,
@@ -57947,6 +74279,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-30",
+      "settlementDate": "2025-06-30",
       "side": "buy",
       "quantity": 726.593,
       "price": 2931.5607,
@@ -57954,6 +74287,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-15",
+      "settlementDate": "2025-07-16",
       "side": "sell",
       "quantity": 490,
       "price": 2939.8451,
@@ -57961,6 +74295,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-19",
+      "settlementDate": "2025-08-20",
       "side": "sell",
       "quantity": 470,
       "price": 2955.5553,
@@ -57968,6 +74303,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-04",
+      "settlementDate": "2025-09-05",
       "side": "sell",
       "quantity": 1030,
       "price": 2964.5601,
@@ -57975,6 +74311,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-10",
+      "settlementDate": "2025-09-11",
       "side": "sell",
       "quantity": 1370,
       "price": 2965.3036,
@@ -57982,6 +74319,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-15",
+      "settlementDate": "2025-09-16",
       "side": "sell",
       "quantity": 100,
       "price": 2967.6201,
@@ -57989,6 +74327,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-24",
+      "settlementDate": "2025-09-25",
       "side": "sell",
       "quantity": 460,
       "price": 2971.9175,
@@ -57996,6 +74335,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-06",
+      "settlementDate": "2025-10-07",
       "side": "sell",
       "quantity": 740,
       "price": 2978.3466,
@@ -58003,6 +74343,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-28",
+      "settlementDate": "2025-10-29",
       "side": "sell",
       "quantity": 1210,
       "price": 2988.3054,
@@ -58010,6 +74351,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-05",
+      "settlementDate": "2025-11-06",
       "side": "sell",
       "quantity": 770,
       "price": 2992.2039,
@@ -58017,6 +74359,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-30",
+      "settlementDate": "2025-12-01",
       "side": "sell",
       "quantity": 1160,
       "price": 3004.1823,
@@ -58024,6 +74367,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-06",
+      "settlementDate": "2026-01-07",
       "side": "sell",
       "quantity": 765,
       "price": 3022.4959,
@@ -58031,6 +74375,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-09",
+      "settlementDate": "2026-01-09",
       "side": "buy",
       "quantity": 22.759,
       "price": 3023.0386,
@@ -58038,6 +74383,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-09",
+      "settlementDate": "2026-02-09",
       "side": "buy",
       "quantity": 705.531,
       "price": 3038.7899,
@@ -58045,6 +74391,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-10",
       "side": "sell",
       "quantity": 1330,
       "price": 3052.9241,
@@ -58052,6 +74399,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-16",
+      "settlementDate": "2026-03-17",
       "side": "sell",
       "quantity": 341.15,
       "price": 3055.4363,
@@ -58059,6 +74407,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-25",
       "side": "sell",
       "quantity": 1344,
       "price": 3059.2254,
@@ -58066,6 +74415,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-05",
+      "settlementDate": "2026-04-06",
       "side": "sell",
       "quantity": 1118,
       "price": 3071.3921,
@@ -58073,6 +74423,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-12",
+      "settlementDate": "2026-04-13",
       "side": "sell",
       "quantity": 601.03,
       "price": 3077.148,
@@ -58080,6 +74431,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-16",
+      "settlementDate": "2026-04-17",
       "side": "sell",
       "quantity": 1464,
       "price": 3079.9851,
@@ -58087,6 +74439,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-03",
+      "settlementDate": "2026-05-04",
       "side": "sell",
       "quantity": 228,
       "price": 3086.8753,
@@ -58094,6 +74447,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-16",
+      "settlementDate": "2026-09-16",
       "side": "buy",
       "quantity": 1730.049,
       "price": 3163.4186,
@@ -58101,6 +74455,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-18",
+      "settlementDate": "2026-09-18",
       "side": "buy",
       "quantity": 1394.719,
       "price": 3164.3213,
@@ -58110,6 +74465,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|bajaj-auto": [
     {
       "date": "2025-07-18",
+      "settlementDate": "2025-07-18",
       "side": "buy",
       "quantity": 100,
       "price": 8344.2376,
@@ -58117,6 +74473,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-21",
+      "settlementDate": "2025-07-21",
       "side": "buy",
       "quantity": 50,
       "price": 8426.3678,
@@ -58124,6 +74481,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-18",
+      "settlementDate": "2025-08-18",
       "side": "buy",
       "quantity": 6,
       "price": 8592.3367,
@@ -58131,6 +74489,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-25",
+      "settlementDate": "2025-09-25",
       "side": "buy",
       "quantity": 80,
       "price": 8847.574,
@@ -58138,6 +74497,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-14",
+      "settlementDate": "2026-07-14",
       "side": "sell",
       "quantity": 34,
       "price": 12000,
@@ -58148,6 +74508,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-11",
+      "settlementDate": "2026-09-15",
       "side": "sell",
       "quantity": 82,
       "price": 11657.485,
@@ -58155,6 +74516,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-15",
+      "settlementDate": "2026-09-16",
       "side": "sell",
       "quantity": 78,
       "price": 11487.3227,
@@ -58162,6 +74524,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-16",
+      "settlementDate": "2026-09-17",
       "side": "sell",
       "quantity": 39,
       "price": 11502.4069,
@@ -58169,6 +74532,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-17",
+      "settlementDate": "2026-09-18",
       "side": "sell",
       "quantity": 3,
       "price": 11470.9133,
@@ -58178,6 +74542,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|bharat-heavy-electricals": [
     {
       "date": "2025-01-20",
+      "settlementDate": "2025-01-20",
       "side": "buy",
       "quantity": 9260,
       "price": 216.9845,
@@ -58185,6 +74550,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-13",
+      "settlementDate": "2026-01-13",
       "side": "buy",
       "quantity": 391,
       "price": 265.7751,
@@ -58192,6 +74558,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-04",
+      "settlementDate": "2026-03-04",
       "side": "buy",
       "quantity": 690,
       "price": 249.4478,
@@ -58199,6 +74566,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-05",
+      "settlementDate": "2026-03-05",
       "side": "buy",
       "quantity": 440,
       "price": 254.5104,
@@ -58206,6 +74574,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-10",
+      "settlementDate": "2026-03-10",
       "side": "buy",
       "quantity": 335,
       "price": 257.6943,
@@ -58213,6 +74582,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-13",
+      "settlementDate": "2026-03-13",
       "side": "buy",
       "quantity": 356,
       "price": 261.8666,
@@ -58220,6 +74590,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-23",
+      "settlementDate": "2026-03-23",
       "side": "buy",
       "quantity": 573,
       "price": 251.3576,
@@ -58227,6 +74598,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 510,
       "price": 258.4251,
@@ -58234,6 +74606,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-27",
+      "settlementDate": "2026-03-27",
       "side": "buy",
       "quantity": 151,
       "price": 256.329,
@@ -58241,6 +74614,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-30",
+      "settlementDate": "2026-03-30",
       "side": "buy",
       "quantity": 432,
       "price": 247.7253,
@@ -58248,6 +74622,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 424,
       "price": 254.8849,
@@ -58255,6 +74630,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-09",
+      "settlementDate": "2026-04-09",
       "side": "buy",
       "quantity": 1631,
       "price": 277.1045,
@@ -58264,6 +74640,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|engineers-india": [
     {
       "date": "2025-04-04",
+      "settlementDate": "2025-04-04",
       "side": "buy",
       "quantity": 62,
       "price": 162.7989,
@@ -58271,6 +74648,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-04",
+      "settlementDate": "2025-04-04",
       "side": "buy",
       "quantity": 4917,
       "price": 163.0468,
@@ -58278,6 +74656,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-07",
+      "settlementDate": "2025-04-07",
       "side": "buy",
       "quantity": 5000,
       "price": 153.445,
@@ -58285,6 +74664,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-08",
+      "settlementDate": "2025-04-08",
       "side": "buy",
       "quantity": 3760,
       "price": 163.6537,
@@ -58292,6 +74672,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-09",
+      "settlementDate": "2025-04-09",
       "side": "buy",
       "quantity": 1321,
       "price": 160.4982,
@@ -58299,6 +74680,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-15",
+      "settlementDate": "2025-04-15",
       "side": "buy",
       "quantity": 2370,
       "price": 168.0658,
@@ -58306,6 +74688,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-16",
+      "settlementDate": "2025-04-16",
       "side": "buy",
       "quantity": 3990,
       "price": 175.6045,
@@ -58313,6 +74696,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-24",
+      "settlementDate": "2025-04-24",
       "side": "buy",
       "quantity": 3160,
       "price": 184.7488,
@@ -58320,6 +74704,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 386,
       "price": 189.6254,
@@ -58329,6 +74714,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|exide-industries": [
     {
       "date": "2025-08-04",
+      "settlementDate": "2025-08-04",
       "side": "buy",
       "quantity": 2940,
       "price": 386.2613,
@@ -58336,6 +74722,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-05",
+      "settlementDate": "2025-08-05",
       "side": "buy",
       "quantity": 2110,
       "price": 389.0493,
@@ -58343,6 +74730,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-07",
+      "settlementDate": "2025-08-07",
       "side": "buy",
       "quantity": 380,
       "price": 375.7977,
@@ -58350,6 +74738,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-18",
+      "settlementDate": "2025-08-18",
       "side": "buy",
       "quantity": 1940,
       "price": 378,
@@ -58357,6 +74746,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-19",
+      "settlementDate": "2025-08-19",
       "side": "buy",
       "quantity": 2230,
       "price": 383.3964,
@@ -58364,6 +74754,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-17",
+      "settlementDate": "2025-09-17",
       "side": "buy",
       "quantity": 372,
       "price": 420.0637,
@@ -58371,6 +74762,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-16",
+      "settlementDate": "2026-03-16",
       "side": "buy",
       "quantity": 744,
       "price": 298.182,
@@ -58378,6 +74770,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 927,
       "price": 301.1032,
@@ -58385,6 +74778,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-18",
+      "settlementDate": "2026-03-18",
       "side": "buy",
       "quantity": 451,
       "price": 308.6386,
@@ -58392,6 +74786,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-19",
+      "settlementDate": "2026-03-19",
       "side": "buy",
       "quantity": 450,
       "price": 303.8163,
@@ -58399,6 +74794,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-20",
+      "settlementDate": "2026-03-20",
       "side": "buy",
       "quantity": 421,
       "price": 305.8746,
@@ -58406,6 +74802,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-23",
+      "settlementDate": "2026-03-23",
       "side": "buy",
       "quantity": 222,
       "price": 294.7194,
@@ -58413,6 +74810,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 482,
       "price": 298.5559,
@@ -58420,6 +74818,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-25",
+      "settlementDate": "2026-03-25",
       "side": "buy",
       "quantity": 381,
       "price": 307.8504,
@@ -58429,6 +74828,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|glenmark-pharmaceuticals": [
     {
       "date": "2025-01-23",
+      "settlementDate": "2025-01-23",
       "side": "buy",
       "quantity": 2830,
       "price": 1522.4094,
@@ -58436,6 +74836,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-16",
+      "settlementDate": "2025-07-17",
       "side": "sell",
       "quantity": 250,
       "price": 2200.3639,
@@ -58443,6 +74844,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-17",
+      "settlementDate": "2025-07-18",
       "side": "sell",
       "quantity": 130,
       "price": 2198.8022,
@@ -58450,6 +74852,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-28",
+      "settlementDate": "2025-07-29",
       "side": "sell",
       "quantity": 270,
       "price": 2155.869,
@@ -58457,6 +74860,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-04",
+      "settlementDate": "2025-08-05",
       "side": "sell",
       "quantity": 160,
       "price": 2090.3798,
@@ -58466,6 +74870,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|gmm-pfaudler": [
     {
       "date": "2025-11-03",
+      "settlementDate": "2025-11-03",
       "side": "buy",
       "quantity": 754,
       "price": 1299.2804,
@@ -58473,6 +74878,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-04",
+      "settlementDate": "2025-11-04",
       "side": "buy",
       "quantity": 465,
       "price": 1269.9201,
@@ -58480,6 +74886,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-06",
+      "settlementDate": "2025-11-06",
       "side": "buy",
       "quantity": 4,
       "price": 1277.9475,
@@ -58487,6 +74894,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-07",
+      "settlementDate": "2025-11-07",
       "side": "buy",
       "quantity": 93,
       "price": 1221.783,
@@ -58494,6 +74902,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-10",
+      "settlementDate": "2025-11-10",
       "side": "buy",
       "quantity": 109,
       "price": 1245.8721,
@@ -58501,6 +74910,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-13",
+      "settlementDate": "2025-11-13",
       "side": "buy",
       "quantity": 468,
       "price": 1260.0005,
@@ -58508,6 +74918,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-17",
+      "settlementDate": "2025-11-17",
       "side": "buy",
       "quantity": 239,
       "price": 1213.0283,
@@ -58515,6 +74926,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-18",
+      "settlementDate": "2025-11-18",
       "side": "buy",
       "quantity": 90,
       "price": 1239.1976,
@@ -58522,6 +74934,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-09",
+      "settlementDate": "2025-12-09",
       "side": "buy",
       "quantity": 71,
       "price": 1076.5463,
@@ -58529,6 +74942,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-06",
+      "settlementDate": "2026-08-07",
       "side": "sell",
       "quantity": 1678,
       "price": 982.318,
@@ -58536,6 +74950,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-07",
+      "settlementDate": "2026-08-10",
       "side": "sell",
       "quantity": 197,
       "price": 964.9778,
@@ -58543,6 +74958,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-11",
       "side": "sell",
       "quantity": 418,
       "price": 969.7586,
@@ -58552,6 +74968,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|graphite-india": [
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 1309,
       "price": 640.3552,
@@ -58559,6 +74976,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-31",
+      "settlementDate": "2025-10-31",
       "side": "buy",
       "quantity": 305,
       "price": 626.5875,
@@ -58566,6 +74984,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-03",
+      "settlementDate": "2025-11-03",
       "side": "buy",
       "quantity": 238,
       "price": 619.7783,
@@ -58573,6 +74992,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-06",
+      "settlementDate": "2025-11-06",
       "side": "buy",
       "quantity": 268,
       "price": 601.8221,
@@ -58580,6 +75000,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-07",
+      "settlementDate": "2025-11-07",
       "side": "buy",
       "quantity": 186,
       "price": 584.77,
@@ -58587,6 +75008,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-10",
+      "settlementDate": "2025-11-10",
       "side": "buy",
       "quantity": 281,
       "price": 539.6526,
@@ -58594,6 +75016,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-09",
+      "settlementDate": "2025-12-09",
       "side": "buy",
       "quantity": 274,
       "price": 538.0199,
@@ -58601,6 +75024,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-30",
+      "settlementDate": "2025-12-30",
       "side": "buy",
       "quantity": 266,
       "price": 592.7595,
@@ -58608,6 +75032,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-02",
+      "settlementDate": "2026-01-02",
       "side": "buy",
       "quantity": 267,
       "price": 658.1401,
@@ -58615,6 +75040,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-04",
+      "settlementDate": "2026-08-05",
       "side": "sell",
       "quantity": 780,
       "price": 710.8751,
@@ -58622,6 +75048,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-05",
+      "settlementDate": "2026-08-06",
       "side": "sell",
       "quantity": 798,
       "price": 713.4172,
@@ -58629,6 +75056,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-06",
+      "settlementDate": "2026-08-07",
       "side": "sell",
       "quantity": 159,
       "price": 711.0761,
@@ -58636,6 +75064,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-14",
+      "settlementDate": "2026-08-17",
       "side": "sell",
       "quantity": 82,
       "price": 721.0824,
@@ -58643,6 +75072,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-21",
+      "settlementDate": "2026-08-24",
       "side": "sell",
       "quantity": 481,
       "price": 715.1422,
@@ -58650,6 +75080,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-24",
+      "settlementDate": "2026-08-25",
       "side": "sell",
       "quantity": 161,
       "price": 720.2501,
@@ -58657,6 +75088,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-25",
+      "settlementDate": "2026-08-27",
       "side": "sell",
       "quantity": 156,
       "price": 711.4128,
@@ -58664,6 +75096,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-26",
+      "settlementDate": "2026-08-27",
       "side": "sell",
       "quantity": 37,
       "price": 684.1046,
@@ -58671,6 +75104,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-27",
+      "settlementDate": "2026-08-28",
       "side": "sell",
       "quantity": 71,
       "price": 692.238,
@@ -58678,6 +75112,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-01",
+      "settlementDate": "2026-09-02",
       "side": "sell",
       "quantity": 83,
       "price": 742.9,
@@ -58685,6 +75120,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-09",
+      "settlementDate": "2026-09-10",
       "side": "sell",
       "quantity": 82,
       "price": 823.0002,
@@ -58692,6 +75128,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-16",
+      "settlementDate": "2026-09-17",
       "side": "sell",
       "quantity": 417,
       "price": 803.8101,
@@ -58699,6 +75136,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-17",
+      "settlementDate": "2026-09-18",
       "side": "sell",
       "quantity": 87,
       "price": 812.1126,
@@ -58708,6 +75146,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|gujarat-ambuja-exports": [
     {
       "date": "2025-04-03",
+      "settlementDate": "2025-04-03",
       "side": "buy",
       "quantity": 480,
       "price": 110.0007,
@@ -58715,6 +75154,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-04",
+      "settlementDate": "2025-04-04",
       "side": "buy",
       "quantity": 12440,
       "price": 114.414,
@@ -58722,6 +75162,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-07",
+      "settlementDate": "2025-04-07",
       "side": "buy",
       "quantity": 3600,
       "price": 111.0588,
@@ -58729,6 +75170,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-08",
+      "settlementDate": "2025-04-08",
       "side": "buy",
       "quantity": 10020,
       "price": 120.388,
@@ -58736,6 +75178,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-09",
+      "settlementDate": "2025-04-09",
       "side": "buy",
       "quantity": 5030,
       "price": 116.0671,
@@ -58743,6 +75186,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-15",
+      "settlementDate": "2025-04-15",
       "side": "buy",
       "quantity": 2310,
       "price": 119.2346,
@@ -58750,6 +75194,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-16",
+      "settlementDate": "2025-04-16",
       "side": "buy",
       "quantity": 2790,
       "price": 124.9636,
@@ -58757,6 +75202,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-17",
+      "settlementDate": "2025-04-17",
       "side": "buy",
       "quantity": 1880,
       "price": 128.0154,
@@ -58764,6 +75210,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-15",
+      "settlementDate": "2025-05-15",
       "side": "buy",
       "quantity": 570,
       "price": 123.3346,
@@ -58771,6 +75218,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-16",
+      "settlementDate": "2025-05-16",
       "side": "buy",
       "quantity": 1140,
       "price": 124.6352,
@@ -58778,6 +75226,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-29",
+      "settlementDate": "2026-06-30",
       "side": "sell",
       "quantity": 3175,
       "price": 163.0827,
@@ -58789,6 +75238,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-30",
+      "settlementDate": "2026-07-01",
       "side": "sell",
       "quantity": 660,
       "price": 165.5835,
@@ -58799,6 +75249,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-07",
+      "settlementDate": "2026-07-08",
       "side": "sell",
       "quantity": 196,
       "price": 161.0653,
@@ -58809,6 +75260,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-08",
+      "settlementDate": "2026-07-09",
       "side": "sell",
       "quantity": 418,
       "price": 161.1683,
@@ -58819,6 +75271,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-09",
+      "settlementDate": "2026-07-10",
       "side": "sell",
       "quantity": 268,
       "price": 159.2417,
@@ -58829,6 +75282,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-13",
+      "settlementDate": "2026-07-14",
       "side": "sell",
       "quantity": 4444,
       "price": 148.1992,
@@ -58839,6 +75293,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-14",
+      "settlementDate": "2026-07-15",
       "side": "sell",
       "quantity": 1176,
       "price": 149.2678,
@@ -58849,6 +75304,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-15",
+      "settlementDate": "2026-07-16",
       "side": "sell",
       "quantity": 810,
       "price": 149.5837,
@@ -58859,6 +75315,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-16",
+      "settlementDate": "2026-07-17",
       "side": "sell",
       "quantity": 1430,
       "price": 148.9945,
@@ -58869,6 +75326,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-17",
+      "settlementDate": "2026-07-20",
       "side": "sell",
       "quantity": 557,
       "price": 146.2945,
@@ -58880,6 +75338,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-20",
+      "settlementDate": "2026-07-21",
       "side": "sell",
       "quantity": 678,
       "price": 144.7933,
@@ -58890,6 +75349,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-21",
+      "settlementDate": "2026-07-22",
       "side": "sell",
       "quantity": 177,
       "price": 144.9488,
@@ -58900,6 +75360,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-22",
+      "settlementDate": "2026-07-23",
       "side": "sell",
       "quantity": 2140,
       "price": 144.2245,
@@ -58910,6 +75371,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-23",
+      "settlementDate": "2026-07-24",
       "side": "sell",
       "quantity": 1050,
       "price": 140.4105,
@@ -58921,6 +75383,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-24",
+      "settlementDate": "2026-07-27",
       "side": "sell",
       "quantity": 8171,
       "price": 147.3698,
@@ -58931,6 +75394,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-27",
+      "settlementDate": "2026-07-28",
       "side": "sell",
       "quantity": 792,
       "price": 157.2506,
@@ -58941,6 +75405,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-03",
+      "settlementDate": "2026-08-04",
       "side": "sell",
       "quantity": 1143,
       "price": 176.0455,
@@ -58948,6 +75413,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-04",
+      "settlementDate": "2026-08-05",
       "side": "sell",
       "quantity": 782,
       "price": 178.1345,
@@ -58955,6 +75421,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-05",
+      "settlementDate": "2026-08-06",
       "side": "sell",
       "quantity": 1132,
       "price": 177.0649,
@@ -58962,6 +75429,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-06",
+      "settlementDate": "2026-08-07",
       "side": "sell",
       "quantity": 1125,
       "price": 176.1816,
@@ -58969,6 +75437,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-07",
+      "settlementDate": "2026-08-10",
       "side": "sell",
       "quantity": 1543,
       "price": 170.5094,
@@ -58976,6 +75445,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-11",
       "side": "sell",
       "quantity": 191,
       "price": 170.1473,
@@ -58983,6 +75453,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-11",
+      "settlementDate": "2026-08-12",
       "side": "sell",
       "quantity": 444,
       "price": 170.2936,
@@ -58990,6 +75461,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-12",
+      "settlementDate": "2026-08-13",
       "side": "sell",
       "quantity": 546,
       "price": 167.0661,
@@ -58997,6 +75469,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-13",
+      "settlementDate": "2026-08-14",
       "side": "sell",
       "quantity": 152,
       "price": 167.2303,
@@ -59004,6 +75477,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-21",
+      "settlementDate": "2026-08-24",
       "side": "sell",
       "quantity": 779,
       "price": 178.9813,
@@ -59011,6 +75485,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-24",
+      "settlementDate": "2026-08-25",
       "side": "sell",
       "quantity": 1168,
       "price": 180.7317,
@@ -59018,6 +75493,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-25",
+      "settlementDate": "2026-08-27",
       "side": "sell",
       "quantity": 1923,
       "price": 179.4804,
@@ -59025,6 +75501,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-26",
+      "settlementDate": "2026-08-27",
       "side": "sell",
       "quantity": 1931,
       "price": 174.6701,
@@ -59032,6 +75509,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-27",
+      "settlementDate": "2026-08-28",
       "side": "sell",
       "quantity": 378,
       "price": 168.6679,
@@ -59039,6 +75517,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-28",
+      "settlementDate": "2026-08-31",
       "side": "sell",
       "quantity": 857,
       "price": 167.4136,
@@ -59046,6 +75525,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-31",
+      "settlementDate": "2026-09-01",
       "side": "sell",
       "quantity": 24,
       "price": 171.8596,
@@ -59055,6 +75535,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|hindustan-aeronautics": [
     {
       "date": "2025-09-12",
+      "settlementDate": "2025-09-12",
       "side": "buy",
       "quantity": 231,
       "price": 4740.9582,
@@ -59062,6 +75543,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-22",
+      "settlementDate": "2025-09-22",
       "side": "buy",
       "quantity": 94,
       "price": 4862.579,
@@ -59069,6 +75551,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-23",
+      "settlementDate": "2025-09-23",
       "side": "buy",
       "quantity": 95,
       "price": 4784.6538,
@@ -59076,6 +75559,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-25",
+      "settlementDate": "2025-09-25",
       "side": "buy",
       "quantity": 91,
       "price": 4771.1,
@@ -59083,6 +75567,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-14",
+      "settlementDate": "2025-10-14",
       "side": "buy",
       "quantity": 49,
       "price": 4745.0773,
@@ -59090,6 +75575,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-09",
       "side": "buy",
       "quantity": 107,
       "price": 3987.3262,
@@ -59097,6 +75583,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-12",
+      "settlementDate": "2026-03-12",
       "side": "buy",
       "quantity": 41,
       "price": 4013.3888,
@@ -59104,6 +75591,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 80,
       "price": 3947.8178,
@@ -59111,6 +75599,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 9,
       "price": 3687.5011,
@@ -59118,6 +75607,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 42,
       "price": 3643.275,
@@ -59127,6 +75617,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|ingersollrand-india": [
     {
       "date": "2026-04-13",
+      "settlementDate": "2026-04-13",
       "side": "buy",
       "quantity": 275,
       "price": 3967.8186,
@@ -59134,6 +75625,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-17",
+      "settlementDate": "2026-04-17",
       "side": "buy",
       "quantity": 170,
       "price": 4100,
@@ -59143,6 +75635,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|intellect-design-arena": [
     {
       "date": "2025-08-26",
+      "settlementDate": "2025-08-26",
       "side": "buy",
       "quantity": 434,
       "price": 983.7486,
@@ -59150,6 +75643,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-28",
+      "settlementDate": "2025-08-28",
       "side": "buy",
       "quantity": 428,
       "price": 974.7571,
@@ -59157,6 +75651,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-01",
+      "settlementDate": "2025-09-01",
       "side": "buy",
       "quantity": 48,
       "price": 988.2781,
@@ -59164,6 +75659,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-02",
+      "settlementDate": "2025-09-02",
       "side": "buy",
       "quantity": 55,
       "price": 989.9971,
@@ -59171,6 +75667,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-03",
+      "settlementDate": "2025-09-03",
       "side": "buy",
       "quantity": 218,
       "price": 960.4266,
@@ -59178,6 +75675,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-08",
+      "settlementDate": "2025-09-08",
       "side": "buy",
       "quantity": 95,
       "price": 909.1971,
@@ -59185,6 +75683,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-09",
+      "settlementDate": "2025-09-09",
       "side": "buy",
       "quantity": 144,
       "price": 943.2506,
@@ -59192,6 +75691,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-10",
+      "settlementDate": "2025-09-10",
       "side": "buy",
       "quantity": 188,
       "price": 995.8658,
@@ -59199,6 +75699,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-11",
+      "settlementDate": "2025-09-11",
       "side": "buy",
       "quantity": 44,
       "price": 1013.8784,
@@ -59206,6 +75707,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-12",
+      "settlementDate": "2025-09-12",
       "side": "buy",
       "quantity": 122,
       "price": 1023.0393,
@@ -59213,6 +75715,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-15",
+      "settlementDate": "2025-09-15",
       "side": "buy",
       "quantity": 150,
       "price": 1020.3086,
@@ -59220,6 +75723,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-17",
+      "settlementDate": "2025-09-17",
       "side": "buy",
       "quantity": 276,
       "price": 1045.9055,
@@ -59227,6 +75731,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-10",
+      "settlementDate": "2025-10-10",
       "side": "buy",
       "quantity": 78,
       "price": 989.5929,
@@ -59234,6 +75739,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-13",
+      "settlementDate": "2025-10-13",
       "side": "buy",
       "quantity": 108,
       "price": 990.3292,
@@ -59241,6 +75747,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-14",
+      "settlementDate": "2025-10-14",
       "side": "buy",
       "quantity": 120,
       "price": 966.4431,
@@ -59248,6 +75755,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-20",
+      "settlementDate": "2025-10-20",
       "side": "buy",
       "quantity": 92,
       "price": 950.8237,
@@ -59255,6 +75763,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-18",
+      "settlementDate": "2025-11-18",
       "side": "buy",
       "quantity": 172,
       "price": 1101.8285,
@@ -59262,6 +75771,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-20",
+      "settlementDate": "2025-11-20",
       "side": "buy",
       "quantity": 46,
       "price": 1098.633,
@@ -59269,6 +75779,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-02",
+      "settlementDate": "2025-12-02",
       "side": "buy",
       "quantity": 13,
       "price": 1094.9138,
@@ -59276,6 +75787,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-30",
+      "settlementDate": "2025-12-30",
       "side": "buy",
       "quantity": 184,
       "price": 950.6508,
@@ -59283,6 +75795,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-05",
+      "settlementDate": "2026-01-05",
       "side": "buy",
       "quantity": 50,
       "price": 972.255,
@@ -59290,6 +75803,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-13",
+      "settlementDate": "2026-01-13",
       "side": "buy",
       "quantity": 41,
       "price": 926.9215,
@@ -59297,6 +75811,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-20",
+      "settlementDate": "2026-01-20",
       "side": "buy",
       "quantity": 180,
       "price": 905.2729,
@@ -59304,6 +75819,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-09",
       "side": "buy",
       "quantity": 257,
       "price": 673.1015,
@@ -59311,6 +75827,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-10",
+      "settlementDate": "2026-03-10",
       "side": "buy",
       "quantity": 189,
       "price": 678.8418,
@@ -59318,6 +75835,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-11",
+      "settlementDate": "2026-03-11",
       "side": "buy",
       "quantity": 70,
       "price": 676.8349,
@@ -59325,6 +75843,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-13",
+      "settlementDate": "2026-03-13",
       "side": "buy",
       "quantity": 167,
       "price": 662.856,
@@ -59332,6 +75851,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 267,
       "price": 650.1891,
@@ -59339,6 +75859,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-07",
+      "settlementDate": "2026-04-07",
       "side": "buy",
       "quantity": 89,
       "price": 667.8621,
@@ -59348,6 +75869,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|isgec-heavy-engineering": [
     {
       "date": "2025-01-20",
+      "settlementDate": "2025-01-20",
       "side": "buy",
       "quantity": 3150,
       "price": 1279.02,
@@ -59355,6 +75877,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-04",
+      "settlementDate": "2026-03-04",
       "side": "buy",
       "quantity": 38,
       "price": 856.9987,
@@ -59362,6 +75885,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-17",
+      "settlementDate": "2026-03-17",
       "side": "buy",
       "quantity": 121,
       "price": 898.1342,
@@ -59369,6 +75893,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-23",
+      "settlementDate": "2026-03-23",
       "side": "buy",
       "quantity": 147,
       "price": 879.7398,
@@ -59376,6 +75901,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 880,
       "price": 893,
@@ -59383,6 +75909,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-27",
+      "settlementDate": "2026-03-27",
       "side": "buy",
       "quantity": 108,
       "price": 894.7049,
@@ -59390,6 +75917,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-30",
+      "settlementDate": "2026-03-30",
       "side": "buy",
       "quantity": 217,
       "price": 869.6933,
@@ -59397,6 +75925,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-09",
+      "settlementDate": "2026-04-09",
       "side": "buy",
       "quantity": 104,
       "price": 959.8237,
@@ -59404,6 +75933,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-28",
+      "settlementDate": "2026-04-28",
       "side": "buy",
       "quantity": 402,
       "price": 1093,
@@ -59413,6 +75943,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|jamna-auto-ind": [
     {
       "date": "2025-12-01",
+      "settlementDate": "2025-12-01",
       "side": "buy",
       "quantity": 7000,
       "price": 115.8538,
@@ -59420,6 +75951,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-20",
+      "settlementDate": "2026-02-20",
       "side": "buy",
       "quantity": 7075,
       "price": 143.949,
@@ -59427,6 +75959,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-04",
+      "settlementDate": "2026-03-04",
       "side": "buy",
       "quantity": 8375,
       "price": 139.585,
@@ -59434,6 +75967,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-09",
       "side": "buy",
       "quantity": 2614,
       "price": 122.8192,
@@ -59441,6 +75975,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-13",
+      "settlementDate": "2026-03-13",
       "side": "buy",
       "quantity": 836,
       "price": 117.2678,
@@ -59448,6 +75983,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-25",
+      "settlementDate": "2026-03-25",
       "side": "buy",
       "quantity": 1671,
       "price": 121.4515,
@@ -59455,6 +75991,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-14",
+      "settlementDate": "2026-07-15",
       "side": "sell",
       "quantity": 800,
       "price": 131.0032,
@@ -59465,6 +76002,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-15",
+      "settlementDate": "2026-07-16",
       "side": "sell",
       "quantity": 2014,
       "price": 131.1288,
@@ -59475,6 +76013,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-16",
+      "settlementDate": "2026-07-17",
       "side": "sell",
       "quantity": 799,
       "price": 134.4429,
@@ -59485,6 +76024,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-17",
+      "settlementDate": "2026-07-20",
       "side": "sell",
       "quantity": 473,
       "price": 131.8696,
@@ -59495,6 +76035,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-20",
+      "settlementDate": "2026-07-21",
       "side": "sell",
       "quantity": 540,
       "price": 134.0114,
@@ -59505,6 +76046,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-21",
+      "settlementDate": "2026-07-22",
       "side": "sell",
       "quantity": 1896,
       "price": 135.3749,
@@ -59515,6 +76057,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-22",
+      "settlementDate": "2026-07-23",
       "side": "sell",
       "quantity": 1049,
       "price": 132.4309,
@@ -59526,6 +76069,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-23",
+      "settlementDate": "2026-07-24",
       "side": "sell",
       "quantity": 1600,
       "price": 131.8436,
@@ -59536,6 +76080,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-24",
+      "settlementDate": "2026-07-27",
       "side": "sell",
       "quantity": 2454,
       "price": 129.7253,
@@ -59546,6 +76091,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-27",
+      "settlementDate": "2026-07-28",
       "side": "sell",
       "quantity": 1322,
       "price": 133.7064,
@@ -59556,6 +76102,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-28",
+      "settlementDate": "2026-07-29",
       "side": "sell",
       "quantity": 411,
       "price": 132.7115,
@@ -59565,6 +76112,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|kaveri-seed": [
     {
       "date": "2025-01-20",
+      "settlementDate": "2025-01-20",
       "side": "buy",
       "quantity": 4430,
       "price": 911.8371,
@@ -59572,6 +76120,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-23",
+      "settlementDate": "2025-01-23",
       "side": "buy",
       "quantity": 180,
       "price": 923.8299,
@@ -59579,6 +76128,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-21",
+      "settlementDate": "2025-02-21",
       "side": "buy",
       "quantity": 20,
       "price": 983.261,
@@ -59586,6 +76136,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-27",
+      "settlementDate": "2025-02-27",
       "side": "buy",
       "quantity": 110,
       "price": 1028.7477,
@@ -59593,6 +76144,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-05",
+      "settlementDate": "2025-03-05",
       "side": "buy",
       "quantity": 520,
       "price": 1024.9108,
@@ -59600,6 +76152,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-10",
+      "settlementDate": "2025-03-10",
       "side": "buy",
       "quantity": 60,
       "price": 1078.1928,
@@ -59607,6 +76160,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-22",
+      "settlementDate": "2026-06-23",
       "side": "sell",
       "quantity": 224,
       "price": 944.9592,
@@ -59619,6 +76173,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|ksb": [
     {
       "date": "2026-03-04",
+      "settlementDate": "2026-03-04",
       "side": "buy",
       "quantity": 71,
       "price": 735.1863,
@@ -59626,6 +76181,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-05",
+      "settlementDate": "2026-03-05",
       "side": "buy",
       "quantity": 52,
       "price": 738.6548,
@@ -59633,6 +76189,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-09",
       "side": "buy",
       "quantity": 392,
       "price": 744.9665,
@@ -59640,6 +76197,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-10",
+      "settlementDate": "2026-03-10",
       "side": "buy",
       "quantity": 96,
       "price": 757.3674,
@@ -59647,6 +76205,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-11",
+      "settlementDate": "2026-03-11",
       "side": "buy",
       "quantity": 438,
       "price": 760.196,
@@ -59654,6 +76213,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-12",
+      "settlementDate": "2026-03-12",
       "side": "buy",
       "quantity": 214,
       "price": 758.1505,
@@ -59661,6 +76221,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-13",
+      "settlementDate": "2026-03-13",
       "side": "buy",
       "quantity": 126,
       "price": 749.8941,
@@ -59668,6 +76229,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-16",
+      "settlementDate": "2026-03-16",
       "side": "buy",
       "quantity": 158,
       "price": 745.1323,
@@ -59675,6 +76237,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-20",
+      "settlementDate": "2026-03-20",
       "side": "buy",
       "quantity": 179,
       "price": 797.4887,
@@ -59682,6 +76245,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-23",
+      "settlementDate": "2026-03-23",
       "side": "buy",
       "quantity": 1080,
       "price": 767.4802,
@@ -59689,6 +76253,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-24",
+      "settlementDate": "2026-03-24",
       "side": "buy",
       "quantity": 72,
       "price": 803.4389,
@@ -59696,6 +76261,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-25",
+      "settlementDate": "2026-03-25",
       "side": "buy",
       "quantity": 430,
       "price": 812.2954,
@@ -59703,6 +76269,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 83,
       "price": 833.9333,
@@ -59710,6 +76277,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-02",
+      "settlementDate": "2026-04-02",
       "side": "buy",
       "quantity": 43,
       "price": 823.0658,
@@ -59717,6 +76285,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-02",
+      "settlementDate": "2026-04-02",
       "side": "buy",
       "quantity": 43,
       "price": 823.0658,
@@ -59724,6 +76293,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-09",
+      "settlementDate": "2026-04-09",
       "side": "buy",
       "quantity": 62,
       "price": 872.9798,
@@ -59731,6 +76301,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-13",
+      "settlementDate": "2026-04-13",
       "side": "buy",
       "quantity": 135,
       "price": 908.118,
@@ -59738,6 +76309,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-15",
+      "settlementDate": "2026-04-15",
       "side": "buy",
       "quantity": 952,
       "price": 932.5,
@@ -59745,6 +76317,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-17",
+      "settlementDate": "2026-04-17",
       "side": "buy",
       "quantity": 367,
       "price": 952.641,
@@ -59752,6 +76325,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-04",
+      "settlementDate": "2026-05-04",
       "side": "buy",
       "quantity": 246,
       "price": 899.4131,
@@ -59759,6 +76333,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-04",
+      "settlementDate": "2026-06-04",
       "side": "buy",
       "quantity": 73,
       "price": 788.9366,
@@ -59766,6 +76341,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-05",
+      "settlementDate": "2026-06-05",
       "side": "buy",
       "quantity": 94,
       "price": 808.9874,
@@ -59773,6 +76349,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-08",
+      "settlementDate": "2026-06-08",
       "side": "buy",
       "quantity": 78,
       "price": 820.4996,
@@ -59780,6 +76357,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-09",
+      "settlementDate": "2026-06-09",
       "side": "buy",
       "quantity": 85,
       "price": 804.4991,
@@ -59789,6 +76367,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|mishra-dhatu-nigam": [
     {
       "date": "2025-04-25",
+      "settlementDate": "2025-04-25",
       "side": "buy",
       "quantity": 1850,
       "price": 291.2143,
@@ -59796,6 +76375,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-28",
+      "settlementDate": "2025-04-28",
       "side": "buy",
       "quantity": 1190,
       "price": 304.2576,
@@ -59803,6 +76383,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-30",
+      "settlementDate": "2025-04-30",
       "side": "buy",
       "quantity": 570,
       "price": 314.733,
@@ -59810,6 +76391,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-06",
+      "settlementDate": "2025-05-06",
       "side": "buy",
       "quantity": 450,
       "price": 307.1868,
@@ -59817,6 +76399,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-08",
+      "settlementDate": "2025-05-08",
       "side": "buy",
       "quantity": 890,
       "price": 309.507,
@@ -59824,6 +76407,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-09",
+      "settlementDate": "2025-05-09",
       "side": "buy",
       "quantity": 370,
       "price": 318.6558,
@@ -59831,6 +76415,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-13",
+      "settlementDate": "2025-05-13",
       "side": "buy",
       "quantity": 80,
       "price": 344.429,
@@ -59838,6 +76423,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-29",
+      "settlementDate": "2025-10-29",
       "side": "buy",
       "quantity": 249,
       "price": 385.8853,
@@ -59845,6 +76431,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-11",
+      "settlementDate": "2025-11-11",
       "side": "buy",
       "quantity": 127,
       "price": 388.4162,
@@ -59852,6 +76439,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-14",
+      "settlementDate": "2025-11-14",
       "side": "buy",
       "quantity": 358,
       "price": 369.8914,
@@ -59859,6 +76447,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-08",
+      "settlementDate": "2025-12-08",
       "side": "buy",
       "quantity": 105,
       "price": 296.844,
@@ -59866,6 +76455,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-09",
+      "settlementDate": "2025-12-09",
       "side": "buy",
       "quantity": 225,
       "price": 299.6846,
@@ -59873,6 +76463,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-22",
+      "settlementDate": "2025-12-22",
       "side": "buy",
       "quantity": 378,
       "price": 310.2328,
@@ -59880,6 +76471,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 457,
       "price": 289.8124,
@@ -59887,6 +76479,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-18",
+      "settlementDate": "2026-06-18",
       "side": "buy",
       "quantity": 184,
       "price": 430.8276,
@@ -59896,6 +76489,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|power-finance": [
     {
       "date": "2025-01-20",
+      "settlementDate": "2025-01-20",
       "side": "buy",
       "quantity": 4570,
       "price": 437.9926,
@@ -59903,6 +76497,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-13",
+      "settlementDate": "2025-05-13",
       "side": "buy",
       "quantity": 2230,
       "price": 413.7536,
@@ -59910,6 +76505,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-10",
+      "settlementDate": "2025-06-10",
       "side": "buy",
       "quantity": 420,
       "price": 431.8385,
@@ -59917,6 +76513,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-11",
+      "settlementDate": "2025-06-11",
       "side": "buy",
       "quantity": 1110,
       "price": 434.7008,
@@ -59926,6 +76523,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|punjab-national-bank": [
     {
       "date": "2025-06-30",
+      "settlementDate": "2025-06-30",
       "side": "buy",
       "quantity": 5290,
       "price": 109.6353,
@@ -59933,6 +76531,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-01",
+      "settlementDate": "2025-07-01",
       "side": "buy",
       "quantity": 980,
       "price": 109.7868,
@@ -59940,6 +76539,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-03",
+      "settlementDate": "2025-07-03",
       "side": "buy",
       "quantity": 7360,
       "price": 111.1412,
@@ -59947,6 +76547,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-18",
+      "settlementDate": "2025-07-18",
       "side": "buy",
       "quantity": 2040,
       "price": 113.4196,
@@ -59954,6 +76555,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-09",
+      "settlementDate": "2025-10-09",
       "side": "buy",
       "quantity": 2376,
       "price": 114.1466,
@@ -59961,6 +76563,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-23",
+      "settlementDate": "2025-10-23",
       "side": "buy",
       "quantity": 2436,
       "price": 119.2496,
@@ -59968,6 +76571,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-27",
+      "settlementDate": "2025-10-27",
       "side": "buy",
       "quantity": 915,
       "price": 118.3949,
@@ -59975,6 +76579,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-04",
+      "settlementDate": "2026-02-05",
       "side": "sell",
       "quantity": 4760,
       "price": 123.6257,
@@ -59982,6 +76587,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-05",
+      "settlementDate": "2026-02-06",
       "side": "sell",
       "quantity": 3570,
       "price": 123.7137,
@@ -59989,6 +76595,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-09",
+      "settlementDate": "2026-02-10",
       "side": "sell",
       "quantity": 1190,
       "price": 123.5512,
@@ -59996,6 +76603,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-23",
+      "settlementDate": "2026-02-24",
       "side": "sell",
       "quantity": 3606,
       "price": 130.8836,
@@ -60005,6 +76613,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|ratnamani-metals-and-tubes": [
     {
       "date": "2026-04-27",
+      "settlementDate": "2026-04-27",
       "side": "buy",
       "quantity": 187,
       "price": 2688.8036,
@@ -60012,6 +76621,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-28",
+      "settlementDate": "2026-04-28",
       "side": "buy",
       "quantity": 160,
       "price": 2709.9907,
@@ -60019,6 +76629,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-29",
+      "settlementDate": "2026-04-29",
       "side": "buy",
       "quantity": 157,
       "price": 2650,
@@ -60026,6 +76637,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-30",
+      "settlementDate": "2026-04-30",
       "side": "buy",
       "quantity": 65,
       "price": 2646.2222,
@@ -60033,6 +76645,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-04",
+      "settlementDate": "2026-05-04",
       "side": "buy",
       "quantity": 29,
       "price": 2670.0828,
@@ -60040,6 +76653,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-05",
+      "settlementDate": "2026-05-05",
       "side": "buy",
       "quantity": 24,
       "price": 2709.4096,
@@ -60047,6 +76661,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-07",
+      "settlementDate": "2026-05-07",
       "side": "buy",
       "quantity": 42,
       "price": 2820.149,
@@ -60054,6 +76669,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-08",
+      "settlementDate": "2026-05-08",
       "side": "buy",
       "quantity": 36,
       "price": 2868.4778,
@@ -60061,6 +76677,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-15",
+      "settlementDate": "2026-05-15",
       "side": "buy",
       "quantity": 30,
       "price": 2720.5813,
@@ -60068,6 +76685,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-03",
+      "settlementDate": "2026-06-03",
       "side": "buy",
       "quantity": 52,
       "price": 2566.749,
@@ -60075,6 +76693,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-04",
+      "settlementDate": "2026-06-04",
       "side": "buy",
       "quantity": 10,
       "price": 2639.982,
@@ -60082,6 +76701,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-08",
+      "settlementDate": "2026-06-08",
       "side": "buy",
       "quantity": 24,
       "price": 2569.295,
@@ -60089,6 +76709,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-09",
+      "settlementDate": "2026-06-09",
       "side": "buy",
       "quantity": 7,
       "price": 2561.75,
@@ -60096,6 +76717,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-12",
+      "settlementDate": "2026-06-12",
       "side": "buy",
       "quantity": 18,
       "price": 2568.1433,
@@ -60103,6 +76725,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-15",
+      "settlementDate": "2026-06-15",
       "side": "buy",
       "quantity": 42,
       "price": 2600.3317,
@@ -60110,6 +76733,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-17",
+      "settlementDate": "2026-06-17",
       "side": "buy",
       "quantity": 73,
       "price": 2648.0025,
@@ -60117,6 +76741,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-21",
+      "settlementDate": "2026-07-22",
       "side": "sell",
       "quantity": 61,
       "price": 2546.1351,
@@ -60127,6 +76752,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-22",
+      "settlementDate": "2026-07-23",
       "side": "sell",
       "quantity": 130,
       "price": 2472.3772,
@@ -60138,6 +76764,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-23",
+      "settlementDate": "2026-07-24",
       "side": "sell",
       "quantity": 84,
       "price": 2422.2571,
@@ -60148,6 +76775,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-24",
+      "settlementDate": "2026-07-27",
       "side": "sell",
       "quantity": 95,
       "price": 2403.7827,
@@ -60159,6 +76787,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-28",
+      "settlementDate": "2026-07-29",
       "side": "sell",
       "quantity": 48,
       "price": 2374.0802,
@@ -60166,6 +76795,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-06",
+      "settlementDate": "2026-08-07",
       "side": "sell",
       "quantity": 24,
       "price": 2386.6871,
@@ -60173,6 +76803,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-07",
+      "settlementDate": "2026-08-10",
       "side": "sell",
       "quantity": 156,
       "price": 2269.5848,
@@ -60180,6 +76811,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-11",
       "side": "sell",
       "quantity": 48,
       "price": 2266.9454,
@@ -60187,6 +76819,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-24",
+      "settlementDate": "2026-08-25",
       "side": "sell",
       "quantity": 49,
       "price": 2636.6188,
@@ -60194,6 +76827,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-25",
+      "settlementDate": "2026-08-27",
       "side": "sell",
       "quantity": 261,
       "price": 2712.1985,
@@ -60203,6 +76837,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|rural-electrification": [
     {
       "date": "2025-01-20",
+      "settlementDate": "2025-01-20",
       "side": "buy",
       "quantity": 2060,
       "price": 485.5952,
@@ -60210,6 +76845,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-27",
+      "settlementDate": "2025-06-27",
       "side": "buy",
       "quantity": 2123,
       "price": 403.3927,
@@ -60219,6 +76855,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|state-bank-of-india": [
     {
       "date": "2025-01-20",
+      "settlementDate": "2025-01-20",
       "side": "buy",
       "quantity": 2580,
       "price": 776.147,
@@ -60226,6 +76863,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-25",
+      "settlementDate": "2025-06-25",
       "side": "buy",
       "quantity": 2510,
       "price": 801.1558,
@@ -60235,6 +76873,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|tech-mahindra": [
     {
       "date": "2026-04-15",
+      "settlementDate": "2026-04-15",
       "side": "buy",
       "quantity": 1160,
       "price": 1471.6891,
@@ -60242,6 +76881,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-16",
+      "settlementDate": "2026-04-16",
       "side": "buy",
       "quantity": 390,
       "price": 1489.0082,
@@ -60251,6 +76891,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|the-anup-engineering": [
     {
       "date": "2026-04-01",
+      "settlementDate": "2026-04-01",
       "side": "buy",
       "quantity": 100,
       "price": 1712.9955,
@@ -60258,6 +76899,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-02",
+      "settlementDate": "2026-04-02",
       "side": "buy",
       "quantity": 77,
       "price": 1732.6817,
@@ -60265,6 +76907,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-02",
+      "settlementDate": "2026-04-02",
       "side": "buy",
       "quantity": 77,
       "price": 1732.6817,
@@ -60272,6 +76915,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-06",
+      "settlementDate": "2026-04-06",
       "side": "buy",
       "quantity": 49,
       "price": 1708.0588,
@@ -60279,6 +76923,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-07",
+      "settlementDate": "2026-04-07",
       "side": "buy",
       "quantity": 146,
       "price": 1734.0711,
@@ -60286,6 +76931,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-13",
+      "settlementDate": "2026-04-13",
       "side": "buy",
       "quantity": 37,
       "price": 1934.317,
@@ -60293,6 +76939,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-15",
+      "settlementDate": "2026-04-15",
       "side": "buy",
       "quantity": 24,
       "price": 2018.0162,
@@ -60300,6 +76947,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-16",
+      "settlementDate": "2026-04-16",
       "side": "buy",
       "quantity": 75,
       "price": 2064.0899,
@@ -60307,6 +76955,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-20",
+      "settlementDate": "2026-04-20",
       "side": "buy",
       "quantity": 63,
       "price": 2047.1768,
@@ -60314,6 +76963,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-27",
+      "settlementDate": "2026-04-27",
       "side": "buy",
       "quantity": 55,
       "price": 2204.7895,
@@ -60321,6 +76971,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-30",
+      "settlementDate": "2026-04-30",
       "side": "buy",
       "quantity": 61,
       "price": 2035.3415,
@@ -60328,6 +76979,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-21",
+      "settlementDate": "2026-05-21",
       "side": "buy",
       "quantity": 40,
       "price": 1967.779,
@@ -60335,6 +76987,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-22",
+      "settlementDate": "2026-05-22",
       "side": "buy",
       "quantity": 82,
       "price": 1982.9488,
@@ -60342,6 +76995,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-25",
+      "settlementDate": "2026-05-25",
       "side": "buy",
       "quantity": 18,
       "price": 1982.0833,
@@ -60349,6 +77003,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-26",
+      "settlementDate": "2026-05-26",
       "side": "buy",
       "quantity": 66,
       "price": 1983.9752,
@@ -60356,6 +77011,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-27",
+      "settlementDate": "2026-05-27",
       "side": "buy",
       "quantity": 8,
       "price": 1949.9625,
@@ -60363,6 +77019,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-29",
+      "settlementDate": "2026-05-29",
       "side": "buy",
       "quantity": 64,
       "price": 1820.9372,
@@ -60370,6 +77027,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-01",
+      "settlementDate": "2026-06-01",
       "side": "buy",
       "quantity": 17,
       "price": 1818.4529,
@@ -60377,6 +77035,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-02",
+      "settlementDate": "2026-06-02",
       "side": "buy",
       "quantity": 28,
       "price": 1831.5075,
@@ -60384,6 +77043,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-03",
+      "settlementDate": "2026-06-03",
       "side": "buy",
       "quantity": 55,
       "price": 1948.3929,
@@ -60391,6 +77051,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-04",
+      "settlementDate": "2026-06-04",
       "side": "buy",
       "quantity": 15,
       "price": 1909.578,
@@ -60398,6 +77059,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-05",
+      "settlementDate": "2026-06-05",
       "side": "buy",
       "quantity": 18,
       "price": 1918.1206,
@@ -60405,6 +77067,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-08",
+      "settlementDate": "2026-06-08",
       "side": "buy",
       "quantity": 27,
       "price": 1912.5348,
@@ -60412,6 +77075,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-09",
+      "settlementDate": "2026-06-09",
       "side": "buy",
       "quantity": 15,
       "price": 1862.2633,
@@ -60419,6 +77083,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-15",
+      "settlementDate": "2026-06-15",
       "side": "buy",
       "quantity": 41,
       "price": 1950,
@@ -60428,6 +77093,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|thermax": [
     {
       "date": "2026-04-08",
+      "settlementDate": "2026-04-08",
       "side": "buy",
       "quantity": 304,
       "price": 3274.6295,
@@ -60435,6 +77101,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-09",
+      "settlementDate": "2026-04-09",
       "side": "buy",
       "quantity": 260,
       "price": 3435.8768,
@@ -60444,6 +77111,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|triveni-turbine": [
     {
       "date": "2026-04-17",
+      "settlementDate": "2026-04-17",
       "side": "buy",
       "quantity": 1358,
       "price": 515.7641,
@@ -60451,6 +77119,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-20",
+      "settlementDate": "2026-04-20",
       "side": "buy",
       "quantity": 78,
       "price": 569.6,
@@ -60458,6 +77127,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-21",
+      "settlementDate": "2026-04-21",
       "side": "buy",
       "quantity": 196,
       "price": 567.5886,
@@ -60465,6 +77135,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-22",
+      "settlementDate": "2026-04-22",
       "side": "buy",
       "quantity": 140,
       "price": 571.9831,
@@ -60472,6 +77143,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-23",
+      "settlementDate": "2026-04-23",
       "side": "buy",
       "quantity": 155,
       "price": 578.7959,
@@ -60479,6 +77151,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-24",
+      "settlementDate": "2026-04-24",
       "side": "buy",
       "quantity": 131,
       "price": 563.8184,
@@ -60486,6 +77159,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-27",
+      "settlementDate": "2026-04-27",
       "side": "buy",
       "quantity": 976,
       "price": 579.1213,
@@ -60493,6 +77167,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-29",
+      "settlementDate": "2026-04-29",
       "side": "buy",
       "quantity": 262,
       "price": 585.3915,
@@ -60500,6 +77175,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-30",
+      "settlementDate": "2026-04-30",
       "side": "buy",
       "quantity": 151,
       "price": 567.8668,
@@ -60507,6 +77183,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-05",
+      "settlementDate": "2026-05-05",
       "side": "buy",
       "quantity": 159,
       "price": 559.5941,
@@ -60514,6 +77191,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-08",
+      "settlementDate": "2026-05-08",
       "side": "buy",
       "quantity": 629,
       "price": 595.6722,
@@ -60521,6 +77199,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-19",
+      "settlementDate": "2026-05-19",
       "side": "buy",
       "quantity": 93,
       "price": 591.9077,
@@ -60530,6 +77209,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|vedanta": [
     {
       "date": "2025-01-20",
+      "settlementDate": "2025-01-20",
       "side": "buy",
       "quantity": 8730,
       "price": 461.5719,
@@ -60537,6 +77217,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-11",
+      "settlementDate": "2025-06-11",
       "side": "buy",
       "quantity": 955,
       "price": 464.2356,
@@ -60544,6 +77225,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-09",
+      "settlementDate": "2025-10-09",
       "side": "buy",
       "quantity": 1097,
       "price": 477.6076,
@@ -60551,6 +77233,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-05",
+      "settlementDate": "2026-02-06",
       "side": "sell",
       "quantity": 1741,
       "price": 648.885,
@@ -60558,6 +77241,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-17",
+      "settlementDate": "2026-02-18",
       "side": "sell",
       "quantity": 472,
       "price": 667.0506,
@@ -60567,6 +77251,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "green-lantern-capital-llp-510861|zf-commercial-vehicle-control-systems-india": [
     {
       "date": "2025-05-30",
+      "settlementDate": "2025-05-30",
       "side": "buy",
       "quantity": 40,
       "price": 13163.9855,
@@ -60574,6 +77259,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-01",
+      "settlementDate": "2025-12-01",
       "side": "buy",
       "quantity": 77,
       "price": 13852.9922,
@@ -60581,6 +77267,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-04",
+      "settlementDate": "2026-03-04",
       "side": "buy",
       "quantity": 8,
       "price": 14245.6112,
@@ -60588,6 +77275,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-09",
       "side": "buy",
       "quantity": 11,
       "price": 13949.9673,
@@ -60595,6 +77283,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-10",
+      "settlementDate": "2026-03-10",
       "side": "buy",
       "quantity": 11,
       "price": 14000,
@@ -60602,6 +77291,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-18",
+      "settlementDate": "2026-03-18",
       "side": "buy",
       "quantity": 25,
       "price": 13859.9824,
@@ -63957,6 +80647,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|arvind-fashions": [
     {
       "date": "2024-10-24",
+      "settlementDate": "2024-10-24",
       "side": "buy",
       "quantity": 2000,
       "price": 574.5944,
@@ -63964,6 +80655,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-11-07",
+      "settlementDate": "2024-11-07",
       "side": "buy",
       "quantity": 1000,
       "price": 588.9999,
@@ -63971,6 +80663,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-12-11",
+      "settlementDate": "2024-12-11",
       "side": "buy",
       "quantity": 1000,
       "price": 540.9579,
@@ -63980,6 +80673,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|chemfab-alkalis": [
     {
       "date": "2024-11-05",
+      "settlementDate": "2024-11-05",
       "side": "buy",
       "quantity": 1000,
       "price": 1008.7751,
@@ -63989,6 +80683,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|dcw": [
     {
       "date": "2025-05-09",
+      "settlementDate": "2025-05-09",
       "side": "buy",
       "quantity": 3000,
       "price": 73.624,
@@ -63998,6 +80693,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|eimco-elecon-india": [
     {
       "date": "2026-10-07",
+      "settlementDate": "2026-10-07",
       "side": "buy",
       "quantity": 300,
       "price": 2343.6904,
@@ -64005,6 +80701,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-11-02",
+      "settlementDate": "2026-11-02",
       "side": "buy",
       "quantity": 50,
       "price": 2149.8195,
@@ -64014,6 +80711,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|elecon-engineering": [
     {
       "date": "2026-09-25",
+      "settlementDate": "2026-09-25",
       "side": "buy",
       "quantity": 2000,
       "price": 456.8241,
@@ -64023,6 +80721,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|indian-metals-and-ferro-alloys": [
     {
       "date": "2024-10-24",
+      "settlementDate": "2024-10-24",
       "side": "buy",
       "quantity": 2000,
       "price": 658.3897,
@@ -64030,6 +80729,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-25",
+      "settlementDate": "2024-10-25",
       "side": "buy",
       "quantity": 500,
       "price": 654.5379,
@@ -64037,6 +80737,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-29",
+      "settlementDate": "2025-12-30",
       "side": "sell",
       "quantity": 1000,
       "price": 1445.5182,
@@ -64044,6 +80745,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-10-23",
+      "settlementDate": "2026-10-23",
       "side": "buy",
       "quantity": 200,
       "price": 1093.7103,
@@ -64053,6 +80755,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|jayaswal-neco-industries": [
     {
       "date": "2025-08-22",
+      "settlementDate": "2025-08-22",
       "side": "buy",
       "quantity": 3000,
       "price": 62.968,
@@ -64060,6 +80763,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-06",
+      "settlementDate": "2025-11-06",
       "side": "buy",
       "quantity": 7000,
       "price": 73.1072,
@@ -64067,6 +80771,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-11-18",
+      "settlementDate": "2025-11-18",
       "side": "buy",
       "quantity": 2000,
       "price": 75.5764,
@@ -64074,6 +80779,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-09",
+      "settlementDate": "2026-01-09",
       "side": "buy",
       "quantity": 2000,
       "price": 84.9306,
@@ -64081,6 +80787,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-20",
+      "settlementDate": "2026-01-20",
       "side": "buy",
       "quantity": 500,
       "price": 76.284,
@@ -64088,6 +80795,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-06",
+      "settlementDate": "2026-02-06",
       "side": "buy",
       "quantity": 2500,
       "price": 74.9657,
@@ -64095,6 +80803,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-13",
+      "settlementDate": "2026-02-13",
       "side": "buy",
       "quantity": 3000,
       "price": 77.2757,
@@ -64102,6 +80811,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-17",
+      "settlementDate": "2026-02-17",
       "side": "buy",
       "quantity": 2000,
       "price": 80.4529,
@@ -64109,6 +80819,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-03-09",
+      "settlementDate": "2026-03-09",
       "side": "buy",
       "quantity": 1000,
       "price": 70.615,
@@ -64118,6 +80829,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|kirloskar-ferrous-industries": [
     {
       "date": "2024-10-24",
+      "settlementDate": "2024-10-24",
       "side": "buy",
       "quantity": 1000,
       "price": 619.47,
@@ -64125,6 +80837,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-25",
+      "settlementDate": "2024-10-25",
       "side": "buy",
       "quantity": 1000,
       "price": 577.44,
@@ -64132,6 +80845,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-28",
+      "settlementDate": "2024-10-28",
       "side": "buy",
       "quantity": 267,
       "price": 601,
@@ -64139,6 +80853,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-11-27",
+      "settlementDate": "2024-11-27",
       "side": "buy",
       "quantity": 500,
       "price": 594.95,
@@ -64146,6 +80861,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-12-17",
+      "settlementDate": "2024-12-17",
       "side": "buy",
       "quantity": 200,
       "price": 648.48,
@@ -64155,6 +80871,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|manali-petrochemical": [
     {
       "date": "2024-12-11",
+      "settlementDate": "2024-12-11",
       "side": "buy",
       "quantity": 10000,
       "price": 66.5,
@@ -64164,6 +80881,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|sansera-engineering": [
     {
       "date": "2025-12-30",
+      "settlementDate": "2025-12-30",
       "side": "buy",
       "quantity": 500,
       "price": 1687.2541,
@@ -64171,6 +80889,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-07",
+      "settlementDate": "2026-01-07",
       "side": "buy",
       "quantity": 200,
       "price": 1898.0455,
@@ -64178,6 +80897,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-06",
+      "settlementDate": "2026-02-06",
       "side": "buy",
       "quantity": 100,
       "price": 1849.6494,
@@ -64185,6 +80905,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-21",
+      "settlementDate": "2026-09-22",
       "side": "sell",
       "quantity": 200,
       "price": 4300.0006,
@@ -64192,6 +80913,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-22",
+      "settlementDate": "2026-09-23",
       "side": "sell",
       "quantity": 200,
       "price": 4494.3803,
@@ -64199,6 +80921,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-23",
+      "settlementDate": "2026-09-24",
       "side": "sell",
       "quantity": 100,
       "price": 4634.9604,
@@ -64206,6 +80929,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-09-25",
+      "settlementDate": "2026-09-28",
       "side": "sell",
       "quantity": 100,
       "price": 4670.1729,
@@ -64215,6 +80939,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|sasken-communication-technologies": [
     {
       "date": "2026-06-24",
+      "settlementDate": "2026-06-24",
       "side": "buy",
       "quantity": 100,
       "price": 2288.4049,
@@ -64222,6 +80947,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-10-26",
+      "settlementDate": "2026-10-26",
       "side": "buy",
       "quantity": 62,
       "price": 1798.8216,
@@ -64231,6 +80957,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "molecule-ventures-llp-7810404|v-mart-retail": [
     {
       "date": "2026-09-25",
+      "settlementDate": "2026-09-25",
       "side": "buy",
       "quantity": 1000,
       "price": 759.0503,
@@ -64240,6 +80967,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|apollo-pipes": [
     {
       "date": "2026-08-20",
+      "settlementDate": "2026-08-20",
       "side": "buy",
       "quantity": 5700,
       "price": 591.9999,
@@ -64249,6 +80977,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|arvind-fashions": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 3920,
       "price": 554.0576,
@@ -64256,6 +80985,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-29",
+      "settlementDate": "2024-10-30",
       "side": "buy",
       "quantity": 165,
       "price": 549.3061,
@@ -64263,6 +80993,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 2995,
       "price": 385.4001,
@@ -64270,6 +81001,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-20",
+      "settlementDate": "2025-02-20",
       "side": "buy",
       "quantity": 220,
       "price": 423.5733,
@@ -64277,6 +81009,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-18",
+      "settlementDate": "2025-03-18",
       "side": "buy",
       "quantity": 2060,
       "price": 365.5222,
@@ -64286,6 +81019,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|birlasoft": [
     {
       "date": "2025-06-25",
+      "settlementDate": "2025-06-25",
       "side": "buy",
       "quantity": 3560,
       "price": 434.4801,
@@ -64293,6 +81027,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-26",
+      "settlementDate": "2025-06-26",
       "side": "buy",
       "quantity": 2000,
       "price": 443.3563,
@@ -64300,6 +81035,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-23",
+      "settlementDate": "2025-10-23",
       "side": "buy",
       "quantity": 50,
       "price": 370.4342,
@@ -64307,6 +81043,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 4500,
       "price": 374.3899,
@@ -64316,6 +81053,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|borosil-renewables": [
     {
       "date": "2025-10-10",
+      "settlementDate": "2025-10-10",
       "side": "buy",
       "quantity": 1100,
       "price": 627.5166,
@@ -64323,6 +81061,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-14",
+      "settlementDate": "2025-10-14",
       "side": "buy",
       "quantity": 715,
       "price": 619.1794,
@@ -64330,6 +81069,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-20",
+      "settlementDate": "2025-10-20",
       "side": "buy",
       "quantity": 1150,
       "price": 643.753,
@@ -64337,6 +81077,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 4000,
       "price": 655.3892,
@@ -64346,6 +81087,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|caplin-point-laboratories": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 490,
       "price": 1931.9716,
@@ -64353,6 +81095,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-12-18",
+      "settlementDate": "2024-12-19",
       "side": "sell",
       "quantity": 10,
       "price": 2422.749,
@@ -64363,6 +81106,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-12-19",
+      "settlementDate": "2024-12-20",
       "side": "sell",
       "quantity": 35,
       "price": 2400,
@@ -64373,6 +81117,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 100,
       "price": 1983.6655,
@@ -64380,6 +81125,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-20",
+      "settlementDate": "2025-03-20",
       "side": "buy",
       "quantity": 515,
       "price": 1958.3965,
@@ -64387,6 +81133,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-19",
+      "settlementDate": "2025-05-19",
       "side": "buy",
       "quantity": 450,
       "price": 2078.382,
@@ -64394,6 +81141,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 420,
       "price": 2031.4947,
@@ -64401,6 +81149,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-15",
+      "settlementDate": "2026-04-15",
       "side": "buy",
       "quantity": 535,
       "price": 1736.4878,
@@ -64410,6 +81159,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|ceat": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 660,
       "price": 2892,
@@ -64417,6 +81167,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-29",
+      "settlementDate": "2024-10-30",
       "side": "buy",
       "quantity": 155,
       "price": 2782.3031,
@@ -64424,6 +81175,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 650,
       "price": 2650.2307,
@@ -64431,6 +81183,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-28",
+      "settlementDate": "2025-05-29",
       "side": "sell",
       "quantity": 75,
       "price": 3751.2283,
@@ -64441,6 +81194,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 200,
       "price": 4102.0032,
@@ -64450,6 +81204,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|cosmo-first": [
     {
       "date": "2024-12-16",
+      "settlementDate": "2024-12-16",
       "side": "buy",
       "quantity": 1000,
       "price": 860.2368,
@@ -64457,6 +81212,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-15",
+      "settlementDate": "2025-01-15",
       "side": "buy",
       "quantity": 15,
       "price": 865.4393,
@@ -64464,6 +81220,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-16",
+      "settlementDate": "2025-01-16",
       "side": "buy",
       "quantity": 20,
       "price": 867.6285,
@@ -64471,6 +81228,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 985,
       "price": 851.1824,
@@ -64478,6 +81236,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 2200,
       "price": 663.6072,
@@ -64485,6 +81244,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-13",
+      "settlementDate": "2026-02-13",
       "side": "buy",
       "quantity": 970,
       "price": 716.7716,
@@ -64494,6 +81254,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|creative-newtech": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 1200,
       "price": 793.3461,
@@ -64501,6 +81262,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-09-11",
+      "settlementDate": "2024-09-11",
       "side": "buy",
       "quantity": 130,
       "price": 898.0076,
@@ -64508,6 +81270,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-09-12",
+      "settlementDate": "2024-09-12",
       "side": "buy",
       "quantity": 120,
       "price": 929.9982,
@@ -64515,6 +81278,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 100,
       "price": 899.5032,
@@ -64522,6 +81286,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-01",
+      "settlementDate": "2025-02-03",
       "side": "buy",
       "quantity": 121,
       "price": 970.0234,
@@ -64529,6 +81294,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-03",
+      "settlementDate": "2025-02-03",
       "side": "buy",
       "quantity": 69,
       "price": 967.6096,
@@ -64536,6 +81302,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1065,
       "price": 805.5982,
@@ -64543,6 +81310,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 630,
       "price": 673.1775,
@@ -64550,6 +81318,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-12",
+      "settlementDate": "2025-12-12",
       "side": "buy",
       "quantity": 420,
       "price": 753.2438,
@@ -64559,6 +81328,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|credit-access-grameen": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 520,
       "price": 1206.349,
@@ -64566,6 +81336,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 360,
       "price": 907.1088,
@@ -64573,6 +81344,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-28",
+      "settlementDate": "2025-01-28",
       "side": "buy",
       "quantity": 740,
       "price": 941.5052,
@@ -64580,6 +81352,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 50,
       "price": 992.4924,
@@ -64587,6 +81360,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-23",
+      "settlementDate": "2025-04-23",
       "side": "buy",
       "quantity": 260,
       "price": 1137.6253,
@@ -64594,6 +81368,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 300,
       "price": 1476.497,
@@ -64601,6 +81376,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-14",
+      "settlementDate": "2026-08-14",
       "side": "buy",
       "quantity": 1630,
       "price": 1563.1561,
@@ -64610,6 +81386,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|dilip-buildcon": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 1700,
       "price": 552.9489,
@@ -64617,6 +81394,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-29",
+      "settlementDate": "2024-10-30",
       "side": "buy",
       "quantity": 685,
       "price": 476.2293,
@@ -64624,6 +81402,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 915,
       "price": 423.8711,
@@ -64631,6 +81410,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1410,
       "price": 418.7861,
@@ -64638,6 +81418,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 1750,
       "price": 495.6959,
@@ -64647,6 +81428,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|edelweiss-financial-services": [
     {
       "date": "2025-05-09",
+      "settlementDate": "2025-05-09",
       "side": "buy",
       "quantity": 2900,
       "price": 76.2221,
@@ -64654,6 +81436,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-13",
+      "settlementDate": "2025-05-13",
       "side": "buy",
       "quantity": 17000,
       "price": 84.7881,
@@ -64661,6 +81444,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-11",
+      "settlementDate": "2026-02-11",
       "side": "buy",
       "quantity": 9955,
       "price": 126.265,
@@ -64670,6 +81454,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|ester-industries": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 4510,
       "price": 139.2041,
@@ -64677,6 +81462,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-29",
+      "settlementDate": "2024-10-30",
       "side": "buy",
       "quantity": 2210,
       "price": 147.1253,
@@ -64684,6 +81470,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-11-07",
+      "settlementDate": "2024-11-07",
       "side": "buy",
       "quantity": 780,
       "price": 170,
@@ -64691,6 +81478,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 500,
       "price": 150.1352,
@@ -64698,6 +81486,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 3600,
       "price": 143.9909,
@@ -64705,6 +81494,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-18",
+      "settlementDate": "2025-03-18",
       "side": "buy",
       "quantity": 5030,
       "price": 124.1775,
@@ -64712,6 +81502,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 10000,
       "price": 113.4617,
@@ -64719,6 +81510,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-16",
+      "settlementDate": "2026-01-16",
       "side": "buy",
       "quantity": 4460,
       "price": 93.9546,
@@ -64728,6 +81520,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|fusion-finance": [
     {
       "date": "2025-04-23",
+      "settlementDate": "2025-04-23",
       "side": "buy",
       "quantity": 7340,
       "price": 162.9026,
@@ -64735,6 +81528,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 5000,
       "price": 184.2966,
@@ -64744,6 +81538,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|ghcl": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 2790,
       "price": 676.5497,
@@ -64751,6 +81546,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 210,
       "price": 684.2176,
@@ -64758,6 +81554,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 575,
       "price": 614.265,
@@ -64765,6 +81562,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-25",
+      "settlementDate": "2025-03-25",
       "side": "buy",
       "quantity": 1310,
       "price": 619.6666,
@@ -64772,6 +81570,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 1200,
       "price": 647.3527,
@@ -64781,6 +81580,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|ghcl-textiles": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 5800,
       "price": 107.4551,
@@ -64788,6 +81588,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 2000,
       "price": 97.2096,
@@ -64795,6 +81596,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 6050,
       "price": 80.7033,
@@ -64802,6 +81604,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 6000,
       "price": 78.0586,
@@ -64809,6 +81612,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-13",
+      "settlementDate": "2026-08-13",
       "side": "buy",
       "quantity": 9145,
       "price": 118.9929,
@@ -64818,6 +81622,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|gland-pharma": [
     {
       "date": "2026-06-09",
+      "settlementDate": "2026-06-09",
       "side": "buy",
       "quantity": 1300,
       "price": 2289.9445,
@@ -64827,6 +81632,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|graphite-india": [
     {
       "date": "2026-09-09",
+      "settlementDate": "2026-09-09",
       "side": "buy",
       "quantity": 2700,
       "price": 809.4235,
@@ -64836,6 +81642,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|ifb-industries": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 650,
       "price": 1931.9685,
@@ -64843,6 +81650,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 35,
       "price": 1769.0951,
@@ -64850,6 +81658,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-31",
+      "settlementDate": "2025-01-31",
       "side": "buy",
       "quantity": 150,
       "price": 1400,
@@ -64857,6 +81666,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1050,
       "price": 1175.0361,
@@ -64864,6 +81674,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-28",
+      "settlementDate": "2025-03-28",
       "side": "buy",
       "quantity": 210,
       "price": 1292.1587,
@@ -64873,6 +81684,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|indo-count-industries": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 3730,
       "price": 420.0462,
@@ -64880,6 +81692,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 3535,
       "price": 331.9934,
@@ -64887,6 +81700,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 4965,
       "price": 316.1237,
@@ -64894,6 +81708,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-18",
+      "settlementDate": "2025-03-18",
       "side": "buy",
       "quantity": 1370,
       "price": 266.3402,
@@ -64901,6 +81716,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 2500,
       "price": 286.0484,
@@ -64910,6 +81726,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|kajaria-ceramics": [
     {
       "date": "2026-09-29",
+      "settlementDate": "2026-09-29",
       "side": "buy",
       "quantity": 1700,
       "price": 1189.9991,
@@ -64917,6 +81734,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-10-06",
+      "settlementDate": "2026-10-06",
       "side": "buy",
       "quantity": 965,
       "price": 1209.7226,
@@ -64924,6 +81742,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-10-19",
+      "settlementDate": "2026-10-19",
       "side": "buy",
       "quantity": 80,
       "price": 1229.0158,
@@ -64933,6 +81752,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|krishca-strapping-solutions": [
     {
       "date": "2025-05-30",
+      "settlementDate": "2025-05-30",
       "side": "buy",
       "quantity": 2000,
       "price": 230,
@@ -64940,6 +81760,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 5500,
       "price": 208.5083,
@@ -64949,6 +81770,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|laxmi-organic-industries": [
     {
       "date": "2025-08-18",
+      "settlementDate": "2025-08-18",
       "side": "buy",
       "quantity": 3610,
       "price": 194.902,
@@ -64956,6 +81778,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-19",
+      "settlementDate": "2025-08-19",
       "side": "buy",
       "quantity": 6915,
       "price": 226.4079,
@@ -64963,6 +81786,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-15",
+      "settlementDate": "2025-09-15",
       "side": "buy",
       "quantity": 5475,
       "price": 223.8873,
@@ -64970,6 +81794,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 8000,
       "price": 198.5512,
@@ -64979,6 +81804,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|mastek": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 325,
       "price": 2914.392,
@@ -64986,6 +81812,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-21",
+      "settlementDate": "2024-10-21",
       "side": "buy",
       "quantity": 175,
       "price": 3045,
@@ -64993,6 +81820,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-11-27",
+      "settlementDate": "2024-11-27",
       "side": "buy",
       "quantity": 100,
       "price": 3288.0023,
@@ -65000,6 +81828,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 200,
       "price": 2693.829,
@@ -65007,6 +81836,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 855,
       "price": 2357.2481,
@@ -65014,6 +81844,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 350,
       "price": 2162.858,
@@ -65023,6 +81854,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|neuland-laboratories": [
     {
       "date": "2025-01-03",
+      "settlementDate": "2025-01-03",
       "side": "buy",
       "quantity": 5,
       "price": 14325,
@@ -65030,6 +81862,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 55,
       "price": 13637.3055,
@@ -65037,6 +81870,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-22",
+      "settlementDate": "2025-01-22",
       "side": "buy",
       "quantity": 55,
       "price": 13870.3138,
@@ -65044,6 +81878,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-24",
+      "settlementDate": "2025-01-24",
       "side": "buy",
       "quantity": 85,
       "price": 14029.7164,
@@ -65051,6 +81886,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 100,
       "price": 15860.8457,
@@ -65058,6 +81894,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-10-07",
+      "settlementDate": "2026-10-08",
       "side": "sell",
       "quantity": 70,
       "price": 21939.6746,
@@ -65072,6 +81909,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|nitin-spinners": [
     {
       "date": "2026-02-19",
+      "settlementDate": "2026-02-19",
       "side": "buy",
       "quantity": 8395,
       "price": 372.0441,
@@ -65079,6 +81917,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-14",
+      "settlementDate": "2026-08-14",
       "side": "buy",
       "quantity": 115,
       "price": 542.7225,
@@ -65086,6 +81925,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-17",
+      "settlementDate": "2026-08-17",
       "side": "buy",
       "quantity": 310,
       "price": 554.4728,
@@ -65093,6 +81933,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-18",
+      "settlementDate": "2026-08-18",
       "side": "buy",
       "quantity": 760,
       "price": 595.8654,
@@ -65102,6 +81943,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|paras-defence-and-space-technologies": [
     {
       "date": "2026-05-07",
+      "settlementDate": "2026-05-07",
       "side": "buy",
       "quantity": 3650,
       "price": 834.0916,
@@ -65109,6 +81951,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-18",
+      "settlementDate": "2026-06-19",
       "side": "sell",
       "quantity": 615,
       "price": 1285.8526,
@@ -65119,6 +81962,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-19",
+      "settlementDate": "2026-06-22",
       "side": "sell",
       "quantity": 605,
       "price": 1436.0027,
@@ -65131,6 +81975,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|pokarna": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 990,
       "price": 1021.4173,
@@ -65138,6 +81983,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-15",
+      "settlementDate": "2024-10-15",
       "side": "buy",
       "quantity": 410,
       "price": 1108.6401,
@@ -65145,6 +81991,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-11-13",
+      "settlementDate": "2024-11-13",
       "side": "buy",
       "quantity": 300,
       "price": 1140,
@@ -65152,6 +81999,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-11-19",
+      "settlementDate": "2024-11-19",
       "side": "buy",
       "quantity": 400,
       "price": 1082.3244,
@@ -65159,6 +82007,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-11-21",
+      "settlementDate": "2024-11-21",
       "side": "buy",
       "quantity": 300,
       "price": 1047.6549,
@@ -65166,6 +82015,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-11-27",
+      "settlementDate": "2024-11-27",
       "side": "buy",
       "quantity": 200,
       "price": 994.5027,
@@ -65173,6 +82023,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 200,
       "price": 1288.1071,
@@ -65180,6 +82031,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1170,
       "price": 1131.3865,
@@ -65187,6 +82039,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 200,
       "price": 910.7872,
@@ -65196,6 +82049,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|polyplex": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 775,
       "price": 1223.5519,
@@ -65203,6 +82057,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 170,
       "price": 1252.3318,
@@ -65210,6 +82065,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 535,
       "price": 1120.3995,
@@ -65217,6 +82073,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-25",
+      "settlementDate": "2025-03-25",
       "side": "buy",
       "quantity": 235,
       "price": 1237.8708,
@@ -65224,6 +82081,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 800,
       "price": 969.4356,
@@ -65233,6 +82091,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|punjab-chem-and-crop-prot-l": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 720,
       "price": 1298.0021,
@@ -65240,6 +82099,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 785,
       "price": 734.5657,
@@ -65247,6 +82107,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-27",
+      "settlementDate": "2025-02-27",
       "side": "buy",
       "quantity": 1220,
       "price": 715.3661,
@@ -65254,6 +82115,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-28",
+      "settlementDate": "2025-02-28",
       "side": "buy",
       "quantity": 35,
       "price": 712.988,
@@ -65261,6 +82123,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-03",
+      "settlementDate": "2025-03-03",
       "side": "buy",
       "quantity": 155,
       "price": 715,
@@ -65270,6 +82133,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|puravankara": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 3445,
       "price": 452.6468,
@@ -65277,6 +82141,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-29",
+      "settlementDate": "2024-10-30",
       "side": "buy",
       "quantity": 1525,
       "price": 396.5554,
@@ -65284,6 +82149,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 1880,
       "price": 352.579,
@@ -65291,6 +82157,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 7750,
       "price": 233.4064,
@@ -65298,6 +82165,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-12",
+      "settlementDate": "2025-08-12",
       "side": "buy",
       "quantity": 1750,
       "price": 256.6655,
@@ -65307,6 +82175,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|sg-mart": [
     {
       "date": "2025-03-28",
+      "settlementDate": "2025-03-28",
       "side": "buy",
       "quantity": 4970,
       "price": 319.56,
@@ -65314,6 +82183,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-04",
+      "settlementDate": "2025-09-04",
       "side": "buy",
       "quantity": 1960,
       "price": 327.55,
@@ -65321,6 +82191,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 3000,
       "price": 373.4054,
@@ -65328,6 +82199,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-10",
+      "settlementDate": "2026-04-13",
       "side": "sell",
       "quantity": 1750,
       "price": 552.6335,
@@ -65338,6 +82210,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-21",
+      "settlementDate": "2026-05-22",
       "side": "sell",
       "quantity": 900,
       "price": 630.0236,
@@ -65348,6 +82221,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-23",
+      "settlementDate": "2026-07-24",
       "side": "sell",
       "quantity": 2440,
       "price": 675.0922,
@@ -65359,6 +82233,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-31",
+      "settlementDate": "2026-09-01",
       "side": "sell",
       "quantity": 1715,
       "price": 791.1861,
@@ -65371,6 +82246,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|shakti-pumps-india": [
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1350,
       "price": 815.9708,
@@ -65380,6 +82256,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|shankara-buildpro": [
     {
       "date": "2026-02-03",
+      "settlementDate": "2026-02-03",
       "side": "buy",
       "quantity": 1415,
       "price": 789.9848,
@@ -65387,6 +82264,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-19",
+      "settlementDate": "2026-05-20",
       "side": "sell",
       "quantity": 1050,
       "price": 1159.2689,
@@ -65399,6 +82277,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|sharda-cropchem": [
     {
       "date": "2026-02-05",
+      "settlementDate": "2026-02-05",
       "side": "buy",
       "quantity": 1920,
       "price": 1117.8326,
@@ -65408,6 +82287,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|sharda-motor-industries": [
     {
       "date": "2024-10-09",
+      "settlementDate": "2024-10-09",
       "side": "buy",
       "quantity": 650,
       "price": 2090.8099,
@@ -65415,6 +82295,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-31",
+      "settlementDate": "2025-01-31",
       "side": "buy",
       "quantity": 87,
       "price": 1769.326,
@@ -65422,6 +82303,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-01",
+      "settlementDate": "2025-02-03",
       "side": "buy",
       "quantity": 276,
       "price": 1811.7965,
@@ -65429,6 +82311,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-03",
+      "settlementDate": "2025-02-03",
       "side": "buy",
       "quantity": 102,
       "price": 1819.9472,
@@ -65436,6 +82319,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 290,
       "price": 1596.0979,
@@ -65443,6 +82327,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-26",
+      "settlementDate": "2025-03-26",
       "side": "buy",
       "quantity": 270,
       "price": 1675.3341,
@@ -65452,6 +82337,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|stove-kraft": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 1125,
       "price": 815.9864,
@@ -65459,6 +82345,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-12-19",
+      "settlementDate": "2024-12-19",
       "side": "buy",
       "quantity": 60,
       "price": 896.4578,
@@ -65466,6 +82353,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 505,
       "price": 933.3925,
@@ -65473,6 +82361,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1495,
       "price": 697.6361,
@@ -65480,6 +82369,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 750,
       "price": 767.4482,
@@ -65489,6 +82379,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|syrma-sgs-technology": [
     {
       "date": "2026-02-05",
+      "settlementDate": "2026-02-05",
       "side": "buy",
       "quantity": 2585,
       "price": 856.3414,
@@ -65496,6 +82387,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-22",
+      "settlementDate": "2026-04-22",
       "side": "buy",
       "quantity": 175,
       "price": 1011.2508,
@@ -65503,6 +82395,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-24",
+      "settlementDate": "2026-04-24",
       "side": "buy",
       "quantity": 175,
       "price": 971.4201,
@@ -65510,6 +82403,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-25",
+      "settlementDate": "2026-06-29",
       "side": "sell",
       "quantity": 385,
       "price": 1467.1272,
@@ -65522,6 +82416,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|time-technoplast": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 1560,
       "price": 401.4725,
@@ -65529,6 +82424,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1390,
       "price": 375.4001,
@@ -65536,6 +82432,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-24",
+      "settlementDate": "2025-03-24",
       "side": "buy",
       "quantity": 2500,
       "price": 389.7322,
@@ -65545,6 +82442,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|v2-retail": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 565,
       "price": 1125.6735,
@@ -65552,6 +82450,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-30",
+      "settlementDate": "2024-10-30",
       "side": "buy",
       "quantity": 975,
       "price": 1107.5758,
@@ -65559,6 +82458,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-27",
+      "settlementDate": "2025-02-27",
       "side": "buy",
       "quantity": 870,
       "price": 1699.7808,
@@ -65566,6 +82466,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-01",
+      "settlementDate": "2025-07-01",
       "side": "buy",
       "quantity": 225,
       "price": 1827.3991,
@@ -65573,6 +82474,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-06",
+      "settlementDate": "2026-01-06",
       "side": "buy",
       "quantity": 525,
       "price": 2299.9737,
@@ -65582,6 +82484,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|vaibhav-global": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 3000,
       "price": 310.6748,
@@ -65589,6 +82492,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 2600,
       "price": 284.5226,
@@ -65596,6 +82500,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 3600,
       "price": 286.945,
@@ -65605,6 +82510,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|varroc-engineering": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 1645,
       "price": 574.9737,
@@ -65612,6 +82518,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 1020,
       "price": 599.9225,
@@ -65619,6 +82526,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-11",
+      "settlementDate": "2025-02-11",
       "side": "buy",
       "quantity": 1540,
       "price": 529.0648,
@@ -65626,6 +82534,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1725,
       "price": 464.518,
@@ -65633,6 +82542,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-14",
+      "settlementDate": "2026-08-14",
       "side": "buy",
       "quantity": 1145,
       "price": 852.984,
@@ -65642,6 +82552,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|viyash-scientific": [
     {
       "date": "2025-11-19",
+      "settlementDate": "2025-11-19",
       "side": "buy",
       "quantity": 9100,
       "price": 253.8597,
@@ -65649,6 +82560,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-20",
+      "settlementDate": "2026-05-20",
       "side": "buy",
       "quantity": 8035,
       "price": 257.0186,
@@ -65656,6 +82568,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-30",
+      "settlementDate": "2026-07-30",
       "side": "buy",
       "quantity": 2300,
       "price": 252.2341,
@@ -65665,6 +82578,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|wockhardt": [
     {
       "date": "2026-05-29",
+      "settlementDate": "2026-05-29",
       "side": "buy",
       "quantity": 1600,
       "price": 1925,
@@ -65674,6 +82588,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|wpil": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 2750,
       "price": 451.69,
@@ -65681,6 +82596,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-10-31",
+      "settlementDate": "2024-10-31",
       "side": "buy",
       "quantity": 750,
       "price": 506.02,
@@ -65688,6 +82604,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 745,
       "price": 391,
@@ -65697,6 +82614,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710067|zensar-technologies": [
     {
       "date": "2024-09-04",
+      "settlementDate": "2024-09-04",
       "side": "buy",
       "quantity": 1970,
       "price": 790.6239,
@@ -65704,6 +82622,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-17",
+      "settlementDate": "2025-01-17",
       "side": "buy",
       "quantity": 645,
       "price": 752.8451,
@@ -65711,6 +82630,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 760,
       "price": 818.7442,
@@ -65718,6 +82638,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-24",
+      "settlementDate": "2025-03-24",
       "side": "buy",
       "quantity": 415,
       "price": 683.3455,
@@ -65725,6 +82646,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 1300,
       "price": 802.2983,
@@ -65734,6 +82656,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|apollo-pipes": [
     {
       "date": "2026-08-20",
+      "settlementDate": "2026-08-20",
       "side": "buy",
       "quantity": 3500,
       "price": 591.9999,
@@ -65743,6 +82666,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|arvind-fashions": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 3515,
       "price": 569.7387,
@@ -65750,6 +82674,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1635,
       "price": 385.4001,
@@ -65757,6 +82682,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-20",
+      "settlementDate": "2025-02-20",
       "side": "buy",
       "quantity": 45,
       "price": 423.5733,
@@ -65764,6 +82690,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-18",
+      "settlementDate": "2025-03-18",
       "side": "buy",
       "quantity": 1465,
       "price": 365.5222,
@@ -65773,6 +82700,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|birlasoft": [
     {
       "date": "2025-06-25",
+      "settlementDate": "2025-06-25",
       "side": "buy",
       "quantity": 2500,
       "price": 434.4801,
@@ -65780,6 +82708,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-06-26",
+      "settlementDate": "2025-06-26",
       "side": "buy",
       "quantity": 1460,
       "price": 443.3563,
@@ -65787,6 +82716,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 2600,
       "price": 374.3899,
@@ -65796,6 +82726,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|borosil-renewables": [
     {
       "date": "2025-10-10",
+      "settlementDate": "2025-10-10",
       "side": "buy",
       "quantity": 1360,
       "price": 627.5166,
@@ -65803,6 +82734,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-20",
+      "settlementDate": "2025-10-20",
       "side": "buy",
       "quantity": 270,
       "price": 643.752,
@@ -65810,6 +82742,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 2900,
       "price": 655.3892,
@@ -65819,6 +82752,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|caplin-point-laboratories": [
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 400,
       "price": 1983.6655,
@@ -65826,6 +82760,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-20",
+      "settlementDate": "2025-03-20",
       "side": "buy",
       "quantity": 355,
       "price": 1958.3965,
@@ -65833,6 +82768,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-19",
+      "settlementDate": "2025-05-19",
       "side": "buy",
       "quantity": 300,
       "price": 2078.382,
@@ -65840,6 +82776,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 205,
       "price": 2031.4947,
@@ -65847,6 +82784,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-15",
+      "settlementDate": "2026-04-15",
       "side": "buy",
       "quantity": 340,
       "price": 1736.4878,
@@ -65856,6 +82794,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|ceat": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 550,
       "price": 3124.1967,
@@ -65863,6 +82802,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 515,
       "price": 2650.2307,
@@ -65870,6 +82810,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-28",
+      "settlementDate": "2025-05-29",
       "side": "sell",
       "quantity": 75,
       "price": 3751.2283,
@@ -65880,6 +82821,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 50,
       "price": 4102.0032,
@@ -65889,6 +82831,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|cosmo-first": [
     {
       "date": "2024-12-16",
+      "settlementDate": "2024-12-16",
       "side": "buy",
       "quantity": 1225,
       "price": 860.2368,
@@ -65896,6 +82839,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1840,
       "price": 663.6072,
@@ -65903,6 +82847,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-13",
+      "settlementDate": "2026-02-13",
       "side": "buy",
       "quantity": 305,
       "price": 716.7716,
@@ -65912,6 +82857,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|creative-newtech": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 860,
       "price": 1010.9078,
@@ -65919,6 +82865,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-01",
+      "settlementDate": "2025-02-03",
       "side": "buy",
       "quantity": 120,
       "price": 970.0234,
@@ -65926,6 +82873,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-03",
+      "settlementDate": "2025-02-03",
       "side": "buy",
       "quantity": 65,
       "price": 967.6095,
@@ -65933,6 +82881,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 995,
       "price": 805.5982,
@@ -65940,6 +82889,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 200,
       "price": 673.1775,
@@ -65947,6 +82897,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-12-12",
+      "settlementDate": "2025-12-12",
       "side": "buy",
       "quantity": 265,
       "price": 753.2438,
@@ -65956,6 +82907,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|credit-access-grameen": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 650,
       "price": 894.7762,
@@ -65963,6 +82915,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-28",
+      "settlementDate": "2025-01-28",
       "side": "buy",
       "quantity": 300,
       "price": 941.5052,
@@ -65970,6 +82923,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 265,
       "price": 992.4923,
@@ -65977,6 +82931,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-04-23",
+      "settlementDate": "2025-04-23",
       "side": "buy",
       "quantity": 500,
       "price": 1137.6253,
@@ -65984,6 +82939,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-14",
+      "settlementDate": "2026-08-14",
       "side": "buy",
       "quantity": 800,
       "price": 1563.1561,
@@ -65993,6 +82949,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|dilip-buildcon": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 2035,
       "price": 499.2995,
@@ -66000,6 +82957,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1390,
       "price": 418.7861,
@@ -66007,6 +82965,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 790,
       "price": 495.6959,
@@ -66016,6 +82975,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|edelweiss-financial-services": [
     {
       "date": "2025-05-09",
+      "settlementDate": "2025-05-09",
       "side": "buy",
       "quantity": 1450,
       "price": 76.2221,
@@ -66023,6 +82983,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-05-13",
+      "settlementDate": "2025-05-13",
       "side": "buy",
       "quantity": 12700,
       "price": 84.7881,
@@ -66030,6 +82991,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-02-11",
+      "settlementDate": "2026-02-11",
       "side": "buy",
       "quantity": 5265,
       "price": 126.265,
@@ -66039,6 +83001,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|ester-industries": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 5550,
       "price": 161.1626,
@@ -66046,6 +83009,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 2890,
       "price": 143.9909,
@@ -66053,6 +83017,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-18",
+      "settlementDate": "2025-03-18",
       "side": "buy",
       "quantity": 3395,
       "price": 124.1775,
@@ -66060,6 +83025,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 5540,
       "price": 113.4617,
@@ -66067,6 +83033,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-16",
+      "settlementDate": "2026-01-16",
       "side": "buy",
       "quantity": 2310,
       "price": 93.9546,
@@ -66076,6 +83043,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|fusion-finance": [
     {
       "date": "2025-04-23",
+      "settlementDate": "2025-04-23",
       "side": "buy",
       "quantity": 7800,
       "price": 162.9026,
@@ -66083,6 +83051,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 250,
       "price": 184.2966,
@@ -66092,6 +83061,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|ghcl": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 2830,
       "price": 630.1585,
@@ -66099,6 +83069,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-25",
+      "settlementDate": "2025-03-25",
       "side": "buy",
       "quantity": 645,
       "price": 619.6666,
@@ -66106,6 +83077,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 495,
       "price": 647.3527,
@@ -66115,6 +83087,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|ghcl-textiles": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 5700,
       "price": 104.2434,
@@ -66122,6 +83095,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 4370,
       "price": 80.7033,
@@ -66129,6 +83103,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 2885,
       "price": 78.0586,
@@ -66136,6 +83111,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-13",
+      "settlementDate": "2026-08-13",
       "side": "buy",
       "quantity": 5925,
       "price": 118.9929,
@@ -66145,6 +83121,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|gland-pharma": [
     {
       "date": "2026-06-09",
+      "settlementDate": "2026-06-09",
       "side": "buy",
       "quantity": 845,
       "price": 2289.9445,
@@ -66154,6 +83131,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|graphite-india": [
     {
       "date": "2026-09-09",
+      "settlementDate": "2026-09-09",
       "side": "buy",
       "quantity": 1800,
       "price": 809.4235,
@@ -66163,6 +83141,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|ifb-industries": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 500,
       "price": 1747.5933,
@@ -66170,6 +83149,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-12",
+      "settlementDate": "2025-02-12",
       "side": "buy",
       "quantity": 100,
       "price": 1201.3027,
@@ -66177,6 +83157,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 770,
       "price": 1175.0361,
@@ -66184,6 +83165,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-28",
+      "settlementDate": "2025-03-28",
       "side": "buy",
       "quantity": 120,
       "price": 1292.1587,
@@ -66193,6 +83175,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|indo-count-industries": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 4195,
       "price": 345.9081,
@@ -66200,6 +83183,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-12",
+      "settlementDate": "2025-02-12",
       "side": "buy",
       "quantity": 665,
       "price": 288.8813,
@@ -66207,6 +83191,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 4035,
       "price": 316.1237,
@@ -66214,6 +83199,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-18",
+      "settlementDate": "2025-03-18",
       "side": "buy",
       "quantity": 785,
       "price": 266.3402,
@@ -66221,6 +83207,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 825,
       "price": 286.0484,
@@ -66230,6 +83217,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|kajaria-ceramics": [
     {
       "date": "2026-10-06",
+      "settlementDate": "2026-10-06",
       "side": "buy",
       "quantity": 1000,
       "price": 1209.7226,
@@ -66237,6 +83225,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-10-19",
+      "settlementDate": "2026-10-19",
       "side": "buy",
       "quantity": 900,
       "price": 1229.0157,
@@ -66246,6 +83235,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|krishca-strapping-solutions": [
     {
       "date": "2025-05-30",
+      "settlementDate": "2025-05-30",
       "side": "buy",
       "quantity": 1500,
       "price": 230,
@@ -66253,6 +83243,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 3500,
       "price": 208.5083,
@@ -66262,6 +83253,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|laxmi-organic-industries": [
     {
       "date": "2025-08-18",
+      "settlementDate": "2025-08-18",
       "side": "buy",
       "quantity": 350,
       "price": 194.902,
@@ -66269,6 +83261,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-19",
+      "settlementDate": "2025-08-19",
       "side": "buy",
       "quantity": 7135,
       "price": 226.4079,
@@ -66276,6 +83269,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-15",
+      "settlementDate": "2025-09-15",
       "side": "buy",
       "quantity": 3890,
       "price": 223.8873,
@@ -66283,6 +83277,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 4285,
       "price": 198.5512,
@@ -66292,6 +83287,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|mastek": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 625,
       "price": 3291.4628,
@@ -66299,6 +83295,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 580,
       "price": 2357.2481,
@@ -66306,6 +83303,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 105,
       "price": 2162.858,
@@ -66315,6 +83313,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|neuland-laboratories": [
     {
       "date": "2025-01-03",
+      "settlementDate": "2025-01-03",
       "side": "buy",
       "quantity": 35,
       "price": 14325,
@@ -66322,6 +83321,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-22",
+      "settlementDate": "2025-01-22",
       "side": "buy",
       "quantity": 30,
       "price": 13870.3137,
@@ -66329,6 +83329,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-24",
+      "settlementDate": "2025-01-24",
       "side": "buy",
       "quantity": 55,
       "price": 14029.7164,
@@ -66336,6 +83337,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 75,
       "price": 15860.8457,
@@ -66343,6 +83345,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-10-07",
+      "settlementDate": "2026-10-08",
       "side": "sell",
       "quantity": 46,
       "price": 21939.6746,
@@ -66356,6 +83359,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|nitin-spinners": [
     {
       "date": "2026-02-19",
+      "settlementDate": "2026-02-19",
       "side": "buy",
       "quantity": 5455,
       "price": 372.0441,
@@ -66363,6 +83367,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-14",
+      "settlementDate": "2026-08-14",
       "side": "buy",
       "quantity": 80,
       "price": 542.7225,
@@ -66370,6 +83375,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-17",
+      "settlementDate": "2026-08-17",
       "side": "buy",
       "quantity": 205,
       "price": 554.4728,
@@ -66377,6 +83383,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-18",
+      "settlementDate": "2026-08-18",
       "side": "buy",
       "quantity": 500,
       "price": 595.8654,
@@ -66386,6 +83393,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|paras-defence-and-space-technologies": [
     {
       "date": "2026-05-07",
+      "settlementDate": "2026-05-07",
       "side": "buy",
       "quantity": 450,
       "price": 834.0916,
@@ -66393,6 +83401,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-11",
+      "settlementDate": "2026-05-11",
       "side": "buy",
       "quantity": 1835,
       "price": 869.0521,
@@ -66400,6 +83409,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-18",
+      "settlementDate": "2026-06-19",
       "side": "sell",
       "quantity": 315,
       "price": 1285.8526,
@@ -66410,6 +83420,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-19",
+      "settlementDate": "2026-06-22",
       "side": "sell",
       "quantity": 395,
       "price": 1436.0027,
@@ -66423,6 +83434,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|pokarna": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 1860,
       "price": 1214.59,
@@ -66430,6 +83442,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1025,
       "price": 1131.3865,
@@ -66439,6 +83452,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|polyplex": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 650,
       "price": 1317.5878,
@@ -66446,6 +83460,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 430,
       "price": 1120.3995,
@@ -66453,6 +83468,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 560,
       "price": 969.4356,
@@ -66462,6 +83478,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|punjab-chem-and-crop-prot-l": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 540,
       "price": 1050.1089,
@@ -66469,6 +83486,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 555,
       "price": 734.5657,
@@ -66476,6 +83494,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-27",
+      "settlementDate": "2025-02-27",
       "side": "buy",
       "quantity": 860,
       "price": 715.3661,
@@ -66483,6 +83502,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-28",
+      "settlementDate": "2025-02-28",
       "side": "buy",
       "quantity": 20,
       "price": 712.988,
@@ -66490,6 +83510,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-03",
+      "settlementDate": "2025-03-03",
       "side": "buy",
       "quantity": 100,
       "price": 715,
@@ -66499,6 +83520,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|puravankara": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 4370,
       "price": 406.3018,
@@ -66506,6 +83528,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 6250,
       "price": 233.4064,
@@ -66513,6 +83536,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-12",
+      "settlementDate": "2025-08-12",
       "side": "buy",
       "quantity": 750,
       "price": 256.6655,
@@ -66522,6 +83546,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|sg-mart": [
     {
       "date": "2025-03-28",
+      "settlementDate": "2025-03-28",
       "side": "buy",
       "quantity": 3540,
       "price": 319.56,
@@ -66529,6 +83554,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-04",
+      "settlementDate": "2025-09-04",
       "side": "buy",
       "quantity": 1420,
       "price": 327.55,
@@ -66536,6 +83562,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 1520,
       "price": 373.4054,
@@ -66543,6 +83570,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-10",
+      "settlementDate": "2026-04-13",
       "side": "sell",
       "quantity": 1200,
       "price": 552.6335,
@@ -66553,6 +83581,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-21",
+      "settlementDate": "2026-05-22",
       "side": "sell",
       "quantity": 580,
       "price": 630.0236,
@@ -66563,6 +83592,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-23",
+      "settlementDate": "2026-07-24",
       "side": "sell",
       "quantity": 1555,
       "price": 675.0922,
@@ -66573,6 +83603,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-31",
+      "settlementDate": "2026-09-01",
       "side": "sell",
       "quantity": 1110,
       "price": 791.1861,
@@ -66586,6 +83617,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|shakti-pumps-india": [
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 980,
       "price": 815.9708,
@@ -66595,6 +83627,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|shankara-buildpro": [
     {
       "date": "2026-02-03",
+      "settlementDate": "2026-02-03",
       "side": "buy",
       "quantity": 665,
       "price": 789.9848,
@@ -66602,6 +83635,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-19",
+      "settlementDate": "2026-05-20",
       "side": "sell",
       "quantity": 670,
       "price": 1159.2689,
@@ -66614,6 +83648,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|sharda-cropchem": [
     {
       "date": "2026-02-05",
+      "settlementDate": "2026-02-05",
       "side": "buy",
       "quantity": 1245,
       "price": 1117.8326,
@@ -66623,6 +83658,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|sharda-motor-industries": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 415,
       "price": 2131.757,
@@ -66630,6 +83666,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-01-31",
+      "settlementDate": "2025-01-31",
       "side": "buy",
       "quantity": 45,
       "price": 1769.326,
@@ -66637,6 +83674,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-01",
+      "settlementDate": "2025-02-03",
       "side": "buy",
       "quantity": 145,
       "price": 1811.7965,
@@ -66644,6 +83682,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-03",
+      "settlementDate": "2025-02-03",
       "side": "buy",
       "quantity": 60,
       "price": 1819.9472,
@@ -66651,6 +83690,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 360,
       "price": 1596.0979,
@@ -66658,6 +83698,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-26",
+      "settlementDate": "2025-03-26",
       "side": "buy",
       "quantity": 170,
       "price": 1675.3341,
@@ -66667,6 +83708,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|stove-kraft": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 1060,
       "price": 816.5581,
@@ -66674,6 +83716,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2024-12-19",
+      "settlementDate": "2024-12-19",
       "side": "buy",
       "quantity": 75,
       "price": 896.4579,
@@ -66681,6 +83724,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1180,
       "price": 697.6361,
@@ -66688,6 +83732,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 255,
       "price": 767.4482,
@@ -66697,6 +83742,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|syrma-sgs-technology": [
     {
       "date": "2026-02-05",
+      "settlementDate": "2026-02-05",
       "side": "buy",
       "quantity": 1675,
       "price": 856.3414,
@@ -66704,6 +83750,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-22",
+      "settlementDate": "2026-04-22",
       "side": "buy",
       "quantity": 115,
       "price": 1011.2508,
@@ -66711,6 +83758,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-04-24",
+      "settlementDate": "2026-04-24",
       "side": "buy",
       "quantity": 115,
       "price": 971.4201,
@@ -66718,6 +83766,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-25",
+      "settlementDate": "2026-06-29",
       "side": "sell",
       "quantity": 250,
       "price": 1467.1272,
@@ -66730,6 +83779,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|time-technoplast": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 1260,
       "price": 454.8758,
@@ -66737,6 +83787,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-12",
+      "settlementDate": "2025-02-12",
       "side": "buy",
       "quantity": 510,
       "price": 335,
@@ -66744,6 +83795,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 375,
       "price": 375.4001,
@@ -66751,6 +83803,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-24",
+      "settlementDate": "2025-03-24",
       "side": "buy",
       "quantity": 1735,
       "price": 389.7322,
@@ -66760,6 +83813,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|v2-retail": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 1270,
       "price": 1362.9294,
@@ -66767,6 +83821,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-27",
+      "settlementDate": "2025-02-27",
       "side": "buy",
       "quantity": 445,
       "price": 1699.7808,
@@ -66774,6 +83829,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-07-01",
+      "settlementDate": "2025-07-01",
       "side": "buy",
       "quantity": 160,
       "price": 1827.3991,
@@ -66781,6 +83837,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-06",
+      "settlementDate": "2026-01-06",
       "side": "buy",
       "quantity": 180,
       "price": 2299.9737,
@@ -66790,6 +83847,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|vaibhav-global": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 3870,
       "price": 302.3294,
@@ -66797,6 +83855,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 2135,
       "price": 286.945,
@@ -66806,6 +83865,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|varroc-engineering": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 2200,
       "price": 525.2051,
@@ -66813,6 +83873,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-11",
+      "settlementDate": "2025-02-11",
       "side": "buy",
       "quantity": 295,
       "price": 529.0648,
@@ -66820,6 +83881,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 1815,
       "price": 464.518,
@@ -66827,6 +83889,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-14",
+      "settlementDate": "2026-08-14",
       "side": "buy",
       "quantity": 295,
       "price": 852.984,
@@ -66836,6 +83899,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|viyash-scientific": [
     {
       "date": "2025-11-19",
+      "settlementDate": "2025-11-19",
       "side": "buy",
       "quantity": 5925,
       "price": 253.8597,
@@ -66843,6 +83907,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-20",
+      "settlementDate": "2026-05-20",
       "side": "buy",
       "quantity": 5205,
       "price": 257.0186,
@@ -66850,6 +83915,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-30",
+      "settlementDate": "2026-07-30",
       "side": "buy",
       "quantity": 1510,
       "price": 252.2341,
@@ -66859,6 +83925,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|wockhardt": [
     {
       "date": "2026-05-29",
+      "settlementDate": "2026-05-29",
       "side": "buy",
       "quantity": 1045,
       "price": 1925,
@@ -66868,6 +83935,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|wpil": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 2580,
       "price": 667.58,
@@ -66875,6 +83943,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 510,
       "price": 391,
@@ -66884,6 +83953,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "svan-investment-managers-llp-8710090|zensar-technologies": [
     {
       "date": "2024-12-03",
+      "settlementDate": "2024-12-03",
       "side": "buy",
       "quantity": 2220,
       "price": 778.006,
@@ -66891,6 +83961,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-02-17",
+      "settlementDate": "2025-02-17",
       "side": "buy",
       "quantity": 235,
       "price": 818.7442,
@@ -66898,6 +83969,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-03-24",
+      "settlementDate": "2025-03-24",
       "side": "buy",
       "quantity": 240,
       "price": 683.3455,
@@ -66905,6 +83977,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-10-30",
+      "settlementDate": "2025-10-30",
       "side": "buy",
       "quantity": 625,
       "price": 802.2983,
@@ -66914,6 +83987,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|amrutanjan-health-care": [
     {
       "date": "2025-08-05",
+      "settlementDate": "2025-08-05",
       "side": "buy",
       "quantity": 3663,
       "price": 682.419,
@@ -66921,6 +83995,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-25",
+      "settlementDate": "2026-05-25",
       "side": "buy",
       "quantity": 1773,
       "price": 564.0896,
@@ -66930,6 +84005,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|ather-energy": [
     {
       "date": "2025-07-31",
+      "settlementDate": "2025-07-31",
       "side": "buy",
       "quantity": 14399,
       "price": 347.2384,
@@ -66937,6 +84013,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-09-16",
+      "settlementDate": "2025-09-17",
       "side": "sell",
       "quantity": 4399,
       "price": 552.1925,
@@ -66944,6 +84021,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-27",
+      "settlementDate": "2026-01-28",
       "side": "sell",
       "quantity": 4000,
       "price": 619,
@@ -66951,6 +84029,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-10-06",
+      "settlementDate": "2026-10-07",
       "side": "sell",
       "quantity": 3000,
       "price": 1405.0004,
@@ -66963,6 +84042,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|eureka-forbes": [
     {
       "date": "2025-07-31",
+      "settlementDate": "2025-07-31",
       "side": "buy",
       "quantity": 4456,
       "price": 560.9727,
@@ -66970,6 +84050,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-06-15",
+      "settlementDate": "2026-06-15",
       "side": "buy",
       "quantity": 4376,
       "price": 457.008,
@@ -66977,6 +84058,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-15",
+      "settlementDate": "2026-07-15",
       "side": "buy",
       "quantity": 4200,
       "price": 475.0537,
@@ -66986,6 +84068,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|gateway-distriparks": [
     {
       "date": "2025-07-31",
+      "settlementDate": "2025-07-31",
       "side": "buy",
       "quantity": 34964,
       "price": 71.5007,
@@ -66993,6 +84076,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-07",
+      "settlementDate": "2025-08-07",
       "side": "buy",
       "quantity": 37862,
       "price": 66.0278,
@@ -67002,6 +84086,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|greaves-cotton": [
     {
       "date": "2025-09-19",
+      "settlementDate": "2025-09-19",
       "side": "buy",
       "quantity": 10737,
       "price": 223.5288,
@@ -67009,6 +84094,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-25",
+      "settlementDate": "2026-05-25",
       "side": "buy",
       "quantity": 14541,
       "price": 171.9253,
@@ -67018,6 +84104,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|jaiprakash-power-ventures": [
     {
       "date": "2025-07-31",
+      "settlementDate": "2025-07-31",
       "side": "buy",
       "quantity": 118623,
       "price": 21.0751,
@@ -67025,6 +84112,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-07",
+      "settlementDate": "2025-08-07",
       "side": "buy",
       "quantity": 133024,
       "price": 18.7935,
@@ -67032,6 +84120,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-19",
+      "settlementDate": "2025-08-19",
       "side": "buy",
       "quantity": 53657,
       "price": 18.6355,
@@ -67041,6 +84130,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|navneet-education": [
     {
       "date": "2025-08-05",
+      "settlementDate": "2025-08-05",
       "side": "buy",
       "quantity": 16793,
       "price": 148.8687,
@@ -67048,6 +84138,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-15",
+      "settlementDate": "2026-07-15",
       "side": "buy",
       "quantity": 12900,
       "price": 152.1104,
@@ -67057,6 +84148,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|nuvama-wealth-management": [
     {
       "date": "2025-08-05",
+      "settlementDate": "2025-08-05",
       "side": "buy",
       "quantity": 353,
       "price": 7067.1671,
@@ -67066,6 +84158,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|panacea-biotec": [
     {
       "date": "2025-08-05",
+      "settlementDate": "2025-08-05",
       "side": "buy",
       "quantity": 2750,
       "price": 415.5168,
@@ -67073,6 +84166,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2025-08-06",
+      "settlementDate": "2025-08-06",
       "side": "buy",
       "quantity": 3306,
       "price": 409.897,
@@ -67082,6 +84176,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|sbfc-finance": [
     {
       "date": "2025-08-05",
+      "settlementDate": "2025-08-05",
       "side": "buy",
       "quantity": 48078,
       "price": 103.996,
@@ -67091,6 +84186,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|shoppers-stop": [
     {
       "date": "2025-07-31",
+      "settlementDate": "2025-07-31",
       "side": "buy",
       "quantity": 4698,
       "price": 532.0511,
@@ -67098,6 +84194,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-29",
+      "settlementDate": "2026-01-29",
       "side": "buy",
       "quantity": 4245,
       "price": 353.3919,
@@ -67105,6 +84202,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-05-25",
+      "settlementDate": "2026-05-25",
       "side": "buy",
       "quantity": 4415,
       "price": 339.7698,
@@ -67114,6 +84212,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|shree-digvijay-cement": [
     {
       "date": "2025-07-31",
+      "settlementDate": "2025-07-31",
       "side": "buy",
       "quantity": 29511,
       "price": 84.7119,
@@ -67123,6 +84222,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|tejas-networks": [
     {
       "date": "2025-08-05",
+      "settlementDate": "2025-08-05",
       "side": "buy",
       "quantity": 4286,
       "price": 583.3026,
@@ -67130,6 +84230,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-01-29",
+      "settlementDate": "2026-01-29",
       "side": "buy",
       "quantity": 3034,
       "price": 329.6146,
@@ -67139,6 +84240,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128004|wockhardt": [
     {
       "date": "2025-08-05",
+      "settlementDate": "2025-08-05",
       "side": "buy",
       "quantity": 3225,
       "price": 1550.1996,
@@ -67148,6 +84250,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|amrutanjan-health-care": [
     {
       "date": "2026-05-25",
+      "settlementDate": "2026-05-25",
       "side": "buy",
       "quantity": 1772,
       "price": 564.0896,
@@ -67157,6 +84260,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|eureka-forbes": [
     {
       "date": "2026-06-15",
+      "settlementDate": "2026-06-15",
       "side": "buy",
       "quantity": 2188,
       "price": 457.008,
@@ -67164,6 +84268,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-15",
+      "settlementDate": "2026-07-15",
       "side": "buy",
       "quantity": 4200,
       "price": 475.0537,
@@ -67171,6 +84276,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-30",
+      "settlementDate": "2026-07-30",
       "side": "buy",
       "quantity": 10864,
       "price": 453.6885,
@@ -67178,6 +84284,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-03",
+      "settlementDate": "2026-08-03",
       "side": "buy",
       "quantity": 5483,
       "price": 455.8736,
@@ -67187,6 +84294,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|gateway-distriparks": [
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-10",
       "side": "buy",
       "quantity": 86587,
       "price": 57.7445,
@@ -67196,6 +84304,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|greaves-cotton": [
     {
       "date": "2026-05-25",
+      "settlementDate": "2026-05-25",
       "side": "buy",
       "quantity": 14541,
       "price": 171.9253,
@@ -67203,6 +84312,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-30",
+      "settlementDate": "2026-07-30",
       "side": "buy",
       "quantity": 20833,
       "price": 236.9235,
@@ -67210,6 +84320,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-03",
+      "settlementDate": "2026-08-03",
       "side": "buy",
       "quantity": 21390,
       "price": 233.75,
@@ -67219,6 +84330,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|navneet-education": [
     {
       "date": "2026-07-15",
+      "settlementDate": "2026-07-15",
       "side": "buy",
       "quantity": 12900,
       "price": 152.1104,
@@ -67226,6 +84338,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-10",
       "side": "buy",
       "quantity": 37406,
       "price": 133.6684,
@@ -67235,6 +84348,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|nuvama-wealth-management": [
     {
       "date": "2026-06-15",
+      "settlementDate": "2026-06-15",
       "side": "buy",
       "quantity": 1187,
       "price": 1685,
@@ -67242,6 +84356,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-10",
       "side": "buy",
       "quantity": 3101,
       "price": 1612.3549,
@@ -67251,6 +84366,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|praj-industries": [
     {
       "date": "2026-08-10",
+      "settlementDate": "2026-08-10",
       "side": "buy",
       "quantity": 15052,
       "price": 332.1798,
@@ -67260,6 +84376,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|sbfc-finance": [
     {
       "date": "2026-07-30",
+      "settlementDate": "2026-07-30",
       "side": "buy",
       "quantity": 53846,
       "price": 90.6262,
@@ -67267,6 +84384,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-03",
+      "settlementDate": "2026-08-03",
       "side": "buy",
       "quantity": 27209,
       "price": 91.8799,
@@ -67276,6 +84394,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|shoppers-stop": [
     {
       "date": "2026-05-25",
+      "settlementDate": "2026-05-25",
       "side": "buy",
       "quantity": 7357,
       "price": 339.7698,
@@ -67283,6 +84402,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-08-13",
+      "settlementDate": "2026-08-13",
       "side": "buy",
       "quantity": 3859.667,
       "price": 421.5049,
@@ -67292,6 +84412,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|shree-digvijay-cement": [
     {
       "date": "2026-07-30",
+      "settlementDate": "2026-07-30",
       "side": "buy",
       "quantity": 67500,
       "price": 73.0291,
@@ -67301,6 +84422,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|vip-industries": [
     {
       "date": "2026-06-15",
+      "settlementDate": "2026-06-15",
       "side": "buy",
       "quantity": 3075,
       "price": 325.2346,
@@ -67308,6 +84430,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-30",
+      "settlementDate": "2026-07-30",
       "side": "buy",
       "quantity": 16359,
       "price": 298.1398,
@@ -67315,6 +84438,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     },
     {
       "date": "2026-07-31",
+      "settlementDate": "2026-07-31",
       "side": "buy",
       "quantity": 9900,
       "price": 299.5926,
@@ -67324,6 +84448,7 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
   "v-e-c-assago-capital-management-llp-128005|wockhardt": [
     {
       "date": "2026-07-30",
+      "settlementDate": "2026-07-30",
       "side": "buy",
       "quantity": 2614,
       "price": 1893.1692,

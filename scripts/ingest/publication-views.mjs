@@ -15,7 +15,7 @@ export function publicationViews({ root = process.cwd(), instantiate, store, bas
       entries.push({ path: prefix + name, mode: '100644', type: 'blob', content });
     };
     json('bootstrap.json', renderer.snapshot()); json('published.json', renderer.published());
-    const names = new Set(['canonical/book.json', 'publication.json', 'audit/manifest.json', 'audit/formats.json',
+    const names = new Set(['canonical/book.json', 'publication.json', 'financial/integrity.json', 'financial/graph.json', 'financial/events.json', 'financial/metrics.json', 'financial/checks.json', 'financial/reconciliationReviews.json', 'financial/registry.json', 'audit/manifest.json', 'audit/formats.json',
       'statement-files/index.json', 'provenance/positions.json', 'ledger/transactions.json', 'ledger/lots.json',
       'ledger/income.json', 'ledger/sales.json', 'consolidated/book.json', 'fund-disclosures.json', 'statement-securities.json', 'exposure-fence.json', 'lookthrough.json']);
     for (const [key, ledger] of Object.entries(renderer.stockLedgers())) json(`ledger/stocks/${key}.json`, ledger);

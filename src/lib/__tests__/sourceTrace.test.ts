@@ -51,6 +51,8 @@ assert.equal(sameFile.sources[0].pointer, undefined, 'a common account PDF never
 const edited = holdingSourceTrace([{ ...bandhan, quantity: 12, enteredNumbers: ['quantity'] }], 'quantity');
 assert.equal(edited.derived, true); assert.ok(edited.notes.some(n => n.includes('saved family correction')));
 assert.equal(edited.sources[0].value, undefined, 'an edited quantity cannot be presented as a printed PDF value');
+assert.ok(holdingSourceTrace([{ ...bandhan, quantity: 12, enteredNumbers: ['quantity'] }], 'currentPrice').notes.some(n => n.includes('saved family correction')), 'a price derived from corrected units names that correction');
+assert.ok(!holdingSourceTrace([{ ...bandhan, unrealizedPnL: 20, enteredNumbers: ['dividendReceived'] }], 'unrealizedPnL').notes.some(n => n.includes('saved family correction')), 'income edits do not claim unrelated unrealized P&L');
 const absent = holdingSourceTrace([{ ...bandhan, quantity: null }], 'quantity');
 assert.equal(absent.sources.length, 0, 'an absence is never linked as a measured quantity');
 const missing = holdingSourceTrace([{ ...bandhan, statementRecord: undefined }], 'quantity');

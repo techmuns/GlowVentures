@@ -183,7 +183,7 @@ ok("the series carries external capital worth adjusting for",
   ok("a like-for-like stretch carries external capital to compare over",
     from >= 0 && bestCapital > 1e5, `${from >= 0 ? `${H[from].date} → ${H[to].date}` : "none"}, ₹${Math.round(bestCapital)}`);
   let adj = 100;
-  for (let i = from + 1; i <= to; i++) adj *= (H[i].linkClose! - (H[i].flowIn ?? 0)) / H[i].linkOpen!;
+  for (let i = from + 1; i <= to; i++) adj *= 1 + (H[i].linkClose! - H[i].linkOpen! - (H[i].flowIn ?? 0)) / (H[i].linkOpen! + (H[i].flowWeighted ?? 0));
   const segAdjusted = adj - 100;
   const segRaw = (H[to].nav / H[from].nav - 1) * 100;
   ok("the flow-adjusted return is materially below the unadjusted NAV move, over the same window",
@@ -205,7 +205,8 @@ ok("the series carries external capital worth adjusting for",
   let byLevel = 100;
   for (let i = 1; i < BOOK_NAV_HISTORY.length; i++) {
     const p = BOOK_NAV_HISTORY[i];
-    byLink *= ((p.linkClose ?? p.nav) - (p.flowIn ?? 0)) / (p.linkOpen ?? BOOK_NAV_HISTORY[i - 1].nav);
+    const opening = p.linkOpen ?? BOOK_NAV_HISTORY[i - 1].nav;
+    byLink *= 1 + ((p.linkClose ?? p.nav) - opening - (p.flowIn ?? 0)) / (opening + (p.flowWeighted ?? 0));
     byLevel *= (p.nav - (p.flowIn ?? 0)) / BOOK_NAV_HISTORY[i - 1].nav;
   }
   near("the chained index reproduces from the links", adjusted, byLink - 100, 1e-9);

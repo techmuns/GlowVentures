@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { saveTableInputs, useTableInputs } from "@/lib/tableInputStore";
 import { validateInputChanges, type InputChange, type InputRecord } from "@/lib/tableInputs";
 import { parseRupees, rupeeText } from "@/lib/capitalEntry";
+import { CapitalRecordDialog } from './CapitalRecordEditor';
 
 type Draft = { text: string; version: string; source: string };
 
@@ -24,6 +25,7 @@ export function CapitalCellInput({ record, field, rowName, display }: {
   const [focused, setFocused] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [editTogether, setEditTogether] = useState(false);
   const current = record.values[field] ?? null;
   const entered = record.versions[field] ?? "";
   const exact = rupeeText(current);
@@ -79,7 +81,9 @@ export function CapitalCellInput({ record, field, rowName, display }: {
         className="mt-1 rounded text-[10.5px] text-slate-500 ring-focus hover:text-loss disabled:opacity-50">{busy ? "Removing…" : "Remove typed figure"}</button>}
       {inputs.status === "loading" && <span className="text-[10.5px] text-slate-500">Loading…</span>}
       {inputs.status === "error" && <span title={inputs.error} className="text-[10.5px] text-slate-500">Unavailable</span>}
-      {error && <p role="alert" className="mt-1 whitespace-normal text-left text-[11px] text-loss" data-pm-capital-error>{error}</p>}
+      {error && <p role="alert" className="mt-1 whitespace-normal text-left text-[11px] text-loss" data-pm-capital-error>{error} <button type="button" className="rounded underline ring-focus" onClick={() => setEditTogether(true)}>Edit capital together</button></p>}
+      {editTogether && <CapitalRecordDialog record={record} initialChanges={dirty && draft ? [{ id: record.id, field, value: typed, version: draft.version, source: draft.source }] : []}
+        close={() => setEditTogether(false)} onSaved={() => { setDraft(null); setError(null); }} />}
     </form>
   );
 }

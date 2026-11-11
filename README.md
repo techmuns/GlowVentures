@@ -5,9 +5,10 @@ the PDF statements their wealth platforms issue and served as a static site
 behind an edge password gate.
 
 Built with **React 18 + TypeScript + Vite + Tailwind + Recharts**, deployed to
-Cloudflare Pages. There is no application database: the book is baked into
-`src/data/glowData.ts` by a committed pipeline, and everything else runs in the
-browser.
+Cloudflare Pages. The committed pipeline prepares the baseline book in `src/data/glowData.ts`.
+Verified uploads publish complete immutable data versions through the existing
+GitHub-backed service; Cloudflare serves authenticated read models. Shared
+calculation modules keep statement data, enrichment and family corrections distinct.
 
 **The one rule everything else follows: no figure is ever fabricated.** Where a
 statement doesn't carry a number, the screen shows `—` and says what is missing
@@ -157,11 +158,15 @@ worthless; extraction that ties out is the product. The reconciler runs row-sum
 checks against each table's own printed total, every derived figure against the
 statement's own version of it, cross-report comparisons, duplicate detection and
 coverage. Every delta is classified `rounding`, `explained` (reproduced exactly
-from a named basis difference) or `material` — and a material delta blocks the
-golden test.
+from a named basis difference) or `material`. A new material discrepancy, altered
+source, or absent/expired scoped review blocks publication. A retained disputed
+measurement is never promoted to a verified claim.
 
-**Currently: 0 material deltas** across 30 row-sum, 177 derived-vs-printed, 900
-dated-table and 3 cross-report checks.
+Current findings are in `docs/extraction-report.json`; they include retained
+source discrepancies. Exact review records and affected metrics are in
+`config/reconciliation-exceptions.json`. The published financial graph, decimal
+settlement journal, calculation safeguards and evidence endpoints are described in
+[Financial integrity](docs/FINANCIAL-INTEGRITY.md).
 
 ### Refreshing when new statements arrive
 

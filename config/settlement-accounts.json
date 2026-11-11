@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "policy": "A settlement-bank mapping requires a source document, account identity and exact settlement references. Equal amounts or close dates alone never identify a transfer.",
+  "mappings": []
+}

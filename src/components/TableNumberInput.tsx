@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useId, useRef, useState } from "react";
 import { refreshTableInputs, saveTableInputs, useTableInputs } from "@/lib/tableInputStore";
-import { type InputRecord } from "@/lib/tableInputs";
+import { type InputChange, type InputRecord } from "@/lib/tableInputs";
+import { CapitalRecordDialog } from './CapitalRecordEditor';
 
 export const TableEditing = createContext(false);
 export const useTableEditing = () => useContext(TableEditing);
@@ -14,6 +15,8 @@ export function TableNumberInput({ record, field }: { record: InputRecord; field
   const text = (n: number | null) => n == null ? "" : String(percent ? Number((n * 100).toFixed(10)) : n);
   const [draft, setDraft] = useState(text(current));
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [capitalChanges, setCapitalChanges] = useState<InputChange[] | null>(null);
+  const capital = record.kind === 'capital' || record.kind === 'private-capital';
   const stale = base.version !== version || base.source !== record.source;
   useEffect(() => {
     if (base.version === version && base.source === record.source && base.value === current) return;
@@ -46,6 +49,13 @@ export function TableNumberInput({ record, field }: { record: InputRecord; field
     </div>
     {stale && <p className="mt-1 whitespace-normal text-[10px] text-amber-600">Saved data changed. Latest number: {current === null ? "blank" : `${text(current)}${percent ? "%" : ""}`}. <button type="button" className="underline ring-focus" onClick={() => { setBase({ value: current, version, source: record.source }); setDraft(text(current)); setError(""); }}>Use latest</button></p>}
     {error && <p role="alert" className="mt-1 max-w-xs whitespace-normal text-xs text-loss">{error}</p>}
+    {capital && <button type="button" disabled={busy} className="mt-1 rounded text-[10px] text-slate-400 underline ring-focus" onClick={() => {
+      const value = draft.trim() === '' ? null : Number(draft.replace(/,/g, ''));
+      setCapitalChanges(value !== base.value ? [{ id: record.id, field, value, version: base.version, source: base.source }] : []);
+    }}>Edit capital together</button>}
+    {capitalChanges && <CapitalRecordDialog record={record} initialChanges={capitalChanges} close={() => setCapitalChanges(null)} onSaved={fresh => {
+      setBase({ value: fresh.values[field], version: fresh.versions[field] ?? '', source: fresh.source }); setDraft(text(fresh.values[field])); setError('');
+    }} />}
   </div>;
 }
 /**

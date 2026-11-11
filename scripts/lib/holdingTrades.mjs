@@ -121,6 +121,8 @@ export function holdingTradeRows(trades, lots = []) {
     .filter((t) => t.date && (t.side === "buy" || t.side === "sell"))
     .map((t) => ({
       date: t.date,
+      ...(t.reference ? { reference: t.reference } : {}),
+      ...(t.settlementDate ? { settlementDate: t.settlementDate } : {}),
       side: t.side,
       quantity: isNum(t.quantity) ? t.quantity : null,
       price: isNum(t.unitPrice) ? t.unitPrice : null,

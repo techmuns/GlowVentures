@@ -595,6 +595,7 @@ export function makeCashFlow(input) {
 export function makeTransaction(input) {
   const named = namedSecurity(input);
   return {
+    ...(input.reference ? { reference: String(input.reference) } : {}),
     date: input.date ?? null,                    // ISO trade date
     settlementDate: input.settlementDate ?? null,
     side: input.side ?? null,                    // "buy" | "sell"
@@ -797,6 +798,7 @@ function normalizeCommitment(c) {
 
 export function makeDocument(input) {
   return {
+    ...(input.financialUnits ? { financialUnits: input.financialUnits } : {}),
     docKey: input.docKey,
     provider: input.provider,
     accountNo: input.accountNo ?? null,
@@ -951,7 +953,7 @@ export function makeDocument(input) {
  */
 // …and the fields carried only where a document prints them, so every other
 // document stays byte-identical (Stage 10mh's `factSheetValues`).
-export const DOCUMENT_FIELDS = Object.freeze([...Object.keys(makeDocument({ docKey: "", provider: "", sourcePath: "" })), "factSheetValues"]);
+export const DOCUMENT_FIELDS = Object.freeze([...Object.keys(makeDocument({ docKey: "", provider: "", sourcePath: "" })), "factSheetValues", "financialUnits"]);
 
 /** Throw if a document breaks the contract — called on every extractor result. */
 export function assertNormalized(doc) {

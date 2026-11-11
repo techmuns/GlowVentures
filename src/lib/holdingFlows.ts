@@ -112,6 +112,7 @@ function incomeIn(key: string, from: string, to: string): { rows: { date: string
  * cannot stand, so the caller falls back to the statement's line.
  */
 export function holdingFlowsOf(p: Position, asOf: string | null): HoldingFlows | null {
+  if (p.returnInputsUnavailableReason) return { dated: false, reason: p.returnInputsUnavailableReason };
   const key = keyOf(p);
   const r = p.tradeRecord;
   /** The close: the statement's, or the market's where the line is priced by it. */

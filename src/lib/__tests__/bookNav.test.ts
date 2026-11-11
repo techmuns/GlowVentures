@@ -204,7 +204,7 @@ const idx = navIndexSeries(pts);
 let byLink = 100, byLevel = 100;
 for (let i = 1; i < pts.length; i++) {
   const p = pts[i];
-  if ((p.linkOpen ?? 0) > 0) byLink *= ((p.linkClose ?? 0) - (p.flowIn ?? 0)) / (p.linkOpen ?? 1);
+  if ((p.linkOpen ?? 0) > 0) byLink *= 1 + ((p.linkClose ?? 0) - (p.linkOpen ?? 0) - (p.flowIn ?? 0)) / ((p.linkOpen ?? 1) + (p.flowWeighted ?? 0));
   if (pts[i - 1].nav > 0) byLevel *= (p.nav - (p.levelFlowIn ?? 0)) / pts[i - 1].nav;
 }
 near("the chained index is the product of its links, re-derived here", idx.at(-1)?.index, byLink, 1e-6);

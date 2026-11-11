@@ -1,3 +1,4 @@
+import { buildFinancialIntegrity } from "./ingest/lib/financial-integrity.mjs";
 import { readerRevisionFor } from './ingest/reader-revision.mjs';
 // Build-server read models. Source absence is a build failure, never a silently
 // partial ledger. URLs are derived from output content, so book revisions cannot mix.
@@ -31,6 +32,14 @@ try {
     }
   }
 } catch (error) { if (error.code !== 'ENOENT') throw error; }
+const integrity = buildFinancialIntegrity(canonicalBook, docs, { readerRevision, bookRevision: digest(canonicalBook) });
+if (integrity.issues.length) throw Error(`Financial integrity failed: ${JSON.stringify(integrity.issues)}`);
+put('financial/integrity.json', integrity);
+for (const name of ['graph', 'events', 'metrics', 'checks', 'reconciliationReviews', 'registry']) put(`financial/${name}.json`, integrity[name]);
+let originalIndex = null;
+try { originalIndex = JSON.parse(await fs.readFile(path.join(root, 'public/statement-files/index.json'), 'utf8')); }
+catch (error) { if (error.code !== 'ENOENT') throw error; }
+if (originalIndex && originalIndex.manifestHash !== digest(JSON.stringify(manifest))) originalIndex = null;
 put('canonical/book.json', canonicalBook);
 if (model.BOOK_POSITIONS.some(p => !p.review && !p.statementRecord)) throw new Error('Regenerate the book: a statement position has no selected source record.');
 const evidenceForPosition = positionEvidenceReader(docs, model.BOOK_ACCOUNTS);
@@ -42,12 +51,12 @@ put('provenance/positions.json', model.BOOK_POSITIONS.map(p => ({ ...evidenceFor
 for (const doc of docs) {
   const source = rawSources.get(`${doc.docKey}|${digest(doc)}`);
   put(`canonical/documents/${doc.docKey}.json`, doc);
-  put(`provenance/documents/${doc.docKey}.json`, { ...documentEvidence(doc, { readerRevision, sourceSha256: source?.sha256 ?? null }),
+  put(`provenance/documents/${doc.docKey}.json`, { ...documentEvidence(doc, { readerRevision, sourceSha256: source?.sha256 ?? originalIndex?.files?.[doc.docKey]?.sha256 ?? null }),
     normalizedDocument: `canonical/documents/${doc.docKey}.json`, receipt: source?.receipt ?? null });
 }
 put('publication.json', { schemaVersion: 1, archiveRevision: archiveRevision(docs), bookRevision: digest(canonicalBook), readerRevision,
   statementDocuments: docs.map(d => ({ document: d.docKey, revision: digest(d), evidence: `provenance/documents/${d.docKey}.json` })),
-  canonical: 'canonical/book.json', positions: 'provenance/positions.json',
+  canonical: 'canonical/book.json', positions: 'provenance/positions.json', financialIntegrity: 'financial/integrity.json',
   overlays: { livePrices: 'Quotes and NAVs retain their own provider/time; they do not overwrite the statement evidence.',
     enteredData: 'Entered capital calls and investment profiles retain their separate dashboard-store history.' } });
 put('ledger/transactions.json', model.deriveTransactions(docs));

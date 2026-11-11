@@ -1,3 +1,4 @@
+import { buildFinancialIntegrity } from "./lib/financial-integrity.mjs";
 // A normal application deployment must retain statements processed since its
 // compiled baseline. Rebuild the union under the new verified reader rules.
 import { assessPublication, digest, positionEvidenceReader, holdingKey, sameFinancialStatement } from './lib/publication.mjs';
@@ -28,7 +29,7 @@ export function migrateRapidPublication(previous, initial, references, instantia
   const records = Object.fromEntries(Object.entries(previous.records).filter(([key]) => kept.has(key)));
   const pagesByDocument = { ...references.pagesByDocument, ...Object.fromEntries(Object.entries(records)
     .map(([key, record]) => [key, record.files['pages.json']?.pages.map(p => p.text).join('\n') ?? null])) };
-  const book = canonicalBookValues(buildCanonicalBook(documents.filter(d => d.status !== 'failed'), documents.length, { ...references, pagesByDocument }));
+  const book = canonicalBookValues(buildCanonicalBook(documents.filter(d => d.status !== 'failed'), documents.length, { ...references, pagesByDocument, financialRegistry: previous.financialIntegrity?.registry }));
   const evidence = positionEvidenceReader(documents, book.BOOK_ACCOUNTS), identities = new Set();
   for (const position of book.BOOK_POSITIONS) {
     const key = holdingKey(position);
@@ -39,7 +40,7 @@ export function migrateRapidPublication(previous, initial, references, instantia
   for (const name of ['deriveTransactions', 'deriveRealisedLots', 'deriveIncome', 'deriveSales', 'buildConsolidatedSheet']) model[name](documents);
   const archiveRevision = assessment.candidateRevision;
   const revision = digest({ readerRevision: initial.readerRevision, baseCommit: initial.baseCommit, archiveRevision, book }).slice(0, 20);
-  return { ...initial, revision, archiveRevision, book, documents, records,
+  return { ...initial, revision, archiveRevision, book, documents, records, financialIntegrity: buildFinancialIntegrity(book, documents, { report, registry: previous.financialIntegrity?.registry, readerRevision: initial.readerRevision, bookRevision: digest(book) }),
     manifest: [...initial.manifest, ...runtime.map(d => records[d.docKey].manifest)],
     originals: { ...initial.originals, ...Object.fromEntries(Object.entries(previous.originals).filter(([key]) => kept.has(key))) },
     previews: previous.previews,
