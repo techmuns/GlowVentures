@@ -7,6 +7,7 @@ import { readSpreadsheet } from '../ingest/lib/sheet.mjs';
 import { readTransactions, serialToIso, REVIEW_WORKBOOK, REVIEW_AS_OF } from './reviewPrivateRead.mjs';
 import { fifoLedger, UNIT_TIE } from '../../shared/fifo.mjs';
 import { ownerIdFor } from '../../shared/owners.mjs';
+import { registerAllotment } from './registerRecords.mjs';
 import { MOPWM_TRANSACTIONS, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate } from './mopwmTransactions.mjs';
 
 // Identity aliases, not cost overrides. No amount, quantity or purchase date is
@@ -218,7 +219,8 @@ function fromMopwm(report,t,a,prior=NO_RECORD) {
 export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovements,docs,archiveCount=docs.length,mopwm=loadMopwmTransactions(root),reviewWorkbook,registerWorkbook}) {
   const workbook=reviewWorkbook ?? readSpreadsheet(fs.readFileSync(path.join(root,REVIEW_WORKBOOK)));
   const rows=readTransactions(workbook).rows;
-  const ema=registerEma(root,registerWorkbook), accountById=new Map(accounts.map((a)=>[a.accountId,a]));
+  const registerWb=registerWorkbook ?? readSpreadsheet(fs.readFileSync(path.join(root,REGISTER)));
+  const ema=registerEma(root,registerWb), accountById=new Map(accounts.map((a)=>[a.accountId,a]));
   /** A record from the transaction report, or the holding left unresolved with the reason. */
   const settle=(t,a,prior)=>{
     const m=fromMopwm(mopwm,t,a,prior);
@@ -246,6 +248,20 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
     const sourceRows=rows.filter((r)=>r.product===name&&ownerIdFor(r.investor)===a.ownerId
       && (t.isin==='INF179K01830'?/\breg\b/i.test(r.advisor):['INF179K01WA6','INF109K012B0'].includes(t.isin)?/\bdir\b/i.test(r.advisor):true));
     if(!name||!sourceRows.length) {
+      // The register's dated purchases, through a recorded bonus (Stage 10mv).
+      const allot=registerAllotment(registerWb,{isin:t.isin,ownerId:a.ownerId});
+      if(allot&&t.asOf>=allot.unitRecord.at(-1).date&&Math.abs(t.quantity-allot.quantity)<=UNIT_TIE) {
+        records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:r2(allot.costBasis),
+          heldPurchases:{first:allot.buys[0].date,last:allot.buys.at(-1).date,lots:allot.buys.length},
+          cashRecord:allot.buys.map((b)=>({date:b.date,side:'buy',amount:r2(b.amount)})),
+          unitRecord:allot.unitRecord,
+          realizedPnL:null,costOfUnitsSold:null,dividendReceived:null,
+          evidence:[{path:REGISTER,sheet:allot.buys[0].sheet,rows:allot.buys.map((b)=>b.row)}],
+          notes:[`Payment register: ${allot.buys.map((b)=>`${b.units.toLocaleString('en-IN')} shares at ₹${b.rate.toLocaleString('en-IN')} on ${b.date}`).join(' and ')}; with the ${allot.spec.bonus.per}:1 bonus of ${allot.spec.bonus.date} they are every unit held`,
+            allot.spec.bonus.source,'No complete separate sales/income record is claimed']});
+        continue;
+      }
+      if(allot) { settle(t,a,`the investment register's purchases and bonus make ${allot.quantity} units, not the ${t.quantity} held on ${t.asOf}`); continue; }
       if(t.isin===ema.isin&&a.ownerId===ema.ownerId&&t.asOf>=ema.date&&Math.abs(t.quantity-ema.quantity)<=UNIT_TIE) {
         records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:r2(ema.costBasis),
           heldPurchases:{first:ema.date,last:ema.date,lots:1},

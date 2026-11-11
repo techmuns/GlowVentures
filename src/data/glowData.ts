@@ -568,7 +568,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-10-06",
     "inceptionDate": "2025-12-26",
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-10-06",
     "custodian": "Goldstandard Wealth Private Limited",
     "noPositionsReason": null,
     "capital": {
@@ -595,7 +595,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-10-06",
     "inceptionDate": "2025-12-26",
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-10-06",
     "custodian": "Goldstandard Wealth Private Limited",
     "noPositionsReason": null,
     "capital": {
@@ -12310,14 +12310,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 171879,
-    "avgCost": null,
+    "avgCost": 116.36325554605274,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 20000400,
+    "costBasisSource": "supplementary-record",
     "marketValue": 42625992,
-    "unrealizedPnL": null,
+    "unrealizedPnL": 22625592,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": null,
+    "returnPct": 113.12569748605029,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -12325,7 +12326,65 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE12Z301012",
+      "quantity": 171879,
+      "asOf": "2026-10-31",
+      "costBasis": 20000400,
+      "heldPurchases": {
+        "first": "2024-07-12",
+        "last": "2025-11-03",
+        "lots": 2
+      },
+      "cashRecord": [
+        {
+          "date": "2024-07-12",
+          "side": "buy",
+          "amount": 12500400
+        },
+        {
+          "date": "2025-11-03",
+          "side": "buy",
+          "amount": 7500000
+        }
+      ],
+      "unitRecord": [
+        {
+          "date": "2024-07-12",
+          "units": 11364
+        },
+        {
+          "date": "2025-06-25",
+          "units": 125004
+        },
+        {
+          "date": "2025-11-03",
+          "units": 171879
+        }
+      ],
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+          "sheet": "AJAY SIR - AARTI",
+          "rows": [
+            41,
+            42
+          ]
+        }
+      ],
+      "notes": [
+        "Payment register: 11,364 shares at ₹1,100 on 2024-07-12 and 46,875 shares at ₹160 on 2025-11-03; with the 10:1 bonus of 2025-06-25 they are every unit held",
+        "Sotefin Bharat Limited, Red Herring Prospectus (BSE, 9 Jul 2026), bonus allotment of 25 Jun 2025: \"Ajay T Jaisinghani 1,13,640\" — https://www.bseindia.com/downloads/ipo/Sotefin%20Bharat%20Ltd%20-%20RHP&GID_150720262012.zip",
+        "No complete separate sales/income record is claimed"
+      ]
+    }
   },
   {
     "statementRecord": {
@@ -15679,15 +15738,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 125000,
-    "avgCost": 604.25,
+    "avgCost": 624.69,
     "currentPrice": null,
-    "costBasis": 75531250,
+    "costBasis": 78086287,
     "costBasisSource": "review",
     "marketValue": 259375000,
-    "unrealizedPnL": 183843750,
+    "unrealizedPnL": 181288713,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 243.4,
+    "returnPct": 232.16,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -15711,7 +15770,7 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-08",
       "text": "Dec 2022 – Aug 2023"
     },
-    "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13). A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 marks Ajay's 1,25,000 shares at ₹22,27,62,500 (the 30 Oct close)."
+    "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat. The review prints one cost, ₹12.085 Cr, for the 2,00,000: Ankita's ₹4,27,63,713 is the two payments the family's investment register dates for her 15,000 shares (75,000 after the 2024 bonus), and Ajay's is the rest. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13). A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 marks Ajay's 1,25,000 shares at ₹22,27,62,500 (the 30 Oct close)."
   },
   {
     "securityKey": "oilmax-energy",
@@ -16510,15 +16569,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 75000,
-    "avgCost": 604.25,
+    "avgCost": 570.18,
     "currentPrice": null,
-    "costBasis": 45318750,
+    "costBasis": 42763713,
     "costBasisSource": "review",
     "marketValue": 155625000,
-    "unrealizedPnL": 110306250,
+    "unrealizedPnL": 112861287,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 243.4,
+    "returnPct": 263.92,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -16542,7 +16601,7 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-08",
       "text": "Dec 2022 – Aug 2023"
     },
-    "reviewNote": "Valued at ₹15,56,25,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13)."
+    "reviewNote": "Valued at ₹15,56,25,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat. The review prints one cost, ₹12.085 Cr, for the 2,00,000: Ankita's ₹4,27,63,713 is the two payments the family's investment register dates for her 15,000 shares (75,000 after the 2024 bonus), and Ajay's is the rest. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13)."
   },
   {
     "securityKey": "pvc-ii-class-a1",
@@ -25232,6 +25291,62 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
   },
   {
     "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE12Z301012",
+    "quantity": 171879,
+    "asOf": "2026-10-31",
+    "costBasis": 20000400,
+    "heldPurchases": {
+      "first": "2024-07-12",
+      "last": "2025-11-03",
+      "lots": 2
+    },
+    "cashRecord": [
+      {
+        "date": "2024-07-12",
+        "side": "buy",
+        "amount": 12500400
+      },
+      {
+        "date": "2025-11-03",
+        "side": "buy",
+        "amount": 7500000
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2024-07-12",
+        "units": 11364
+      },
+      {
+        "date": "2025-06-25",
+        "units": 125004
+      },
+      {
+        "date": "2025-11-03",
+        "units": 171879
+      }
+    ],
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "AJAY SIR - AARTI",
+        "rows": [
+          41,
+          42
+        ]
+      }
+    ],
+    "notes": [
+      "Payment register: 11,364 shares at ₹1,100 on 2024-07-12 and 46,875 shares at ₹160 on 2025-11-03; with the 10:1 bonus of 2025-06-25 they are every unit held",
+      "Sotefin Bharat Limited, Red Herring Prospectus (BSE, 9 Jul 2026), bonus allotment of 25 Jun 2025: \"Ajay T Jaisinghani 1,13,640\" — https://www.bseindia.com/downloads/ipo/Sotefin%20Bharat%20Ltd%20-%20RHP&GID_150720262012.zip",
+      "No complete separate sales/income record is claimed"
+    ]
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
     "isin": "INE1H7V01011",
     "quantity": 59000,
     "asOf": "2026-10-31",
@@ -31551,6 +31666,36 @@ export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
     "units": 4716,
     "rate": 31810,
     "reviewRow": 443
+  },
+  {
+    "accountId": "review-ankita-jaisinghani",
+    "securityKey": "national-stock-exchange-of-india",
+    "security": "National Stock Exchange of India",
+    "date": "2022-12-09",
+    "kind": "purchase",
+    "amount": 6412500,
+    "units": null,
+    "rate": null,
+    "reviewRow": null,
+    "register": {
+      "sheet": "PVT INV",
+      "row": 74
+    }
+  },
+  {
+    "accountId": "review-ankita-jaisinghani",
+    "securityKey": "national-stock-exchange-of-india",
+    "security": "National Stock Exchange of India",
+    "date": "2023-01-27",
+    "kind": "purchase",
+    "amount": 36351213,
+    "units": null,
+    "rate": null,
+    "reviewRow": null,
+    "register": {
+      "sheet": "PVT INV",
+      "row": 75
+    }
   },
   {
     "accountId": "review-ankita-jaisinghani",
@@ -48878,6 +49023,21 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "v-e-c-assago-capital-management-llp-128005",
+    "units": null,
+    "security": null,
+    "securityKey": null,
+    "date": "2025-07-30",
+    "direction": "in",
+    "label": "VEC ASSAGO PMS",
+    "amount": 75000000,
+    "invested": 75000000,
+    "fromRegister": {
+      "sheet": "ATJ-AAJ FUND HOUSE",
+      "row": 84
+    }
+  },
+  {
     "accountId": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574",
     "date": "2025-07-31",
     "direction": "out",
@@ -49915,6 +50075,36 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2"
   },
   {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "units": null,
+    "security": null,
+    "securityKey": null,
+    "date": "2025-12-26",
+    "direction": "in",
+    "label": "Aristos Equity Portfolio - GoldStandard",
+    "amount": 75000000,
+    "invested": 75000000,
+    "fromRegister": {
+      "sheet": "FUND HOUSE",
+      "row": 104
+    }
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "units": null,
+    "security": null,
+    "securityKey": null,
+    "date": "2025-12-26",
+    "direction": "in",
+    "label": "ARISTOS EQUITY PORTFOLIO",
+    "amount": 175000000,
+    "invested": 175000000,
+    "fromRegister": {
+      "sheet": "ATJ-AAJ FUND HOUSE",
+      "row": 85
+    }
+  },
+  {
     "accountId": "green-lantern-capital-llp-510854",
     "date": "2025-12-29",
     "direction": "out",
@@ -50304,6 +50494,54 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025"
   },
   {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "units": null,
+    "security": null,
+    "securityKey": null,
+    "date": "2026-03-31",
+    "direction": "out",
+    "label": "Capital netted out before the 2026-04-01 opening balance",
+    "amount": 7050,
+    "invested": null,
+    "fromRegister": {
+      "sheet": "FUND HOUSE",
+      "row": 104
+    },
+    "assumedDate": "the manager's opening balance on 2026-04-01 is ₹7,050 below the ₹7,50,00,000 paid on 2025-12-26 (its own rows of this kind are TDS transfers out of capital); no statement dates it, so it is placed on 2026-03-31"
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "units": null,
+    "security": null,
+    "securityKey": null,
+    "date": "2026-03-31",
+    "direction": "out",
+    "label": "Capital netted out before the 2026-04-01 opening balance",
+    "amount": 18025,
+    "invested": null,
+    "fromRegister": {
+      "sheet": "ATJ-AAJ FUND HOUSE",
+      "row": 85
+    },
+    "assumedDate": "the manager's opening balance on 2026-04-01 is ₹18,025 below the ₹17,50,00,000 paid on 2025-12-26 (its own rows of this kind are TDS transfers out of capital); no statement dates it, so it is placed on 2026-03-31"
+  },
+  {
+    "accountId": "v-e-c-assago-capital-management-llp-128005",
+    "units": null,
+    "security": null,
+    "securityKey": null,
+    "date": "2026-03-31",
+    "direction": "out",
+    "label": "Capital netted out before the 2026-04-01 opening balance",
+    "amount": 21531,
+    "invested": null,
+    "fromRegister": {
+      "sheet": "ATJ-AAJ FUND HOUSE",
+      "row": 84
+    },
+    "assumedDate": "the manager's opening balance on 2026-04-01 is ₹21,531 below the ₹7,50,00,000 paid on 2025-07-30 (its own rows of this kind are TDS transfers out of capital); no statement dates it, so it is placed on 2026-03-31"
+  },
+  {
     "accountId": "buoyant-capital-103473",
     "date": "2026-04-01",
     "direction": "in",
@@ -50620,6 +50858,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "bndh-l-and-mcf-dp-gr"
   },
   {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-06-05",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 3904,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-06-05",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 8675,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "green-lantern-capital-llp-510854",
     "date": "2026-06-05",
     "direction": "out",
@@ -50636,6 +50896,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "direction": "out",
     "label": "Capital outflow",
     "amount": 8832,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-06-09",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 800,
     "invested": null,
     "units": null,
     "security": null,
@@ -50749,6 +51020,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "direction": "out",
     "label": "Capital outflow",
     "amount": 2482,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-06-30",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 5940,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-06-30",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 13500,
     "invested": null,
     "units": null,
     "security": null,
@@ -50891,6 +51184,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-07-24",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 1680,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-07-24",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 4020,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "green-lantern-capital-llp-510854",
     "date": "2026-07-27",
     "direction": "out",
@@ -50935,6 +51250,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-07-30",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 6000,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-07-30",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 16400,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "3p-investment-managers-3000048",
     "date": "2026-07-31",
     "direction": "out",
@@ -50968,6 +51305,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-08-04",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 2400,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-08-04",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 5600,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "helios-mutual-fund-10355977",
     "date": "2026-08-06",
     "direction": "in",
@@ -50990,6 +51349,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": 15245765.959,
     "security": "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
     "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option"
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-08-07",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 9020,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-08-07",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 20615,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",
@@ -51019,6 +51400,50 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "direction": "out",
     "label": "TDS Trf to Capital A/c",
     "amount": 6658,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-08-12",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 3735,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-08-12",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 8715,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-08-13",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 1425,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-08-13",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 3000,
     "invested": null,
     "units": null,
     "security": null,
@@ -51168,6 +51593,50 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-08-27",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 2400,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-08-27",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 6000,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-08-28",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 4005,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-08-28",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 9825,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2026-09-01",
     "direction": "out",
@@ -51217,6 +51686,50 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "direction": "out",
     "label": "Capital outflow",
     "amount": 1690,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-09-09",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 2500,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-09-16",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 4900,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-09-17",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 4200,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-09-17",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 9000,
     "invested": null,
     "units": null,
     "security": null,
@@ -51329,6 +51842,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "direction": "out",
     "label": "Capital outflow",
     "amount": 14600,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100022",
+    "date": "2026-09-30",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 2500,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "goldstandard-wealth-private-limited-100023",
+    "date": "2026-09-30",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 7800,
     "invested": null,
     "units": null,
     "security": null,

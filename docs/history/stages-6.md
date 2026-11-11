@@ -1510,7 +1510,23 @@ Codex's review of #352, verified against the code and the book:
 - `build-book` now reads the tape (`saleRows`: the holding trades and the day's sales settled against capital-gain lots) from the winning report type alone, deduped among itself, which is the runtime ledger's `datedRows` rule. Book: 1,817 → 1,820 trades, Green Lantern 510861 28 → 31 of 34 lines dated; no value, cost, realised gain or summary moves. Client request: 73 → 70 PMS stocks.
 - Check: `holdingTrades.test.mjs` restates the tape off the archive for every account issuing both report types and fails on main's book with exactly those three holdings.
 
-### Stage 10mv — Audit: holdings whose dates are in the files but not on the page
+### Stage 10mv — The investment register dates money no statement does: Sotefin, V.E.C 128005, Goldstandard ×2, Ankita's NSE
+
+*"whatever data we have available, we need to use that, right?"* · *"Yes, apply all four"* — the family, 11 Nov 2026, after an audit of the 180 holdings with no dated money (99 valued, ₹211 Cr).
+
+- **The "held out by decision" was a build rule from the August 2026 delivery, not the family's.** The register has fed missing costs since 21 Oct (Stage 10fn). It now also dates money, through `scripts/lib/registerRecords.mjs`: one committed entry per row, found by sheet and serial number. A changed row stops the build.
+- **Sotefin Bharat** (Ajay, ICICI 49794950; no cost before): `AJAY SIR - AARTI` rows 41–42 give 11,364 at ₹1,100 (12 Jul 2024) and 46,875 at ₹160 (3 Nov 2025). The RHP's 10:1 bonus of 25 Jun 2025 (1,13,640 to Ajay) makes 1,71,879, every unit held. Cost ₹2,00,00,400 (`recoverHoldingCosts`), with cost, HPR and XIRR.
+- **V.E.C 128005, Goldstandard 100023/100022**: each mandate's opening payment (₹7.5 Cr on 30 Jul 2025; ₹17.5 Cr and ₹7.5 Cr on 26 Dec 2025) is on the manager's printed inception date. It is listed only where the manager's 1 Apr 2026 opening capital balance is that payment less at most 0.1% (`inceptionMoves`).
+  - The shortfall (₹21,531, ₹18,025, ₹7,050; the manager's own rows of that kind are TDS) is an outflow on 31 Mar 2026 marked `assumedDate`.
+  - Goldstandard's own TDS rows, held back while nothing had been paid in (rule 4 of `datedCapitalElsewhere`), now merge.
+  - Money-weighted: V.E.C 128005 18.77% (128004 is 18.42%). Goldstandard is under a year, so it shows absolute.
+- **NSE, Ankita**: `PVT INV` rows 74–75 (₹64,12,500 on 9 Dec 2022, "15000 EQUITY SHARES OF NSE"; ₹3,63,51,213 on 27 Jan 2023) tie to their subtotal. MOPWM's report carries the 15,000 into her demat and adds the 60,000 bonus of 2 Nov 2024, making her 75,000.
+  - They are her `BOOK_REVIEW_FLOWS` rows (`register`, `reviewRow: null`). Her cost is ₹4,27,63,713 and Ajay's the review's ₹12.085 Cr less it, ₹7,80,86,287 (was a split by shares).
+  - Her line: XIRR 45.49%. The two-owner row stays undated for Ajay's part: the register dates 5,000 of his 25,000 pre-bonus shares, at an amount that does not match its rate.
+- `CapitalMove.fromRegister` / `assumedDate` and `ReviewFlow.register` carry the source into the transaction rows (`consolidatedSheet.ts` notes).
+- Checks: `registerRecords.test.mjs` (test:ingest) reads the real rows and breaks each one: renamed row, other holder, units × rate, bonus ratio, missing MOPWM bonus, subtotal, and each reconciliation refusal.
+
+### Stage 10mw — Audit: holdings whose dates are in the files but not on the page
 
 *"audit this for all the holdings that we are not missing out on showing dates, similar to this man industries example … not accounting for those in our calculations, even though we already have them in the files"* — the family, 12 Nov 2026.
 
@@ -1519,8 +1535,8 @@ Codex's review of #352, verified against the code and the book:
 - LKP 98245's six 31 March balances (Belrise, Capri Global, Electronics Mart, Jyothy Labs, Varun Beverages, Pricol). The capital gain statement to 31 Jul lists the lots still open and the lots sold since. Open lots bought by 31 March, plus lots bought by then and sold after it, are exactly the units held, and their cost is the holding's own to the rupee. They date the holding (`heldSince`, the lots XIRR reads). The ST/LT split stays the live register's (`ltDate.ts`), because these units have since been sold.
 - VAML at Green Lantern 510854/510861: the Vedanta demerger (1 for 1, ex-date 30 Apr 2026) joins `shared/demergers.mjs`, so their from-inception tapes date the 4,340 and 8,569 shares through the parent's own buys (Stage 10ly's replay).
 - Vedanta at HDFC Securities 3110320 joins Stage 10ms's alias: bought 1,77,000 on 18 Jul 2024, sold 67,000 in July 2026, 1,10,000 held.
-- Ten review private lines dated only by month now carry the family register's own payments (`scripts/lib/registerPurchaseDates.mjs`, `Position.registerPayments`, source `register`), e.g. Waterwala Labs' eight, Everest Fleet ×3, URB ×2. Gates: a committed alias (never a token match), the holder's own rows, an exact total against the review's cost, and every payment inside the review's months. The register never replaces a day the review prints. All ten are at cost, so no rate is struck; XIRR now names "held at cost", not a span.
+- Ten review private lines dated only by month (none of them Stage 10mv's) now carry the family register's own payments (`scripts/lib/registerPurchaseDates.mjs`, `Position.registerPayments`, source `register`), e.g. Waterwala Labs' eight, Everest Fleet ×3, URB ×2. Gates: a committed alias (never a token match), the holder's own rows, an exact total against the review's cost, and every payment inside the review's months. The register never replaces a day the review prints. All ten are at cost, so no rate is struck; XIRR now names "held at cost", not a span.
 - Four ties disagree with the review on when the money went in, and are left for the family: Zepto (₹15 Cr paid 13 Nov 2024; review Feb 2025, which the XIRR uses), Transition VC (paid 20 Dec 2024; review Aug–Oct 2025), Inflexor and Hyprkytchen (payments after the review's span end).
 - XIRR: six holdings dated by original buys plus a bonus (ZF Commercial ×2, Sharda Motor ×2, Time Technoplast ×2) now solve on their trades. A bonus adds units and no money (`holdingFlowsOf`).
-- Client request: the LKP and Bandhan items move to resolved (37 records).
+- Client request: the LKP and Bandhan items move to resolved, and so does Sotefin, which Stage 10mv dated and costed but left on the list (36 records).
 - Checks: `registerPurchaseDates.test.mjs` (each gate broken once). `portfolioExcel.test` re-derives the bonus case off the saved capture, and `tranches.test` reads every statement of an account for its printed NAVs.

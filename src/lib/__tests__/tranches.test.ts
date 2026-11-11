@@ -145,7 +145,7 @@ for (const k of keys) {
     Math.max(1, tie * (p.marketValue / p.quantity!)));
   // Each lot's amount is printed to the paisa and the fund rounds its cost column
   // once, so n lots may part from it by half a paisa each (Bandhan 8652064's 23
-  // purchases and switches in: ₹0.02 on ₹43.09 Cr, Stage 10mv). A paisa floor.
+  // purchases and switches in: ₹0.02 on ₹43.09 Cr, Stage 10mw). A paisa floor.
   if (p.costBasis != null) near(`invested ties to cost basis — ${tr.accountId.slice(-8)}`, t.invested, p.costBasis, Math.max(0.01, 0.005 * tr.moves.length));
 }
 ok("at least one position was bought over several dates", multiTranche > 0, `${multiTranche} of ${keys.length}`);
@@ -255,7 +255,7 @@ for (const k of keys) {
   const p = posOf(tr.accountId, tr.securityKey);
   if (!p) continue;
   const acctNo = tr.accountId.split("-").at(-1)!;
-  // EVERY STATEMENT OF THE ACCOUNT IS ITS OWN PAGE (Stage 10mv): Bandhan
+  // EVERY STATEMENT OF THE ACCOUNT IS ITS OWN PAGE (Stage 10mw): Bandhan
   // 8652064 prints its April purchases on the 14 Oct statement, and the 26 Oct
   // one the manifest lists first opens in August.
   const pagePaths = manifest.filter((m) => m.accountNo === acctNo)

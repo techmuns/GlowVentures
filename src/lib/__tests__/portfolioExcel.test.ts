@@ -250,7 +250,7 @@ function solveXirr(recordKeys: readonly string[]): number | null {
  */
 const STMT = new Map(BOOK_POSITIONS.map((p) => [`${p.accountId}|${p.securityKey}`, p]));
 /**
- * EVERY UNIT A BUY OR A BONUS ON ONE (Stage 10mv): the window sold nothing, every
+ * EVERY UNIT A BUY OR A BONUS ON ONE (Stage 10mw): the window sold nothing, every
  * row in it is a buy, and the saved bonus issues after the last of them multiply
  * those buys to exactly the units held — so the buys are every rupee paid.
  * Re-expressed off the saved capture, never `investedOn.ts`.

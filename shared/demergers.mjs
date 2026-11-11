@@ -32,7 +32,7 @@ export const DEMERGERS = Object.freeze([
     ],
   },
   {
-    // Stage 10mv: Green Lantern 510854/510861 hold VAML on no trade of their own;
+    // Stage 10mw: Green Lantern 510854/510861 hold VAML on no trade of their own;
     // their from-inception tapes hold exactly that many Vedanta on the record date.
     parentKey: 'vedanta', parentSymbol: 'VEDL', parentIsin: 'INE205A01025',
     childKey: 'vedanta-aluminium-metal', childSymbol: 'VAML',

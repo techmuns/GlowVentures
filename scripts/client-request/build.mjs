@@ -109,9 +109,6 @@ const ITEMS = [
   { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "City Union Bank", units: 104400, from: "ICICI and the broker or account the shares came from",
     send: "The ICICI order book shows 79,283 shares bought on 2 July 2026; the 31 October statement shows 104,400. Send the purchase or transfer record for the other 25,117 shares, with date, shares and amount paid.",
     check: () => noCost(ICICI, "city-union", 104400) && tradesOf(ICICI, "city-union").reduce((n, t) => n + (t.side === "buy" ? t.quantity : -t.quantity), 0) === 79283 },
-  { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "Sotefin Bharat", units: 171879, from: "Client accounts team and ICICI",
-    send: "Send the allotment or purchase record for these shares: date, shares and amount paid. Confirm they are the SOTEFIN investment of Rs 20,000,400 dated 12 July 2024 in the 30 June review, so one purchase is not counted twice.",
-    check: () => noCost(ICICI, "sotefin-bharat", 171879) },
   { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "Vantage Oak Fund I, Class A2", units: 2275000, from: "Vantage Oak / fund manager",
     send: "Send the subscription or drawdown record (dates and amounts paid), the latest fund statement showing the NAV and its date, and the fund's SEBI AIF category. Ankita's Motilal demat 1201090012838316 also shows 1,225,000 units of this class; include her records too.",
     check: () => noCost(ICICI, "vof-i-class-a2", 2275000) && !!unvalued(MO_ANKITA, "vof-i-class-a2") },
@@ -219,7 +216,9 @@ const RESOLVED = [
   ["Bharat Jaisinghani | LKP 98245", "Purchase dates for the 31 March balances (Belrise, Capri Global, Electronics Mart, Jyothy Labs, Varun Beverages, Pricol)", "LKP's capital gain statement to 31 July 2026 dates every unit held on 31 March: the lots still open and the lots sold after it, at the statement's own cost.",
     () => [["belrise-industries", 12500], ["capri-global-capital", 7000], ["electronics-mart-india", 10000], ["jyothy-labs", 4000], ["varun-beverages", 2700], ["pricol", 650]]
       .every(([k, q]) => { const p = pos(LKP, k); return !!p && near(p.quantity, q) && p.dated && p.dateSources.includes("lots"); })],
-  ["Ajay Jaisinghani | Bandhan folio 8652064", "Bandhan Large & Mid Cap and Arbitrage purchase dates", "Bandhan's own statement of 14 October 2026 dates every unit from a nil opening on 2 April 2026: each purchase, carried through the switches between the folio's schemes.",
+  ["Ajay Jaisinghani | ICICI NSDL 49794950", "Sotefin Bharat", "The family's investment register prints both purchases (12 July 2024 and 3 November 2025), and the 10:1 bonus makes them every one of the 1,71,879 shares; its cost is now carried.",
+    () => { const p = pos(ICICI, "sotefin-bharat"); return !!p && near(p.quantity, 171879) && p.costBasis != null && p.dated; }],
+  ["Ajay Jaisinghani | Bandhan folio 8652064", "Bandhan Large & Mid Cap and Arbitrage purchase dates", "Bandhan's own statement of 14 October 2026 dates every purchase and switch in from a nil opening on 2 April 2026.",
     () => ["bndh-l-and-mcf-dp-gr", "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth"]
       .every((k) => { const p = pos("bandhan-mutual-fund-8652064", k); return !!p && p.dated && p.dateSources.includes("allotments"); })],
   ["Ajay Jaisinghani | MOPWM", "SOTEFIN (private investment valuation)", "Now listed and priced on the ICICI statement, so it is no longer valued at cost. Its allotment record is asked for in section 1.",

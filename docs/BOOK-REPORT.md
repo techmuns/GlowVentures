@@ -200,7 +200,7 @@ Where a statement disagrees, the review is followed and the statement named (13 
 
 Written off on the review, a measured ₹0 in no total: Vecino Fitness Pvt Ltd - DOPAMINE, BETR Tech Privated Limited - Venture Catalyst, Bitcipher LLP, Cheelizza - ANIMESH LODHA, Crypto, Crypto Matic, DCX Deposits, Falconbrick Technologies Private Limited - Shashi Kiran, Moneyclub Technologies Private Limited - Venture Catalyst, Neblio Technologies Pvt Ltd, One Eight Technologies Private Limited - Ram, Reflexical, Tamasha - Angel List, UE Lifesciences - SHIKHA JAISINGHANI, Wazir, Zaamo E Commerce Pvt Ltd - PRADEEP KUMAR, AL Trust - Forbidden Foods - BRB, Faraway Foods Private Limited, Kylo Edutech Private Ltd, Rang Technovations LLP, Synergistic Financial Networks Pvt Ltd (Equity Shares) - MOSAMBEE, Transigo OPC Pvt Ltd.
 
-The review's dated rows behind the holdings it values (65 rows, `BOOK_REVIEW_FLOWS`) — what each fund's return is struck on:
+The review's dated rows behind the holdings it values (67 rows, `BOOK_REVIEW_FLOWS`) — what each fund's return is struck on:
 
 | Holding | Purchases | Sales | Income rows |
 | --- | ---: | ---: | ---: |
@@ -212,6 +212,7 @@ The review's dated rows behind the holdings it values (65 rows, `BOOK_REVIEW_FLO
 | india-sme-investments-177302 · India SME Investments Fund II — Class A2 | 7 | 0 | 1 |
 | review-ajay-jaisinghani · Assetgro Fintech Private Limited — Series B Preference | 1 | 0 | 0 |
 | review-ajay-jaisinghani · Zepto | 1 | 0 | 0 |
+| review-ankita-jaisinghani · National Stock Exchange of India | 2 | 0 | 0 |
 | review-ankita-jaisinghani · Transition Venture Capital Fund I — Class A1 | 1 | 0 | 0 |
 | review-bharat-jaisinghani · K M Global - Credit Private Limited | 3 | 0 | 0 |
 | sky-capital-rising-titans-fund-SKY003 · Sky Capital Rising Titans Fund I | 5 | 0 | 0 |
@@ -279,9 +280,9 @@ Together **1,08,24,88,70,223**, excluded from the 10,74,27,49,691.78 consolidate
 
 **29** of those account(s) start every class's record at nil — a printed running unit balance that starts from zero on the class's first allotment, or a first allotment on the day the class's own series name says it was issued — which proves their record reaches inception: 3p-investment-managers-3000048, ask-absolute-return-fund-9039917111, ask-absolute-return-fund-9039917144, bandhan-mutual-fund-1802619, bandhan-mutual-fund-8652064, bandhan-mutual-fund-8691267, baring-private-equity-india-fund-AIFM_BPEPF6_0584, buoyant-capital-103472, buoyant-capital-103473, carnelian-bharat-amritkaal-fund-4551, hdfc-mutual-fund-16002141, helios-mutual-fund-10056128, helios-mutual-fund-10056154, helios-mutual-fund-10063876, helios-mutual-fund-10355977, icici-prudential-mutual-fund-14320536, icici-prudential-mutual-fund-36378950, icici-prudential-mutual-fund-36379637, invesco-mutual-fund-3041491081, invesco-mutual-fund-3041491145, invesco-mutual-fund-3041794916, kotak-mahindra-mutual-fund-5372722, kotak-mahindra-mutual-fund-7125255, kotak-mahindra-mutual-fund-7125319, motilal-oswal-active-momentum-fund-904168868444, motilal-oswal-delphi-equity-fund-9049241536, motilal-oswal-founders-fund-90410016093, motilal-oswal-founders-fund-90410016104, motilal-oswal-hedged-equity-multi-factor-strategy-90410014574.
 
-**187** dated contribution(s) totalling **8,00,57,25,594.04** and **448** withdrawal(s) totalling **2,33,08,29,006.86**, across **54 of 95** account(s).
+**190** dated contribution(s) totalling **8,33,07,25,594.04** and **478** withdrawal(s) totalling **2,33,10,44,171.86**, across **56 of 95** account(s).
 
-These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 41 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
+These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 39 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
 
 A per-contribution breakdown is published for **36** position(s), of which **15** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
 
@@ -540,7 +541,9 @@ never guessed into the nearest plausible bucket.
 - account Goldstandard Wealth Private Limited::100022: 15 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 100022: zydus-lifesciences is not dated through its corporate actions — ZYDUSLIFE's buyback of 2026-05-29 (Buy Back) is not one this replay can carry units through
 - account 100022: life-insurance-corp-of-india is not dated through its corporate actions — its trades from 2026-04-01, carried through bonus of 2026-05-29, end on 0 units where the statement holds 6000
-- account 100022: its capital register's only movements are 12 withdrawal(s) (TDS Trf to Capital A/c, 47209 in all) and it publishes no other dated capital, so they are not listed as the family's own: on their own they would present an account funded before the register's window as one nothing was paid into. The XIRR and the NAV chain still net them.
+- account 100022: the investment register's 2025-12-26 payment of 75000000 (FUND HOUSE row 104) opens its dated capital record — the manager's inception date, and its 2026-04-01 opening balance of 74992950 less 7050 netted out before it, listed on 2026-03-31 with its date assumed
+- account 100022: its dated capital record runs to 2026-10-06 — the capital register whose balances tie reaches that date
+- account 100022: 12 movement(s) from its capital register (0 in, 47209 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
 - account Goldstandard Wealth Private Limited::100023: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-appraisal`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100023: bank-book 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-bank-book`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100023: capital-register 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-capital-register`; its dated rows are still counted
@@ -569,7 +572,9 @@ never guessed into the nearest plausible bucket.
 - account Goldstandard Wealth Private Limited::100023: 19 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 100023: zydus-lifesciences is not dated through its corporate actions — ZYDUSLIFE's buyback of 2026-05-29 (Buy Back) is not one this replay can carry units through
 - account 100023: life-insurance-corp-of-india is not dated through its corporate actions — its trades from 2026-04-01, carried through bonus of 2026-05-29, end on 0 units where the statement holds 16400
-- account 100023: its capital register's only movements are 15 withdrawal(s) (TDS Trf to Capital A/c, 121350 in all) and it publishes no other dated capital, so they are not listed as the family's own: on their own they would present an account funded before the register's window as one nothing was paid into. The XIRR and the NAV chain still net them.
+- account 100023: the investment register's 2025-12-26 payment of 175000000 (ATJ-AAJ FUND HOUSE row 85) opens its dated capital record — the manager's inception date, and its 2026-04-01 opening balance of 174981975 less 18025 netted out before it, listed on 2026-03-31 with its date assumed
+- account 100023: its dated capital record runs to 2026-10-06 — the capital register whose balances tie reaches that date
+- account 100023: 15 movement(s) from its capital register (0 in, 121350 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
 - account Green Lantern Capital LLP::510854: appraisal 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510854-2026-06-25-appraisal`; its dated rows are still counted
 - account Green Lantern Capital LLP::510854: capital-gain 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510854-2026-06-25-capital-gain`; its dated rows are still counted
 - account Green Lantern Capital LLP::510854: capital-register 2026-06-25 superseded for SNAPSHOT facts by 2026-09-23 — `green-lantern-capital-llp-510854-2026-06-25-capital-register`; its dated rows are still counted
@@ -982,6 +987,7 @@ never guessed into the nearest plausible bucket.
 - account V.E.C Assago Capital Management LLP::128005: transaction-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: fact-sheet 2026-08-13 superseded for SNAPSHOT facts by 2026-09-30 — `v-e-c-assago-capital-management-llp-128005-2026-08-13-fact-sheet`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: 11 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 128005: the investment register's 2025-07-30 payment of 75000000 (ATJ-AAJ FUND HOUSE row 84) opens its dated capital record — the manager's inception date, and its 2026-04-01 opening balance of 74978469 less 21531 netted out before it, listed on 2026-03-31 with its date assumed
 - account 128005: its dated capital record runs to 2026-08-13 — the capital register whose balances tie reaches that date
 - account 128005: 4 movement(s) from its capital register (112400000 in, 9162 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
 - 1 depository row(s) for Franklin India Credit AIF are NOT carried: the unit count matches that fund's own statement exactly, so they are the same holding seen from custody, and the fund is the authority on what its own units are worth.
@@ -991,8 +997,9 @@ never guessed into the nearest plausible bucket.
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Ajay Jaisinghani's cost is FIFO over the review's dated rows: ₹99,41,987.06 held, ₹57,512.96 of cost sold for a realised ₹20,807.04; the review's purchases less sale proceeds (₹99,21,180.02) is kept as the check
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Bharat Jaisinghani's Transactions rows walk to 9,94,198.706 units; the closing holds 9,90,429.68, so 3,769.026 units are on no dated row
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Bharat Jaisinghani's cost is FIFO over the review's dated rows: ₹99,41,987.06 held, ₹57,512.96 of cost sold for a realised ₹20,807.04; the review's purchases less sale proceeds (₹99,21,180.02) is kept as the check
+- review: National Stock Exchange of India — Ankita Jaisinghani's line is dated by the family's investment register (PVT INV rows 74 and 75: ₹4,27,63,713 for 15,000 shares), carried to 75,000 by the 60,000-share bonus of 2024-11-02 in MOPWM's transaction report
 - review: 88 private-market rows from the consolidated review (MOPWM, 30 Jun 2026) — 62 statement rows superseded, 22 written-off lines named
-- review: 65 dated rows (purchases, sales, income) behind 16 valued holdings
+- review: 67 dated rows (purchases, sales, income) behind 17 valued holdings
 - review-ajay-jaisinghani: everest-fleet dated by the investment register — 3 payment(s), 2022-01-10 to 2023-05-15, adding to the review's cost, inside its Jan 2022 – May 2023
 - review-ankita-jaisinghani: everest-fleet dated by the investment register — 2 payment(s), 2022-01-11 to 2023-05-15, adding to the review's cost, inside its Jan 2022 – May 2023
 - review-bharat-jaisinghani: everest-fleet dated by the investment register — 2 payment(s), 2022-05-11 to 2023-05-15, adding to the review's cost, inside its Jan 2022 – May 2023
@@ -1222,7 +1229,7 @@ never guessed into the nearest plausible bucket.
 - FIFO and the class-switch carry disagree on Kotak Flexi Cap Fund Direct Growth (kotak-mahindra-mutual-fund-5372722): FIFO over the unit record holds 500000 of cost, and the switch carry did not restate the statement's 500000. The statement's cost stands; see the switch notes above for why it was not carried.
 - share movements: 90 holding-window(s) from the demat statements, 90 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 join a position this book carries and 23 a holding it carries as a quantity with no value; 39 close at nil, securities the account sold out of during the window; 19 close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; 9 sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. 0 movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.
 - share movements: 19 window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (8 close at nil; 11 close with units still held on an account that sent no holding statement); 0 ISIN(s) the book files under two keys keep the statement's own name rather than picking one; 12 window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; 0 block(s) would have landed on a key their account already filed and keep their own name instead; 0 window(s) were overwritten by a second block under one key.
-- cost recovery: 53 exact account/ISIN/quantity records from the saved workbooks; 44 recorded security balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.
+- cost recovery: 54 exact account/ISIN/quantity records from the saved workbooks; 43 recorded security balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.
 - MOPWM's transaction report: its demat-folio fund "redemptions" of 2026-10-01 reappear unit for unit on later statements of the same owners — transfers of custody, which no roll applies as sales
 - motilal-oswal-financial-services-demat-1201090012539150: IFB Industries Ltd (INE559A01017) carried from 15772 on 2026-07-31 to 0 on 2026-09-09 by 2 exchange trade(s) on MOPWM's transaction report of 2026-10-23, live basis only (the report's own record holds the statement's units on 2026-07-31)
 - motilal-oswal-financial-services-demat-1201090012539150: KRBL Ltd (INE001B01026) carried from 0 on 2026-07-31 to 67500 on 2026-08-28 by 2 exchange trade(s) on MOPWM's transaction report of 2026-10-23, live basis only (the report's own record holds the statement's units on 2026-07-31)
