@@ -249,9 +249,11 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
   }
   const marketMetrics = metrics.filter(m => m.metric === 'marketValue');
   const hasDispute = marketMetrics.some(m => m.status === 'disputed');
+  const totalMeasured = finite(book.BOOK_SUMMARY?.totalValue) && (positions.some(p => finite(p.marketValue))
+    || accounts.some(a => book.BOOK_ACCOUNT_RETURN_RECORDS?.[a.accountId]?.record?.value === 0));
   metrics.push({ id: 'portfolio:marketValue', metric: 'marketValue', scope: 'canonical reported book', positionId: null,
-    value: book.BOOK_SUMMARY?.totalValue ?? null, usableValue: hasDispute || positions.some(p => p.valuedAtCost) || book.BOOK_UNVALUED_HOLDINGS?.length ? null : book.BOOK_SUMMARY?.totalValue ?? null,
-    currency: 'INR', unit: 'money', scale: 2, status: hasDispute ? 'disputed' : positions.some(p => p.valuedAtCost) ? 'mixed-basis' : book.BOOK_UNVALUED_HOLDINGS?.length ? 'partial' : 'source-backed',
+    value: totalMeasured ? book.BOOK_SUMMARY.totalValue : null, usableValue: !totalMeasured || hasDispute || positions.some(p => p.valuedAtCost) || book.BOOK_UNVALUED_HOLDINGS?.length ? null : book.BOOK_SUMMARY.totalValue,
+    currency: 'INR', unit: 'money', scale: 2, status: !totalMeasured ? 'missing' : hasDispute ? 'disputed' : positions.some(p => p.valuedAtCost) ? 'mixed-basis' : book.BOOK_UNVALUED_HOLDINGS?.length ? 'partial' : 'source-backed',
     effectiveDate: book.BOOK_AS_OF, basis: 'source dates and carrying amounts retained per position',
     formula: 'canonical deduplicated reported values; retained unvalued custody rows are not added as zero or as extra investments',
     formulaVersion: 'financial-integrity-v1', readerRevision, bookRevision, inputs: marketMetrics.map(m => m.id) });

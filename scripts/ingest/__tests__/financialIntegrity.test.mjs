@@ -96,6 +96,14 @@ test('an empty ownership projection is unknown unless an actual nil was measured
   graph.nodes[1].verifiedNil = true;
   assert.equal(ownershipExposure(graph, [], 'owner', '2026-11-01').value, 0);
 });
+test('an empty aggregate cannot turn a missing portfolio into a verified zero', () => {
+  const b = { ...book([]), BOOK_SUMMARY: { totalValue: 0 } };
+  const metric = buildFinancialIntegrity(b, []).metrics.find(m => m.id === 'portfolio:marketValue');
+  assert.equal(metric.status, 'missing'); assert.equal(metric.value, null); assert.equal(metric.usableValue, null);
+  b.BOOK_ACCOUNT_RETURN_RECORDS = { [account.accountId]: { record: { value: 0 } } };
+  const nil = buildFinancialIntegrity(b, []).metrics.find(m => m.id === 'portfolio:marketValue');
+  assert.equal(nil.status, 'source-backed'); assert.equal(nil.usableValue, 0);
+});
 
 test('a source review is unaffected by password-list order, but financial changes invalidate it', async () => {
   const { reviewDocumentRevision } = await import('../lib/reconciliation-policy.mjs');
