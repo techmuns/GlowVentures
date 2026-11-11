@@ -3031,12 +3031,30 @@ function build(archived, archiveCount = archived.length, references = {}) {
      * move's invested-or-amount) — the ledger's own exclusion.
      */
     const saleType = SALE_AUTHORITY.find((rt) => allIssues.some((d) => d.reportType === rt && (d.transactions ?? []).length)) ?? null;
-    const typeOfDoc = new Map(allIssues.map((d) => [d.docKey, d.reportType]));
+    /**
+     * THE TAPE IS DEDUPED AMONG ITS OWN REPORT TYPE ONLY (Stage 10mt).
+     *
+     * `dated.transactions` dedupes across EVERY document of the account, and a
+     * manager's investor report prints the same trades as its transaction
+     * statement. Where the two print a row identically — a whole-rupee rate,
+     * which both write the same — the investor report's copy came first and the
+     * transaction statement's was dropped as its duplicate; the type filter
+     * then threw the investor report's copy away too, and the trade was gone.
+     * Green Lantern 510861 lost Ingersoll Rand's 17 Apr 2026 buy of 170 at
+     * ₹4,100, Ratnamani's 29 Apr buy of 157 at ₹2,650 and Anup Engineering's
+     * 15 Jun buy of 41 at ₹1,950, so its since-inception statement "left" 368
+     * held units on no dated trade and three holdings carried no Invested on
+     * date. The runtime ledger's `datedRows` already reads the winning type
+     * alone (`src/lib/ledgerModel.ts`); this is the same rule.
+     */
+    const saleRows = saleType
+      ? datedRowsAcross(allIssues.filter((d) => d.reportType === saleType), new Set(group.map((d) => d.docKey)), [], `account ${key}`).transactions
+      : [];
     const ownFundMoves = capitalMovesFrom(dated.cashFlows, accountId, [], `account ${accountNo}`);
     const isOwnFundMove = (sale) => ownFundMoves.some((m) => m.securityKey === sale.securityKey && m.date === sale.date
       && isNum(sale.amount) && isNum(m.invested ?? m.amount) && Math.abs((m.invested ?? m.amount) - sale.amount) <= 1);
-    const daySales = saleType ? daySalesOf(dated.transactions
-      .filter((t) => t.side === "sell" && t.date && t.securityKey && typeOfDoc.get(t.source) === saleType)
+    const daySales = saleType ? daySalesOf(saleRows
+      .filter((t) => t.side === "sell" && t.date && t.securityKey)
       .map((t) => ({ accountNo, securityKey: t.securityKey, date: t.date, amount: settledOf(t),
         // What a capital gain is struck on: the consideration less brokerage
         // (see pass 3 in shared/lotSettlement.mjs). Null where either is unprinted.
@@ -3191,8 +3209,8 @@ function build(archived, archiveCount = archived.length, references = {}) {
     // before it, the last of them, so the record can say the tape stops short.
     const tapeWindows = saleType ? tradeWindows(allIssues.filter((d) => d.reportType === saleType)) : [];
     const tapeWindow = windowThrough(tapeWindows, asOf) ?? (asOf ? tapeWindows.filter((w) => w.to < asOf).at(-1) ?? null : null);
-    const tapeOf = (securityKey) => oneCopyPerTrade((saleType ? dated.transactions : [])
-      .filter((t) => t.securityKey === securityKey && typeOfDoc.get(t.source) === saleType)
+    const tapeOf = (securityKey) => oneCopyPerTrade(saleRows
+      .filter((t) => t.securityKey === securityKey)
       .filter((t) => !ownFundMoves.some((m) => m.securityKey === t.securityKey && m.date === t.date))
       .map((t) => ({ ...t, amount: settledOf(t) })));
     const tradeRecordOf = (h) => {
