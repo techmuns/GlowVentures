@@ -114,11 +114,12 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
     addNode({ id, kind: 'position', accountId: p.accountId, memberId: p.memberId ?? null, instrument: instrument.id, quantity: p.quantity == null ? null : String(p.quantity), asOf: a.asOf });
     edges.push({ id: `holds:${id}`, owner: `account:${p.accountId}`, owned: id, relationship: 'holds', fraction: 1, evidence: source(p, 'quantity') });
     edges.push({ id: `instrument:${id}`, owner: id, owned: instrument.id, relationship: 'position-in', evidence: source(p, 'securityKey') });
-    const related = reviews.filter(r => r.finding.docKey === p.statementRecord?.document && (!r.finding.securityKey || r.finding.securityKey === p.securityKey));
+    const related = reviews.filter(r => r.finding.docKey === p.statementRecord?.document && (!r.finding.securityKey || r.finding.securityKey === p.securityKey)
+      && (!r.review?.affectedSecurityKeys || r.review.affectedSecurityKeys.includes(p.securityKey)));
     const metric = (name, value, basis, formula, dependencies) => {
       const unit = name === 'quantity' ? 'units' : name === 'returnPct' ? 'percent' : ['currentPrice', 'avgCost'].includes(name) ? 'money-per-unit' : 'money';
       const disputed = related.filter(r => r.review?.disposition === 'withhold-affected-claim' || !r.review)
-        .filter(r => !r.finding.field || r.finding.field === name || name === 'unrealizedPnL');
+        .filter(r => { const affected = r.review?.affectedMetrics ?? [r.finding.field ?? 'marketValue']; return affected.includes(name) || dependencies.some(field => affected.includes(field)); });
       let status = value == null ? 'missing' : disputed.length ? 'disputed' : p.valuedAtCost && ['marketValue', 'unrealizedPnL'].includes(name) ? 'at-cost' : 'source-backed';
       const required = name === 'unrealizedPnL' ? [p.marketValue, p.costBasis] : [value];
       if (required.some(v => v == null)) status = 'missing';
@@ -220,6 +221,22 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
   }
   checks.push(...reconcileSettlements(events, documents, accounts, settlementMappings));
   issues.push(...validateOwnershipGraph(nodes, edges));
+  for (const check of checks.filter(c => c.status === 'disputed')) {
+    const affected = check.kind === 'cost-lots' ? ['costBasis', 'avgCost', 'unrealizedPnL', 'returnPct']
+      : ['unit-lots', 'unit-transactions'].includes(check.kind) ? ['quantity', 'marketValue', 'avgCost', 'unrealizedPnL', 'returnPct'] : [];
+    for (const metric of metrics) if (metric.positionId === check.positionId && affected.includes(metric.metric)) {
+      metric.status = 'disputed'; metric.usableValue = null;
+      (metric.controlFailures ??= []).push({ kind: check.kind, evidence: check.evidence });
+    }
+  }
+  const marketMetrics = metrics.filter(m => m.metric === 'marketValue');
+  const hasDispute = marketMetrics.some(m => m.status === 'disputed');
+  metrics.push({ id: 'portfolio:marketValue', metric: 'marketValue', scope: 'canonical reported book', positionId: null,
+    value: book.BOOK_SUMMARY?.totalValue ?? null, usableValue: hasDispute || positions.some(p => p.valuedAtCost) || book.BOOK_UNVALUED_HOLDINGS?.length ? null : book.BOOK_SUMMARY?.totalValue ?? null,
+    currency: 'INR', unit: 'money', scale: 2, status: hasDispute ? 'disputed' : positions.some(p => p.valuedAtCost) ? 'mixed-basis' : book.BOOK_UNVALUED_HOLDINGS?.length ? 'partial' : 'source-backed',
+    effectiveDate: book.BOOK_AS_OF, basis: 'source dates and carrying amounts retained per position',
+    formula: 'canonical deduplicated reported values; retained unvalued custody rows are not added as zero or as extra investments',
+    formulaVersion: 'financial-integrity-v1', readerRevision, bookRevision, inputs: marketMetrics.map(m => m.id) });
   const summary = {
     positions: positions.length, accounts: accounts.length, missingCost: positions.filter(p => p.costBasis == null).length,
     atCost: positions.filter(p => p.valuedAtCost).length, unvaluedRows: book.BOOK_UNVALUED_HOLDINGS?.length ?? 0,
@@ -235,6 +252,7 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
 export function positionIntegrity(integrity) {
   const result = new Map();
   for (const m of integrity.metrics) {
+    if (!m.positionId) continue;
     const key = JSON.stringify([m.accountId, m.memberId ?? null, m.securityKey]);
     const record = result.get(key) ?? { positionId: m.positionId, quantityAsOf: m.quantityAsOf, formulaVersion: m.formulaVersion, metrics: {} };
     if (['quantity', 'costBasis', 'marketValue', 'unrealizedPnL'].includes(m.metric)) record.metrics[m.metric] = { status: m.status, basis: m.basis, effectiveDate: m.effectiveDate, exceptions: m.exceptions };

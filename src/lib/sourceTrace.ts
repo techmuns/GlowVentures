@@ -97,7 +97,7 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
   let missing = 0, derived = ['avgCost', 'unrealizedPnL'].includes(metric) || positions.length > 1;
   for (const p of positions) {
     const check = p.integrity?.metrics[metric];
-    if (check?.status === 'disputed') notes.add('The statement contains an unresolved discrepancy affecting this figure. Its source measurements are retained; this figure is disputed pending corrected source evidence.');
+    if (check?.status === 'disputed') notes.add(p.priceEvidence && ['marketValue', 'currentPrice', 'unrealizedPnL'].includes(metric) ? 'The original statement valuation has an unresolved discrepancy. This view uses the separately sourced market price listed below; the original statement measurements are retained for review.' : 'The statement contains an unresolved discrepancy affecting this figure. Its source measurements are retained; this figure is disputed pending corrected source evidence.');
     if (check?.status === 'at-cost') notes.add('This is a carrying amount at cost, not an independently measured valuation.');
     if (p.priceEvidence && p.integrity?.quantityAsOf) notes.add(`The price and the units have separate dates: the units were recorded on ${p.integrity.quantityAsOf}. Continued ownership after that date is assumed unless a later reconciled record confirms it.`);
     const original = acquisitionIdentity(p);

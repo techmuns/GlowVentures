@@ -36,7 +36,10 @@
       "resolutionRequired": "Corrected source or independently reproduced basis explanation; any changed finding requires a new review.",
       "documentRevisions": {
         "kotak-mahindra-mutual-fund-4295974-2026-10-05-holdings": "fb2dc6e24b1ee029d7df7fef6b2c073acd06df443dda08decd8e88d91419a2c6"
-      }
+      },
+      "affectedSecurityKeys": [
+        "kotak-liquid-fund-direct-plan-daily-idcw"
+      ]
     },
     {
       "id": "a834aa6153703f9c403e1e53d4fadad3019de9280260fe09e7e24e0991cae18b",
@@ -844,7 +847,7 @@
       "owner": "Glow data reconciliation",
       "reviewedBy": "Codex source-policy inspection",
       "reviewedOn": "2026-11-11",
-      "reviewBy": "2026-12-11",
+      "reviewBy": "9999-12-31",
       "resolutionRequired": "Recheck when the identity, amounts or family decision changes.",
       "documentRevisions": {
         "360-one-alternates-asset-management-1000633-2026-06-04-statement-of-earnings": "fa711bc1131b73fdfd40802a78319fed22fb4587699f36c6292beaeef3769679",
