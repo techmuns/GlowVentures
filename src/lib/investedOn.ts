@@ -46,7 +46,7 @@ import savedActions from "../../public/data/corporate-actions.json";
 import { symbolForKey } from "./quotes";
 import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 
-export type InvestedOnSource = "allotments" | "lots" | "trades" | "action-trades" | "bonus-trades" | "recovered-lots" | "review-lots" | "calls" | "review" | "account";
+export type InvestedOnSource = "allotments" | "lots" | "trades" | "action-trades" | "bonus-trades" | "recovered-lots" | "review-lots" | "calls" | "register" | "review" | "account";
 
 /**
  * The first and last date the money went in, and how many dated payments that
@@ -87,7 +87,7 @@ for (const row of savedActions.rows) {
 type LineDates = { dates: string[]; source: InvestedOnSource; payments?: number; adjustments?: string[] };
 
 /** No sales, every purchase before the bonus, and an exact independent closing-unit control. */
-function bonusPurchaseDates(p: Position): LineDates | null {
+export function bonusPurchaseDates(p: Position): LineDates | null {
   const r = p.tradeRecord;
   if (!r || r.sells || !Number.isFinite(p.quantity) || !(p.quantity! > 0)
     || r.from < savedActions.requestedFrom || r.to > savedActions.verifiedThrough) return null;
@@ -156,13 +156,16 @@ function lineDates(p: Position): LineDates | null {
   }
   const called = CALL_DATES.get(trancheKey(p.accountId, p.securityKey));
   if (called?.length) return { dates: called, source: "calls" };
+  // The family's dated payments behind a line the review dates by month (Stage 10mv).
+  const paid = p.registerPayments?.payments;
+  if (paid?.length) return { dates: paid.map((x) => x.date), source: "register", payments: paid.length };
   if (p.investedDates) return { dates: [p.investedDates.from, p.investedDates.to], source: "review" };
   return null;
 }
 
 /** How many dated payments a line is — null where its source dates a span. */
 function linePayments(p: Position, d: LineDates): number | null {
-  if (d.source === "bonus-trades" || d.source === "action-trades" || d.source === "review-lots") return d.payments ?? null;
+  if (d.source === "bonus-trades" || d.source === "action-trades" || d.source === "review-lots" || d.source === "register") return d.payments ?? null;
   if (d.source === "trades") return p.tradeRecord?.held?.lots ?? null;
   if (d.source === "recovered-lots") return p.recoveredCost?.heldPurchases?.lots ?? p.rolledForward?.heldPurchases?.lots ?? null;
   if (d.source === "review") return d.dates[0] === d.dates[1] && /^\d{4}-\d{2}-\d{2}$/.test(d.dates[0]) ? 1 : null;
@@ -218,6 +221,7 @@ const SOURCE_WORDS: Record<InvestedOnSource, string> = {
   "recovered-lots": "the original purchase lots in the supplementary records, reconciled to this account, ISIN and every unit still held, first-in, first-out",
   "review-lots": "the purchase dates in the family's 30 June 2026 review, carried through this account's own dated sales to every unit held, first-in, first-out, the broker's long-term quantity and cost agreeing",
   calls: "the fund's dated capital calls",
+  register: "the family's investment register's dated payments, which add to the review's cost to the rupee and fall inside the review's own months",
   review: "the family's review's investment dates",
   account: "the inception date and capital record the statements print",
 };

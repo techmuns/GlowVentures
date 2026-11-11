@@ -63,6 +63,9 @@ export function reclassificationsFrom(cashFlows, accountId, notes, label) {
     used.add(i);
     out.push({
       accountId, date: o.date,
+      // The day the units were allotted into the new class — the out-leg's
+      // settlement day where the fund credits it later (Bandhan, Stage 10mv).
+      ...(i.date !== o.date ? { inDate: i.date } : {}),
       from: o.securityKey, fromSecurity: o.security, fromUnits: Math.abs(o.units),
       to: i.securityKey, toSecurity: i.security, toUnits: Math.abs(i.units),
       amount: r2(i.amount),

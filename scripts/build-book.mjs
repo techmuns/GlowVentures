@@ -78,6 +78,7 @@ import { dematAccountsFor } from "./lib/dematAccounts.mjs";
 import { readSpreadsheet } from "./ingest/lib/sheet.mjs";
 import { REVIEW_WORKBOOK, readTransactions as readReviewTransactions } from "./lib/reviewPrivateRead.mjs";
 import { reviewPurchaseDates } from "./lib/reviewPurchaseDates.mjs";
+import { registerPurchaseDates, loadRegisterPayments } from "./lib/registerPurchaseDates.mjs";
 import { REGISTER } from "./lib/recoverHoldingCosts.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
@@ -329,6 +330,7 @@ const datedKey = (kind, r) => [
 function datedRowsAcross(allIssues, kept, notes, label) {
   const out = Object.fromEntries(DATED_COLLECTIONS.map((k) => [k, []]));
   const seen = new Set();
+  const keptAt = new Map();
   let recovered = 0;
   // Kept documents first, so a row present on both keeps the authoritative
   // document's copy and its `source` back-reference.
@@ -357,8 +359,21 @@ function datedRowsAcross(allIssues, kept, notes, label) {
         const n = (ordinal.get(base) ?? 0) + 1;
         ordinal.set(base, n);
         const k = `${base}\u0001#${n}`;
-        if (seen.has(k)) continue;
+        if (seen.has(k)) {
+          // THE SWITCH'S OTHER LEG TRAVELS WITH THE ROW (Stage 10mv). Bandhan
+          // 8652064's 26 Oct statement repeats the Overnight and Arbitrage
+          // switch-outs, but its Large & Mid Cap block opens on 13 Aug, so it
+          // cannot see the in-legs and its copies carry no `settlementDate`;
+          // the 14 Oct copy, which can, does. Keeping the first copy bare
+          // unpaired every switch, and ₹40.7 Cr of dated purchases went undated.
+          const at = keptAt.get(k);
+          if (r.settlementDate && at && !out[kind][at.i].settlementDate) {
+            out[kind][at.i] = { ...out[kind][at.i], settlementDate: r.settlementDate };
+          }
+          continue;
+        }
         seen.add(k);
+        keptAt.set(k, { i: out[kind].length });
         out[kind].push(r);
         if (!kept.has(d.docKey)) recovered++;
       }
@@ -1239,11 +1254,26 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
   const moves = [];
   for (const date of [...byDate.keys()].sort()) {
     const day = byDate.get(date);
-    const contribs = day.filter((r) => r.kind === "contribution");
+    const out = day.filter((r) => r.kind === "withdrawal");
+    const dayContribs = day.filter((r) => r.kind === "contribution");
+    /**
+     * TWO SCHEMES BOUGHT ON ONE DAY ARE TWO PURCHASES (Stage 10mv). Bandhan
+     * 8652064 bought ₹1.875 Cr of Large & Mid Cap and ₹15 Cr of Arbitrage on
+     * 2 Jul 2026, each on its own self-contained row; grouped by date alone they
+     * became one ₹16.875 Cr move filed under Large & Mid Cap, its units summed
+     * across two schemes, and neither line's allotments could tie to its holding.
+     * Split only where every row prints its own net and names its scheme — a
+     * gross row and its allotment (Sanshi) still describe one payment.
+     */
+    const keysToday = new Set(dayContribs.map((r) => r.securityKey));
+    const contribGroups = dayContribs.length > 1 && keysToday.size > 1
+      && dayContribs.every((r) => selfContained(r) && r.securityKey)
+      ? [...keysToday].sort().map((k) => dayContribs.filter((r) => r.securityKey === k))
+      : [dayContribs];
+    for (const contribs of contribGroups) {
     const self = contribs.filter(selfContained);
     const allot = contribs.filter((r) => isNum(r.units) && !selfContained(r));
     const gross = contribs.filter((r) => !isNum(r.units) && !selfContained(r));
-    const out = day.filter((r) => r.kind === "withdrawal");
 
     if (contribs.length) {
       // A self-contained row carries both halves itself. Otherwise the gross row
@@ -1293,6 +1323,7 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
         security: named?.security ?? null,
         securityKey: named?.securityKey ?? null,
       });
+    }
     }
     if (out.length) {
       const amount = Math.abs(sum(out.map((r) => r.amount ?? 0)));
@@ -2043,18 +2074,7 @@ function lastMovementOf(h, tape) {
  */
 function positionTranchesFrom(capitalMoves, reclassifications, positions, notes, fifoLots = new Map()) {
   const out = {};
-  /**
-   * WHERE FIFO RAN, THE TRANCHES ARE THE LOTS STILL HELD. A switch carries a
-   * lot into the new class with its own date and cost, and a sale takes the
-   * oldest first — so a contribution partly redeemed shows what is LEFT of it,
-   * and a contribution made into a class the family then switched out of shows
-   * up in the class that holds its units now. The allotment table alone could
-   * say neither: Neo's first drawdown is 25,000 units of which 10,837.2
-   * survive. (A record with a class SWITCH and no sale — Buoyant — is carried
-   * by `carryLotsThroughSwitches` below; FIFO lots stand only where units LEFT.)
-   */
-  for (const [k, lots] of [...fifoLots.entries()].sort()) {
-    if (!lots.length) continue;
+  const fifoTranche = (k, lots) => {
     const [accountId, securityKey] = k.split("|");
     const pos = positions.find((p) => p.accountId === accountId && p.securityKey === securityKey);
     const moves = lots.map((l) => ({
@@ -2072,7 +2092,69 @@ function positionTranchesFrom(capitalMoves, reclassifications, positions, notes,
       security: pos?.security ?? null,
       securityKey,
     }));
-    out[k] = { accountId, securityKey, moves, units: Math.round(sum(moves.map((m) => m.units)) * 1e3) / 1e3, basis: "fifo" };
+    return { accountId, securityKey, moves, units: Math.round(sum(moves.map((m) => m.units)) * 1e3) / 1e3, basis: "fifo" };
+  };
+  /**
+   * A CLASS SWITCHED A PART AT A TIME, AS THE FUND ITSELF BOOKS IT (Stage 10mv).
+   *
+   * The carry below moves a whole class's lots per switch — Buoyant's one A1 → A4
+   * move between share classes of one fund. Bandhan 8652064 switched Overnight
+   * and Arbitrage into Large & Mid Cap, different schemes, in ten slices, so the
+   * carry ties nothing and ₹40.7 Cr of dated purchases read "Invested on —". A
+   * switch between schemes is a redemption and a purchase: the fund costs the
+   * units switched in at the switch's own amount on the day they were allotted,
+   * and that is how its statement strikes the holding's cost (₹22.5 Cr of
+   * purchases and ₹20.59 Cr of switches in = ₹43,09,13,833.72 to the paisa). So
+   * the class's own purchases and switches in are its lots, each switch out and
+   * sale takes the oldest first, and the lots left must be every unit held.
+   */
+  const switchedTranche = (k, heldQty) => {
+    const [accountId, securityKey] = k.split("|");
+    const legs = reclassifications.filter((r) => r.accountId === accountId && (r.to === securityKey || r.from === securityKey));
+    if (!legs.length) return null;
+    const ev = [
+      ...capitalMoves.filter((m) => m.accountId === accountId && m.securityKey === securityKey && isNum(m.units) && m.units !== 0)
+        .map((m) => ({ date: m.date, order: m.direction === "in" ? 0 : 2, units: m.direction === "in" ? Math.abs(m.units) : -Math.abs(m.units), move: m })),
+      ...legs.filter((r) => r.to === securityKey).map((r) => ({ date: r.inDate ?? r.date, order: 0, units: r.toUnits,
+        move: { accountId, date: r.inDate ?? r.date, direction: "in", label: `Switch in from ${r.fromSecurity}`,
+          amount: r.amount, invested: r.amount, charges: null, units: r.toUnits, security: r.toSecurity, securityKey } })),
+      ...legs.filter((r) => r.from === securityKey).map((r) => ({ date: r.date, order: 1, units: -r.fromUnits })),
+    ].sort((x, y) => x.date.localeCompare(y.date) || x.order - y.order);
+    const lots = [];
+    for (const e of ev) {
+      if (e.units > 0) { lots.push({ move: e.move, units: e.units, bought: e.units }); continue; }
+      let left = -e.units;
+      while (left > UNIT_TIE && lots.length) {
+        const t = Math.min(left, lots[0].units);
+        lots[0].units -= t; left -= t;
+        if (lots[0].units <= UNIT_TIE) lots.shift();
+      }
+      if (left > UNIT_TIE) return null;
+    }
+    const units = sum(lots.map((l) => l.units));
+    if (!lots.length || Math.abs(units - heldQty) > UNIT_TIE) return null;
+    const moves = lots.map(({ move, units: u, bought }) => {
+      const f = u / bought;
+      const sc = (v) => (isNum(v) ? r2(v * f) : v);
+      const m = { ...move, amount: sc(move.amount), invested: sc(move.invested), charges: sc(move.charges), units: Math.round(u * 1e4) / 1e4 };
+      if (f < 1 - 1e-9) m.label = `${move.label} · ${r3(f * 100)}% of it still held`;
+      return isNum(m.charges) && m.charges > 0 && isNum(m.invested) ? { ...m, invested: r2(m.invested + m.charges) } : m;
+    });
+    return { accountId, securityKey, moves, units: Math.round(units * 1e3) / 1e3 };
+  };
+  /**
+   * WHERE FIFO RAN, THE TRANCHES ARE THE LOTS STILL HELD. A switch carries a
+   * lot into the new class with its own date and cost, and a sale takes the
+   * oldest first — so a contribution partly redeemed shows what is LEFT of it,
+   * and a contribution made into a class the family then switched out of shows
+   * up in the class that holds its units now. The allotment table alone could
+   * say neither: Neo's first drawdown is 25,000 units of which 10,837.2
+   * survive. (A record with a class SWITCH and no sale — Buoyant — is carried
+   * by `carryLotsThroughSwitches` below; FIFO lots stand only where units LEFT.)
+   */
+  for (const [k, lots] of [...fifoLots.entries()].sort()) {
+    if (!lots.length) continue;
+    out[k] = fifoTranche(k, lots);
   }
 
   const byKey = new Map();
@@ -2104,6 +2186,15 @@ function positionTranchesFrom(capitalMoves, reclassifications, positions, notes,
       continue;
     }
     const allotted = sum(moves.map((m) => m.units));
+    // A class switched a part at a time — see `switchedTranche` (Stage 10mv).
+    const switched = Math.abs(allotted - held[0].quantity) > UNIT_TIE && held[0].quantity > 0
+      ? switchedTranche(k, held[0].quantity) : null;
+    if (switched) {
+      out[k] = switched;
+      notes.push(`${securityKey} in ${accountId}: the class-switch carry ties ${Math.round(allotted * 1e3) / 1e3} of ${held[0].quantity} units, `
+        + `so its own ${switched.moves.length} purchase(s) and switch(es) in date it, each switch out and sale taking the oldest first`);
+      continue;
+    }
     if (Math.abs(allotted - held[0].quantity) > UNIT_TIE) {
       // A REDEEMED POSITION IS NOT AN UNEXPLAINED SHORTFALL, and saying it is
       // sends the next reader to look for a missing allotment. The units were
@@ -2144,6 +2235,17 @@ function positionTranchesFrom(capitalMoves, reclassifications, positions, notes,
     const paid = moves.map((m) => (isNum(m.charges) && m.charges > 0 && isNum(m.invested)
       ? { ...m, invested: r2(m.invested + m.charges) } : m));
     out[k] = { accountId, securityKey, moves: paid, units: Math.round(allotted * 1e3) / 1e3 };
+  }
+  // A class held only through switches has no capital move of its own to start from.
+  for (const k of [...new Set(reclassifications.map((r) => `${r.accountId}|${r.to}`))].sort()) {
+    if (out[k]) continue;
+    const [accountId, securityKey] = k.split("|");
+    const held = positions.filter((p) => p.accountId === accountId && p.securityKey === securityKey);
+    if (held.length !== 1 || !(held[0].quantity > 0)) continue;
+    const switched = switchedTranche(k, held[0].quantity);
+    if (!switched) continue;
+    out[k] = switched;
+    notes.push(`${securityKey} in ${accountId}: held only through switches in, dated by its ${switched.moves.length} switch(es) in`);
   }
   return out;
 }
@@ -3883,7 +3985,42 @@ function build(archived, archiveCount = archived.length, references = {}) {
        * somebody might act on.
        */
       const lots = lotsByKey.get(h.securityKey) ?? [];
-      const dated = lots.filter((l) => l.purchaseDate && isNum(l.totalCost));
+      let dated = lots.filter((l) => l.purchaseDate && isNum(l.totalCost));
+      /**
+       * …OR THE UNITS THE HOLDING STATEMENT HELD, REBUILT FROM A LATER CAPITAL
+       * GAIN STATEMENT (Stage 10mv). LKP 98245's holdings are struck 31 March
+       * 2026 and its capital gain statement runs 1 Apr 2025 – 31 Jul 2026: its
+       * open lots are what was held on 31 JULY, so Belrise's one open lot of
+       * 6,500 is half of the 12,500 held on 31 March and the gate below refused
+       * it — while the other 6,000, sold on 25 June, are on the same statement's
+       * sold lots with their own purchase date and cost. The units held on the
+       * holding's date are exactly the open lots bought by then plus the sold lots
+       * bought by then and sold after it, where the statement's window runs
+       * through both dates. Used only where those units are every unit held and
+       * their cost is the holding statement's own to the rupee.
+       */
+      let rebuiltFromCg = false;
+      const lotsCover = (ls) => isNum(h.quantity) && ls.length
+        && Math.abs(ls.reduce((s, l) => s + (isNum(l.quantity) ? l.quantity : NaN), 0) - h.quantity) < 1e-6;
+      if (!lotsCover(dated) && asOf && isNum(h.quantity) && h.quantity > 0) {
+        const cg = allIssues.filter((d) => d.reportType === "capital-gain" && d.periodFrom && d.periodTo
+          && d.periodFrom <= asOf && d.periodTo > asOf && (d.openLots ?? []).length)
+          .sort((a, b) => b.periodTo.localeCompare(a.periodTo) || a.docKey.localeCompare(b.docKey))[0];
+        if (cg) {
+          const held = (cg.openLots ?? []).filter((l) => l.securityKey === h.securityKey && l.purchaseDate && l.purchaseDate <= asOf);
+          const soldAfter = (cg.capitalGains ?? []).filter((l) => l.securityKey === h.securityKey && l.purchaseDate
+            && l.purchaseDate <= asOf && l.saleDate && l.saleDate > asOf && l.saleDate <= cg.periodTo)
+            .map((l) => ({ ...l, totalCost: l.totalCost ?? l.purchaseAmount }));
+          const rebuilt = [...held, ...soldAfter];
+          const cost = rebuilt.reduce((s, l) => s + (isNum(l.totalCost) ? l.totalCost : NaN), 0);
+          if (lotsCover(rebuilt) && Number.isFinite(cost) && isNum(costBasis) && Math.abs(cost - costBasis) <= 1) {
+            dated = rebuilt;
+            rebuiltFromCg = true;
+            notes.push(`account ${accountNo}: ${h.securityKey}'s ${h.quantity} units on ${asOf} are dated by the ${cg.periodTo} capital gain statement — `
+              + `${held.length} lot(s) still open and ${soldAfter.length} sold after ${asOf}, costing the holding's own ${r2(costBasis)}`);
+          }
+        }
+      }
       let stCostBasis = null;
       let ltCostBasis = null;
       let daysToLT = null;
@@ -3956,6 +4093,10 @@ function build(archived, archiveCount = archived.length, references = {}) {
         stCostBasis = split.stCostBasis;
         ltCostBasis = split.ltCostBasis;
         daysToLT = split.daysToLT;
+        // REBUILT UNITS DATE THE HOLDING, NOT A LIVE TAX SPLIT (Stage 10mv): they have
+        // since been sold, and the split the pages re-age is off the register's open
+        // lots (`ltDate.ts`); their realised ST/LT is the capital gain statement's own.
+        if (rebuiltFromCg) { stCostBasis = null; ltCostBasis = null; daysToLT = null; }
         if (split.why) notes.push(`account ${accountNo}: ${h.security} — ${split.stCostBasis === null ? "no short/long-term split: " : ""}${split.why}`);
         // The OLDEST lot, not the newest: the holding has existed since its
         // first surviving unit was bought.
@@ -4843,6 +4984,21 @@ function build(archived, archiveCount = archived.length, references = {}) {
     positions.push(...review.positions);
     positions.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey));
     notes.push(...review.notes);
+    // THE REGISTER'S DATED PAYMENTS BEHIND A LINE THE REVIEW DATES BY MONTH
+    // (Stage 10mv) — a date source only; see `registerPurchaseDates.mjs`.
+    {
+      const payments = loadRegisterPayments(ROOT, references.registerWorkbook);
+      // The review's holder accounts join `accounts` further down; they come with the layer.
+      const ownerOfAccount = new Map([...accounts, ...review.accounts].map((a) => [a.accountId, a.ownerId]));
+      for (const p of review.positions) {
+        const r = registerPurchaseDates({ position: p, ownerId: ownerOfAccount.get(p.accountId), payments });
+        if (!r) continue;
+        if (r.reason) { notes.push(`${p.accountId}: ${p.securityKey} is not dated by the investment register — ${r.reason}`); continue; }
+        p.registerPayments = r;
+        notes.push(`${p.accountId}: ${p.securityKey} dated by the investment register — ${r.payments.length} payment(s), `
+          + `${r.payments[0].date} to ${r.payments.at(-1).date}, adding to the review's cost, inside its ${p.investedDates.text}`);
+      }
+    }
     // AN ACCOUNT THE REVIEW DATES MUST HOLD ONLY THE REVIEW'S LINES. Its dated
     // record replaces the statement's calls and capital moves on the
     // Transactions card (`capitalMovesWithCalls`), so a statement holding with

@@ -2800,8 +2800,8 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasis": 7574153.25,
     "marketValue": 7724469.33,
     "unrealizedPnL": 150316.08,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
     "returnPct": 1.98,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -2908,8 +2908,8 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasis": 430913833.72,
     "marketValue": 407339525.05,
     "unrealizedPnL": -23574308.67,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
     "returnPct": -5.47,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8348,6 +8348,25 @@ export const BOOK_POSITIONS: Position[] = [
       "held": null,
       "reason": "none of its 4340 units is on a dated trade: the transaction statements in this drop run from 2025-01-13 to 2026-07-27 and record no buy or sell of it"
     },
+    "actionRecord": {
+      "units": 4340,
+      "to": "2026-07-27",
+      "held": {
+        "first": "2025-01-14",
+        "last": "2025-10-09",
+        "lots": 3
+      },
+      "actions": [
+        {
+          "kind": "demerger",
+          "date": "2026-04-30",
+          "ratio": 1,
+          "of": "vedanta",
+          "label": "Demerger: 1 for 1",
+          "source": "Vedanta's demerger: record date 1 May 2026, a market holiday, so ex-date 30 Apr (NSE's saved capture, the date this replay keys on; units held at its start are every trade to 29 Apr, the T+1 cutoff): 1 share of Vedanta Aluminium Metal for every 1 Vedanta share held, as the resulting company announced the allotment"
+        }
+      ]
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -10298,6 +10317,25 @@ export const BOOK_POSITIONS: Position[] = [
       "held": null,
       "reason": "none of its 8569 units is on a dated trade: the transaction statements in this drop run from 2025-01-16 to 2026-07-27 and record no buy or sell of it"
     },
+    "actionRecord": {
+      "units": 8569,
+      "to": "2026-07-27",
+      "held": {
+        "first": "2025-01-20",
+        "last": "2025-10-09",
+        "lots": 3
+      },
+      "actions": [
+        {
+          "kind": "demerger",
+          "date": "2026-04-30",
+          "ratio": 1,
+          "of": "vedanta",
+          "label": "Demerger: 1 for 1",
+          "source": "Vedanta's demerger: record date 1 May 2026, a market holiday, so ex-date 30 Apr (NSE's saved capture, the date this replay keys on; units held at its start are every trade to 29 Apr, the T+1 cutoff): 1 share of Vedanta Aluminium Metal for every 1 Vedanta share held, as the resulting company announced the allotment"
+        }
+      ]
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -11372,6 +11410,29 @@ export const BOOK_POSITIONS: Position[] = [
       "unaccounted": null,
       "held": null,
       "reason": "the transaction statements end on 2026-10-31, before this holding's own statement of 2026-11-02, so the trades between the two are not in this drop"
+    },
+    "reviewPurchases": {
+      "first": "2024-07-18",
+      "last": "2024-07-18",
+      "lots": 1,
+      "units": 110000,
+      "closing": {
+        "date": "2026-06-30",
+        "units": 177000
+      },
+      "through": "2026-10-31",
+      "sales": 330,
+      "longTermUnits": 110000,
+      "lotCost": 26237637.85,
+      "evidence": {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          407,
+          414
+        ]
+      },
+      "reviewAsOf": "2026-06-30"
     },
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
@@ -13585,7 +13646,8 @@ export const BOOK_POSITIONS: Position[] = [
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-09-10",
+    "purchaseDates": 1,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -13628,7 +13690,8 @@ export const BOOK_POSITIONS: Position[] = [
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-07-10",
+    "purchaseDates": 1,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -13706,7 +13769,8 @@ export const BOOK_POSITIONS: Position[] = [
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2026-01-02",
+    "purchaseDates": 1,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -13749,7 +13813,8 @@ export const BOOK_POSITIONS: Position[] = [
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-04-17",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -13859,7 +13924,8 @@ export const BOOK_POSITIONS: Position[] = [
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2026-02-05",
+    "purchaseDates": 1,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -13937,7 +14003,8 @@ export const BOOK_POSITIONS: Position[] = [
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-07-10",
+    "purchaseDates": 1,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -14953,7 +15020,22 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-11",
       "text": "Nov 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 12. The review's Transactions row: 636 preference shares at ₹78,668, and the ICICI Bank NSDL statement's 636 in Ajay's account. A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 holds 541 Series B preference shares and 20,797 equity shares of the company, now Assetgro Fintech Limited, where the review carries 636 preference shares."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 12. The review's Transactions row: 636 preference shares at ₹78,668, and the ICICI Bank NSDL statement's 636 in Ajay's account. A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 holds 541 Series B preference shares and 20,797 equity shares of the company, now Assetgro Fintech Limited, where the review carries 636 preference shares.",
+    "registerPayments": {
+      "payments": [
+        {
+          "date": "2025-11-26",
+          "amount": 50032848
+        }
+      ],
+      "evidence": {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "AJAY SIR - AARTI",
+        "rows": [
+          81
+        ]
+      }
+    }
   },
   {
     "securityKey": "big-bang-boom-solutions-private-limited-0-001-pref-12sp44",
@@ -15326,7 +15408,32 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-05",
       "text": "Jan 2022 – May 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Ajay Jaisinghani's ₹2,53,18,588 of the line. Three holders; the family's investment register records each one's payment."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Ajay Jaisinghani's ₹2,53,18,588 of the line. Three holders; the family's investment register records each one's payment.",
+    "registerPayments": {
+      "payments": [
+        {
+          "date": "2022-01-10",
+          "amount": 10034580
+        },
+        {
+          "date": "2022-05-04",
+          "amount": 5186168
+        },
+        {
+          "date": "2023-05-15",
+          "amount": 10097840
+        }
+      ],
+      "evidence": {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "AJAY SIR - AARTI",
+        "rows": [
+          10,
+          11,
+          12
+        ]
+      }
+    }
   },
   {
     "securityKey": "innoviti-payment-solutions-private-ltd-pranav-koranne",
@@ -15979,7 +16086,27 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-02",
       "text": "Jun 2022 – Feb 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ajay Jaisinghani's ₹1,00,00,000 of the line. Two holders; the family's investment register records each one's payment."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ajay Jaisinghani's ₹1,00,00,000 of the line. Two holders; the family's investment register records each one's payment.",
+    "registerPayments": {
+      "payments": [
+        {
+          "date": "2022-06-24",
+          "amount": 5000000
+        },
+        {
+          "date": "2023-02-14",
+          "amount": 5000000
+        }
+      ],
+      "evidence": {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "AJAY SIR - AARTI",
+        "rows": [
+          4,
+          5
+        ]
+      }
+    }
   },
   {
     "securityKey": "we-voise",
@@ -16303,7 +16430,27 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-05",
       "text": "Jan 2022 – May 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Ankita Jaisinghani's ₹1,60,93,284 of the line. Three holders; the family's investment register records each one's payment."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Ankita Jaisinghani's ₹1,60,93,284 of the line. Three holders; the family's investment register records each one's payment.",
+    "registerPayments": {
+      "payments": [
+        {
+          "date": "2022-01-11",
+          "amount": 10034580
+        },
+        {
+          "date": "2023-05-15",
+          "amount": 6058704
+        }
+      ],
+      "evidence": {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "PVT INV",
+        "rows": [
+          52,
+          53
+        ]
+      }
+    }
   },
   {
     "securityKey": "inflexor-technologies",
@@ -16442,7 +16589,32 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2022-08",
       "text": "Dec 2021 – Aug 2022"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 22. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 22. One holder on the review's own Transactions and on the register.",
+    "registerPayments": {
+      "payments": [
+        {
+          "date": "2021-12-07",
+          "amount": 6400000
+        },
+        {
+          "date": "2022-01-11",
+          "amount": 4600000
+        },
+        {
+          "date": "2022-08-26",
+          "amount": 5000000
+        }
+      ],
+      "evidence": {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "FUND HOUSE",
+        "rows": [
+          6,
+          7,
+          8
+        ]
+      }
+    }
   },
   {
     "securityKey": "since-99-apparel-pvt-limited-punit-sehgal-dexter-capital",
@@ -16674,7 +16846,27 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-02",
       "text": "Jun 2022 – Feb 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ankita Jaisinghani's ₹1,25,00,000 of the line. Two holders; the family's investment register records each one's payment."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ankita Jaisinghani's ₹1,25,00,000 of the line. Two holders; the family's investment register records each one's payment.",
+    "registerPayments": {
+      "payments": [
+        {
+          "date": "2022-06-24",
+          "amount": 5000000
+        },
+        {
+          "date": "2023-02-09",
+          "amount": 7500000
+        }
+      ],
+      "evidence": {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "PVT INV",
+        "rows": [
+          67,
+          68
+        ]
+      }
+    }
   },
   {
     "securityKey": "a-k-enterprises",
@@ -16904,7 +17096,27 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2024-03",
       "text": "Oct 2023 – Mar 2024"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 26. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 26. One holder on the review's own Transactions and on the register.",
+    "registerPayments": {
+      "payments": [
+        {
+          "date": "2023-10-18",
+          "amount": 5000018
+        },
+        {
+          "date": "2024-03-14",
+          "amount": 10000000
+        }
+      ],
+      "evidence": {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "PVT INV",
+        "rows": [
+          83,
+          84
+        ]
+      }
+    }
   },
   {
     "securityKey": "big-bang-boom-solutions-private-limited-0-001-pref-12sp44",
@@ -16998,7 +17210,27 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-05",
       "text": "Jan 2022 – May 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Bharat Jaisinghani's ₹61,95,952 of the line. Three holders; the family's investment register records each one's payment."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Bharat Jaisinghani's ₹61,95,952 of the line. Three holders; the family's investment register records each one's payment.",
+    "registerPayments": {
+      "payments": [
+        {
+          "date": "2022-05-11",
+          "amount": 5186168
+        },
+        {
+          "date": "2023-05-15",
+          "amount": 1009784
+        }
+      ],
+      "evidence": {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "PVT INV",
+        "rows": [
+          49,
+          50
+        ]
+      }
+    }
   },
   {
     "securityKey": "fh-edutech",
@@ -17090,7 +17322,47 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2020-10",
       "text": "Jul 2020 – Oct 2020"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 11. One holder on the review's own Transactions and on the register."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 11. One holder on the review's own Transactions and on the register.",
+    "registerPayments": {
+      "payments": [
+        {
+          "date": "2020-07-29",
+          "amount": 1000000
+        },
+        {
+          "date": "2020-08-03",
+          "amount": 750000
+        },
+        {
+          "date": "2020-08-06",
+          "amount": 750000
+        },
+        {
+          "date": "2020-10-01",
+          "amount": 1000000
+        },
+        {
+          "date": "2020-10-05",
+          "amount": 1000000
+        },
+        {
+          "date": "2020-10-06",
+          "amount": 500000
+        }
+      ],
+      "evidence": {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "PVT INV",
+        "rows": [
+          24,
+          25,
+          26,
+          27,
+          28,
+          29
+        ]
+      }
+    }
   },
   {
     "securityKey": "hanok-reuben-medhari-drink-prime",
@@ -18057,7 +18329,57 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-07",
       "text": "Feb 2020 – Jul 2023"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 6. The family's investment register records both Waterwala payments under Bharat."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 6. The family's investment register records both Waterwala payments under Bharat.",
+    "registerPayments": {
+      "payments": [
+        {
+          "date": "2020-02-17",
+          "amount": 6000232
+        },
+        {
+          "date": "2020-05-04",
+          "amount": 1000000
+        },
+        {
+          "date": "2020-05-04",
+          "amount": 500000
+        },
+        {
+          "date": "2020-05-05",
+          "amount": 1000000
+        },
+        {
+          "date": "2020-05-18",
+          "amount": 1000000
+        },
+        {
+          "date": "2020-05-20",
+          "amount": 1000000
+        },
+        {
+          "date": "2020-05-21",
+          "amount": 500920
+        },
+        {
+          "date": "2023-07-31",
+          "amount": 70000000
+        }
+      ],
+      "evidence": {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "PVT INV",
+        "rows": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ]
+      }
+    }
   },
   {
     "securityKey": "zippmat-private-ltd-abhijeet-kudva",
@@ -44508,12 +44830,24 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "date": "2020-05-18",
     "direction": "in",
     "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
-    "amount": 208333,
-    "invested": 208333,
+    "amount": 156250,
+    "invested": 156250,
     "charges": null,
-    "units": 3022.3630000000003,
+    "units": 1459.857,
     "security": "Kotak Large & Mid Cap Fund - Direct Growth",
     "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2020-05-18",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 52083,
+    "invested": 52083,
+    "charges": null,
+    "units": 1562.506,
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "securityKey": "kotak-mid-cap-fund-direct-growth"
   },
   {
     "accountId": "kotak-mahindra-mutual-fund-7125255",
@@ -44532,12 +44866,24 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "date": "2020-05-26",
     "direction": "in",
     "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
-    "amount": 208334,
-    "invested": 208334,
+    "amount": 156250,
+    "invested": 156250,
     "charges": null,
-    "units": 2922.139,
+    "units": 1416.386,
     "security": "Kotak Large & Mid Cap Fund - Direct Growth",
     "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2020-05-26",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 52084,
+    "invested": 52084,
+    "charges": null,
+    "units": 1505.753,
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "securityKey": "kotak-mid-cap-fund-direct-growth"
   },
   {
     "accountId": "kotak-mahindra-mutual-fund-7125255",
@@ -44556,12 +44902,24 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "date": "2020-06-01",
     "direction": "in",
     "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
-    "amount": 208333,
-    "invested": 208333,
+    "amount": 156250,
+    "invested": 156250,
     "charges": null,
-    "units": 2765.1369999999997,
+    "units": 1334.364,
     "security": "Kotak Large & Mid Cap Fund - Direct Growth",
     "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2020-06-01",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 52083,
+    "invested": 52083,
+    "charges": null,
+    "units": 1430.773,
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "securityKey": "kotak-mid-cap-fund-direct-growth"
   },
   {
     "accountId": "kotak-mahindra-mutual-fund-7125255",
@@ -49302,10 +49660,34 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "date": "2025-11-04",
     "direction": "in",
     "label": "Lateral shift in",
-    "amount": 39421363.29,
-    "invested": 39419392.32,
-    "charges": 1970.97,
-    "units": 1179622.861,
+    "amount": 13393902.83,
+    "invested": 13393233.17,
+    "charges": 669.66,
+    "units": 379758.113,
+    "security": "Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1)",
+    "securityKey": "invesco-india-arbitrage-fund-direct-plan-growth-af-d1"
+  },
+  {
+    "accountId": "invesco-mutual-fund-3041491145",
+    "date": "2025-11-04",
+    "direction": "in",
+    "label": "Lateral shift in",
+    "amount": 26027460.46,
+    "invested": 26026159.15,
+    "charges": 1301.31,
+    "units": 799864.748,
+    "security": "Invesco India Arbitrage Fund - Regular Plan Growth (AF-GP)",
+    "securityKey": "invesco-india-arbitrage-fund-regular-plan-growth-af-gp"
+  },
+  {
+    "accountId": "invesco-mutual-fund-3041794916",
+    "date": "2025-11-04",
+    "direction": "in",
+    "label": "Lateral shift in",
+    "amount": 7419985.97,
+    "invested": 7419614.99,
+    "charges": 370.98,
+    "units": 210379.298,
     "security": "Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1)",
     "securityKey": "invesco-india-arbitrage-fund-direct-plan-growth-af-d1"
   },
@@ -49314,12 +49696,12 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "date": "2025-11-04",
     "direction": "in",
     "label": "Lateral shift in",
-    "amount": 16505064.53,
-    "invested": 16504239.32,
-    "charges": 825.21,
-    "units": 489578.03500000003,
-    "security": "Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1)",
-    "securityKey": "invesco-india-arbitrage-fund-direct-plan-growth-af-d1"
+    "amount": 9085078.56,
+    "invested": 9084624.33,
+    "charges": 454.23,
+    "units": 279198.737,
+    "security": "Invesco India Arbitrage Fund - Regular Plan Growth (AF-GP)",
+    "securityKey": "invesco-india-arbitrage-fund-regular-plan-growth-af-gp"
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",
@@ -50389,10 +50771,22 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "date": "2026-07-02",
     "direction": "in",
     "label": "Net Purchase via Online",
-    "amount": 168750000,
-    "invested": 168741562.92,
-    "charges": 8437.08,
-    "units": 4125355.281,
+    "amount": 150000000,
+    "invested": 149992500.37,
+    "charges": 7499.63,
+    "units": 4011814.056,
+    "security": "Bandhan Arbitrage Fund-Direct Plan-Growth",
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-07-02",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 113541.225,
     "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
     "securityKey": "bndh-l-and-mcf-dp-gr"
   },
@@ -51354,6 +51748,308 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
     ],
     "units": 485837.2,
     "basis": "fifo"
+  },
+  "bandhan-mutual-fund-8652064|bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth": {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth",
+    "moves": [
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-07-02",
+        "direction": "in",
+        "label": "Net Purchase via Online · 5.049% of it still held",
+        "amount": 7574153.24,
+        "invested": 7574153.25,
+        "charges": 378.69,
+        "units": 202573.963,
+        "security": "Bandhan Arbitrage Fund-Direct Plan-Growth",
+        "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth"
+      }
+    ],
+    "units": 202573.963
+  },
+  "bandhan-mutual-fund-8652064|bndh-l-and-mcf-dp-gr": {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "securityKey": "bndh-l-and-mcf-dp-gr",
+    "moves": [
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-04-02",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 127182.131,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-04-17",
+        "direction": "in",
+        "label": "Switch in from Bandhan Liquid Fund-Direct Plan-Growth",
+        "amount": 12297210.16,
+        "invested": 12297210.16,
+        "charges": null,
+        "units": 76436.188,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-04-23",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 115883.027,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-04-30",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 116036.506,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-05-07",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 113157.478,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-05-14",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 115567.31,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-05-21",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 115126.631,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-05-29",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 115523.873,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-06-04",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 116631.287,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-06-11",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 119464.914,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-06-18",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 114618.485,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-06-25",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 114473.624,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-07-02",
+        "direction": "in",
+        "label": "Net Purchase via Online",
+        "amount": 18750000,
+        "invested": 18750000,
+        "charges": 937.45,
+        "units": 113541.225,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-07-08",
+        "direction": "in",
+        "label": "Switch in from Bandhan Overnight Fund-Direct Plan-Growth",
+        "amount": 25003485.15,
+        "invested": 25003485.15,
+        "charges": null,
+        "units": 153906.317,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-07-15",
+        "direction": "in",
+        "label": "Switch in from Bandhan Overnight Fund-Direct Plan-Growth",
+        "amount": 25060747.57,
+        "invested": 25060747.57,
+        "charges": null,
+        "units": 151048.164,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-07-23",
+        "direction": "in",
+        "label": "Switch in from Bandhan Arbitrage Fund-Direct Plan-Growth",
+        "amount": 12010001.18,
+        "invested": 12010001.18,
+        "charges": null,
+        "units": 73969.553,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-07-30",
+        "direction": "in",
+        "label": "Switch in from Bandhan Arbitrage Fund-Direct Plan-Growth",
+        "amount": 12008486.42,
+        "invested": 12008486.42,
+        "charges": null,
+        "units": 72719.095,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-08-06",
+        "direction": "in",
+        "label": "Switch in from Bandhan Arbitrage Fund-Direct Plan-Growth",
+        "amount": 11983184.18,
+        "invested": 11983184.18,
+        "charges": null,
+        "units": 71663.178,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-08-13",
+        "direction": "in",
+        "label": "Switch in from Bandhan Arbitrage Fund-Direct Plan-Growth",
+        "amount": 25008916.88,
+        "invested": 25008916.88,
+        "charges": null,
+        "units": 148980.195,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-08-20",
+        "direction": "in",
+        "label": "Switch in from Bandhan Arbitrage Fund-Direct Plan-Growth",
+        "amount": 25008117.31,
+        "invested": 25008117.31,
+        "charges": null,
+        "units": 149290.272,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-08-27",
+        "direction": "in",
+        "label": "Switch in from Bandhan Arbitrage Fund-Direct Plan-Growth",
+        "amount": 24981539.37,
+        "invested": 24981539.37,
+        "charges": null,
+        "units": 148716.991,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-09-03",
+        "direction": "in",
+        "label": "Switch in from Bandhan Arbitrage Fund-Direct Plan-Growth",
+        "amount": 25053251.46,
+        "invested": 25053251.46,
+        "charges": null,
+        "units": 150235.073,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      },
+      {
+        "accountId": "bandhan-mutual-fund-8652064",
+        "date": "2026-09-21",
+        "direction": "in",
+        "label": "Switch in from Bandhan Arbitrage Fund-Direct Plan-Growth",
+        "amount": 7498894.02,
+        "invested": 7498894.02,
+        "charges": null,
+        "units": 45148.955,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      }
+    ],
+    "units": 2639320.472
   },
   "baring-private-equity-india-fund-AIFM_BPEPF6_0584|baring-private-equity-india-fund-6-class-a1": {
     "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
@@ -52554,6 +53250,25 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
       }
     ],
     "units": 7500
+  },
+  "bandhan-mutual-fund-8691267|bndh-l-and-mcf-dp-gr": {
+    "accountId": "bandhan-mutual-fund-8691267",
+    "securityKey": "bndh-l-and-mcf-dp-gr",
+    "moves": [
+      {
+        "accountId": "bandhan-mutual-fund-8691267",
+        "date": "2026-04-17",
+        "direction": "in",
+        "label": "Switch in from Bandhan Liquid Fund-Direct Plan-Growth",
+        "amount": 3926598.38,
+        "invested": 3926598.38,
+        "charges": null,
+        "units": 24406.691,
+        "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+        "securityKey": "bndh-l-and-mcf-dp-gr"
+      }
+    ],
+    "units": 24406.691
   }
 };
 
@@ -71111,6 +71826,30 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
  * date, units and total cost as the register prints them.
  */
 export const BOOK_HOLDING_LOTS: Record<string, { date: string; quantity: number | null; cost: number }[]> = {
+  "lkp-securities-98245|belrise-industries": [
+    {
+      "date": "2025-09-10",
+      "quantity": 6000,
+      "cost": 851340
+    },
+    {
+      "date": "2025-09-10",
+      "quantity": 6500,
+      "cost": 922285
+    }
+  ],
+  "lkp-securities-98245|capri-global-capital": [
+    {
+      "date": "2025-07-10",
+      "quantity": 3500,
+      "cost": 621800.55
+    },
+    {
+      "date": "2025-07-10",
+      "quantity": 3500,
+      "cost": 621800.55
+    }
+  ],
   "lkp-securities-98245|crompton-greaves-consumer-electrical": [
     {
       "date": "2025-03-04",
@@ -71121,6 +71860,35 @@ export const BOOK_HOLDING_LOTS: Record<string, { date: string; quantity: number 
       "date": "2025-11-12",
       "quantity": 2000,
       "cost": 558963
+    }
+  ],
+  "lkp-securities-98245|electronics-mart-india": [
+    {
+      "date": "2026-01-02",
+      "quantity": 3000,
+      "cost": 316833.6
+    },
+    {
+      "date": "2026-01-02",
+      "quantity": 3500,
+      "cost": 369639.2
+    },
+    {
+      "date": "2026-01-02",
+      "quantity": 3500,
+      "cost": 369639.2
+    }
+  ],
+  "lkp-securities-98245|jyothy-labs": [
+    {
+      "date": "2025-04-17",
+      "quantity": 3000,
+      "cost": 1125750
+    },
+    {
+      "date": "2026-01-02",
+      "quantity": 1000,
+      "cost": 282464.6
     }
   ],
   "lkp-securities-98245|mrs-bectors-food-specialities": [
@@ -71135,6 +71903,13 @@ export const BOOK_HOLDING_LOTS: Record<string, { date: string; quantity: number 
       "cost": 857455.2
     }
   ],
+  "lkp-securities-98245|pricol": [
+    {
+      "date": "2026-02-05",
+      "quantity": 650,
+      "cost": 378730.63
+    }
+  ],
   "lkp-securities-98245|transrail-lighting": [
     {
       "date": "2025-09-10",
@@ -71145,6 +71920,13 @@ export const BOOK_HOLDING_LOTS: Record<string, { date: string; quantity: number 
       "date": "2025-09-17",
       "quantity": 25,
       "cost": 19376.25
+    }
+  ],
+  "lkp-securities-98245|varun-beverages": [
+    {
+      "date": "2025-07-10",
+      "quantity": 2700,
+      "cost": 1247182.11
     }
   ],
   "v-e-c-assago-capital-management-llp-128004|amrutanjan-health-care": [
