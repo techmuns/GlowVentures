@@ -13507,7 +13507,7 @@ const INVESTED_ON_BOOK = (() => {
       const reviewLots = !!p.reviewPurchases?.first && !p.rolledForward && p.reviewPurchases.units != null
         && Math.abs(p.reviewPurchases.units - p.quantity) <= 0.0005;
       return Boolean(ins.length || p.heldSince || called.has(`${p.accountId}|${p.securityKey}`)
-        || p.tradeRecord?.held || recoveredLots(p) || rolledLots || reviewLots || p.investedDates);
+        || p.tradeRecord?.held || recoveredLots(p) || rolledLots || reviewLots || p.registerPayments?.payments?.length || p.investedDates);
     };
     // The lines a SECURITY row is built from: current (a closed position and a
     // sub-₹1,000 speck are not rows), each `dedupeGroup` once, and no mandate's.

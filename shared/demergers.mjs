@@ -31,6 +31,15 @@ export const DEMERGERS = Object.freeze([
       'https://www.icicidirect.com/research/equity/trending-news/heg-sets-sept-1-effective-date-for-demerger-merger-sept-7-record-date-for-1-1-swap',
     ],
   },
+  {
+    // Stage 10mx: Green Lantern 510854/510861 hold VAML on no trade of their own;
+    // their from-inception tapes hold exactly that many Vedanta on the record date.
+    parentKey: 'vedanta', parentSymbol: 'VEDL', parentIsin: 'INE205A01025',
+    childKey: 'vedanta-aluminium-metal', childSymbol: 'VAML',
+    recordDate: '2026-04-30', ratio: 1,
+    source: "Vedanta's demerger: record date 1 May 2026, a market holiday, so ex-date 30 Apr (NSE's saved capture, the date this replay keys on; units held at its start are every trade to 29 Apr, the T+1 cutoff): 1 share of Vedanta Aluminium Metal for every 1 Vedanta share held, as the resulting company announced the allotment",
+    sources: ['https://vedantaaluminium.com/?p=10310', 'https://www.nseindia.com/companies-listing/corporate-filings-actions?symbol=VEDL&tabIndex=equity'],
+  },
 ]);
 
 for (const d of DEMERGERS) {

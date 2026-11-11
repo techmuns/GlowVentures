@@ -143,7 +143,10 @@ for (const k of keys) {
   // per-unit mark, or a rupee, whichever is larger.
   near(`value ties to market value — ${tr.accountId.slice(-8)}`, t.value, p.marketValue,
     Math.max(1, tie * (p.marketValue / p.quantity!)));
-  if (p.costBasis != null) near(`invested ties to cost basis — ${tr.accountId.slice(-8)}`, t.invested, p.costBasis, 0.01);
+  // Each lot's amount is printed to the paisa and the fund rounds its cost column
+  // once, so n lots may part from it by half a paisa each (Bandhan 8652064's 23
+  // purchases and switches in: ₹0.02 on ₹43.09 Cr, Stage 10mx). A paisa floor.
+  if (p.costBasis != null) near(`invested ties to cost basis — ${tr.accountId.slice(-8)}`, t.invested, p.costBasis, Math.max(0.01, 0.005 * tr.moves.length));
 }
 ok("at least one position was bought over several dates", multiTranche > 0, `${multiTranche} of ${keys.length}`);
 
@@ -252,11 +255,13 @@ for (const k of keys) {
   const p = posOf(tr.accountId, tr.securityKey);
   if (!p) continue;
   const acctNo = tr.accountId.split("-").at(-1)!;
-  const entry = manifest.find((m) => m.accountNo === acctNo);
-  if (!entry) continue;
-  const pagesPath = path.join(AUDIT, entry.docKey, "pages.json");
-  if (!fs.existsSync(pagesPath)) continue;
-  const raw = fs.readFileSync(pagesPath, "utf8");
+  // EVERY STATEMENT OF THE ACCOUNT IS ITS OWN PAGE (Stage 10mx): Bandhan
+  // 8652064 prints its April purchases on the 14 Oct statement, and the 26 Oct
+  // one the manifest lists first opens in August.
+  const pagePaths = manifest.filter((m) => m.accountNo === acctNo)
+    .map((m) => path.join(AUDIT, m.docKey, "pages.json")).filter((f) => fs.existsSync(f));
+  if (!pagePaths.length) continue;
+  const raw = pagePaths.map((f) => fs.readFileSync(f, "utf8")).join(" ");
   const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE)!;
   for (const r of t.rows) {
     // A TRANCHE CARRIED THROUGH A FUND'S CLASS SWITCH is priced here in the
