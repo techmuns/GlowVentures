@@ -1585,6 +1585,7 @@ Codex's review of #352, verified against the code and the book:
 - Validate actual vertical and horizontal scrolling at desktop, tablet and phone widths, both themes, opaque row surfaces and sorting from the pinned heading. Build and delivery evidence are recorded on the PR.
 - Source-preview regression setup opens the quantity source list before recording the arranged background scroll. Otherwise its automated Qty click first scrolls a control out from beneath the frozen Security column, changing the test's starting state before any document opens. The check still requires a nonzero horizontal offset and exact scroll/DOM/filter/expansion restoration.
 - Give the Total label its own Security cell, with a separate blank span for any remaining leading columns, and freeze that one cell. Pinning the old merged label would cover adjacent totals; leaving it scrolling would put figures below the fixed Security heading. The shared browser header check now measures the heading, name and Total against the real scrollport and requires equal column widths.
+- Integration validation also checks Stage 10ne's two approved register-date choices against their raw workbook rows, holders and amounts. Every other review flow keeps the review-date requirement; all amounts, kinds, units and rates still tie to the review. No financial source values are changed here.
 
 ### Stage 10nc — Investment performance names how many accounts it covers, of how many
 
