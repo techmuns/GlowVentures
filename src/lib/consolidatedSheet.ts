@@ -84,6 +84,8 @@ const mask = (v: string) => v.length > 4 ? `XXXX${v.slice(-4)}` : v;
 const yn = (b: boolean) => b ? "Y" : "N";
 const sideLabel = (s: Position["marketSide"]) => s === "listed" ? "Listed" : s === "private" ? "Private" : null;
 const reviewNote = "Family consolidated review (MOPWM), 30-Jun-2026";
+/** The family's own record of what they paid (Stage 10mv). */
+const registerNote = "Family investment register (NEW INVESTMENT SHEET.xlsx)";
 
 const VIEW_COLUMNS: ConsolidatedColumn[] = [
   col("name", "Security", "", 34), col("printed", "Name as printed on statement", "", 28), col("sec", "Security ID", "", 28), col("isin", "ISIN", "", 14), col("symbol", "NSE symbol", "", 12),
@@ -198,9 +200,10 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       ...(mv.payoutKind === "income" || mv.payoutKind === "equalisation" ? { txntype: "Income", counts: "Income" }
         : mv.direction === "in" ? { txntype: "Buy", counts: "Investment" } : { txntype: "Sell", counts: "Divestment" }),
       qty: mv.units, gross: mv.amount, chg: mv.charges ?? null, net: mv.amount == null ? null : mv.amount * (mv.direction === "in" ? -1 : 1),
-      notes: [mv.fromReview ? reviewNote : mv.fromCall ? "Reconciled call schedule; this is a call, not proof of payment" : "External capital record",
+      notes: [mv.fromRegister ? `${registerNote}, ${mv.fromRegister.sheet} row ${mv.fromRegister.row}` : mv.fromReview ? reviewNote : mv.fromCall ? "Reconciled call schedule; this is a call, not proof of payment" : "External capital record",
+        mv.assumedDate ? `Date assumed: ${mv.assumedDate}` : null,
         !mv.securityKey && sec ? "Account-level record; the account holds only this security" : null].filter(Boolean).join("; "),
-      src: mv.fromReview ? reviewNote : null, check: mv.amount == null ? "Amount not reported" : "OK" });
+      src: mv.fromRegister ? registerNote : mv.fromReview ? reviewNote : null, check: mv.amount == null ? "Amount not reported" : "OK" });
   }
   // SWITCHES (Stage 10lt). *"what happens when I redeem from somewhere and I
   // invest somewhere else"* — the family, 4 Nov 2026. A switch is that move made

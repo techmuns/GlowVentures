@@ -163,14 +163,17 @@ const REVIEWED = new Set(BOOK_REVIEW_FLOWS.map((f) => f.accountId));
 // The LLPs' capital is dated by the family's written note, which is not a statement
 // in the archive (`applyFamilyAdvice`, Stage 10jq).
 const ADVISED = new Set(BOOK_POSITIONS.filter((p) => p.costBasisSource === "family-advice").map((p) => p.accountId));
+// The mandates whose opening payment the family's investment register dates, held
+// to the manager's own opening balance in the build (Stage 10mv). Not a statement.
+const REGISTERED = new Set(BOOK_CAPITAL_MOVES.filter((m) => m.fromRegister).map((m) => m.accountId));
 const missing = [...expected].filter((a) => !listed.has(a)).sort();
-const extra = [...listed].filter((a) => !expected.has(a) && !REVIEWED.has(a) && !ADVISED.has(a)).sort();
+const extra = [...listed].filter((a) => !expected.has(a) && !REVIEWED.has(a) && !ADVISED.has(a) && !REGISTERED.has(a)).sort();
 ok("every account with a dated capital record in the archive is on the record", missing.length === 0,
   missing.join(", ") || `${expected.size} account(s)`);
 ok("…and no account is there without one — a statement, the family's review or their written note dates every one", extra.length === 0,
   extra.join(", ") || `none · ${[...REVIEWED].filter((a) => !expected.has(a)).length} dated by the review alone`);
-ok("a register holding nothing but withdrawals, for an account with no other dated capital, is NOT listed",
-  withdrawalsOnly.every((a) => !listed.has(a)),
+ok("a register holding nothing but withdrawals, for an account with no other dated capital, is NOT listed — unless the investment register dates the payment that opened it",
+  withdrawalsOnly.every((a) => !listed.has(a) || REGISTERED.has(a)),
   withdrawalsOnly.length ? `${withdrawalsOnly.length} held back: ${withdrawalsOnly.join(", ")}` : "none in this archive");
 
 // LOAD-BEARING. The typed rows alone must NOT account for every listed account,
