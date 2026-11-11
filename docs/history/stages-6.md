@@ -1583,3 +1583,9 @@ Codex's review of #352, verified against the code and the book:
 - The client asked what "53 accounts covered" meant when they hold over 100 accounts. The card counted the accounts in the measured total and said nothing about the rest.
 - The face now reads "N of M accounts covered" (`accountCoverage` in `CapitalBridge.tsx`): M is every account holding an investment today plus any measured account that now holds nothing. The new (i) button says what one account is (a demat, a fund folio, a PMS or AIF account, or one owner's MOPWM review block), gives the book's account count, and lists each account left out with its value, holding count and the record it needs, plus the accounts partly included. Handles: `data-bridge-accounts-covered`, `-of`, `data-bridge-account-outside`, `data-bridge-account-partly`.
 - No figure changes. `check-selected-attribution.mjs` passes.
+
+### Stage 10nd — Portfolio Monitor: one row per category, totals on the band
+
+- The family, 12 Nov: the category band was blank across the table and its totals sat on a second "· total" row under it — "you can show the totals in the first one itself."
+- The band is now the totals row: its first cell keeps the heading (name, counts, subtotal, notes, chevron) and the other cells are the category's totals, drawn through `<Tr view>` so each stays under its column when columns are dragged. The row carries both `data-section` and `data-category-total`. A category with no totals still draws a full-width band. Nothing about what any cell computes changed.
+- `check:pages`: `sectionOf` finds the band's totals as the first table row after its count line (innerText breaks after the heading cell), and the tree-state walk counts the band's own totals. On the seven Monitor routes this branch shows the same three findings as a control build of main.
