@@ -211,7 +211,8 @@ try {
   check('Mobile editor stays within the viewport', await page.getByRole('dialog').evaluate(el => el.getBoundingClientRect().right <= innerWidth));
   const related = (await snapshot()).catalog.find(r => r.kind === 'capital' && ['committed', 'called', 'paid', 'undrawn'].every(f => Number.isFinite(r.values[f])));
   assert.ok(related, 'a source capital record supplies the identity balances');
-  await page.getByRole('checkbox', { name: 'Show all investments and properties' }).check();
+  const showAllInputs = page.getByRole('checkbox', { name: 'Show all investments and properties' });
+  if (await showAllInputs.count()) await showAllInputs.check();
   await page.getByLabel('Find investment inputs').fill(related.label);
   const group = page.locator(`[data-capital-record-id="${related.id}"]`);
   await group.waitFor();
