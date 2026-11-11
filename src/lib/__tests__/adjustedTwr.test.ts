@@ -102,6 +102,7 @@ if ('unit' in found) {
   const result = adjustedTwr([sold], { start: '2026-10-31', end: '2026-11-11' }); near(result.pct, 20); assert.equal(result.to, '2026-11-05');
   const held = rec({ openDate: '2026-10-31', closeValue: 110, marks: [{ date: '2026-11-05', value: 100 }] }, 'still-held');
   near(adjustedTwr([sold, held], { start: '2026-10-31', end: '2026-11-11' }).pct, 21, 1e-8);
+  missing(run([{ ...rec(), closedOn: '2026-05-01' }]), /contradicts/);
 }
 assert.ok('outside' in exitedTwrUnit(exited, account, '2026-11-30', '2026-12-11', exitedBook), 'a sale before the period is not a current-period gap');
 assert.ok('reason' in exitedTwrUnit(exited, account, '2026-10-31', '2026-11-11', { ...exitedBook, histories: {} }), 'missing exited price histories are not silently omitted');

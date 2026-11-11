@@ -69,6 +69,11 @@ export function adjustedTwr(records: readonly TwrRecord[], { start, end, annuali
       || Math.abs(sum(w.flows.filter(f => f.amount > 0).map(f => f.amount)) - w.capitalOut) > .01) {
       return fail('The dated contributions and withdrawals do not reconcile to the record totals.', r.label);
     }
+    if (r.closedOn && (!validDay(r.closedOn)
+      || [{ date: w.openDate, value: w.openValue }, ...(w.marks ?? []), { date: w.closeDate, value: w.closeValue }].some(m => m.date >= r.closedOn! && m.value > .01)
+      || w.flows.some(f => f.date > r.closedOn! && f.amount < 0))) {
+      return fail('The recorded full exit contradicts a later investment value or purchase.', r.label);
+    }
   }
   const from = start ?? records.map(r => r.window.openDate).sort()[0];
   if (!(from < end)) return fail('The record spans no investment period.');

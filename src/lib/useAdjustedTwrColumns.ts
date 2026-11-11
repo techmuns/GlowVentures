@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { usePortfolio } from '@/context/PortfolioContext';
-import { allDebt } from './analytics';
+import { isDebtHolding } from './analytics';
 import { periodSelection, statementReturnInputs } from './availableCardReturns';
 import { assumedHoldingBook } from './assumedHoldingBook';
 import { selectedSegmentReturns, type SelectedLine } from './selectedSegmentReturns';
@@ -100,8 +100,9 @@ export function useAdjustedTwrColumns({ model, current, exited, calculationCurre
           inceptionKnown: u.window!.openValue === 0 && u.window!.openedInWindow
             && (u.key === u.accountId ? inputOf.get(u.accountId)?.knownFrom === null : u.basis === 'broker-trades'),
         }));
+        const investedPositions = row.units.flatMap(u => u.positions);
         return [col.key, adjustedTwr(records, { start: twrPeriodStart(col.period, end), end, annualise: col.period === 'inception',
-          debt: allDebt(row.units.flatMap(u => u.positions)), gaps })];
+          debt: investedPositions.length > 0 && investedPositions.every(isDebtHolding), gaps })];
       })) as TwrValues;
       cache.set(key, result); return result;
     };
