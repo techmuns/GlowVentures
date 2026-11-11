@@ -673,6 +673,10 @@ never guessed into the nearest plausible bucket.
 - account 16180583: no flow block in any statement, so no value bridge
 - account 16180583: no external capital movements found, so no money-weighted return series
 - account 3110320 (HDFC Securities) carries 2 of 10 holding(s) with NO market value, so they are in the archive and out of every total: STERLITE ELECTRIC LIMITED EQ (1140 unit(s), no price published); STERLITE GRID 5 LIMITED EQ NEW FV RS 2/ (1140 unit(s), no price published). A depository prints the value a security was allotted at, or the price its last movement went through at, where it holds no mark for it, and neither is a valuation: carried, either would state one nobody struck. The remaining 8 row(s) on the same statement ARE marked and are in the book.
+- account 3110320: deepak-fertilisers-and-petrochemicals's 10930 units are the review's 10930 of 2026-06-30 carried through 0 sale(s) to 2026-10-31 — 1 dated purchase lot(s), 2024-07-30 to 2024-07-30
+- account 3110320: kingfa-science-and-technology-india's 1808 units are the review's 1808 of 2026-06-30 carried through 0 sale(s) to 2026-10-31 — 1 dated purchase lot(s), 2024-11-22 to 2024-11-22
+- account 3110320: man-industries-india's 480000 units are the review's 517317 of 2026-06-30 carried through 109 sale(s) to 2026-10-31 — 2 dated purchase lot(s), 2025-01-10 to 2025-07-25
+- account 3110320: manorama-industries is not dated off the review — the trade statements end on 2026-10-31, before the holding's 2026-11-02; 4000 of its units are short-term on the broker's own record, so a purchase between the two cannot be ruled out
 - account 3110320: no time-weighted return series in any statement
 - account 3110320: no flow block in any statement, so no value bridge
 - account 3110320: no external capital movements found, so no money-weighted return series

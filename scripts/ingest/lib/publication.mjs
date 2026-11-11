@@ -35,7 +35,7 @@ function walk(value, visit, pointer = '') {
   else visit(value, pointer);
 }
 const nonempty = v => v !== null && v !== undefined && v !== '';
-const numericFields = new Set(['quantity', 'unitCost', 'totalCost', 'marketPrice', 'marketValue', 'amount', 'gross', 'net', 'price', 'units', 'accruedIncome', 'distributedIncome', 'realized', 'positionIrrPct', 'benchmarkIrrPct', 'purchaseAmount', 'saleAmount', 'shortTerm', 'longTerm']);
+const numericFields = new Set(['quantity', 'unitCost', 'totalCost', 'marketPrice', 'marketValue', 'amount', 'gross', 'net', 'price', 'units', 'accruedIncome', 'distributedIncome', 'realized', 'positionIrrPct', 'benchmarkIrrPct', 'purchaseAmount', 'saleAmount', 'shortTerm', 'longTerm', 'longTermQuantity']);
 const identity = d => stable([d.provider, d.accountNo, d.reportType, d.asOf, d.periodFrom, d.periodTo]);
 const content = d => {
   const copy = structuredClone(d);
@@ -177,7 +177,10 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
     const other = seenContent.get(contentOf(d));
     if (other && other !== d.docKey) duplicates.push({ document: d.docKey, sameAs: other });
     else seenContent.set(contentOf(d), d.docKey);
-    const sameIssue = baseline.find(x => x.docKey !== d.docKey && identity(x) === identity(d));
+    // A declared twin (HDFC Securities' demat view of its own equity portfolio)
+    // is the same statement's witness, not a second issue of it (Stage 10ms).
+    const sameIssue = baseline.find(x => x.docKey !== d.docKey && identity(x) === identity(d)
+      && x.twinOf !== d.docKey && d.twinOf !== x.docKey);
     if (sameIssue && contentOf(sameIssue) !== contentOf(d)) add('CONFLICTING_ISSUE', d, `A different statement already covers the same account, report and date (${sameIssue.docKey}). A correction requires review.`);
     const previous = baseline.filter(x => accountKey(x) === accountKey(d) && x.reportType === d.reportType && x.asOf && x.asOf <= d.asOf)
       .sort((a, b) => b.asOf.localeCompare(a.asOf))[0];

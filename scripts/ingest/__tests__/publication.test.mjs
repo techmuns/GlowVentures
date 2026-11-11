@@ -186,6 +186,13 @@ test('same-date restatements with different facts require review', () => {
   const next = doc({ docKey: 'a-corrected-file' }); next.holdings[0].quantity = 11;
   assert.ok(has(assess([doc(), next]), 'CONFLICTING_ISSUE'));
 });
+test("a reader correction is not in conflict with the statement's own declared twin", () => {
+  const twin = doc({ docKey: 'hdfc-123-2026-10-01-demat' }); twin.twinOf = doc().docKey; twin.holdings[0].quantity = 99;
+  const next = doc(); next.holdings[0].quantity = 11;
+  assert.ok(!has(assess([next], [doc(), twin]), 'CONFLICTING_ISSUE'));
+  const stranger = doc({ docKey: 'other-file' }); stranger.holdings[0].quantity = 99;
+  assert.ok(has(assess([next], [doc(), stranger]), 'CONFLICTING_ISSUE'));
+});
 test('a repeated statement under a different filename is a no-op delivery', () => {
   const next = doc({ docKey: 'a-renamed-file', sourcePath: 'source/copy.pdf' });
   const result = assess([doc(), next]);

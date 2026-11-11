@@ -558,6 +558,22 @@ export type Position = {
     actions: { kind: "split" | "bonus" | "demerger"; date: string; factor?: number; ratio?: number; of?: string; label: string; source: string }[];
   };
   /**
+   * THE REVIEW'S DATED PURCHASES OF A HOLDING WHOSE COST ITS STATEMENT PRINTS
+   * (Stage 10ms) — the review's block for this owner, product and custodian,
+   * to its own Closing, carried through the account's own later trades to
+   * exactly the units held, with the broker's long-term quantity and cost
+   * agreeing. `reason` alone where an aliased holding fails a step. A source
+   * for the Invested on column ONLY: the statement's cost and value stand.
+   * Built by `scripts/lib/reviewPurchaseDates.mjs`.
+   */
+  reviewPurchases?: {
+    reason?: string;
+    first?: string; last?: string; lots?: number; units?: number;
+    closing?: { date: string; units: number }; through?: string; sales?: number;
+    longTermUnits?: number; lotCost?: number;
+    evidence?: { path: string; sheet: string; rows: number[] }; reviewAsOf?: string;
+  };
+  /**
    * ISO date the STATEMENT says its price or value is struck at — which need
    * not be its account's `asOf`: ICICI's NSDL balance is at 31 Mar 2026 and its
    * values are "Prices as on 30-Mar-2026". Present only where the statement
