@@ -1512,5 +1512,5 @@ Codex's review of #352, verified against the code and the book:
 
 ### Stage 10mu — Returns controls share one compact row
 
-- The return-type group's full explanation set its flex basis, pushing it onto a second line while leaving unused space beside the dates. The group now reserves 14rem for its label and dropdown and grows into the remaining row width; the short explanation truncates first, with the full explanation retained on hover.
+- The return-type group's full explanation set its flex basis, pushing it onto a second line while leaving unused space beside the dates. The group now reserves 14rem for its label and dropdown and grows into the remaining row width; the short explanation truncates first and is hidden below 1440px, with the full explanation retained on hover.
 - Toolbar gaps are 12px. The period buttons can wrap within the toolbar on narrow screens, and a wrapped return-type group starts at the left edge rather than floating to the right. Period, date and calculation behavior is unchanged.

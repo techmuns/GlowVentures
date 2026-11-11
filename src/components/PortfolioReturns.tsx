@@ -271,7 +271,7 @@ export default function PortfolioReturns() {
               </option>
             ))}
           </select>
-          <span className="min-w-0 flex-1 truncate text-[11.5px] text-slate-500" data-returns-type-desc={displayedRtype}>
+          <span className="hidden min-w-0 flex-1 truncate text-[11.5px] text-slate-500 min-[1440px]:block" data-returns-type-desc={displayedRtype}>
             {returnHelp.short}
           </span>
         </label>
