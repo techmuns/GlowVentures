@@ -145,7 +145,7 @@ function recordedYearWindow(p: Position, a: Account, openAt: string | null, end:
   // From the statement on, the units are carried at published closes: an
   // assumption, named on every pooled surface as `assumedHolding`'s are.
   const unit: ReturnUnit = { key: window.accountId, accountId: p.accountId, label, positions: [p], gain,
-    invested: openValue + capitalIn, close: closeValue, from: open.date, to: closing.date, window,
+    invested: openValue + capitalIn, close: closeValue, from: open.date, to: closing.date, window, basis: 'broker-trades',
     assumption: { owner: a.owner, statementDate: anchor.date, quantity: anchor.quantity, source: h.source,
       opening: openValue, closing: closeValue, income: income.reduce((t, f) => t + f.amount, 0),
       incomeDates: income.map((f) => ({ date: f.date, amount: f.amount })) } };

@@ -219,7 +219,7 @@ try {
  await page.locator('[data-returns-period="fytd"]').click();
  await page.locator('[data-returns-type-select]').selectOption('xirr');
  const total = table.locator('[data-seg-total]');
- assert.equal(await total.locator('[data-return-info]').count(), 3);
+ assert.equal(await total.locator('[data-return-info]').count(), 7, 'gain, selected return, benchmark and four INR TWR explanations');
  await total.getByRole('button', { name: 'What is included in total return?', exact: true }).click();
  const dialog = page.getByRole('dialog'); await dialog.waitFor();
  assert.match(await dialog.innerText(), new RegExp(`Based on the available records for ${cardWindows('fytd').accounts} accounts only`));

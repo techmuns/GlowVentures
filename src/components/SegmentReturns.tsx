@@ -43,6 +43,9 @@ import { REVIEW_NOTE, reviewColumn, reviewColumnIds, withReviewAccessors, type R
 import { InvestedOnCell } from '@/components/InvestedOnCell';
 import { ReviewColumnCell } from '@/components/ReviewColumnCell';
 import type { Position } from '@/lib/types';
+import { TWR_COLUMNS } from '@/lib/adjustedTwr';
+import { useAdjustedTwrColumns } from '@/lib/useAdjustedTwrColumns';
+import { AdjustedTwrCell } from '@/components/AdjustedTwrCell';
 
 /**
  * PORTFOLIO MONITOR'S HOLDING COLUMNS, HERE TOO (Stage 10hz): Avg cost and
@@ -53,7 +56,7 @@ import type { Position } from '@/lib/types';
 const REVIEW_COLS = reviewColumnIds('holding').filter(id => id !== 'review:investmentRange');
 const REVIEW_SET = new Set(REVIEW_COLS);
 const COLS = ['seg', 'holdings', 'qty', 'avgCost', 'cmp', 'day', 'value', 'weight', 'deployed', 'investedOn', 'cost', 'gain', 'pnl', 'realised',
-  'bench', 'ret', 'contrib', 'basis', 'sector', 'entity', ...REVIEW_COLS];
+  'bench', 'ret', ...TWR_COLUMNS.map(c => c.key), 'contrib', 'basis', 'sector', 'entity', ...REVIEW_COLS];
 const ALL_BENCH_KEYS = BENCHMARKS.map(b => b.key);
 const OPTIONAL = ['qty', 'cmp', 'day', 'cost', 'pnl', 'realised', 'sector', 'entity', ...REVIEW_COLS];
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
@@ -89,6 +92,7 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
   // units, or on the Sector view — which draws no dated total of its own — the same pool grouped by category.
   const pool = useMemo(() => a ?? (statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, 'category', selection,
     () => null, calculationCurrent) : null), [a, current, exited, statementPortfolio, selection, calculationCurrent]);
+  const twrOf = useAdjustedTwrColumns({ model: a, current, exited, calculationCurrent, axis, end: selection.end, feed: marketFeed });
   const bridge = useMemo(() => pool && statementPortfolio ? capitalBridge(pool.total.units, { accounts: statementPortfolio.accounts,
     positions: statementPortfolio.positions, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME, capitalGains: BOOK_CAPITAL_GAINS }) : null,
   [pool, statementPortfolio]);
@@ -199,6 +203,7 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
   const named = (xs: string[], noun: string) => xs.length === 1 ? xs[0] : xs.length ? `${xs.length} ${noun}` : null;
   const accessors = withReviewAccessors<SelectedLine>({ seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
     weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, bench: r => bench(r).pct, ret: r => r.returnPct, contrib: r => r.contribution,
+    ...Object.fromEntries(TWR_COLUMNS.map(c => [c.key, (r: SelectedLine) => twrOf(r)[c.key].pct])),
     basis: r => r.units.some(u => u.assumption) ? 'Assumed held' : 'Statement records',
     qty: r => fig(r).quantity, avgCost: r => fig(r).avgCost, cmp: r => fig(r).price, day: r => fig(r).day.pct,
     investedOn: r => fig(r).investedOn?.first, cost: r => fig(r).costReason ? null : fig(r).cost.cost,
@@ -269,6 +274,7 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
         title={shownAbsolute(l) ? `Held under a year, so this is the absolute return, not ${type.label}: a return under a year is never annualised.`
           : l.measured?.basis === 'annual' && l.periodPct != null ? `${pct(l.periodPct)} over the period itself, not stated per year` : undefined}>
         {l.returnPct != null ? <>{shownAbsolute(l) && <span className="ret-tag">ABS</span>}{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} />{info(l, 'return')}</span></td>,
+      ...TWR_COLUMNS.map(c => <AdjustedTwrCell key={c.key} column={c.key} result={twrOf(l)[c.key]} pad={pad} label={l.label} />),
       <td key="contrib" className={`${pad} text-right mono ${changeColor(l.contribution)}`}>{l.contribution != null ? `${l.contribution >= 0 ? '+' : ''}${l.contribution.toFixed(2)} pp` : <AbsentCell reason={contributionReason} />}</td>,
       <td key="basis" className={`${pad} text-right text-[11px] text-slate-400`}>{l.units.some(u => u.assumption)
         ? l.units.every(u => u.assumption) ? 'Assumed held' : 'Statements + assumed held' : l.units.length ? 'Statement records' : 'Missing records'}</td>,
@@ -309,8 +315,10 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
           <SortHeader col="gain" view={view} pad="px-4 py-2">Gain / loss</SortHeader>
           <SortHeader col="pnl" view={view} pad="px-4 py-2" title="Value now less purchase cost, over the holdings that report a cost. Since purchase, not the selected period.">Unreal. P&amp;L</SortHeader>
           <SortHeader col="realised" view={view} pad="px-4 py-2" title="Booked on units already sold, first-in first-out, holding by holding from the statements' own records. Since purchase, not the selected period.">Realised P&amp;L</SortHeader>
-          <SortHeader col="bench" view={view} pad="px-4 py-2" title={`What the row's own index would have earned on the same money, on the Return column's measure. ${BENCH_HOW} A share is compared by AMFI's size class (Nifty 50, Midcap 150, Smallcap 250), a fund by its category, a managed account by the benchmark its manager reports, a private holding with the Nifty 500; a row holding different kinds is a blend of each one's index. Cash, debt, arbitrage and hybrid holdings have no index in the feed and are named in the info button. Price indices: dividends are not in them.`}>Benchmark return</SortHeader>
+          <SortHeader col="bench" view={view} pad="px-4 py-2" title={`INR basis. What the row's own index would have earned on the same money, on the Return column's measure. ${BENCH_HOW} A share is compared by AMFI's size class (Nifty 50, Midcap 150, Smallcap 250), a fund by its category, a managed account by the benchmark its manager reports, a private holding with the Nifty 500; a row holding different kinds is a blend of each one's index. Cash, debt, arbitrage and hybrid holdings have no index in the feed and are named in the info button. Price indices: dividends are not in them.`}>Benchmark return (INR)</SortHeader>
           <SortHeader col="ret" view={view} pad="px-4 py-2">Return · {typeHead}</SortHeader>
+          {TWR_COLUMNS.map(c => <SortHeader key={c.key} col={c.key} view={view} pad="px-4 py-2"
+            title="Time-weighted return from INR values and dated cash flows, linked at every cash-flow date. Fixed calendar period, through the selected ending date or latest common valuation. Missing valuations are explained in the info button. The INR basis is retained when the display currency changes.">{c.label}</SortHeader>)}
           <SortHeader col="contrib" view={view} pad="px-4 py-2" title="For Absolute return only: row gain divided by the total's shared money base, so these contributions add to the total return.">Contribution</SortHeader>
           <SortHeader col="basis" view={view} pad="px-4 py-2" title="Assumed held means no later sale or transfer appears in the records we have. This basis is also included in Excel exports.">Holding basis</SortHeader>
           <SortHeader col="sector" view={view} align="left" pad="px-4 py-2">Sector</SortHeader>
