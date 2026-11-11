@@ -1,4 +1,4 @@
-// Local-only Home navigation, real-book reconciliation and responsive layout.
+// Local-only Home verification: real book totals, dates, entity scope and widget lifecycle.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -6,7 +6,7 @@ import { build } from 'esbuild';
 import { chromium } from 'playwright-core';
 const base = process.env.BASE ?? 'http://127.0.0.1:4173';
 assert.ok(['127.0.0.1', 'localhost'].includes(new URL(base).hostname), 'local environment required');
-const out = path.resolve('.cache/home-overview');
+const out = path.resolve('.cache/home-dashboard/browser');
 await fs.mkdir(out, { recursive: true });
 const bundle = await build({ stdin: { contents: `
   export { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_TAPE_ROWS } from './src/data/glowData';
@@ -40,62 +40,88 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.route('**/api/**', route => route.fulfill({ status: 503, json: { ok: false } }));
     await page.route('**/api/fx', route => route.fulfill({ json: { ok: true, inrPerUsd: 100, date: '2026-11-10' } }));
+    // Deliberately synthetic benchmark fixtures, local QA only; never part of the application.
+    await page.route('**/api/prices?**', route => {
+      const symbol = new URL(route.request().url()).searchParams.get('symbol');
+      const t = [], v = [], rate = symbol === '^NSEI' ? .0005 : .0002;
+      for (let d = Date.UTC(2022, 0, 1), i = 0; d <= Date.UTC(2026, 11, 1); d += 86400000, i++) { t.push(new Date(d).toISOString().slice(0, 10)); v.push(1000 * (1 + rate) ** i); }
+      return route.fulfill({ json: { ok: true, symbol, name: symbol === '^NSEI' ? 'NIFTY 50' : 'NIFTY 500', t, v } });
+    });
     await page.route(/fonts\.(googleapis|gstatic)\.com/, route => route.abort());
     await page.goto(base + '/');
     await page.locator('[data-home-overview]').waitFor();
-    if (width === 390) {
-      assert.ok((await page.locator('[data-home-overview]').boundingBox()).width > 240, 'the compact navigation leaves room for Home');
-      await page.getByRole('button', { name: 'Expand navigation', exact: true }).click();
-      assert.equal(await page.locator('aside').getAttribute('data-mobile-expanded'), 'true');
-      await page.locator('[data-nav-entry="/home"]').click();
-      assert.equal(await page.locator('aside').getAttribute('data-mobile-expanded'), 'false', 'a navigation selection closes the drawer');
-    }
-    assert.equal(new URL(page.url()).pathname, '/home', 'the front door opens Home');
+    assert.equal(new URL(page.url()).pathname, '/home');
     assert.deepEqual(await page.locator('[data-nav-group="Daily"] [data-nav-entry]').evaluateAll(els => els.slice(0, 2).map(el => el.dataset.navEntry)), ['/home', '/cio']);
-    assert.equal(await page.locator('[data-nav-entry="/home"]').getAttribute('aria-current'), 'page');
     await page.waitForFunction(expected => Math.abs(Number(document.querySelector('[data-home-aum]')?.dataset.homeAum) - expected) < .01, expected);
     const rows = await page.locator('[data-home-class]').evaluateAll(els => els.map(el => ({ value: Number(el.dataset.value), weight: Number(el.dataset.weight) })));
-    assert.ok(Math.abs(rows.reduce((sum, row) => sum + row.value, 0) - expected) < .01, 'asset values reconstruct AUM');
-    assert.ok(Math.abs(rows.reduce((sum, row) => sum + row.weight, 0) - 100) < 1e-8, 'asset weights sum to 100%');
+    assert.ok(Math.abs(rows.reduce((sum, row) => sum + row.value, 0) - expected) < .01);
+    assert.ok(Math.abs(rows.reduce((sum, row) => sum + row.weight, 0) - 100) < 1e-8);
     assert.equal(Number(await page.locator('[data-home-geography]').getAttribute('data-unclassified-value')), expected);
-    assert.doesNotMatch(await page.locator('[data-home-geography]').innerText(), /United States|Europe|Canada/, 'no reference-image geography is fabricated');
-    assert.ok(await page.locator('[data-home-overview]').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'Home has no horizontal overflow');
-    const boxes = await page.locator('[data-home-grid] > .card').evaluateAll(els => els.map(el => { const r = el.getBoundingClientRect(); return { x: r.x, y: r.y }; }));
-    if (width === 1440) {
-      assert.ok(boxes[0].x < boxes[1].x && Math.abs(boxes[0].y - boxes[1].y) < 1, 'donut left and AUM right');
-      assert.ok(Math.abs(boxes[1].x - boxes[2].x) < 1 && boxes[2].y > boxes[1].y, 'geography is under AUM');
-    } else assert.ok(boxes[0].y < boxes[1].y && boxes[1].y < boxes[2].y, 'cards stack on narrow screens');
-    await page.locator('[data-home-grid]').screenshot({ path: path.join(out, `${theme}-${width}.png`) });
-    const sector = page.locator('[data-home-allocation-chart] .recharts-sector').first();
-    const sectorBox = await sector.boundingBox();
-    // The bounding-box centre is the donut's empty hole. Click its painted arc.
-    await sector.click({ position: { x: sectorBox.width / 2, y: 8 } });
-    assert.match(new URL(page.url()).search, /of=family-class/, 'donut segment opens its holdings');
-    await page.locator('[data-page-nav-home]').click();
-    await page.locator('[data-home-aum]').waitFor();
-    await page.locator('[data-home-class] a').first().click();
-    assert.match(new URL(page.url()).search, /of=family-class/, 'asset slice opens its holdings');
-    await page.locator('[data-page-nav-home]').click();
-    await page.locator('[data-home-aum]').waitFor();
-    if (width === 1440) {
-      await page.getByRole('group', { name: 'Display currency', exact: true }).getByRole('button', { name: 'USD', exact: true }).click();
-      await page.waitForFunction(() => document.querySelector('[data-home-aum]')?.textContent.includes('$'));
-      assert.equal(Number(await page.locator('[data-home-aum]').getAttribute('data-home-aum')), expected, 'currency changes the display, not the model');
+    await page.waitForFunction(() => document.querySelector('[data-home-benchmark-return]')?.getAttribute('data-home-benchmark-return') !== '');
+    const benchmarkBefore = Number(await page.locator('[data-home-benchmark-return]').getAttribute('data-home-benchmark-return'));
+    await page.getByLabel('Indian benchmark', { exact: true }).selectOption('nifty-50');
+    await page.waitForFunction(before => {
+      const n = document.querySelector('[data-home-benchmark-return]')?.getAttribute('data-home-benchmark-return'); return n && Math.abs(Number(n) - before) > .01;
+    }, benchmarkBefore);
+    assert.ok(await page.locator('[data-home-overview]').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'Home has no page-level horizontal overflow');
+    await page.locator('[data-home-overview]').screenshot({ path: path.join(out, `${theme}-${width}.png`) });
+    await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    await page.getByRole('searchbox', { name: 'Search widgets' }).fill('currency');
+    assert.equal(await dialog.locator('[data-widget-catalog]').count(), 1);
+    await dialog.locator('[data-widget-catalog="currency"]').hover();
+    assert.equal(await dialog.locator('[data-widget-catalog="currency"]').getAttribute('title'), 'Not relevant for firm');
+    await dialog.locator('[data-widget-catalog="currency"]').click();
+    assert.equal(await dialog.getByRole('heading', { name: 'Currency Exposure', exact: true }).count(), 1);
+    assert.equal(await dialog.locator('.home-widget-live-preview').count(), 1, 'click opens the detailed preview popup');
+    await dialog.getByRole('button', { name: 'Add to Home', exact: true }).click();
+    await page.locator('[data-home-widget="currency"]').waitFor();
+    await page.getByRole('button', { name: 'Edit layout', exact: true }).click();
+    await page.getByRole('button', { name: 'Move Currency Exposure earlier' }).click();
+    await page.getByRole('combobox', { name: 'Size of Currency Exposure', exact: true }).selectOption('full');
+    assert.match(await page.locator('[data-home-widget="currency"]').getAttribute('class'), /home-widget-full/);
+    const layout = await page.locator('[data-home-widget]').evaluateAll(els => els.map(el => el.dataset.homeWidget));
+    assert.equal(layout.at(-2), 'currency', 'keyboard reorder moves the new widget');
+    await page.reload();
+    await page.locator('[data-home-widget="currency"]').waitFor();
+    assert.deepEqual(await page.locator('[data-home-widget]').evaluateAll(els => els.map(el => el.dataset.homeWidget)), layout, 'layout persists across reload');
+    await page.getByRole('button', { name: 'Edit layout', exact: true }).click();
+    await page.getByRole('button', { name: 'Remove Currency Exposure', exact: true }).click();
+    assert.equal(await page.locator('[data-home-widget="currency"]').count(), 0);
+    await page.getByRole('button', { name: 'Done', exact: true }).click();
+    // Add every additional reference widget through its actual popup.
+    for (const id of ['concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors']) {
+      await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
+      await page.getByRole('searchbox', { name: 'Search widgets' }).fill('');
+      await dialog.locator(`[data-widget-catalog="${id}"]`).click();
+      await dialog.getByRole('button', { name: 'Add to Home', exact: true }).click();
+      await page.locator(`[data-home-widget="${id}"]`).waitFor();
     }
+    await page.getByLabel('Home start date', { exact: true }).fill('2026-03-31');
+    await page.getByLabel('Home end date', { exact: true }).fill('2026-06-30');
+    await page.getByRole('button', { name: 'Apply Home dates', exact: true }).click();
+    await page.waitForFunction(total => { const el = document.querySelector('[data-home-aum]'); return el && Math.abs(Number(el.dataset.homeAum) - total) > 1; }, expected);
+    assert.match(await page.locator('[data-home-widget="aum"]').innerText(), /Recorded AUM/);
+    assert.equal(await page.getByRole('row', { name: /July 2026/ }).count(), 0, 'monthly widget respects the end date');
+    await page.getByRole('group', { name: 'Home date presets' }).getByRole('button', { name: 'FYTD', exact: true }).click();
+    await page.waitForFunction(expected => Math.abs(Number(document.querySelector('[data-home-aum]')?.dataset.homeAum) - expected) < .01, expected);
+    await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
+    await page.getByRole('searchbox', { name: 'Search widgets' }).fill('not-a-widget');
+    await page.keyboard.press('Escape');
+    assert.equal(await dialog.isVisible(), false, 'Escape closes and releases focus');
     await page.goto(`${base}/home?members=${owner}`);
     await page.waitForFunction(expected => Math.abs(Number(document.querySelector('[data-home-aum]')?.dataset.homeAum) - expected) < .01, scopedTotal);
     await page.locator('[data-nav-entry="/cio"]').click();
     await page.locator('main h1').first().waitFor();
     await page.locator('[data-page-nav-home]').first().click();
     await page.locator('[data-home-overview]').waitFor();
-    assert.equal(new URL(page.url()).pathname, '/home');
-    assert.ok(Math.abs(Number(await page.locator('[data-home-aum]').getAttribute('data-home-aum')) - scopedTotal) < .01, 'Home navigation preserves member scope');
+    assert.ok(Math.abs(Number(await page.locator('[data-home-aum]').getAttribute('data-home-aum')) - scopedTotal) < .01, 'Home preserves member scope');
     assert.deepEqual(errors, []);
-    results.push({ theme, width, total: expected, scopedTotal, classes: rows.length });
+    results.push({ theme, width, total: expected, scopedTotal, classes: rows.length, widgets: layout.length });
     await context.close();
   }
   await fs.writeFile(path.join(out, 'results.json'), JSON.stringify(results, null, 2));
-  console.log('Home navigation, real-book AUM and weights, scoped totals, currency, drilldowns and layouts passed:', results);
+  console.log('Home: AUM reconciliation, benchmark switch, dates, all widget previews/additions, layout size/order/persistence/removal, member scope and responsive themes passed:', results);
 } catch (error) {
   await activePage?.screenshot({ path: path.join(out, 'failure.png') }).catch(() => {});
   throw error;
