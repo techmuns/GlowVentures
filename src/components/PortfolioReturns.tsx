@@ -256,7 +256,7 @@ export default function PortfolioReturns() {
               onChange={(e) => set({ rto: e.target.value || null })} />
           </label>
         </div>
-        <label className="ml-auto flex flex-wrap items-center gap-2 text-[12px] text-slate-400" data-returns-types
+        <label className="ml-auto flex min-w-0 max-w-full flex-wrap items-center gap-2 text-[12px] text-slate-400" data-returns-types
           title={returnHelp.title}>
           <span className="label-xs">Return type</span>
           <select className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
@@ -269,7 +269,7 @@ export default function PortfolioReturns() {
               </option>
             ))}
           </select>
-          <span id={`${tabsId}-return-type-help`} className="max-w-[16rem] text-[11.5px] text-slate-500" aria-live="polite" data-returns-type-desc={displayedRtype}>
+          <span id={`${tabsId}-return-type-help`} className="min-w-0 max-w-[16rem] text-[11.5px] text-slate-500" aria-live="polite" data-returns-type-desc={displayedRtype}>
             {returnHelp.short}
           </span>
         </label>

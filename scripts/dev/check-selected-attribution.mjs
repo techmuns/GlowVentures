@@ -165,10 +165,13 @@ try {
    assert.match(text, type === 'absolute' ? /Total gain/ : /Under a year: showing absolute return/);
    assert.match(await page.locator('[data-returns-bench-portfolio]').innerText(), /Portfolio · Absolute return/);
   }
-  assert.ok(await hint.evaluate(el => {
+  // Native selectOption does not scroll an offscreen toolbar into view.
+  await hint.scrollIntoViewIfNeeded();
+  const layout = await hint.evaluate(el => {
    const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && el.scrollWidth <= el.clientWidth + 1;
-  }), 'the explanation fits without truncation on mobile and desktop');
-  await page.screenshot({ path: `${out}/return-picker-${theme}-${width}.png` });
+  });
+  assert.ok(layout, `${theme}/${width}: the explanation fits without truncation after scrolling it into view`);
+  await page.locator('[data-returns-types]').screenshot({ path: `${out}/return-picker-${theme}-${width}.png` });
  }
  await page.setViewportSize({ width: 1440, height: 1000 });
  await page.getByRole('tab', { name: 'Return attribution', exact: true }).click();
