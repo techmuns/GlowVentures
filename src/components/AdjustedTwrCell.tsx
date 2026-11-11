@@ -1,4 +1,5 @@
 import { ReturnCalculationInfo } from './ReturnCalculation';
+import { ExportableTable } from './ExportableTable';
 import { changeColor, fmtDate, fmtNum } from '@/lib/format';
 import { TWR_COLUMNS, type TwrColumn, type TwrResult } from '@/lib/adjustedTwr';
 
@@ -26,9 +27,9 @@ export function AdjustedTwrCell({ column, result: r, pad, label }: { column: Twr
           {r.gaps.length > 0 && <div data-twr-gaps><p className="font-semibold">Records needed</p><ul className="mt-1 space-y-2">{r.gaps.map((g, i) => <li key={i}><span className="font-medium">{g.label}</span> · {g.reason}</li>)}</ul></div>}
           {r.steps.length > 0 && <details data-twr-working><summary className="cursor-pointer">Calculation steps in INR</summary>
             <p className="mt-2">Interval growth = (closing value − net money added) ÷ opening value. TWR = (product of interval growth − 1) × 100. Annualised TWR = (product of interval growth ^ (365 ÷ days) − 1) × 100.</p>
-            <div className="mt-2 overflow-x-auto"><table className="min-w-full text-right text-[11px]"><thead><tr>{['From', 'To', 'Opening', 'Net added', 'Closing', 'Return'].map(h => <th key={h} className="px-2 py-1">{h}</th>)}</tr></thead>
+            <div className="mt-2 overflow-x-auto"><ExportableTable exportName="inr-twr-working" data-table-static="Calculation steps follow their cash-flow dates" className="min-w-full text-right text-[11px]"><thead><tr>{['From', 'To', 'Opening', 'Net added', 'Closing', 'Return'].map(h => <th key={h} className="px-2 py-1">{h}</th>)}</tr></thead>
               <tbody>{r.steps.map((s, i) => <tr key={i}><td className="px-2 py-1">{fmtDate(s.from)}</td><td className="px-2 py-1">{fmtDate(s.to)}</td>
-                <td className="px-2 py-1">{inr(s.opening)}</td><td className="px-2 py-1">{inr(s.netIn)}</td><td className="px-2 py-1">{inr(s.closing)}</td><td className="px-2 py-1">{pct((s.growth - 1) * 100)}</td></tr>)}</tbody></table></div>
+                <td className="px-2 py-1">{inr(s.opening)}</td><td className="px-2 py-1">{inr(s.netIn)}</td><td className="px-2 py-1">{inr(s.closing)}</td><td className="px-2 py-1">{pct((s.growth - 1) * 100)}</td></tr>)}</tbody></ExportableTable></div>
           </details>}
         </div>}</ReturnCalculationInfo>
     </span>
