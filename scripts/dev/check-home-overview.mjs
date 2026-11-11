@@ -59,7 +59,10 @@ try {
       assert.ok(Math.abs(boxes[1].x - boxes[2].x) < 1 && boxes[2].y > boxes[1].y, 'geography is under AUM');
     } else assert.ok(boxes[0].y < boxes[1].y && boxes[1].y < boxes[2].y, 'cards stack on narrow screens');
     await page.locator('[data-home-grid]').screenshot({ path: path.join(out, `${theme}-${width}.png`) });
-    await page.locator('[data-home-allocation-chart] .recharts-sector').first().click();
+    const sector = page.locator('[data-home-allocation-chart] .recharts-sector').first();
+    const sectorBox = await sector.boundingBox();
+    // The bounding-box centre is the donut's empty hole. Click its painted arc.
+    await sector.click({ position: { x: sectorBox.width / 2, y: 8 } });
     assert.match(new URL(page.url()).search, /of=family-class/, 'donut segment opens its holdings');
     await page.locator('[data-page-nav-home]').click();
     await page.locator('[data-home-aum]').waitFor();
