@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { BOOK_POSITIONS, BOOK_ACCOUNTS } from '../../data/glowData';
 import { depositoryFundHoldings } from '../fundNavs';
-import { holdingSourceTrace, statementSourceHref, sourceRecordAt, sourcePage } from '../sourceTrace';
+import { holdingSourceTrace, statementSourceHref, sourceRecordAt, sourcePage, reviewFacts } from '../sourceTrace';
 import { pdfSourceMatch, isinBeforePage } from '../pdfSourceHighlight';
 import { sourceBackground } from '../../components/SourceLink';
 import { sourceSheetIndex } from '../statementPreview';
@@ -81,20 +81,22 @@ const allocated = holdingSourceTrace([{ ...bandhan, statementRecord: undefined, 
 assert.equal(allocated.derived, true); assert.ok(allocated.sources.some(s => s.note === 'Allocated to this owner by the review record.'));
 // A review record in plain words (Stage 10jn): its value, date, cost and
 // shares off the holding and the review's own note; the full note is kept.
-const nse = BOOK_POSITIONS.find(p => p.reviewNote?.includes('Now a listed company') && p.quantity === 125000)!;
-assert.ok(nse, 'Ajay’s review-backed NSE holding is present');
+const nse = BOOK_POSITIONS.find(p => p.securityKey === 'national-stock-exchange-of-india' && p.accountId === 'review-ajay-jaisinghani')!;
+assert.ok(nse, 'Ajay\'s exact NSE holding is present'); assert.equal(nse.quantity, 125000);
 const nseReview = holdingSourceTrace([nse], 'quantity').sources.find(s => s.review)!;
 assert.equal(nseReview.note, nse.reviewNote, 'the full audit note stays under Full detail');
 // Ajay's 1,25,000 are on the ICICI NSDL statement of 31 Oct 2026, which marks them at the
 // 30 Oct close (Stage 10kn): the record says a newer statement differs, and the popup says so.
 assert.deepEqual(nseReview.review, { value: 259375000, cost: nse.costBasis, units: 125000, unitWord: 'shares', asOf: '30 Jun 2026',
   atCost: false, splitByShares: false, shared: false, noHolder: false, listed: true, differs: true });
-assert.equal(nse.costBasis, 78086287, 'the register-backed allocation replaces the old pro-rata split');
+assert.equal(nseReview.review!.cost, 78086287, 'Ajay holds the remainder after the register dates Ankita\'s payments');
+assert.equal(reviewFacts({ ...nse, reviewNote: 'The review cost is split by shares.' }).splitByShares, true,
+  'the share-allocation marker remains supported when a source actually says so');
 assert.ok(/A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026/.test(nse.reviewNote ?? ''), 'the newer statement is named in the record');
 // Ankita's 75,000 have no newer valued statement, so her half of the same line does not differ.
-const nseAnkita = BOOK_POSITIONS.find(p => p.reviewNote?.includes('Now a listed company') && p.quantity === 75000)!;
-assert.ok(nseAnkita, 'Ankita’s review-backed NSE holding is present');
-assert.equal(nseAnkita.costBasis, 42763713, 'her dated register payments remain the cost source');
+const nseAnkita = BOOK_POSITIONS.find(p => p.securityKey === 'national-stock-exchange-of-india' && p.accountId === 'review-ankita-jaisinghani')!;
+assert.ok(nseAnkita, 'Ankita\'s exact NSE holding is present'); assert.equal(nseAnkita.quantity, 75000);
+assert.equal(nseAnkita.costBasis, 42763713, 'the register supplies Ankita\'s two dated payments');
 assert.equal(holdingSourceTrace([nseAnkita], 'quantity').sources.find(s => s.review)!.review!.differs, false);
 const plain = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(SourceDetails, { trace: holdingSourceTrace([nse], 'quantity') })));
 assert.ok(plain.includes('Worth ₹25.94 Cr for 1,25,000 shares on 30 Jun 2026'), plain);
