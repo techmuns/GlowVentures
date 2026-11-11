@@ -177,9 +177,11 @@ try {
   if (width >= 1278) {
    const compact = await page.locator('[data-returns-toolbar]').evaluate(el => {
     const centers = [...el.children].map(child => { const r = child.getBoundingClientRect(); return r.y + r.height / 2; });
-    return el.getBoundingClientRect().height < 55 && Math.max(...centers) - Math.min(...centers) < 2;
+    const rect = el.getBoundingClientRect();
+    return { width: rect.width, height: rect.height, centers, groupWidths: [...el.children].map(child => child.getBoundingClientRect().width) };
    });
-   assert.ok(compact, `${theme}/${width}: periods, dates and return type share one compact row`);
+   assert.ok(compact.height < 55 && Math.max(...compact.centers) - Math.min(...compact.centers) < 2,
+    `${theme}/${width}: periods, dates and return type share one compact row: ${JSON.stringify(compact)}`);
   }
   await page.locator('[data-returns-types]').screenshot({ path: `${out}/return-picker-${theme}-${width}.png` });
  }
