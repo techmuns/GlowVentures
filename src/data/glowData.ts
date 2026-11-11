@@ -9300,11 +9300,15 @@ export const BOOK_POSITIONS: Position[] = [
     "tradeRecord": {
       "from": "2025-01-16",
       "to": "2026-07-27",
-      "buys": 1,
+      "buys": 2,
       "sells": 0,
-      "unaccounted": 170,
-      "held": null,
-      "reason": "the transaction statements from 2025-01-16 to 2026-07-27 buy 275 and sell 0 units of it against 445 held, so 170 of them are on no dated trade in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-13",
+        "last": "2026-04-17",
+        "lots": 2
+      },
+      "reason": null
     },
     "accruedIncome": 8900,
     "dividendReceived": 8900,
@@ -9819,11 +9823,15 @@ export const BOOK_POSITIONS: Position[] = [
     "tradeRecord": {
       "from": "2025-01-16",
       "to": "2026-07-27",
-      "buys": 15,
+      "buys": 16,
       "sells": 4,
-      "unaccounted": 157,
-      "held": null,
-      "reason": "the transaction statements from 2025-01-16 to 2026-07-27 buy 799 and sell 370 units of it against 586 held, so 157 of them are on no dated trade in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-29",
+        "last": "2026-06-17",
+        "lots": 14
+      },
+      "reason": null
     },
     "accruedIncome": 0,
     "dividendReceived": null,
@@ -10050,11 +10058,15 @@ export const BOOK_POSITIONS: Position[] = [
     "tradeRecord": {
       "from": "2025-01-16",
       "to": "2026-07-27",
-      "buys": 24,
+      "buys": 25,
       "sells": 0,
-      "unaccounted": 41,
-      "held": null,
-      "reason": "the transaction statements from 2025-01-16 to 2026-07-27 buy 1217 and sell 0 units of it against 1258 held, so 41 of them are on no dated trade in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-01",
+        "last": "2026-06-15",
+        "lots": 25
+      },
+      "reason": null
     },
     "accruedIncome": 0,
     "dividendReceived": null,
@@ -57869,6 +57881,13 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "quantity": 275,
       "price": 3967.8186,
       "amount": 1093114.2
+    },
+    {
+      "date": "2026-04-17",
+      "side": "buy",
+      "quantity": 170,
+      "price": 4100,
+      "amount": 698254.6
     }
   ],
   "green-lantern-capital-llp-510861|intellect-design-arena": [
@@ -58749,6 +58768,13 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "amount": 434378.99
     },
     {
+      "date": "2026-04-29",
+      "side": "buy",
+      "quantity": 157,
+      "price": 2650,
+      "amount": 416798.89
+    },
+    {
       "date": "2026-04-30",
       "side": "buy",
       "quantity": 65,
@@ -59140,6 +59166,13 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "quantity": 15,
       "price": 1862.2633,
       "amount": 27984.23
+    },
+    {
+      "date": "2026-06-15",
+      "side": "buy",
+      "quantity": 41,
+      "price": 1950,
+      "amount": 80093.91
     }
   ],
   "green-lantern-capital-llp-510861|thermax": [
