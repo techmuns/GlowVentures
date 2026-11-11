@@ -67,6 +67,7 @@ try {
     await page.getByRole('dialog', { name: 'Return calculation and coverage', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Close return coverage', exact: true }).click();
     assert.ok(await page.locator('[data-home-overview]').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'Home has no page-level horizontal overflow');
+    assert.ok(await page.evaluate(() => document.body.scrollWidth <= innerWidth + 1), 'the global toolbar does not widen the mobile page');
     await page.locator('[data-home-overview]').screenshot({ path: path.join(out, `${theme}-${width}.png`) });
     await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
     const dialog = page.getByRole('dialog');
