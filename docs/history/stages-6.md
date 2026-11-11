@@ -1590,7 +1590,18 @@ Codex's review of #352, verified against the code and the book:
 - The records request (`scripts/client-request/build.mjs`) never asked for those opening valuations. A new section 4 lists 14 requests for a value on or near 31 Dec 2025 and/or 31 Mar 2026, plus the money moved since: Sanshi ×5, Buoyant ×2, Founders ×2, Carnelian Amritkaal, Active Momentum (only the purchase-day statement), HDFC Securities, SVAN ×2, five Motilal demats, Kotak 7111389/5372722, Bandhan 8691267, ICICI 49794950, the 31-Mar-only PMS accounts and nine MF folios. "Received since 27 October" becomes section 5.
 - Each row is checked against `BOOK_ACCOUNT_NAV_HISTORY` and the verified return record's opening, which `facts.ts` now passes (`navDates`, `returnOpen`). When a valuation for that date arrives, the build stops. Left out: listings during the year (ESDS, NSE, Sotefin), which have no market price before listing, and Bandhan 8652064, whose statement already dates every purchase from nil on 2 Apr.
 
-### Stage 10ne — Portfolio Monitor: one row per category, totals on the band
+### Stage 10ne — Where the review and the register date one payment differently, the register's day
+
+*"Use register dates"* — the family, 12 Nov 2026, choosing between the two records for Zepto and Transition Venture Capital (Stage 10mx left both on the review's date).
+
+- The review's Transactions tab and the register print the same payment on different days. Zepto: ₹15,00,15,960 for 4,716 shares at ₹31,810, on 24 Feb 2025 in the review and 13 Nov 2024 in the register (`AJAY SIR - AARTI` row 65). Ankita's ₹25 lakh into Transition VC: 1 Aug 2025 against 20 Dec 2024 (`FUND HOUSE` row 91).
+- `REGISTER_REDATES` / `registerRedate` in `scripts/lib/registerRecords.mjs` moves that one review row's date to the register's day. The amount, units and cost stay the review's, and the build stops if the row, holder, amount or units stop matching. Invested on reads the same day.
+- XIRR, on the same valuations: Zepto 165.4% → 80.3% a year, Ankita's Transition 60.5% → 25.8%.
+- Inflexor and Hyprkytchen (register payments after the review's span, both at cost) are unchanged; they were not part of the question.
+- Transition's security row (Ankita's line with the two trust folios) now spans more than a year, so it is XIRR (66.1% pooled). `portfolioExcel.test` dropped rows of mixed engagement, so it now holds them to the same whole-accounts rule, re-solved.
+- Checks: `registerRecords.test.mjs` (both redates, and a refusal for each mismatch).
+
+### Stage 10nf — Portfolio Monitor: one row per category, totals on the band
 
 - The family, 12 Nov: the category band was blank across the table and its totals sat on a second "· total" row under it — "you can show the totals in the first one itself."
 - The band is now the totals row: its first cell keeps the heading (name, counts, subtotal, notes, chevron) and the other cells are the category's totals, drawn through `<Tr view>` so each stays under its column when columns are dragged. The row carries both `data-section` and `data-category-total`. A category with no totals still draws a full-width band. Nothing about what any cell computes changed.

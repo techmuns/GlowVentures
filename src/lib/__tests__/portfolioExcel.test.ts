@@ -188,6 +188,7 @@ const INDEX = buildDatedCapital({
 /** The current holdings as the page holds them — what "every holding of an account" is measured against. */
 const UNIVERSE: Position[] = PAGE.filter((_, i) => NAV_SET.held.includes(RAW[i]));
 /** The sheet's rows outside the mandates: each key's current non-PMS lines, one class and one engagement. */
+const MIXED_ROWS = new Map<string, Position[]>();
 const DIRECT_ROWS = (() => {
   const m = new Map<string, Position[]>();
   PAGE.forEach((p, i) => {
@@ -195,12 +196,14 @@ const DIRECT_ROWS = (() => {
     (m.get(p.securityKey) ?? m.set(p.securityKey, []).get(p.securityKey)!).push(p);
   });
   for (const [k, ps] of m) {
-    if (new Set(ps.map((p) => p.assetClass)).size !== 1 || new Set(ps.map((p) => ACC.get(p.accountId)?.engagement)).size !== 1) m.delete(k);
+    if (new Set(ps.map((p) => p.assetClass)).size !== 1 || new Set(ps.map((p) => ACC.get(p.accountId)?.engagement)).size !== 1) { MIXED_ROWS.set(k, ps); m.delete(k); }
   }
   return m;
 })();
 const capitalOf = (key: string) => {
-  const ps = DIRECT_ROWS.get(key);
+  // A row of mixed lines (Transition VC: a review line beside two AIF folios) is
+  // still whole accounts on one dated record where every account is (Stage 10ne).
+  const ps = DIRECT_ROWS.get(key) ?? MIXED_ROWS.get(key);
   return ps ? INDEX.behind(firstOfGroup(ps), UNIVERSE) : null;
 };
 /**
@@ -604,7 +607,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   // 29-11-2024 is the first such row the book carries (its Transaction Details
   // are read since the fund statements' dated tables were). Every OTHER direct
   // CAGR row must be one this rule annualised from its own lot register.
-  const datedRowNames = new Set([...DIRECT_ROWS].filter(([key]) => accountDated(key))
+  const datedRowNames = new Set([...DIRECT_ROWS, ...MIXED_ROWS].filter(([key]) => accountDated(key))
     .flatMap(([, ps]) => ps.map((p) => displaySecurity(p.security))));
   const sheetCagr = ROWS.filter((r) => (r["Measure"] === "CAGR" || r["Measure"] === "XIRR") && r["Mandate"] === DASH
     && !datedRowNames.has(r["Security"] as string)).length;
@@ -643,12 +646,12 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
 // answer to one question, one click apart.
 {
   const byName = new Map<string, string[]>();
-  for (const [key, ps] of DIRECT_ROWS) for (const n of new Set(ps.map((p) => displaySecurity(p.security)))) {
+  for (const [key, ps] of [...DIRECT_ROWS, ...MIXED_ROWS]) for (const n of new Set(ps.map((p) => displaySecurity(p.security)))) {
     (byName.get(n) ?? byName.set(n, []).get(n)!).push(key);
   }
   let subjects = 0, xirrs = 0;
   const wrong: string[] = [];
-  for (const [key, ps] of DIRECT_ROWS) {
+  for (const [key, ps] of [...DIRECT_ROWS, ...MIXED_ROWS]) {
     const cap = capitalOf(key);
     if (!cap || !cap.dated || cap.holdings) continue;
     const names = [...new Set(ps.map((p) => displaySecurity(p.security)))];

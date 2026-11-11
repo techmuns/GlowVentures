@@ -301,7 +301,7 @@ report (`october-2026-e/`, Stage 10hu) are read and are not statement
 sources: no extractor reads them. They supply dated records where a statement
 has none: the review values the private book, and the review, the register and
 the report supply costs, while the register also dates four holdings' money
-(Stage 10mv, `scripts/lib/registerRecords.mjs`). A monthly drop reissues the same filenames, so
+(Stage 10mv, `scripts/lib/registerRecords.mjs`), and its day stands where it and the review date one payment differently — Zepto, Ankita's Transition VC (Stage 10ne, the family's choice). A monthly drop reissues the same filenames, so
 extraction mirrors each archive's own path under `source/`.
 
 **Accounts.** One row per account, regenerated from `BOOK_POSITIONS` by

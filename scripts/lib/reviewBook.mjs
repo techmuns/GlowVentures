@@ -23,7 +23,7 @@ import { securityKeyOf } from "../../shared/securityKey.mjs";
 import { resolveSector, UNCLASSIFIED } from "../../shared/sectors.mjs";
 import { fifoReturnPct, fifoLedger } from "../../shared/fifo.mjs";
 import { ownerById } from "../../shared/owners.mjs";
-import { readRegisterWorkbook, registerReviewFlows } from "./registerRecords.mjs";
+import { readRegisterWorkbook, registerRedate, registerReviewFlows } from "./registerRecords.mjs";
 import { loadMopwmTransactions } from "./mopwmTransactions.mjs";
 
 // A date is a date, never an Excel serial (Stage 10dg): the review stores a
@@ -360,6 +360,10 @@ export function reviewBookLayer({ root = ".", positions, unvalued, reviewWorkboo
       if (reg?.reason) fail(`${e.name}: ${ownerName(s.owner)}'s register record does not tie — ${reg.reason}`);
       if (reg && !near(reg.paid, s.cost)) fail(`${e.name}: ${ownerName(s.owner)}'s cost ${s.cost} is not the ${reg.paid} the register dates`);
       if (reg) { f.dated = reg.flows; notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s line is ${reg.note}`); }
+      // …AND WHERE THE TWO RECORDS DATE ONE PAYMENT DIFFERENTLY, THE REGISTER'S
+      // DAY (Stage 10ne, the family's decision): the amount and units stay the review's.
+      const redate = registerRedate(register(), { key: e.key, owner: s.owner, flows: f.dated });
+      if (redate) { f.dated = redate.flows; notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s ${redate.note}`); }
       if (f.rows) {
         if (!e.atCost && f.closing !== null && !near(f.closing, s.value)) fail(`${e.name}: ${s.owner}'s value ${s.value} is not the Transactions closing ${f.closing}`);
         const tieTo = l.cost > 1 ? f.cost : f.paidIn;
@@ -389,7 +393,10 @@ export function reviewBookLayer({ root = ".", positions, unvalued, reviewWorkboo
           + `${inr(measured.fifo.costSold)} of cost sold for a realised ${inr(measured.fifo.realised)}; the review's purchases less sale proceeds `
           + `(${inr(r2(s.cost))}) is kept as the check`);
       }
-      push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty, tab: e.tab, row: l.row, listed: e.listed, dates: l.dates,
+      // Invested on reads the day the money went in; for a redated holder, the register's.
+      const holderDates = redate && !f.dated.some((x) => x.kind === "purchase" && !x.register)
+        ? { precision: "day", from: redate.date, to: redate.date, text: null } : l.dates;
+      push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty, tab: e.tab, row: l.row, listed: e.listed, dates: holderDates,
         cost: s.cost, value: s.value, atCost: !!e.atCost, asOf: valuedOn, fifo: measured.fifo, income: measured.income,
         note: `${e.atCost ? "Held at cost" : `Valued at ₹${s.value.toLocaleString("en-IN")}`} on the family's consolidated review (MOPWM, 30 Jun 2026), ${tabName} row ${l.row}${f.closingDate && !e.atCost ? `, its closing of ${dayText(f.closingDate)}` : ""}. ${cap(e.why)}.` });
     }

@@ -4331,7 +4331,7 @@ export function PortfolioMonitor() {
                         `data-row` already are: a claim about structure must not
                         depend on prose a redesign is free to reword.
 
-                        ONE ROW, NOT TWO (Stage 10ne): the band carries its
+                        ONE ROW, NOT TWO (Stage 10nf): the band carries its
                         category's totals in its own cells. "The first one is
                         blank, and then in the second one we are showing totals —
                         you can show the totals in the first one itself." So the
@@ -4502,7 +4502,7 @@ export function PortfolioMonitor() {
                       is where the Private Market page's standard puts a section's
                       totals: a reader sees what a category adds up to before its
                       rows, and a CLOSED section still shows its figures. Until
-                      Stage 10ne they were a second row under a band that spanned
+                      Stage 10nf they were a second row under a band that spanned
                       the table blank; nothing about what the cells carry moved.
 
                       THE BAND IS A ROW OF CELLS, NOT A WIDENED HEADING, and that is

@@ -26008,9 +26008,9 @@ export const BOOK_POSITIONS: Position[] = [
       "row": 70
     },
     "investedDates": {
-      "from": "2025-02",
-      "to": "2025-02",
-      "text": "Feb 2025"
+      "from": "2024-11-13",
+      "to": "2024-11-13",
+      "text": "13 Nov 2024"
     },
     "reviewNote": "Valued at ₹22,82,85,156.52 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 70, its closing of 31 Jul 2025. The review's own Transactions rows — 4,716 bought on 24 Feb 2025, closing at ₹22.83 Cr on 31 Jul 2025. A statement says otherwise: Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026.",
     "integrity": {
@@ -26904,9 +26904,9 @@ export const BOOK_POSITIONS: Position[] = [
       "row": 13
     },
     "investedDates": {
-      "from": "2025-08",
-      "to": "2025-10",
-      "text": "Aug 2025 – Oct 2025"
+      "from": "2024-12-20",
+      "to": "2024-12-20",
+      "text": "20 Dec 2024"
     },
     "reviewNote": "Valued at ₹32,85,877 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions.",
     "integrity": {
@@ -47352,12 +47352,16 @@ export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
     "accountId": "review-ajay-jaisinghani",
     "securityKey": "zepto",
     "security": "Zepto",
-    "date": "2025-02-24",
+    "date": "2024-11-13",
     "kind": "purchase",
     "amount": 150015960,
     "units": 4716,
     "rate": 31810,
-    "reviewRow": 443
+    "reviewRow": 443,
+    "register": {
+      "sheet": "AJAY SIR - AARTI",
+      "row": 65
+    }
   },
   {
     "accountId": "review-ankita-jaisinghani",
@@ -47393,12 +47397,16 @@ export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
     "accountId": "review-ankita-jaisinghani",
     "securityKey": "transition-venture-capital-fund-i-class-a1",
     "security": "Transition Venture Capital Fund I — Class A1",
-    "date": "2025-08-01",
+    "date": "2024-12-20",
     "kind": "purchase",
     "amount": 2500000,
     "units": 2500,
     "rate": 1000,
-    "reviewRow": 82
+    "reviewRow": 82,
+    "register": {
+      "sheet": "FUND HOUSE",
+      "row": 91
+    }
   },
   {
     "accountId": "review-bharat-jaisinghani",
