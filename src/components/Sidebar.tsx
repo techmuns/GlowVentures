@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { ChevronDown, Lock } from "lucide-react";
+import { ChevronDown, Lock, Menu, X } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { EXTRAS_GROUP, EXTRAS_PATHS, NAV } from "@/lib/nav";
 
@@ -51,6 +51,16 @@ const EXTRAS_OPEN_KEY = "glow:navExtras:v1";
 
 export function Sidebar() {
   const { portfolio, bookIsEmpty } = usePortfolio();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const mobileToggle = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setMobileOpen(false); mobileToggle.current?.focus(); }
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [mobileOpen]);
   // An empty book locks the analytics routes exactly as a missing one does:
   // there is nothing behind them but zeros until statements are ingested.
   const hasPortfolio = !!portfolio && !bookIsEmpty;
@@ -120,22 +130,27 @@ export function Sidebar() {
     return acc;
   }, {});
 
-  return (
-    <aside ref={asideRef} style={{ width }}
+  return (<>
+    {mobileOpen && <button type="button" className="mobile-nav-backdrop" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
+    <aside ref={asideRef} style={{ width }} data-mobile-expanded={mobileOpen}
       className="app-sidebar relative flex h-full shrink-0 flex-col border-r border-ink-700 bg-ink-900">
       {/* THE WORDMARK IS GLOW CENTRAL RESEARCH'S — a gold "G" and GLOW VENTURES
           in gold capitals, with what this particular app is underneath — so
           the two dashboards the family uses read as one house (Stage 10cg). */}
-      <div className="flex h-16 items-center gap-2.5 border-b border-ink-700 px-5">
+      <div className="flex h-16 items-center gap-2.5 border-b border-ink-700 px-5" data-sidebar-brand>
+        <button ref={mobileToggle} type="button" className="mobile-nav-toggle" aria-expanded={mobileOpen}
+          aria-controls="dashboard-navigation" aria-label={mobileOpen ? 'Collapse navigation' : 'Expand navigation'} onClick={() => setMobileOpen(open => !open)}>
+          {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </button>
         <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-champagne-500 to-champagne-600 text-ink-950 shadow-glow">
           <span className="font-display text-[15px] font-extrabold">G</span>
         </div>
-        <div className="min-w-0 leading-tight">
+        <div className="min-w-0 leading-tight" data-sidebar-wordmark>
           <div className="truncate font-display text-[14px] font-extrabold uppercase tracking-[0.08em] text-champagne-400">Glow Ventures</div>
           <div className="truncate text-[10px] font-semibold text-slate-500">Family Office Cockpit</div>
         </div>
       </div>
-      <nav className="flex-1 overflow-y-auto px-2.5 py-4">
+      <nav id="dashboard-navigation" className="flex-1 overflow-y-auto px-2.5 py-4">
         {Object.entries(groups).map(([group, items]) => {
           /**
            * ONE GROUP COLLAPSES AND THE REST DO NOT, and the heading is the
@@ -157,6 +172,7 @@ export function Sidebar() {
             {collapsible ? (
               <button type="button" onClick={() => setExtrasOpen((o) => !o)}
                 data-nav-group-toggle={group} aria-expanded={shown}
+                aria-label={shown ? `Hide ${group}` : `Show ${group}`}
                 title={shown ? `Hide ${group}` : `Show ${group}`}
                 className="flex w-full items-center gap-1.5 rounded-md px-2.5 pb-1.5 pt-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600 transition-colors hover:text-slate-400">
                 <ChevronDown className={["h-3 w-3 shrink-0 transition-transform", shown ? "" : "-rotate-90"].join(" ")} />
@@ -176,7 +192,8 @@ export function Sidebar() {
                 const locked = !hasPortfolio && !ALWAYS_ACCESSIBLE.has(to);
                 return (
                   <li key={to}>
-                    <NavLink to={to} data-nav-entry={to} title={locked ? "Ingest statements first" : label}
+                    <NavLink to={to} data-nav-entry={to} title={locked ? "Ingest statements first" : label} aria-label={label}
+                      onClick={() => setMobileOpen(false)}
                       className={({ isActive }) => [
                         "group flex items-center gap-2 rounded-md px-2.5 py-2 text-[12px] transition-colors",
                         isActive ? "nav-active bg-ink-700/80 text-slate-100"
@@ -195,7 +212,7 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="border-t border-ink-700 px-5 py-3">
+      <div className="border-t border-ink-700 px-5 py-3" data-sidebar-footer>
         <div className="flex items-center gap-2.5">
           <div className="grid h-8 w-8 place-items-center rounded-full bg-ink-600 text-xs font-semibold text-slate-200">GV</div>
           <div className="leading-tight">
@@ -218,5 +235,5 @@ export function Sidebar() {
         <span className="h-full w-0.5 bg-transparent transition-colors group-hover:bg-champagne-500/70 group-focus-visible:bg-champagne-500" />
       </div>
     </aside>
-  );
+  </>);
 }

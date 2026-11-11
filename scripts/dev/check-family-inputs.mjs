@@ -225,7 +225,7 @@ check("the nav renders its groups structurally", navGroups.length > 0, navGroups
 // *"change the hierarchy of these pages, Morning CIO then Portfolio Monitor and
 //  then Private Market and then Polycab"* — Polycab led this group until now.
 check("the Daily group is in the order the family asked for",
-  same(groupOf("Daily")?.entries, ["/cio", "/monitor", "/private-market", "/polycab"]),
+  same(groupOf("Daily")?.entries, ["/home", "/cio", "/monitor", "/private-market", "/real-estate", "/polycab"]),
   groupOf("Daily")?.entries.join(" → "));
 
 // *"remove exposure and IPS page from the dashboard UI"*. Its ALLOCATION group

@@ -408,7 +408,8 @@ const SECTOR_WORDS: Record<string, string[]> = {
 
 /** The words for each page, beyond its own label. About the DASHBOARD, never the book. */
 const PAGE_WORDS: Record<string, string[]> = {
-  "/cio": ["home", "dashboard", "summary", "overview", "morning", "briefing", "today"],
+  "/home": ["dashboard", "summary", "overview", "aum", "asset mix", "geography"],
+  "/cio": ["morning", "briefing", "today"],
   "/monitor": ["holdings", "portfolio", "positions", "all holdings", "stocks", "monitor"],
   "/private-market": ["private", "private equity", "pe", "venture", "vc", "drawdown funds", "capital accounts"],
   "/real-estate": ["property", "properties", "real estate", "land", "apartment", "commercial", "rent", "locations"],

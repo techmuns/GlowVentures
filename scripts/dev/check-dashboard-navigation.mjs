@@ -66,7 +66,7 @@ try{
   links.push(...await page.locator('main a[href]').evaluateAll(els=>els.map(e=>e.getAttribute('href'))));
  }
  const dynamic=['/stock/','/mandate/','/fund/'].map(prefix=>links.find(h=>h.startsWith(prefix))).filter(Boolean);
- const routes=['/cio','/monitor','/private-market','/real-estate','/polycab','/family','/sectors','/capital-gains','/performance','/returns','/corporate-actions','/ledger','/audit','/statements','/upload','/holdings?of=bucket&key=Cash',...dynamic];
+ const routes=['/home','/cio','/monitor','/private-market','/real-estate','/polycab','/family','/sectors','/capital-gains','/performance','/returns','/corporate-actions','/ledger','/audit','/statements','/upload','/holdings?of=bucket&key=Cash',...dynamic];
  assert.equal(dynamic.length,3,'Stock, mandate and fund detail routes are covered');
  const only=process.env.ONLY?.split(',');
  for(const route of routes.filter(r=>!only||only.includes(new URL(r,base).pathname))){

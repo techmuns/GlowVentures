@@ -48,7 +48,7 @@ try {
   // Holdings held through entities fill the table, so no empty-state row sits above them.
   await page.locator("[data-real-estate-table] [data-book-holding]").first().waitFor();
   assert.equal(await page.locator("[data-real-estate-table] tbody").getByText("No properties added").count(), 0, "No empty-state row while entity holdings are shown.");
-  assert.deepEqual(await page.locator('[data-nav-group="Daily"] [data-nav-entry]').evaluateAll(links => links.map(a => a.getAttribute("data-nav-entry"))), ["/cio", "/monitor", "/private-market", "/real-estate", "/polycab"]);
+  assert.deepEqual(await page.locator('[data-nav-group="Daily"] [data-nav-entry]').evaluateAll(links => links.map(a => a.getAttribute("data-nav-entry"))), ["/home", "/cio", "/monitor", "/private-market", "/real-estate", "/polycab"]);
   await page.screenshot({ path: path.join(out, "empty.png"), fullPage: true });
   await page.getByRole("button", { name: "Add property", exact: true }).first().click();
   assert.equal(await page.getByRole("form", { name: "Property editor" }).locator("[required]").count(), 0);

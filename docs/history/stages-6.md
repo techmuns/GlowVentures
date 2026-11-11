@@ -1510,6 +1510,16 @@ Codex's review of #352, verified against the code and the book:
 - `build-book` now reads the tape (`saleRows`: the holding trades and the day's sales settled against capital-gain lots) from the winning report type alone, deduped among itself, which is the runtime ledger's `datedRows` rule. Book: 1,817 → 1,820 trades, Green Lantern 510861 28 → 31 of 34 lines dated; no value, cost, realised gain or summary moves. Client request: 73 → 70 PMS stocks.
 - Check: `holdingTrades.test.mjs` restates the tape off the archive for every account issuing both report types and fails on main's book with exactly those three holdings.
 
+### Stage 10mu — Home: the portfolio at a glance
+
+- Home sits above Morning CIO in Daily and is the populated dashboard's front door. The existing Home buttons and global search reach it; an empty book still opens ingestion. The root redirect retains the member query so it cannot race the context's scope restoration.
+- The reference layout becomes an asset-class donut on the left, with AUM and Geography on the right. AUM and every class open their holdings. The total counts each duplicate group once, shares Morning CIO's family asset-class rules, and follows the member and currency selectors.
+- On phones the navigation becomes an icon rail with an expandable menu, leaving room for the cards; AUM uses compact currency notation there. Desktop navigation keeps its saved width.
+- Residual-only classes stay in AUM but offer no empty current-holdings link; classes with current holdings retain their arc and legend links.
+- Geography names the unclassified value. The book has no verified country exposure, so no countries, weights or historical AUM change are inferred from the screenshot, listing venue, currency or fund names.
+- Validation covers canonical AUM, dedupe, allocation totals, missing classifications, scoped totals, search, navigation, currency and light/dark desktop/mobile layouts.
+- The full CI run exposed a pre-existing 200-batch cap in its table-scroll probe after the workbook grew beyond 10,000 rows. The probe now bounds attempts by the actual row count while retaining strict progress and complete-row assertions.
+
 ### Stage 10mv — The investment register dates money no statement does: Sotefin, V.E.C 128005, Goldstandard ×2, Ankita's NSE
 
 *"whatever data we have available, we need to use that, right?"* · *"Yes, apply all four"* — the family, 11 Nov 2026, after an audit of the 180 holdings with no dated money (99 valued, ₹211 Cr).
@@ -1526,12 +1536,14 @@ Codex's review of #352, verified against the code and the book:
 - `CapitalMove.fromRegister` / `assumedDate` and `ReviewFlow.register` carry the source into the transaction rows (`consolidatedSheet.ts` notes).
 - Checks: `registerRecords.test.mjs` (test:ingest) reads the real rows and breaks each one: renamed row, other holder, units × rate, bonus ratio, missing MOPWM bonus, subtotal, and each reconciliation refusal.
 
-### Stage 10mw — Financial graph, calculation safeguards and scoped source verification
+### Stage 10mw — Home: date-scoped overview and a configurable widget library
 
-- Stable instrument identities, effective-dated ownership, metric evidence and a balanced decimal settlement-control journal are published with each immutable book. Independent bank matches require an evidenced account mapping, legal holder, exact reference, date and paise amount. Missing bank links, ownership fractions and valuations remain unavailable.
-- XIRR validates dates and isolates all candidate roots before publishing one stable rate. NAV projections retain actual day-weighted capital and identify undated approximations. Capital corrections validate the whole batch, including restores, against the current published source and retain their history; incompatible corrections invalidate dated returns.
-- Historical material discrepancies now require exact source-bound, dated reviews. Unresolved marks retain their disputed status and have no verified usable value. Gross income is not silently posted as received cash, and corporate-action notices are not booked twice.
-- The existing dashboard layout is retained. Details and limitations: `docs/FINANCIAL-INTEGRITY.md`.
+- Home gains a single date range with MTD/YTD/FYTD/1Y presets and the existing global member/currency scope. Current AUM still reconciles to the consolidated book; past end dates use only earlier NAV marks plus dated capital. Whole-account history stays mixed rather than using today's allocation weights. Partial historical levels are labelled recorded AUM.
+- Every block is a widget. The searchable, category-filtered library opens a live preview popup with Add to Home/Cancel. Eighteen widget types cover AUM, summary metrics, portfolio versus Indian benchmark, asset class, geography, currency, allocation history, recorded/projected cash flows, asset details, concentration, large movements, monthly returns, vintage, volatility and sectors. Layout editing supports drag or keyboard reorder, size, remove, restore defaults and browser-local persistence. Unsupported firm widgets expose “Not relevant for firm” on hover/focus.
+- Returns reuse Morning CIO's selected records and dated-money index comparison. Monthly returns are independent available-record cohorts; held/partial records are named. Daily volatility requires at least 20 observed returns with boundary coverage and refuses sparse histories. No geography, underlying currency, household liabilities, fund vintages or future payment schedules are invented. Polycab remains ring-fenced.
+- Every Home table uses the standard view-only Excel exporter, with source-precision numeric cells and all collapsed asset detail rows. Updated the NSE source-trace fixture to select exact owner/security identity after the register-based cost update; no financial source or calculation changes. Test bundles stay in this checkout’s ignored cache even when dependencies are reused.
+- Home alone reflows the global toolbar into two mobile rows, keeping entity selection, search, currency and theme controls within the viewport. Widget confirmation actions stay visible; long return-source coverage opens in an accessible dialog.
+- Added focused arithmetic/coverage tests and expanded the local browser check to exercise benchmark switching, custom historical dates, each widget's popup/add lifecycle, layout order/size/persistence/removal, entity scope and both themes at desktop/mobile widths. Validation results are recorded on the PR.
 
 ### Stage 10mx — Audit: holdings whose dates are in the files but not on the page
 
@@ -1552,3 +1564,10 @@ Codex's review of #352, verified against the code and the book:
 
 - `npm run client:request` re-run after Stages 10ms–10mx: `docs/client/Glow-Ventures-records-still-needed-2026-11-12.pdf`. It has 36 named records (43 on 11 Nov), 68 PMS stocks in 4 accounts (73 in 6), and 75 private records (unchanged).
 - Section 4 now also names the answers those stages applied: Man Industries, Deepak and Kingfa dates (10ms), and Green Lantern's stocks (10mt/10mx). The SOTEFIN note no longer points to a section 1 row that was removed. The column reads "Item on an earlier list".
+
+### Stage 10mz — Financial graph, calculation safeguards and scoped source verification
+
+- Stable instrument identities, effective-dated ownership, metric evidence and a balanced decimal settlement-control journal are published with each immutable book. Independent bank matches require an evidenced account mapping, legal holder, exact reference, date and paise amount. Missing bank links, ownership fractions and valuations remain unavailable.
+- XIRR validates dates and isolates all candidate roots before publishing one stable rate. NAV projections retain actual day-weighted capital and identify undated approximations. The normal capital editor stages related balances together. Capital corrections validate the whole batch, including restores, against the current published source and retain their history; incompatible corrections invalidate dated returns.
+- Historical material discrepancies now require exact source-bound, dated reviews. Unresolved marks retain their disputed status and have no verified usable value. Gross income is not silently posted as received cash, and corporate-action notices are not booked twice.
+- The existing dashboard layout is retained. Details and limitations: `docs/FINANCIAL-INTEGRITY.md`.

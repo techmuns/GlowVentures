@@ -21,7 +21,7 @@ function CurrencySwitch() {
     ? "Showing INR: the USD → INR reference rate is still loading, and this browser has no earlier rate saved. USD figures appear when it arrives."
     : "Showing INR: the FX feed did not respond and this browser has no earlier rate saved, so there is no published rate to convert at. No USD figure is struck on a made-up rate.";
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" data-topbar-currency>
       <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Display currency"
         data-fx-status={fxState.status} data-ccy-requested={requestedCurrency} data-ccy-shown={displayCurrency}>
         {SUPPORTED_DISPLAY_CURRENCIES.map((c: DisplayCurrency) => {
@@ -213,11 +213,11 @@ export function TopBar() {
           members and trusts picked — every page below follows it except
           Family & Entities, which always shows everyone. */}
       <MemberScopeSelect />
-      <div className="flex min-w-0 max-w-3xl flex-1 items-center gap-2">
+      <div className="flex min-w-0 max-w-3xl flex-1 items-center gap-2" data-topbar-search>
         <SmartSearch />
       </div>
-      <div className="ml-auto flex items-center gap-3">
-        <div className="hidden items-center gap-2 text-xs lg:flex"><QuoteStatus /></div>
+      <div className="ml-auto flex items-center gap-3" data-topbar-actions>
+        <div className="hidden items-center gap-2 text-xs lg:flex" data-topbar-quotes><QuoteStatus /></div>
         <CurrencySwitch />
         {/* A scope with no holding draws no total: ₹0 would read as a measured
             nothing, and the page below already says why it is empty. */}
@@ -227,7 +227,7 @@ export function TopBar() {
             <TrendingUp className="h-3.5 w-3.5 text-champagne-400" /> {fmtFromBase(portfolio.totalValue, { compact: true })}
           </span>
         )}
-        <div className="flex items-center gap-2 border-l border-ink-700 pl-3">
+        <div className="flex items-center gap-2 border-l border-ink-700 pl-3" data-topbar-buttons>
           <button onClick={refresh} disabled={refreshing} className="btn-ghost h-9 px-2.5" title="Reload data">
             <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
           </button>
