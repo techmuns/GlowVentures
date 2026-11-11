@@ -78,6 +78,12 @@ previous/original value, source fingerprint, effective date and validator versio
 in the existing Git-backed store history. There is one authenticated dashboard
 session, so no individual editor identity is invented.
 
+The existing number editor stages related capital fields and restores in one
+atomic save. Inline cells link to that same grouped editor when a relationship
+needs more than one amount changed. Incomplete source balances are unavailable
+checks, not reconciled capital identities. Static builds evaluate source-review
+expiry on the publication day and block expired or altered review evidence.
+
 A correction cannot silently preserve an XIRR based on incompatible dated cash
 or units. The dated return remains unavailable until the transaction record
 reconciles with the correction. The canonical statements are not overwritten.

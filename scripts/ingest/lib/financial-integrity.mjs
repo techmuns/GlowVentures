@@ -79,17 +79,18 @@ export function validateOwnershipGraph(nodes, edges) {
   return issues;
 }
 
-export function buildFinancialIntegrity(book, documents, { report = null, registry = seedRegistry, readerRevision = null, bookRevision = null, evaluationDate = null, ownership = ownershipRegistry, settlementMappings = settlementRegistry.mappings } = {}) {
+export function buildFinancialIntegrity(book, documents, { report = null, registry = seedRegistry, readerRevision = null, bookRevision = null, evaluationDate = new Date().toISOString().slice(0, 10), ownership = ownershipRegistry, settlementMappings = settlementRegistry.mappings } = {}) {
   const positions = book.BOOK_POSITIONS ?? [], accounts = book.BOOK_ACCOUNTS ?? [], accountById = new Map(accounts.map(a => [a.accountId, a]));
   const identities = financialRegistry(positions, registry), issues = [...identities.issues];
   if (!report) {
-    const revisions = new Map(documents.map(d => [d.docKey, reviewDocumentRevision(d)]));
+    const present = new Set(documents.map(d => d.docKey));
     report = {};
-    for (const e of RECONCILIATION_EXCEPTIONS) if (Object.entries(e.documentRevisions ?? {}).every(([key, revision]) => revisions.get(key) === revision))
+    for (const e of RECONCILIATION_EXCEPTIONS) if (Object.keys(e.documentRevisions ?? {}).every(key => present.has(key)))
       (report[e.section] ??= []).push(e.finding);
   }
-  const reviewedOn = RECONCILIATION_EXCEPTIONS.map(e => e.reviewedOn).sort().at(-1);
-  const reviews = reconciliationReview(report, { on: evaluationDate ?? reviewedOn ?? book.BOOK_AS_OF, documentRevisions: new Map(documents.map(d => [d.docKey, reviewDocumentRevision(d)])) });
+  const reviews = reconciliationReview(report, { on: evaluationDate, documentRevisions: new Map(documents.map(d => [d.docKey, reviewDocumentRevision(d)])) });
+  if (!day(evaluationDate)) issues.push({ code: 'INVALID_REVIEW_EVALUATION_DATE' });
+  for (const review of reviews) if (review.status === 'needs-review') issues.push({ code: 'RECONCILIATION_REVIEW_REQUIRED', id: review.id, section: review.section });
   const nodes = [], edges = [], metrics = [], checks = [], events = [];
   const node = new Map(), addNode = n => { if (!node.has(n.id)) { node.set(n.id, n); nodes.push(n); } };
   for (const owner of book.BOOK_OWNERS ?? []) { const id = owner.ownerId ?? owner.id; if (id) addNode({ id: `owner:${id}`, kind: 'owner', label: owner.name ?? owner.displayName ?? id }); }
@@ -229,8 +230,10 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
   }
   for (const c of book.BOOK_COMMITMENTS ?? []) {
     const violations = capitalIssues(c, CAPITAL_TERMS[c.accountId]);
+    const missingFields = ['committed', 'called', 'paid', 'undrawn', 'pending'].filter(field => !finite(c[field]));
     if (violations.length) issues.push({ code: 'CAPITAL_DOES_NOT_RECONCILE', accountId: c.accountId, violations });
-    checks.push({ kind: 'capital', accountId: c.accountId, status: violations.length ? 'disputed' : 'reconciled', issues: violations,
+    checks.push({ kind: 'capital', accountId: c.accountId, status: violations.length ? 'disputed' : missingFields.length ? 'unavailable' : 'reconciled', issues: violations, missingFields,
+      reason: !violations.length && missingFields.length ? 'The source does not supply every balance required to reconcile the capital identities.' : null,
       adjustment: CAPITAL_TERMS[c.accountId] ?? null });
   }
   checks.push(...reconcileSettlements(events, documents, accounts, settlementMappings));

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import { buildFinancialIntegrity, financialRegistry, validateOwnershipGraph } from '../lib/financial-integrity.mjs';
 import { ownershipExposure, reconcileSettlements } from '../lib/financial-settlement.mjs';
 import { financialUnitIssue } from '../lib/financial-units.mjs';
@@ -43,7 +44,23 @@ test('contradictory source capital holds book preparation, while partial balance
   const b = book(); b.BOOK_COMMITMENTS = [{ accountId: account.accountId, committed: 100, called: 10, paid: 5000 }];
   assert.ok(buildFinancialIntegrity(b, []).issues.some(i => i.code === 'CAPITAL_DOES_NOT_RECONCILE'));
   b.BOOK_COMMITMENTS = [{ accountId: account.accountId, committed: 100, called: null, paid: 50 }];
-  assert.deepEqual(buildFinancialIntegrity(b, []).issues, []);
+  const partial = buildFinancialIntegrity(b, []);
+  assert.deepEqual(partial.issues, []);
+  assert.equal(partial.checks.find(c => c.kind === 'capital').status, 'unavailable');
+  b.BOOK_COMMITMENTS = [{ accountId: account.accountId, committed: 100, called: 50, paid: 40, undrawn: 50, pending: 10 }];
+  assert.equal(buildFinancialIntegrity(b, []).checks.find(c => c.kind === 'capital').status, 'reconciled');
+});
+test('static preparation blocks an expired source review using the publication day', () => {
+  const entries = JSON.parse(readFileSync(new URL('../../../config/reconciliation-exceptions.json', import.meta.url))).entries;
+  const key = entries.find(e => e.section === 'rowSumChecks').finding.docKey;
+  const document = JSON.parse(readFileSync(new URL(`../../../public/audit/${key}/document.json`, import.meta.url)));
+  const valid = buildFinancialIntegrity(book([]), [document], { evaluationDate: '2026-11-11' });
+  assert.ok(valid.reconciliationReviews.length > 0); assert.deepEqual(valid.issues, []);
+  const expired = buildFinancialIntegrity(book([]), [document], { evaluationDate: '2026-12-12' });
+  assert.ok(expired.issues.some(i => i.code === 'RECONCILIATION_REVIEW_REQUIRED'));
+  assert.ok(expired.reconciliationReviews.every(r => r.status === 'needs-review'));
+  const changed = structuredClone(document); changed.holdings[0].quantity += 1;
+  assert.ok(buildFinancialIntegrity(book([]), [changed], { evaluationDate: '2026-11-11' }).issues.some(i => i.code === 'RECONCILIATION_REVIEW_REQUIRED'), 'altered source evidence cannot silently erase its review requirement');
 });
 test('ownership paths multiply fractions and reject cycles or overlapping ownership above 100%', () => {
   const nodes = [{ id: 'root', kind: 'owner' }, { id: 'trust', kind: 'owner' }, { id: 'position', kind: 'position' }];
