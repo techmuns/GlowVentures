@@ -41,8 +41,8 @@ export function Home() {
               <PieChart accessibilityLayer>
                 <Pie data={model.allocation} dataKey="value" nameKey="label" cx="50%" cy="50%"
                   innerRadius="62%" outerRadius="88%" paddingAngle={1.5} stroke="var(--chart-tooltip-bg)" strokeWidth={3} isAnimationActive={false}
-                  cursor="pointer" onClick={(_, index) => navigate(drilldownHref('family-class', model.allocation[index].key))}>
-                  {model.allocation.map(row => <Cell key={row.key} fill={colorOf(row.key)} />)}
+                  onClick={(_, index) => { const row = model.allocation[index]; if (row.canOpen) navigate(drilldownHref('family-class', row.key)); }}>
+                  {model.allocation.map(row => <Cell key={row.key} fill={colorOf(row.key)} style={{ cursor: row.canOpen ? 'pointer' : 'default' }} />)}
                 </Pie>
                 <Tooltip formatter={(value: number, label: string) => [money(value), label]}
                   contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle} />
@@ -55,15 +55,19 @@ export function Home() {
           </> : <AbsentSection what="Asset mix unavailable" needs={model.total <= 0 ? 'A positive portfolio value is needed to draw allocation weights.' : 'A negative asset-class value cannot be represented by a donut chart. The amounts are listed below.'} />}
         </div>
         <ul className="mt-2 space-y-1" aria-label="Asset class allocation" data-home-allocation>
-          {model.allocation.map(row => <li key={row.key} data-home-class={row.key} data-value={row.value} data-weight={row.weight ?? ''}>
-            <Link to={drilldownHref('family-class', row.key)} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-md px-2 py-2 text-sm hover:bg-ink-700/40 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
-              title={`Open the holdings in ${row.label}`}>
+          {model.allocation.map(row => {
+            const classes = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-md px-2 py-2 text-sm sm:grid-cols-[auto_minmax(0,1fr)_auto_auto]";
+            const content = <>
               <span className="row-span-2 h-2.5 w-2.5 rounded-full sm:row-span-1" style={{ backgroundColor: colorOf(row.key) }} />
               <span className="min-w-0 break-words text-slate-300">{row.label}</span>
               <span className="col-start-2 row-start-2 min-w-0 break-words tabular text-slate-100 sm:col-start-3 sm:row-start-1 sm:text-right">{money(row.value)}</span>
               <span className="col-start-3 row-span-2 row-start-1 text-right tabular text-slate-400 sm:col-start-4 sm:row-span-1">{row.weight == null ? DASH : row.weight > 0 && row.weight < 0.1 ? '<0.1%' : `${row.weight.toFixed(1)}%`}</span>
-            </Link>
-          </li>)}
+            </>;
+            return <li key={row.key} data-home-class={row.key} data-value={row.value} data-weight={row.weight ?? ''} data-can-open={row.canOpen}>
+              {row.canOpen ? <Link to={drilldownHref('family-class', row.key)} className={`${classes} hover:bg-ink-700/40`} title={`Open the holdings in ${row.label}`}>{content}</Link>
+                : <div className={classes} title="No current holdings to open. Recorded residual balances remain included in AUM.">{content}</div>}
+            </li>;
+          })}
         </ul>
       </Card>
 

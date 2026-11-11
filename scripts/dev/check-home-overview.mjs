@@ -54,9 +54,13 @@ try {
     assert.deepEqual(await page.locator('[data-nav-group="Daily"] [data-nav-entry]').evaluateAll(els => els.slice(0, 2).map(el => el.dataset.navEntry)), ['/home', '/cio']);
     assert.equal(await page.locator('[data-nav-entry="/home"]').getAttribute('aria-current'), 'page');
     await page.waitForFunction(expected => Math.abs(Number(document.querySelector('[data-home-aum]')?.dataset.homeAum) - expected) < .01, expected);
-    const rows = await page.locator('[data-home-class]').evaluateAll(els => els.map(el => ({ value: Number(el.dataset.value), weight: Number(el.dataset.weight) })));
+    const rows = await page.locator('[data-home-class]').evaluateAll(els => els.map(el => ({ value: Number(el.dataset.value), weight: Number(el.dataset.weight), canOpen: el.dataset.canOpen })));
+    assert.ok(rows.every(row => ['true', 'false'].includes(row.canOpen)), 'each class declares whether it has current holdings to open');
     assert.ok(Math.abs(rows.reduce((sum, row) => sum + row.value, 0) - expected) < .01, 'asset values reconstruct AUM');
     assert.ok(Math.abs(rows.reduce((sum, row) => sum + row.weight, 0) - 100) < 1e-8, 'asset weights sum to 100%');
+    for (const row of await page.locator('[data-home-class][data-can-open="false"]').all()) {
+      assert.equal(await row.locator('a').count(), 0, 'residual-only classes stay in AUM without offering empty drilldowns');
+    }
     assert.equal(Number(await page.locator('[data-home-geography]').getAttribute('data-unclassified-value')), expected);
     assert.doesNotMatch(await page.locator('[data-home-geography]').innerText(), /United States|Europe|Canada/, 'no reference-image geography is fabricated');
     assert.ok(await page.locator('[data-home-overview]').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'Home has no horizontal overflow');
