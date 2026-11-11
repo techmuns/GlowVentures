@@ -1580,6 +1580,11 @@ Codex's review of #352, verified against the code and the book:
 
 ### Stage 10nb — Portfolio Monitor keeps Security labels visible
 
+- Keep the existing vertically frozen heading row and pin its Security cell plus the holdings' Security names to the left while scrolling sideways. Opaque inherited row surfaces preserve stripes, expanded-row colours and hover highlighting; spanning section/detail cells scroll as before. Totals paint above the pinned body cells.
+- Limit the pinned name column to 10rem on phone widths so adjacent figures remain reachable. The horizontal pin applies on screen only; sorting, column order and the export data are unchanged.
+- Validate actual vertical and horizontal scrolling at desktop, tablet and phone widths, both themes, opaque row surfaces and sorting from the pinned heading. Build and delivery evidence are recorded on the PR.
+- Source-preview regression setup opens the quantity source list before recording the arranged background scroll. Otherwise its automated Qty click first scrolls a control out from beneath the frozen Security column, changing the test's starting state before any document opens. The check still requires a nonzero horizontal offset and exact scroll/DOM/filter/expansion restoration.
+
 ### Stage 10nc — Investment performance names how many accounts it covers, of how many
 
 - The client asked what "53 accounts covered" meant when they hold over 100 accounts. The card counted the accounts in the measured total and said nothing about the rest.

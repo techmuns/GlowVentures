@@ -178,6 +178,10 @@ try {
   await page.getByRole('tab',{name:'Cash',exact:true}).click();
   await page.keyboard.press('Escape');
   await venue.locator('button[data-source-metric="quantity"]').scrollIntoViewIfNeeded();
+  // Open the source list before arranging the background scroll. With the
+  // Security column frozen, scrolling first can hide Qty beneath it, making
+  // Playwright scroll back to reach Qty before any document is opened.
+  const monitorSourceLink = await dematStatement(venue);
   const origin = page.url();
   const snapshot = await page.locator('main').evaluate(el => {
     const scrolls = [...el.querySelectorAll('*')].filter(e=>e.scrollWidth>e.clientWidth+5 && e.clientWidth>0 && /auto|scroll/.test(getComputedStyle(e).overflowX));
@@ -185,7 +189,8 @@ try {
     window.__sourceReturn = scrolls.map(el=>({el,left:el.scrollLeft,top:el.scrollTop}));
     return {top:el.scrollTop};
   });
-  await (await dematStatement(venue)).click();
+  assert.ok(await page.evaluate(()=>window.__sourceReturn.some(({left})=>left>5)), 'the source-return fixture exercises horizontal scroll');
+  await monitorSourceLink.click();
   await page.locator(`[data-statement-preview="${doc}"]`).waitFor();
   assert.equal(await page.locator('a a, button button, a button, button a').count(),0,'source links never nest interactive controls');
   await page.locator('[data-source-back]').click();
