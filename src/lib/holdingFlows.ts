@@ -124,7 +124,7 @@ export function holdingFlowsOf(p: Position, asOf: string | null): HoldingFlows |
     };
   };
   /**
-   * …OR WHERE A BONUS MADE THE REST OF THE UNITS (Stage 10mw). Every unit is one
+   * …OR WHERE A BONUS MADE THE REST OF THE UNITS (Stage 10mx). Every unit is one
    * of the window's own buys or a bonus on them, nothing was sold, and a bonus
    * adds units and no money — so the buys ARE every rupee that went in, exactly
    * as `bonusPurchaseDates` already reconciles them for Invested on (ZF Commercial,

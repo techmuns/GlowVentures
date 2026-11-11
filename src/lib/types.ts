@@ -455,7 +455,7 @@ export type Position = {
   investedDates?: { from: string; to: string; text: string } | null;
   /**
    * THE FAMILY'S OWN DATED PAYMENTS BEHIND A LINE THE REVIEW DATES BY MONTH
-   * (Stage 10mw) — the investment register's serial group for this holder, which
+   * (Stage 10mx) — the investment register's serial group for this holder, which
    * adds to the review's cost to the rupee and falls inside `investedDates`'s
    * months. A date source for Invested on only; built by
    * `scripts/lib/registerPurchaseDates.mjs`.

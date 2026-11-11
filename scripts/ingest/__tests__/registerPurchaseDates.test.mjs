@@ -1,4 +1,4 @@
-// A private line the review dates by month, dated by the register's payments (Stage 10mw).
+// A private line the review dates by month, dated by the register's payments (Stage 10mx).
 // Run: node scripts/ingest/__tests__/registerPurchaseDates.test.mjs
 //
 // ON CONSTRUCTED INPUTS shaped like Bharat's Waterwala Labs line: the review

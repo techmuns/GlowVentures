@@ -156,7 +156,7 @@ function lineDates(p: Position): LineDates | null {
   }
   const called = CALL_DATES.get(trancheKey(p.accountId, p.securityKey));
   if (called?.length) return { dates: called, source: "calls" };
-  // The family's dated payments behind a line the review dates by month (Stage 10mw).
+  // The family's dated payments behind a line the review dates by month (Stage 10mx).
   const paid = p.registerPayments?.payments;
   if (paid?.length) return { dates: paid.map((x) => x.date), source: "register", payments: paid.length };
   if (p.investedDates) return { dates: [p.investedDates.from, p.investedDates.to], source: "review" };

@@ -361,7 +361,7 @@ function datedRowsAcross(allIssues, kept, notes, label) {
         ordinal.set(base, n);
         const k = `${base}\u0001#${n}`;
         if (seen.has(k)) {
-          // THE SWITCH'S OTHER LEG TRAVELS WITH THE ROW (Stage 10mw). Bandhan
+          // THE SWITCH'S OTHER LEG TRAVELS WITH THE ROW (Stage 10mx). Bandhan
           // 8652064's 26 Oct statement repeats the Overnight and Arbitrage
           // switch-outs, but its Large & Mid Cap block opens on 13 Aug, so it
           // cannot see the in-legs and its copies carry no `settlementDate`;
@@ -1258,7 +1258,7 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
     const out = day.filter((r) => r.kind === "withdrawal");
     const dayContribs = day.filter((r) => r.kind === "contribution");
     /**
-     * TWO SCHEMES BOUGHT ON ONE DAY ARE TWO PURCHASES (Stage 10mw). Bandhan
+     * TWO SCHEMES BOUGHT ON ONE DAY ARE TWO PURCHASES (Stage 10mx). Bandhan
      * 8652064 bought ₹1.875 Cr of Large & Mid Cap and ₹15 Cr of Arbitrage on
      * 2 Jul 2026, each on its own self-contained row; grouped by date alone they
      * became one ₹16.875 Cr move filed under Large & Mid Cap, its units summed
@@ -2096,7 +2096,7 @@ function positionTranchesFrom(capitalMoves, reclassifications, positions, notes,
     return { accountId, securityKey, moves, units: Math.round(sum(moves.map((m) => m.units)) * 1e3) / 1e3, basis: "fifo" };
   };
   /**
-   * A CLASS SWITCHED A PART AT A TIME, AS THE FUND ITSELF BOOKS IT (Stage 10mw).
+   * A CLASS SWITCHED A PART AT A TIME, AS THE FUND ITSELF BOOKS IT (Stage 10mx).
    *
    * The carry below moves a whole class's lots per switch — Buoyant's one A1 → A4
    * move between share classes of one fund. Bandhan 8652064 switched Overnight
@@ -2187,7 +2187,7 @@ function positionTranchesFrom(capitalMoves, reclassifications, positions, notes,
       continue;
     }
     const allotted = sum(moves.map((m) => m.units));
-    // A class switched a part at a time — see `switchedTranche` (Stage 10mw).
+    // A class switched a part at a time — see `switchedTranche` (Stage 10mx).
     const switched = Math.abs(allotted - held[0].quantity) > UNIT_TIE && held[0].quantity > 0
       ? switchedTranche(k, held[0].quantity) : null;
     if (switched) {
@@ -3991,7 +3991,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
       let dated = lots.filter((l) => l.purchaseDate && isNum(l.totalCost));
       /**
        * …OR THE UNITS THE HOLDING STATEMENT HELD, REBUILT FROM A LATER CAPITAL
-       * GAIN STATEMENT (Stage 10mw). LKP 98245's holdings are struck 31 March
+       * GAIN STATEMENT (Stage 10mx). LKP 98245's holdings are struck 31 March
        * 2026 and its capital gain statement runs 1 Apr 2025 – 31 Jul 2026: its
        * open lots are what was held on 31 JULY, so Belrise's one open lot of
        * 6,500 is half of the 12,500 held on 31 March and the gate below refused
@@ -4096,7 +4096,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
         stCostBasis = split.stCostBasis;
         ltCostBasis = split.ltCostBasis;
         daysToLT = split.daysToLT;
-        // REBUILT UNITS DATE THE HOLDING, NOT A LIVE TAX SPLIT (Stage 10mw): they have
+        // REBUILT UNITS DATE THE HOLDING, NOT A LIVE TAX SPLIT (Stage 10mx): they have
         // since been sold, and the split the pages re-age is off the register's open
         // lots (`ltDate.ts`); their realised ST/LT is the capital gain statement's own.
         if (rebuiltFromCg) { stCostBasis = null; ltCostBasis = null; daysToLT = null; }
@@ -5011,7 +5011,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
     positions.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey));
     notes.push(...review.notes);
     // THE REGISTER'S DATED PAYMENTS BEHIND A LINE THE REVIEW DATES BY MONTH
-    // (Stage 10mw) — a date source only; see `registerPurchaseDates.mjs`.
+    // (Stage 10mx) — a date source only; see `registerPurchaseDates.mjs`.
     {
       const payments = loadRegisterPayments(ROOT, references.registerWorkbook);
       // The review's holder accounts join `accounts` further down; they come with the layer.

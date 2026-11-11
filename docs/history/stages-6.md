@@ -1526,7 +1526,7 @@ Codex's review of #352, verified against the code and the book:
 - `CapitalMove.fromRegister` / `assumedDate` and `ReviewFlow.register` carry the source into the transaction rows (`consolidatedSheet.ts` notes).
 - Checks: `registerRecords.test.mjs` (test:ingest) reads the real rows and breaks each one: renamed row, other holder, units × rate, bonus ratio, missing MOPWM bonus, subtotal, and each reconciliation refusal.
 
-### Stage 10mw — Audit: holdings whose dates are in the files but not on the page
+### Stage 10mx — Audit: holdings whose dates are in the files but not on the page
 
 *"audit this for all the holdings that we are not missing out on showing dates, similar to this man industries example … not accounting for those in our calculations, even though we already have them in the files"* — the family, 12 Nov 2026.
 

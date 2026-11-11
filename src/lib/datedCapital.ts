@@ -132,7 +132,7 @@ const noRateReason = (g: CapitalGroup | undefined) =>
  */
 const spanReason = (ps: readonly Position[]): string | null => {
   // A line the investment register dates payment by payment is not a span any
-  // more (Stage 10mw); what stops its rate is that it is held at cost.
+  // more (Stage 10mx); what stops its rate is that it is held at cost.
   const registered = ps.find((p) => p.registerPayments?.payments?.length);
   if (registered) return registered.valuedAtCost ? AT_COST_RETURN
     : "the family's investment register dates each payment, but the review prints no dated valuation of this line to close a money-weighted return on";
