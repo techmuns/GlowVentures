@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Report controls borrow the reference PDF's teal. The PDF itself has fixed colours in every theme. */
+.cio-report-export, .cio-report-download {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: 1px solid #236268; border-radius: 7px; padding: 7px 11px;
+  background: #003f43; color: #fff; font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.cio-report-export:hover, .cio-report-download:hover { background: #165b60; }
+.cio-report-export:focus-visible, .cio-report-download:focus-visible { outline: 2px solid #7e9f9e; outline-offset: 3px; }
+.cio-report-dialog {
+  position: fixed; inset: 0; margin: auto; width: min(96vw, 1380px); max-width: 96vw;
+  height: 92vh; max-height: 92vh; padding: 0; border: 1px solid #c7d8d5; border-radius: 12px;
+  background: #edf2f1; color: #183338; box-shadow: 0 24px 100px #0006; overflow: hidden;
+}
+.cio-report-dialog[open] { display: flex; flex-direction: column; }
+.cio-report-dialog::backdrop { background: #061918b3; }
+.cio-report-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; flex-shrink: 0; padding: 14px 18px; background: #fff; border-bottom: 1px solid #d6dfde; }
+.cio-report-toolbar strong { font-size: 14px; }
+.cio-report-toolbar small { display: block; margin-top: 3px; font-size: 11px; color: #63787a; }
+.cio-report-actions { display: flex; align-items: center; gap: 14px; }
+.cio-report-actions button { padding: 5px; border-radius: 5px; }
+.cio-report-actions button:focus-visible { outline: 2px solid #003f43; }
+.cio-report-document { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.cio-report-loading { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px; padding: 24px; }
+.cio-report-loading button { padding: 8px 14px; border: 1px solid #7e9f9e; border-radius: 6px; }
+.cio-report-options { position: fixed; inset: 0; margin: auto; width: 520px; max-width: 94vw; max-height: 90vh; padding: 24px; border: 1px solid #c7d8d5; border-radius: 12px; background: #fff; color: #183338; overflow-y: auto; box-shadow: 0 24px 100px #0006; }
+.cio-report-options::backdrop { background: #061918b3; }
+.cio-report-options-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 22px; }
+.cio-report-options-heading strong { font-size: 19px; }
+.cio-report-options-heading p { margin-top: 6px; font-size: 12px; color: #63787a; }
+.cio-report-options label { display: flex; flex-direction: column; gap: 7px; font-size: 12px; font-weight: 600; }
+.cio-report-options select, .cio-report-options input { width: 100%; min-width: 0; border: 1px solid #c7d8d5; border-radius: 6px; background: #fff; color: #183338; padding: 9px 10px; font-size: 13px; font-weight: 400; }
+.cio-report-options input[readonly] { background: #f1f5f4; }
+.cio-report-options :focus-visible { outline: 2px solid #7e9f9e; outline-offset: 2px; }
+.cio-report-date-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+.cio-report-period-note { margin-top: 16px; color: #63787a; font-size: 11px; line-height: 1.6; }
+.cio-report-period-error { margin-top: 12px; color: #a74654; font-size: 12px; }
+.cio-report-options-footer { margin-top: 22px; display: flex; justify-content: end; align-items: center; gap: 20px; font-size: 12px; }
+.cio-report-options-footer button:disabled { opacity: .5; cursor: not-allowed; }
+@media (max-width: 640px) { .cio-report-toolbar { padding: 10px; gap: 8px; } .cio-report-toolbar strong { font-size: 12px; } .cio-report-actions { gap: 8px; } }
+
 /* File drags cover the library's viewport, including an open provider folder. */
 .statement-drop-overlay {
   position: fixed; inset: 0; z-index: 1000; pointer-events: none;

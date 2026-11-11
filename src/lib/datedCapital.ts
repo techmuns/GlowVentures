@@ -59,7 +59,7 @@
  * own date instead, its units assumed held (Stage 10jo, `holdingFlowsOf`).
  */
 import type { Account, AccountReturnCoverage, CapitalMove, Commitment, Position, PositionTranches, ReviewFlow } from "./types";
-import type { CapitalLeg, RowCapital } from "./analytics";
+import { AT_COST_RETURN, type CapitalLeg, type RowCapital } from "./analytics";
 import { capitalClose, capitalMovesWithCalls, capitalRollup, type CapitalGroup } from "./tranches";
 import { xirrPct } from "./bucketXirr";
 import type { DatedFlow } from "./xirr";
@@ -131,6 +131,11 @@ const noRateReason = (g: CapitalGroup | undefined) =>
  * absent: placing the cost anywhere inside the span would be an estimate.
  */
 const spanReason = (ps: readonly Position[]): string | null => {
+  // A line the investment register dates payment by payment is not a span any
+  // more (Stage 10mx); what stops its rate is that it is held at cost.
+  const registered = ps.find((p) => p.registerPayments?.payments?.length);
+  if (registered) return registered.valuedAtCost ? AT_COST_RETURN
+    : "the family's investment register dates each payment, but the review prints no dated valuation of this line to close a money-weighted return on";
   const d = ps.find((p) => p.investedDates)?.investedDates;
   if (!d) return null;
   const month = d.from === d.to;

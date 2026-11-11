@@ -7,6 +7,7 @@ import { installReadModelRoutes } from './read-model-api.mjs';
 import { assertStickyTableHeaders, assertTableHeaderFixture } from './table-headers.mjs';
 import { installProfileStoreFixture, assertInlineProfileEditing } from './private-profile-inputs.mjs';
 import { assertTableExportControls, assertInfiniteTableExport, assertPrivateProfileExport, assertExportRetry, assertCompleteColumnExport, assertCollapsedSectionExport, assertUnfilteredSearchExport, assertPrivateMarketFilterExport, assertMemberFilterExport, assertTransactionFilterExport, assertPortfolioPageExport, downloadTableWorkbook } from './table-excel.mjs';
+import { appendByScrolling, scrollToEnd } from './table-scroll.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const capture = JSON.parse(await fs.readFile('public/data/corporate-actions.json', 'utf8'));
@@ -20,31 +21,6 @@ const source = manifest.flatMap(f => f.sheets.map(s => ({file:f.fileKey, sheet:s
   .filter(s => s.rows > 250).sort((a,b) => a.rows - b.rows)[0];
 assert.ok(source, 'a large source table is available');
 const sourceRoute = `/audit?file=${encodeURIComponent(source.file)}&sheet=${encodeURIComponent(source.sheet)}`;
-// Drive the real scroll surface: automatic append must work without a button.
-async function appendByScrolling(table) {
-  const end = table.locator('[data-table-scroll-end]');
-  const before = Number(await end.getAttribute('data-loaded-rows'));
-  const total = Number(await end.getAttribute('data-total-rows'));
-  assert.ok(before < total, 'more rows are available');
-  await end.scrollIntoViewIfNeeded();
-  await end.page().waitForFunction(({ element, before }) => Number(element.dataset.loadedRows) > before,
-    { element: await end.elementHandle(), before });
-}
-async function scrollToEnd(table) {
-  const end = table.locator('[data-table-scroll-end]');
-  const total = Number(await end.getAttribute('data-total-rows'));
-  assert.ok(Number.isInteger(total) && total >= 0, 'the table reports a finite row count');
-  let shown = Number(await end.getAttribute('data-loaded-rows'));
-  assert.ok(Number.isInteger(shown) && shown >= 0 && shown <= total, 'the loaded row count is within the total');
-  while (shown < total) {
-    await appendByScrolling(table);
-    assert.equal(Number(await end.getAttribute('data-total-rows')), total, 'scrolling retains the full table total');
-    const loaded = Number(await end.getAttribute('data-loaded-rows'));
-    assert.ok(Number.isInteger(loaded) && loaded > shown && loaded <= total, 'each scroll advances towards the final row');
-    shown = loaded;
-  }
-  return total;
-}
 try {
   await assertTableHeaderFixture(browser,base);
   for (const route of ['/corporate-actions','/monitor','/monitor?group=category','/monitor?group=basket','/monitor?group=assetClass','/monitor?show=transactions','/ledger','/sectors','/family','/capital-gains','/private-market','/holdings?of=book','/performance','/returns','/audit','/audit?consolidated=Transactions',sourceRoute,'/cio','/polycab','/upload','/statements']) {
