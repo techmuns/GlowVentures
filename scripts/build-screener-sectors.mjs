@@ -78,7 +78,7 @@ const REUSE = process.env.REUSE === "1";
  * names (6 Nov 2026). The page must still prove itself at run time — its own
  * symbol or scrip code echoed back — so a typo here is refused, never stored.
  *
- * THE GSPC AND VEDANTA RESTRUCTURINGS, rechecked 12 Nov 2026 (Stage 10ny). On
+ * THE GSPC AND VEDANTA RESTRUCTURINGS, rechecked 12 Nov 2026 (Stage 10ob). On
  * 6 Nov three fund-held names reached no page; each has since listed, or kept
  * its listing, under another name. NSE's master and each page are the evidence:
  *   • Gujarat Gas Ltd is GUJARAT ENERGY LIMITED — the same ISIN, INE844O01030,

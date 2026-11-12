@@ -14070,7 +14070,7 @@ const MONITOR_BASIS_BOOK = (() => {
     const VENDOR = JSON.parse(readFileSync(new URL("../src/data/screenerSectors.json", import.meta.url), "utf8"));
     // The listing `build-sectors` joined for a company the app's symbol tier does
     // not reach (Stage 10md) — a renamed, BSE-only or demerged company (Stage
-    // 10ny: HEG Graphite carries no symbol of its own). `companyExposure` reads
+    // 10ob: HEG Graphite carries no symbol of its own). `companyExposure` reads
     // it after the symbol, so this does too.
     const VENDOR_KEYS = JSON.parse(readFileSync(new URL("../src/data/screenerKeys.json", import.meta.url), "utf8"));
     // Deduped over EVERY position, as the page's `consolidated` is — the index
@@ -14088,7 +14088,7 @@ const MONITOR_BASIS_BOOK = (() => {
       // — a company's sector does not depend on how much of it is held.
       const rows = allShares.filter((p) => p.securityKey === k);
       // Stage 10md's ORDER, which this index kept the old way round until Stage
-      // 10ny: screener.in wherever it has a page, then the industry every fund
+      // 10ob: screener.in wherever it has a page, then the industry every fund
       // filing agrees on, then the statement — `companyExposure`'s three tiers,
       // the same order `placeOf` in SECURITY_AXIS_BOOK writes out. Statement
       // first read Engineers India as IT off one PMS's "Consulting Services".
@@ -30749,7 +30749,7 @@ const INVARIANTS = {
      * send the next reader to the wrong source.
      */
     ["the Unclassified row names its cause, for this view's own sources", (t, ctx) => {
-      // Stage 10ny: every issuer placed, so there is no row to carry a cause.
+      // Stage 10ob: every issuer placed, so there is no row to carry a cause.
       // Abstains on the BOOK's count (the same re-expression the Unclassified
       // hover check reads), never on the page failing to draw the row.
       const u = SECURITY_AXIS_BOOK?.tiers?.consolidated?.unclassMix;
