@@ -313,7 +313,7 @@ async function run() {
   const landed = { ...makeBatch("20261021T000000Z-x", [{ name: "a.pdf", size: 1, blob: "0".repeat(40) }]).files[0], status: "landed" as const, docKeys: ["k1", "k2"], commit: "abcdef1234" };
   ok("a landed file is in the library only once the site serves its documents",
     fileView(landed, new Set(["k1", "k2"])).key === "in-library" && fileView(landed, new Set(["k1"])).key === "publishing");
-  for (const processor of ['rapid', 'github']) {
+  for (const processor of ['rapid', 'github'] as const) {
     const ready = fileView({ ...landed, processor }, new Set());
     ok(`${processor}: a completed publication waits quietly for the reader to load it`, ready.key === 'update-ready'
       && ready.label === 'Update ready' && settledView(ready) && !/automatically/.test(ready.title));
