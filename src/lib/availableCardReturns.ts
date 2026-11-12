@@ -9,9 +9,41 @@ import { ytdBook, ytdSelection } from './ytdAvailable';
 import { heldAtLastValue } from './periodRules';
 import {
   BOOK_ACCOUNT_NAV_HISTORY, BOOK_ACCOUNT_CASH_FLOWS, BOOK_NAV_COVERAGE,
-  BOOK_UNDATED_CAPITAL, BOOK_CAPITAL_FROM_INCEPTION, BOOK_UNIT_WINDOWS,
+  BOOK_UNDATED_CAPITAL, BOOK_CAPITAL_FROM_INCEPTION, BOOK_UNIT_WINDOWS, BOOK_TRADE_OPENINGS,
 } from '@/data/glowData';
-import type { Account, UnitWindow } from './types';
+import type { Account, TradeOpening, UnitWindow } from './types';
+
+const longDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+/** What a rebuilt opening rests on, for the card's info button. */
+export function tradeOpeningNote(o: TradeOpening, opened: string): string {
+  const entries = o.openings.find(x => x.date === opened)?.entries ?? [];
+  return `Opening value on ${longDate(opened)} rebuilt from the manager's own records: every trade since inception, its bank book's cash balance and that day's exchange closes. `
+    + `The same rebuild matches the manager's printed totals within ${Math.max(...o.checks.map(c => Math.abs(c.diffPct)))}% on ${o.checks.map(c => longDate(c.date)).join(', ')}.`
+    + entries.map(e => ` ${e.securityKey.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')} was not yet listed on that day, so it joins on its first close (${longDate(e.date)}).`).join('');
+}
+
+/**
+ * THE OPENING VALUES WE REBUILT OURSELVES (Stage 10ni; the family, 12 Nov 2026:
+ * "can't we calculate it ourselves by finding out the market prices of all the
+ * holdings at that particular time?"). An account the book carries a rebuilt
+ * opening for (`BOOK_TRADE_OPENINGS`) opens on it: the opening days' values,
+ * the manager's own later values, and the capital register's money in and out.
+ */
+export function withTradeOpening(i: AccountInput, o: TradeOpening | undefined, marks: readonly { date: string; nav: number }[] = []): AccountInput {
+  if (!o || i.outside || !o.openings.length) return i;
+  const first = o.openings[0].date;
+  if (i.knownFrom != null && i.knownFrom <= first && !i.flowsUnknown) return i;
+  const vals = new Map<string, number>();
+  for (const v of i.flowsUnknown ? [] : i.valuations) vals.set(v.date, v.value);
+  for (const m of marks) if (m.date > first && m.date <= o.capitalTo) vals.set(m.date, m.nav);
+  for (const x of o.openings) vals.set(x.date, x.value);
+  // The ledger's money up to where the account's own record starts; the record's own after it.
+  const own = i.flowsUnknown ? [] : i.flows.filter(f => i.knownFrom == null || f.date > i.knownFrom);
+  const ledger = o.flows.filter(f => i.flowsUnknown || i.knownFrom == null || f.date <= i.knownFrom);
+  return { ...i, valuations: [...vals].map(([date, value]) => ({ date, value })).sort((x, y) => x.date.localeCompare(y.date)),
+    flows: [...ledger, ...own].sort((x, y) => x.date.localeCompare(y.date)), knownFrom: first,
+    knownTo: i.flowsUnknown ? o.capitalTo : i.knownTo, flowsUnknown: null, undated: [], tradeOpening: true };
+}
 
 /** Shared selected records, including the same fallback gates as attribution. */
 export function statementReturnInputs(statement: Portfolio, unitWindows: Readonly<Record<string, UnitWindow>> = BOOK_UNIT_WINDOWS): AccountInput[] {
@@ -28,6 +60,8 @@ export function statementReturnInputs(statement: Portfolio, unitWindows: Readonl
        * exactly the same units (`BOOK_UNIT_WINDOWS`), is measured from the
        * first of them: its value moved by the market alone, with no dated flow.
        */
+      const rebuilt = withTradeOpening(i, BOOK_TRADE_OPENINGS[i.accountId], BOOK_ACCOUNT_NAV_HISTORY[i.accountId]);
+      if (rebuilt !== i) return rebuilt;
       const w = unitWindows[i.accountId];
       if (!w || !i.flowsUnknown || i.outside) return i;
       const dates = w.valuations.map(v => v.date);
@@ -147,6 +181,12 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
       return !selection.inception && included.has(a.accountId) && c?.record && c.gap ? [{ label: `${a.owner} · ${a.provider} · account ${a.accountNo}`,
         reason: `${c.latestValuationDate ?? a.asOf}: ${c.gap}` }] : [];
     });
+    // A window opened on a value we rebuilt says so (Stage 10ni).
+    for (const u of result.total.units) {
+      const o = BOOK_TRADE_OPENINGS[u.accountId], a = statement.accounts.find(x => x.accountId === u.accountId);
+      if (!o || !a || !u.window || !o.openings.some(x => x.date === u.window!.openDate)) continue;
+      notes.push({ label: `${a.owner} · ${a.provider} · account ${a.accountNo}`, reason: tradeOpeningNote(o, u.window.openDate) });
+    }
     // Where each part of the money starts, by the value it closes at. Money
     // first put in during the period (it opens at nil) covers the whole of it;
     // the period is full only where every part does.

@@ -83,6 +83,7 @@ import { reviewPurchaseDates } from "./lib/reviewPurchaseDates.mjs";
 import { registerPurchaseDates, loadRegisterPayments } from "./lib/registerPurchaseDates.mjs";
 import { REGISTER } from "./lib/recoverHoldingCosts.mjs";
 import { inceptionMoves, readRegisterWorkbook, registerInceptions } from "./lib/registerRecords.mjs";
+import { tradeOpenings } from "./lib/tradeOpenings.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
 const OUT = process.env.GLOW_BOOK_OUT ?? path.join(ROOT, "src", "data", "glowData.ts");
@@ -5662,8 +5663,18 @@ function build(archived, archiveCount = archived.length, references = {}) {
 
   const accountReturnRecords = buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
     historicalNavs: references.historicalNavs ?? JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) });
+  // A PMS account's 31 Dec and 31 Mar values rebuilt from its own from-inception
+  // ledgers at exchange closes, only where the same rebuild reproduces the
+  // manager's printed totals (Stage 10ni, `tradeOpenings.mjs`).
+  const rebuiltOpenings = tradeOpenings({ byAccount, accounts, saved: savedActions,
+    closes: references.openingCloses ?? (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, "scripts/ingest/reference/opening-closes.json"), "utf8")).closes; } catch { return null; } })(),
+    asOf: accounts.map((a) => a.asOf).filter(Boolean).sort().at(-1) });
+  for (const [id, o] of Object.entries(rebuiltOpenings.openings)) {
+    notes.push(`${id}: opening value rebuilt from its own ledgers — ${o.openings.map((x) => `${x.date} ₹${x.value.toLocaleString("en-IN")}`).join(", ")}; ties to the manager's totals ${o.checks.map((c) => `${c.diffPct}% on ${c.date}`).join(", ")}`);
+  }
+  for (const r of rebuiltOpenings.refused) notes.push(`an opening value is not rebuilt for ${r}`);
   const result = {
-    accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
+    accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows, tradeOpenings: rebuiltOpenings.openings,
     accountReturnRecords, ...periodEvidence({ byAccount, accounts, positions, accountReturnRecords }),
     capitalMoves, positionTranches, shareMovements, shareRolls: shareRolls.rolls, tapeRows: tapeBoughtRows, advisedBalances: advised.balances, holdingCostRecovery,
     // Keyed on the holdings this book carries, in key order, so the file
@@ -5786,6 +5797,7 @@ export function canonicalBookValues(book) {
     BOOK_EARLIER_BALANCES: book.earlierBalances,
     BOOK_STATEMENT_UNIT_NAVS: book.statementUnitNavs,
     BOOK_UNIT_WINDOWS: book.unitWindows,
+    BOOK_TRADE_OPENINGS: book.tradeOpenings,
     BOOK_ENTITY_CASH_FLOWS: book.entityCashFlows,
     BOOK_ACCOUNT_RETURNS: book.accountReturns,
     BOOK_ACCOUNT_BRIDGES: book.accountBridges,
@@ -5812,7 +5824,7 @@ function emit(book) {
   L.push("// carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the");
   L.push("// list and what document would supply each.");
   L.push("import type {");
-  L.push("  Account, AccountBridge, AdvisedBalance, EarlierBalance, StatementUnitNavs, UnitWindow, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
+  L.push("  Account, AccountBridge, AdvisedBalance, EarlierBalance, StatementUnitNavs, UnitWindow, TradeOpening, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,");
   L.push("  PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, ShareRoll, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
@@ -6061,6 +6073,9 @@ function emit(book) {
   L.push(`export const BOOK_STATEMENT_UNIT_NAVS: Record<string, StatementUnitNavs> = ${j(book.statementUnitNavs)};`);
   L.push("");
   L.push(`export const BOOK_UNIT_WINDOWS: Record<string, UnitWindow> = ${j(book.unitWindows)};`);
+  L.push("");
+  L.push("/** A PMS account's 31 Dec and 31 Mar values rebuilt from its own from-inception ledgers at exchange closes, tied to the manager's totals (Stage 10ni). */");
+  L.push(`export const BOOK_TRADE_OPENINGS: Record<string, TradeOpening> = ${j(book.tradeOpenings ?? {})};`);
   L.push("");
   L.push("/**");
   L.push(" * The same flows keyed by OWNER — a person's money-weighted return is over");

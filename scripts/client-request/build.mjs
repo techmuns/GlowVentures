@@ -243,12 +243,8 @@ const OPENINGS = [
     check: () => noMarValue("motilal-oswal-active-momentum-fund-904168868444") && asOf("motilal-oswal-active-momentum-fund-904168868444") === "2026-08-06" },
   { holder: "Ajay Jaisinghani", account: "HDFC Securities 3110320", what: "All shares in the account",
     onFile: `Earliest holding statement on file: ${DATE(asOf(HDFC_SEC))}`, from: "HDFC Securities",
-    send: `The holding statement (shares and value) as at ${BOTH}. The trade details already received cover the purchases and sales.`,
+    send: `The holding statement as at ${BOTH}, showing the number of every share held. We value them ourselves at that day's exchange closes. The trade details already received cover the purchases and sales.`,
     check: () => noMarValue(HDFC_SEC) && asOf(HDFC_SEC) === "2026-11-02" },
-  { holder: "Ajay and Bharat Jaisinghani", account: "SVAN 8710067 (Ajay) and 8710090 (Bharat)", what: "SVAN PMS portfolio",
-    onFile: `Earliest valuation on file: ${DATE(firstOnFile("svan-investment-managers-llp-8710067"))}`, from: "SVAN Investment Managers",
-    send: `The portfolio statement as at ${BOTH} (holdings, cash and total value), and capital added or withdrawn from 1 January to 30 April 2026. The trade records already received date every stock.`,
-    check: () => many(["svan-investment-managers-llp-8710067", "svan-investment-managers-llp-8710090"], (id) => noMarValue(id) && firstOnFile(id) === "2026-04-30") },
   { holder: "Ajay, Ankita, Bharat, Aarti and the Bharat Jaisinghani Family Trust", account: `Motilal demats ${MO_DEMATS.map(([h, , n]) => `${n} (${h})`).join(", ")}`, what: "All shares and funds in these demats",
     onFile: `Earliest holding statement on file: ${DATE("2026-07-31")}`, from: "Motilal",
     send: `The demat holding statement as at ${BOTH} for each account, showing the quantity of every share and fund. This is in addition to the current statement requested in section 1.`,
@@ -268,12 +264,12 @@ const OPENINGS = [
     check: () => noDecValue(ICICI) && asOf(ICICI) === "2026-10-31" },
   { holder: "Ajay and Ankita Jaisinghani", account: "Carnelian 3517383 (Ajay); Goldstandard 100023 (Ajay) and 100022 (Ankita); V.E.C 128005 (Ajay)", what: "PMS portfolios",
     onFile: `Earliest valuation on file: ${DATE("2026-03-31")}; transaction statements start 1 April 2026`, from: "Carnelian, Goldstandard and V.E.C Assago",
-    send: "The portfolio statement as at 31 December 2025 (holdings, cash and total value), and the transaction and capital statement from 1 January to 31 March 2026. The same from-inception transaction statement also answers the purchase dates in section 2.",
+    send: "The holding statement as at 31 December 2025 (the number of every share held, and the cash balance), and the transaction and capital statement from 1 January to 31 March 2026. We value the shares ourselves at that day's exchange closes. A from-inception transaction statement and bank book would do instead, and would also answer the purchase dates in section 2.",
     check: () => many(["carnelian-asset-management-and-advisors-pvt-ltd-3517383", "goldstandard-wealth-private-limited-100023", "goldstandard-wealth-private-limited-100022", "v-e-c-assago-capital-management-llp-128005"],
       (id) => noDecValue(id) && firstOnFile(id) === "2026-03-31") },
   { holder: "Ajay and Ankita Jaisinghani", account: "V.E.C 128004 (Ankita); Green Lantern 510861 (Ajay) and 510854 (Ankita)", what: "PMS portfolios",
     onFile: `Earliest valuation on file: ${DATE("2026-03-31")}`, from: "V.E.C Assago and Green Lantern",
-    send: "The portfolio statement as at 31 December 2025 (holdings, cash and total value). Their from-inception transaction statements are already on file.",
+    send: "The bank book (cash ledger) from 1 January to 31 March 2026, showing the cash balance on 31 December 2025 and the dividends, fees and expenses in those months. Their from-inception trades are on file, so we work out the shares held on 31 December and value them at that day's exchange closes ourselves; only the cash is missing.",
     check: () => many(["v-e-c-assago-capital-management-llp-128004", "green-lantern-capital-llp-510861", "green-lantern-capital-llp-510854"], (id) => noDecValue(id) && firstOnFile(id) === "2026-03-31") },
   { holder: "Ajay, Ankita, Bharat and Aarti Jaisinghani", account: "Helios 10056128, 10056154, 10063876; HDFC MF 15644806, 16002141, 15725046; Kotak 7125255; ICICI Prudential 36378950, 36379637", what: "Mutual fund folios",
     onFile: "Units on file from the 31 March 2026 opening balance", from: "Fund companies or registrars (or one CAS)",
@@ -291,6 +287,8 @@ if (openingsFailed.length) {
 
 // ── Resolved since 27 October (written by hand; each checked) ────────────────
 const RESOLVED = [
+  ["Ajay and Bharat Jaisinghani | SVAN 8710067 and 8710090", "Portfolio values on 31 December 2025 and 31 March 2026", "Worked out from SVAN's own records: every trade since inception, its bank book and each day's exchange closes. The same calculation reproduces SVAN's printed totals within 0.02% on 31 May, 30 June and 31 July 2026.",
+    () => ["svan-investment-managers-llp-8710067", "svan-investment-managers-llp-8710090"].every((id) => (F.tradeOpenings[id]?.openings ?? []).map((o) => o.date).join() === "2025-12-31,2026-03-31")],
   ["Ankita Jaisinghani | Motilal 1201090012838316", "HDFC Balanced Advantage Regular (37,755.485 units)", "Sold on 23 September 2026; the adviser's transaction report supplies the purchase cost and sale.",
     () => F.rolls.some((r) => r.accountId === MO_ANKITA && near(r.statementQuantity, 37755.485) && r.quantity === 0)],
   ["Ajay Jaisinghani | ICICI NSDL 49794950", "Yash Highvoltage", "The ICICI order book with the 31 October statement records the 34,000 shares sold from 24 June to 9 July 2026, with the amounts received.",
@@ -370,7 +368,7 @@ td.num, th.num { width: 25%; }
 .newpage { break-before: page; }
 </style></head><body>
 <h1>All records still needed from the client</h1>
-<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This list replaces the earlier lists (checked 27 October and 11 November 2026): records received since then are no longer requested and are listed in section 5, and the newer statements raised the new items below. Section 4 is new: the valuations at the start of the year that this year&#8217;s returns need. Includes all client requests: purchase and balance records, PMS stock history, and private investment valuations. One complete broker or fund export can answer several rows.</p>
+<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This list replaces the earlier lists (checked 27 October and 11 November 2026): records received since then are no longer requested and are listed in section 5, as are values we can now work out ourselves, and the newer statements raised the new items below. Section 4 is new: the valuations at the start of the year that this year&#8217;s returns need. Includes all client requests: purchase and balance records, PMS stock history, and private investment valuations. One complete broker or fund export can answer several rows.</p>
 <h2>1. Purchase, date, balance and other records</h2>
 <table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
 <thead><tr><th>Holder and account</th><th>Stock, fund or file</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
@@ -386,12 +384,12 @@ ${s2.replace(/<table class="grp">/g, '<table class="grp"><colgroup><col class="c
 ${s3}
 </tbody></table>
 <h2 class="newpage">4. Valuations at the start of the year</h2>
-<p class="lead">The financial-year return is measured from 31 March 2026 and the calendar-year return from 31 December 2025. Each needs every account's value on that date and the money paid in or out after it. For the accounts below, the earliest valuation on file is later, so their return for the year can only start from that later date. In particular, the January to March 2026 market fall is not captured for most of the book. A statement dated within a few days of 31 December 2025 or 31 March 2026 is enough.</p>
+<p class="lead">The financial-year return is measured from 31 March 2026 and the calendar-year return from 31 December 2025. Each needs every account's value on that date and the money paid in or out after it. For the accounts below, the earliest valuation on file is later, so their return for the year can only start from that later date. In particular, the January to March 2026 market fall is not captured for most of the book. A statement dated within a few days of 31 December 2025 or 31 March 2026 is enough. For listed shares and mutual funds we only need the number of shares or units held on those dates: we value them ourselves at that day's exchange close or published NAV. A value is asked for only where no price is published (AIFs and PMS strategies valued by their manager).</p>
 <table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
 <thead><tr><th>Holder and account</th><th>Investment</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
 ${sOpen}
 </tbody></table>
-<h2>5. Received since 27 October: no longer needed</h2>
+<h2>5. No longer needed: received or worked out since 27 October</h2>
 <table class="s4"><colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
 <thead><tr><th>Holder and account</th><th>Item on an earlier list</th><th>What answered it</th></tr></thead><tbody>
 ${s4}

@@ -1275,6 +1275,24 @@ export type StatementUnitNavs = { isin: string; navs: { date: string; nav: numbe
 /** Consecutive valued statements holding exactly the same units: no money moved between them. */
 export type UnitWindow = { valuations: { date: string; value: number; docKey: string }[]; evidence: string };
 
+/**
+ * A PMS ACCOUNT'S OPENING VALUES REBUILT FROM ITS OWN LEDGERS (Stage 10ni,
+ * `scripts/lib/tradeOpenings.mjs`): units from every trade since inception at
+ * each day's exchange close, plus the bank book's balance — kept only where the
+ * same rebuild reproduces the manager's printed totals (`checks`). A demerged
+ * share not yet listed on an opening day joins on its first close (`entries`,
+ * also in `flows` as money arriving). `flows` are the capital register's, the
+ * investor's view: into the account negative.
+ */
+export type TradeOpening = {
+  openings: { date: string; value: number; equity: number; cash: number; names: number;
+    entries: { date: string; securityKey: string; units: number; close: number; value: number }[] }[];
+  flows: { date: string; amount: number; description: string }[];
+  capitalTo: string;
+  checks: { date: string; docKey: string; rebuilt: number; printed: number; diffPct: number }[];
+  sources: string[];
+};
+
 export type AdvisedBalance = {
   accountId: string;
   isin: string;
