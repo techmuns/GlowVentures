@@ -1657,6 +1657,23 @@ Codex's review of #352, verified against the code and the book:
 - Section and footer totals pool those same legs; rows no equity index measures (cash, debt, hybrid) are left out of the total's index and named in its hover.
 - A dash that remains carries its reason as the hover only (`data-bench-reason`); `benchGapLabel` is gone. The `monitor` check now asks for that hover instead of a face label.
 
+### Stage 10nv — Portfolio Monitor: every YTD from 31 December
+
+*"for all the holdings the returns need to be simply YTD return from the same YTD"* — the family, 12 Nov 2026. Asked what a row with no 31 December value shows, they chose a dash over carrying units back to 1 January.
+
+- `ytdBook.of` (the Monitor's YTD column) accepts a window only if it opens on or before 31 December, or at nil on a holding first bought this year. The "from 31 Mar" / "from 6 Oct" chips are gone. Any other row is a dash naming its first dated value and the 31 Dec 2025 record it needs. An account window that opens later falls back to its holdings, so a purchase record can still open them on 1 January.
+- A row bought this year carries `bought` (`data-ytd-bought`), and its hover says nothing was held on 1 January.
+- `account`, `holding` and `ytdSelection` are unchanged, so Morning CIO's YTD card and the Returns tab's YTD still measure from the first dated value (see the 12 Nov explain-only decision).
+- `monitor-ytd` now checks that no cell carries a later start. Its whole-account re-solver reads `BOOK_TRADE_OPENINGS` and `BOOK_ACCOUNT_NAV_HISTORY`, so SVAN Velocity's 31 Dec opening (Stage 10ni) re-solves off the book.
+
+### Stage 10nw — Ledger Insights' transactions filter by date, side and account
+
+- The client (#377) asked for the dated transaction ledger to be sliceable — "show me purchases from June", one account, one side — and exported from there. The Transactions tab now carries a filter bar (From / To dates, Side, Account) above its tiles, reusing `FormBits`' `TextField`/`SelectField`. Member scope stays the page-wide selector; these narrow WITHIN the chosen members, and the existing `ExportableTable` carries whatever the filter shows to Excel.
+- Every figure on the tab is struck over the filtered set, so the summary ties to the rows on screen: the Transactions count, Bought and Sold tiles and the table all read `filtered`, and the Bought/Sold window follows the chosen dates. Sold with no sell in view renders `—` ("no sells in this view"), never ₹0.
+- The statements' own Realised total is a whole-record primitive over every lot — not narrowable by a per-trade filter — so under any active filter it renders `—` ("not sliced by these filters") rather than a figure that would not tie, and the lots-by-sale cross-check and the Sales & exits roll-up (both whole-window) are hidden until the filter is cleared. An active filter that matches nothing renders an `AbsentSection`, not a grid of zeros. The From/To date pickers are bounded to the tape's own window and kept in order (`TextField` gained `min`/`max`).
+- Numbered 10nw after rebasing onto a fast-moving main: the branch first used 10nk, then 10nu, both taken meanwhile by Home's allocation cards and the YTD work.
+- `build`, `test:family` and `check:pages ONLY=ledger` green (2 combos clean; the tab's existing measured-zero leads and the tape-window not-checked invariant are unchanged). No book or generated file changed.
+
 ### Stage 10nu — "Not split" counts accounts, not lines
 
 *"what is not split here?"* — the family, 12 Nov 2026, on Investment performance's breakdown: "Not split · 34 accounts" beside "53 accounts" at the top.

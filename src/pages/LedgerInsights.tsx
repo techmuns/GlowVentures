@@ -12,6 +12,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtNum, changeColor, fmtDate } from "@/lib/format";
 import { StockLink } from "@/components/StockLink";
+import { TextField, SelectField } from "@/components/FormBits";
 
 import { AbsentCell, AbsentSection, absentTile, DASH } from "@/components/Absent";
 import { holdingBucket, bucketLabel, isMandateHeld, MANDATE_BUCKET } from "@/lib/analytics";
@@ -193,10 +194,36 @@ function TransactionsView({ data, sales, scoped }: {
 }) {
   const txnView = useTableView("ledger-txns", TXN_COLS);
   const saleView = useTableView("ledger-sales", SALE_COLS);
+  // #377 — the client-facing filters over the dated transaction record: a date
+  // window, the trade side, and the account. Member scope is the page-wide
+  // selector above; these narrow WITHIN the chosen members. Every figure on this
+  // tab — the summary tiles and the table — is struck over the filtered set, so
+  // the summary always ties to the rows on screen; the statements' own realised
+  // total is a whole-record primitive and is shown only when no filter is active.
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [sideFilter, setSideFilter] = useState<"all" | "Buy" | "Sell">("all");
+  const [acctFilter, setAcctFilter] = useState("all");
+  const accounts = useMemo(
+    () => Array.from(new Set(data.txns.map((t) => t.account))).sort((a, b) => a.localeCompare(b)),
+    [data.txns]);
+  const filterActive = !!(fromDate || toDate || sideFilter !== "all" || acctFilter !== "all");
+  const filtered = useMemo(
+    () => data.txns.filter((t) =>
+      (!fromDate || t.date.slice(0, 10) >= fromDate) &&
+      (!toDate || t.date.slice(0, 10) <= toDate) &&
+      (sideFilter === "all" || t.side === sideFilter) &&
+      (acctFilter === "all" || t.account === acctFilter)),
+    [data.txns, fromDate, toDate, sideFilter, acctFilter]);
+  const clearFilters = () => { setFromDate(""); setToDate(""); setSideFilter("all"); setAcctFilter("all"); };
+  // The native date pickers are bounded to the tape's own window (and kept in
+  // order), so a reader cannot pick a day the record could never carry.
+  const dmin = data.periodFrom ? data.periodFrom.slice(0, 10) : undefined;
+  const dmax = data.periodTo ? data.periodTo.slice(0, 10) : undefined;
   // THE DEFAULT ORDER IS THE LEDGER'S OWN and stays untouched until a reader
   // ranks a column: `ledger.ts` returns these dated rows newest-first, which is
   // a fact about the record rather than a ranking this page chose.
-  const txnRows = sortRows(data.txns, txnView.sort, {
+  const txnRows = sortRows(filtered, txnView.sort, {
     date: (t) => t.date,
     security: (t) => t.security,
     account: (t) => t.account,
@@ -215,7 +242,9 @@ function TransactionsView({ data, sales, scoped }: {
     status: (r) => (r.exited ? "Exited" : "Trimmed"),
   });
   const { fmtFromBase } = usePortfolio();
-  const win = ledgerWindow(data.periodFrom, data.periodTo);
+  const win = (fromDate || toDate)
+    ? ledgerWindow(fromDate || data.periodFrom, toDate || data.periodTo)
+    : ledgerWindow(data.periodFrom, data.periodTo);
   /**
    * `Txn.amount` is `number | null` — a trade whose statement prints no
    * settlement, net or gross reported nothing, which is not the same as a trade
@@ -223,8 +252,8 @@ function TransactionsView({ data, sales, scoped }: {
    * zero, which is `sumOrNull`'s rule applied to a running total, and the tiles
    * say how many rows each figure covers.
    */
-  const buys = data.txns.filter((t) => t.side === "Buy");
-  const sells = data.txns.filter((t) => t.side === "Sell");
+  const buys = filtered.filter((t) => t.side === "Buy");
+  const sells = filtered.filter((t) => t.side === "Sell");
   const bought = buys.reduce((s, t) => s + (t.amount ?? 0), 0);
   const sold = sells.reduce((s, t) => s + (t.amount ?? 0), 0);
   const boughtOf = buys.filter((t) => t.amount != null).length;
@@ -253,19 +282,59 @@ function TransactionsView({ data, sales, scoped }: {
 
   return (
     <div className="space-y-4">
+      <div className="rounded-lg border border-ink-700 bg-ink-800/40 p-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <TextField label="From" type="date" mono={false} value={fromDate} onChange={setFromDate}
+            min={dmin} max={toDate || dmax}
+            hint="Show trades dated on or after this day. The record covers the transaction statements' window shown as the tape pill above." />
+          <TextField label="To" type="date" mono={false} value={toDate} onChange={setToDate}
+            min={fromDate || dmin} max={dmax}
+            hint="Show trades dated on or before this day." />
+          <SelectField label="Side" value={sideFilter} onChange={(v) => setSideFilter(v as "all" | "Buy" | "Sell")}
+            options={[{ value: "all", label: "All" }, { value: "Buy", label: "Buys" }, { value: "Sell", label: "Sells" }]} />
+          <SelectField label="Account" value={acctFilter} onChange={setAcctFilter}
+            options={[{ value: "all", label: "All accounts" }, ...accounts.map((a) => ({ value: a, label: a }))]} />
+        </div>
+        <div className="mt-2.5 flex items-center justify-between gap-3">
+          <span className="text-[11.5px] text-slate-500"
+            data-prose-ok="how many dated rows the filters match — a coverage lead, not a computed figure">
+            {filterActive
+              ? `Showing ${fmtNum(filtered.length)} of ${fmtNum(data.txns.length)} dated transactions`
+              : `${fmtNum(data.txns.length)} dated transactions`}
+          </span>
+          {filterActive && (
+            <button type="button" onClick={clearFilters}
+              className="whitespace-nowrap text-[11.5px] text-champagne-400 transition-colors hover:text-champagne-300">
+              Clear filters
+            </button>
+          )}
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <AbsentSection what="No transactions match these filters"
+          needs="Widen the date range, or set Side and Account back to All. The record only covers the transaction statements' window shown above — nothing outside it was ever reported." />
+      ) : (
+      <>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Transactions" value={fmtNum(data.txns.length)}
-          sub={`${fmtNum(data.buys)} buys · ${fmtNum(data.sells)} sells`} icon={<ArrowLeftRight className="h-4 w-4" />} />
+        <StatTile label="Transactions" value={fmtNum(filtered.length)}
+          sub={`${fmtNum(buys.length)} buys · ${fmtNum(sells.length)} sells${filterActive ? ` · ${fmtNum(data.txns.length)} before filters` : ""}`}
+          icon={<ArrowLeftRight className="h-4 w-4" />} />
         <StatTile label="Bought" value={fmtFromBase(bought, { compact: true })} sub={`settled cost, ${win ?? "over the statements' windows"}${coverage(boughtOf, buys.length)}`} />
         <StatTile label="Sold"
-          {...(data.sells
+          {...(sells.length
             ? { value: fmtFromBase(sold, { compact: true }), sub: `settled proceeds, ${win ?? "over the statements' windows"}${coverage(soldOf, sells.length)}` }
-            : absentTile("no sells over this window", "Every transaction on these statements is a purchase."))} />
+            : absentTile("no sells in this view", filterActive ? "No sell matches these filters." : "Every transaction on these statements is a purchase."))} />
         {/* THE STATEMENT FIGURE IS THE HEADLINE. It is the printed primitive —
             what the managers determined and what Capital Gains shows. The
             roll-up we derive from the tape is a cross-check and sits below,
             never in a tile where it could be mistaken for the answer. */}
-        {scoped ? (
+        {filterActive ? (
+          <StatTile label="Realised (as the statements report it)"
+            {...absentTile("not sliced by these filters",
+              "Realised gain is the capital gain statements' own total over every lot — it isn't narrowed by the date, side or account filters above. Clear them to see it.")}
+            icon={<Receipt className="h-4 w-4" />} />
+        ) : scoped ? (
           scopedStatement?.realised != null ? (
             <StatTile label="Realised (as the statements report it)"
               value={<span className={changeColor(scopedStatement.realised)}>{fmtFromBase(scopedStatement.realised, { compact: true, sign: true })}</span>}
@@ -294,7 +363,7 @@ function TransactionsView({ data, sales, scoped }: {
         )}
       </div>
 
-      {sales?.statementRealized != null && sales.totalRealized != null
+      {!filterActive && sales?.statementRealized != null && sales.totalRealized != null
         && Math.abs(sales.statementRealized - sales.totalRealized) > 1 && (
         <div className="rounded-lg border border-dashed border-ink-600/70 px-3 py-2.5 text-xs leading-relaxed text-slate-500">
           <div className="font-medium text-slate-400" title="Each lot attributed to the sale that produced it, set against the statement's own total.">Cross-check · lots by sale</div>
@@ -359,14 +428,14 @@ function TransactionsView({ data, sales, scoped }: {
         </div>
       </Card>
 
-      {scoped && (
+      {!filterActive && scoped && (
         <div data-ledger-sales-scope-absent>
           <AbsentSection what={`Sales & exits · whole family only · not shown for ${scoped.label}`}
             needs={wholeFamilyOnly("The sales and exits roll-up, which adds each security's sells across every account and reads whether the family still holds it,", scoped.label)} />
         </div>
       )}
 
-      {sales && sales.rows.length > 0 && (
+      {!filterActive && sales && sales.rows.length > 0 && (
         <Card title="Sales &amp; exits" subtitle="Per security, over the same window — and whether the name is still held" pad={false}
           right={<Pill tone="info">{sales.exits} exited · {sales.trims} trimmed</Pill>}>
           <div className="overflow-x-auto" data-navigation-scroll="ledgerinsights-3">
@@ -404,6 +473,8 @@ function TransactionsView({ data, sales, scoped }: {
             </ExportableTable>
           </div>
         </Card>
+      )}
+      </>
       )}
     </div>
   );

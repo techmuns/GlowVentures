@@ -5371,10 +5371,11 @@ export function PortfolioMonitor() {
                               data-return-na={!res.shown && res.na ? "" : undefined}
                               data-return-valued-at={r.valuedAt ?? undefined}
                               data-return-note={res.shown ? res.note : undefined}
-                              /* A YTD FROM THE FIRST DATE WE HAVE (Stage 10jl): its window, and the
-                                 whole accounts pooled — the sweep re-solves those off the book. */
+                              /* THE ROW'S YEAR TO DATE (Stage 10jl, 10nv): its window, the day a row
+                                 bought this year was first at work, and the whole accounts pooled —
+                                 the sweep re-solves those off the book. */
                               {...(res.shown && res.from && yf?.shown ? {
-                                "data-ytd-from": yf.from, "data-ytd-to": yf.to,
+                                "data-ytd-from": yf.from, "data-ytd-to": yf.to, "data-ytd-bought": yf.bought,
                                 "data-ytd-accounts": yf.accounts.join(" "), "data-ytd-assumed": yf.assumed ? "true" : "false",
                               } : {})}
                               /* WHICH ACCOUNTS THE ROW IS, where it is whole accounts
