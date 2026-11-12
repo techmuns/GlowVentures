@@ -207,8 +207,9 @@ export function FundHistory({ funds, fundDated, schemes, money, moneyFull }: {
       {/* ── BLOCK B — Value & NAV over time (trajectory awaits quarterly NAVs) ── */}
       <h3 className="mt-6 text-[13px] font-semibold text-slate-200" data-prose-ok="section heading, not an explainer line">Value &amp; NAV over time</h3>
       {model.hasTrajectory ? (
-        <div className="mt-3 overflow-x-auto" data-fund-nav-trajectory>
-          <table className="min-w-full text-[13px]" data-table-static="a short dated valuation series, in date order">
+        <div className="mt-3 overflow-x-auto">
+          <ExportableTable exportName={`Fund history — ${sel.security} — valuations`} className="min-w-full text-[13px]"
+            data-fund-nav-trajectory data-table-static="a short dated valuation series, in date order">
             <thead className="border-b border-ink-700"><tr>
               <th scope="col" className="px-4 py-2 text-left text-slate-400">Valued on</th>
               <th scope="col" className="px-4 py-2 text-right text-slate-400">Value</th>
@@ -221,7 +222,7 @@ export function FundHistory({ funds, fundDated, schemes, money, moneyFull }: {
                   <td className="px-4 py-2 text-right mono text-slate-400">{v.cost == null ? DASH : money(v.cost)}</td></tr>
               ))}
             </tbody>
-          </table>
+          </ExportableTable>
         </div>
       ) : (
         <div className="mt-3">
