@@ -39,6 +39,7 @@ import { concentrationNames } from "./concentration";
 import { type GroupAxis, groupKeyFor, groupLabelFor, GROUP_NOUN } from "./groupAxis";
 import { measuredAccountsReturn, type UnmeasuredAccount } from "./returns";
 import { xirrPct, moneyWeightedReturn, type MoneyWeighted } from "./bucketXirr";
+import { currentHomeHoldings } from './homeDashboard';
 
 /** The route the drill-down lives at. Imported, never typed at a call site. */
 export const DRILLDOWN_PATH = "/holdings";
@@ -55,6 +56,7 @@ export const TOP_NAMES = 10;
  */
 export type DrilldownId =
   | "book"        // every holding — Current Value of Holdings (and the capital invested in it), Positions, Distinct names
+  | "home-cash"   // Home's cash total, including small and negative non-zero balances
   | "bucket"      // one allocation row, on the CATEGORY axis
   /**
    * ONE ALLOCATION ROW ON EACH OF THE FAMILY'S OWN TWO AXES.
@@ -80,7 +82,7 @@ export type DrilldownId =
   | "losers";
 
 const IDS = new Set<DrilldownId>([
-  "book", "bucket", "basket", "family-class",
+  "book", "home-cash", "bucket", "basket", "family-class",
   "measured", "top-names", "cross-held", "winners", "losers",
 ]);
 
@@ -416,6 +418,15 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
   };
 
   switch (scope.id) {
+    case "home-cash": {
+      // Home includes every non-zero balance; the usual holdings floor would change its total.
+      const rows = currentHomeHoldings(portfolio.positions).filter(p => groupKeyFor('assetClass', accIdx, p) === 'Cash');
+      return {
+        ...base, ...excludedWhere(() => false), id: scope.id, key: "",
+        title: "Cash holdings", crumb: "Total cash", rows,
+        absent: rows.length ? null : { what: "No cash holdings", needs: "No separately valued cash holdings are recorded in this selection." },
+      };
+    }
     /**
      * ── ONE ALLOCATION ROW, ON WHICHEVER AXIS THE TABLE WAS GROUPED BY ──────
      *
