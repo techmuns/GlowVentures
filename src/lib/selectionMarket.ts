@@ -35,7 +35,7 @@ export function selectionMarket(current: readonly Position[], units: readonly Re
   let pending = 0;
   for (const p of current) {
     if (!(p.marketValue > 0)) { gaps.push({ position: p, reason: 'A positive current holding value is needed for its portfolio weight.', code: 'value' }); continue; }
-    // A period reports private investments apart, as the cards do; Since investment covers them.
+    // A period's price figure reports private investments apart (no published price); Since investment covers them.
     if (!inception && p.marketSide === 'private') { gaps.push({ position: p, reason: 'A private investment: reported apart, at Private Market’s value.', code: 'unmatched' }); continue; }
     const u = byKey.get(marketHoldingKey(p));
     // An account's return that also carries private investments is not the public holdings' own.

@@ -1077,12 +1077,13 @@ export function MorningCIO() {
   /**
    * THE THREE RETURN CARDS' CAPTION — ONE LINE (the family, 5 Nov 2026: "more
    * minimal … I rather see number of records covered over total records"). The
-   * public holdings the figure covers over every public holding, the date it is
-   * measured to (the standing rule), and what qualifies the figure: assumed, or
-   * not annualised (a short history, Stage 10hk). By value, the split, the index and the private line are in the ⓘ.
+   * holdings the figure covers over every holding — private ones held at their
+   * latest valuation since Stage 10nu — the date it is measured to (the standing
+   * rule), and what qualifies the figure: assumed, or not annualised (a short
+   * history, Stage 10hk). By value, the split, the index and the private line are in the ⓘ.
    */
   const periodCaption = (r: AvailableCardReturn, measure?: string) => {
-    const c = r.coverage, covered = c.measuredPublicHoldings + c.heldPublicHoldings;
+    const c = r.coverage, covered = c.measuredPublicHoldings + c.heldPublicHoldings + c.privateCoveredHoldings, holdings = c.publicHoldings + c.privateHoldings;
     const assumed = r.total.units.filter(u => u.assumption).length;
     return <div data-card-coverage data-card-period data-prose-ok="the holdings the return covers and the date it is measured to, on the card at the family's request (5 Nov 2026)"
       data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
@@ -1090,10 +1091,11 @@ export function MorningCIO() {
       data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
       data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}
       data-card-public={c.publicValue} data-card-measured={c.measuredValue} data-card-held={c.heldValue} data-card-waiting={c.waitingValue}
-      data-card-public-covered={covered} data-card-public-holdings={c.publicHoldings}
+      data-card-public-covered={c.measuredPublicHoldings + c.heldPublicHoldings} data-card-public-holdings={c.publicHoldings}
+      data-card-private-covered={c.privateCoveredHoldings} data-card-private-holdings={c.privateHoldings}
       data-card-measured-holdings={c.measuredHoldings} data-card-measured-accounts={c.measuredAccounts} data-card-held-count={c.heldUnits.length}
       className="whitespace-normal leading-snug">
-      <span className="block text-[11px] text-slate-300"><span className="tabular font-semibold text-slate-100">{fmtNum(covered)}</span> of <span className="tabular">{fmtNum(c.publicHoldings)}</span> holdings</span>
+      <span className="block text-[11px] text-slate-300"><span className="tabular font-semibold text-slate-100">{fmtNum(covered)}</span> of <span className="tabular">{fmtNum(holdings)}</span> holdings</span>
       <span className="block text-[10px] text-slate-500">{r.to ? `to ${fmtDate(r.to)}` : 'No verified dates'}{measure && ` · ${measure}`}
         {/* The owner-specific explanation is behind the card's one info button. */}
         {assumed > 0 && <span data-holding-assumption data-assumed-count={assumed}> · assumed</span>}</span>
@@ -1102,25 +1104,26 @@ export function MorningCIO() {
   /**
    * WHAT LEFT THE CARD'S FACE, AT THE TOP OF ITS ⓘ (5 Nov 2026): the period, the
    * gain, the index on the same money, coverage by count and by value, and the
-   * private investments reported apart. The full working follows it.
+   * private investments, held at their latest valuation (Stage 10nu). The full working follows it.
    */
   const periodSummary = (r: AvailableCardReturn, period: string, periodTitle?: string) => {
-    const c = r.coverage, pub = c.publicValue, coveredValue = c.measuredValue + c.heldValue, pl = m.privateLine;
-    const share = (v: number) => (pub > 0 ? Math.min(100, Math.round((v / pub) * 100)) : 0);
+    const c = r.coverage, all = c.publicValue + c.privateTotalValue, pl = m.privateLine;
+    const coveredValue = c.measuredValue + c.heldValue + c.privateCoveredValue;
+    const share = (v: number) => (all > 0 ? Math.min(100, Math.round((v / all) * 100)) : 0);
     const row = (term: string, desc: ReactNode, attrs: Record<string, string> = {}) => <div className="contents" {...attrs}>
       <dt className="text-slate-400">{term}</dt><dd className="text-right tabular text-slate-100">{desc}</dd></div>;
     return <dl data-card-summary className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-lg bg-ink-900 p-3">
       {row('Period', <span title={periodTitle}>{period} · {measuredDates(r)}</span>)}
       {r.total.gain != null && row('Gain', <span className={changeColor(r.total.gain)}>{money(r.total.gain, true)}</span>)}
       {row('Benchmark', benchLine(r))}
-      {row('Holdings', <>{fmtNum(c.measuredPublicHoldings + c.heldPublicHoldings)} of {fmtNum(c.publicHoldings)} public
-        <span className="block text-xs text-slate-400">{fmtNum(c.measuredPublicHoldings)} measured · {fmtNum(c.heldPublicHoldings)} held at last value</span></>)}
-      {row('Value', <>{money(coveredValue)} of {money(pub)} · {share(coveredValue)}%
-        <span className="block text-xs text-slate-400">{share(c.measuredValue)}% measured · {share(c.heldValue)}% held{c.waitingValue > 5e5 && <> · {money(c.waitingValue)} waiting for prices</>}</span></>)}
-      {row('Private', <span data-card-private-line title="Reported apart, at Private Market's latest value and gain since investment — not this period's return.">
-        {money(pl.value)}{pl.pnl != null && <> · {money(pl.pnl, true)} since investment</>}
-        <span className="block text-xs text-slate-400">Reported apart, not in this return</span></span>,
-        { 'data-card-private': String(pl.value), 'data-card-private-gain': String(pl.pnl ?? '') })}
+      {row('Holdings', <>{fmtNum(c.measuredPublicHoldings + c.heldPublicHoldings + c.privateCoveredHoldings)} of {fmtNum(c.publicHoldings + c.privateHoldings)}
+        <span className="block text-xs text-slate-400">{fmtNum(c.measuredPublicHoldings)} measured · {fmtNum(c.heldPublicHoldings)} public and {fmtNum(c.privateCoveredHoldings)} private held at last value</span></>)}
+      {row('Value', <>{money(coveredValue)} of {money(all)} · {share(coveredValue)}%
+        <span className="block text-xs text-slate-400">{share(c.measuredValue)}% measured · {share(c.heldValue + c.privateCoveredValue)}% held{c.waitingValue > 5e5 && <> · {money(c.waitingValue)} waiting for prices</>}</span></>)}
+      {row('Private', <span data-card-private-line title="A private investment has no published price. Each is in this return at its latest valuation from the company or fund, 0% until a new valuation arrives; the gain since investment is Private Market's.">
+        {money(c.privateCoveredValue)} in this return
+        <span className="block text-xs text-slate-400">{c.privateHeldValue === c.privateCoveredValue ? 'Held at latest valuation' : `${money(c.privateHeldValue)} held at latest valuation`}{pl.pnl != null && <> · {money(pl.pnl, true)} since investment</>}</span></span>,
+        { 'data-card-private': String(c.privateCoveredValue), 'data-card-private-gain': String(pl.pnl ?? '') })}
     </dl>;
   };
   /**

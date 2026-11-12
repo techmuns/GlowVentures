@@ -70,7 +70,7 @@ export type CapitalBridge = {
   /** The gain of the accounts no record splits — named in `rows`. */
   unsplit: number; splitCount: number; unsplitCount: number;
   /**
-   * DISTINCT accounts, not rows (Stage 10nu): a row is a whole account or one
+   * DISTINCT accounts, not rows (Stage 10ny): a row is a whole account or one
    * holding measured on its own, so one account can give several rows.
    * `accounts` is every account the bridge covers; `unsplitAccounts` those with a row not split.
    */

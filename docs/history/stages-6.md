@@ -1674,7 +1674,23 @@ Codex's review of #352, verified against the code and the book:
 - Numbered 10nw after rebasing onto a fast-moving main: the branch first used 10nk, then 10nu, both taken meanwhile by Home's allocation cards and the YTD work.
 - `build`, `test:family` and `check:pages ONLY=ledger` green (2 combos clean; the tab's existing measured-zero leads and the tape-window not-checked invariant are unchanged). No book or generated file changed.
 
-### Stage 10nu — "Not split" counts accounts, not lines
+### Stage 10nx — Sector Composition drills into sub-industries
+
+- The client (#406) asked that a large sector open into its sub-industries, not just its companies: Financials → Banks / Finance / Insurance / Capital Markets / Fintech. An opened sector that spans more than one of screener.in's Broad Industries now groups its company rows under a non-collapsing sub-industry band carrying the group's issuer count and total; a single-sub-industry sector stays the flat list exactly as before.
+- `CompanyExposure` gains `subIndustry` (`src/lib/lookthrough.ts`): screener's Broad Industry, set only on the `vendor` tier (it is `hit.screenerBroadIndustry`), `null` where a filing or the statement placed the sector or screener names none. It is a projection of the one classification — no second resolver — and rides `equityOnly`'s spread into `SectorEntry`, so the page reads it on each row with no change to `sectorRollup.ts`.
+- The band is modelled on `CompareGroup` — a `tree-section-row` inside the existing `[data-sector-companies]` table, carrying `data-sub-industry` / `data-sub-industry-total`. Every `[data-sector-company]` row is still rendered, in the reader's sort order, so the per-row Direct/PMS/derived/total split, the summing footer and the `sectorSplit` check-pages probe are untouched; the band has no `data-sector-company`, and its `data-table-depth="1"` ancestor keeps it out of the zebra check. Only the Consolidated (companies) view groups; Direct Equity's holdings view is unchanged.
+- `build`, `test:family`, `check:pages ONLY=sectors` (2 combos clean) and `scripts/dev/check-sector-return-details.mjs` all green. No book or generated file changed.
+
+### Stage 10nu — Returns hold every private investment at its latest valuation
+
+*"all others i think you can assume to be held at value right as new data comes we can show updated but dont show this incomplete"* — the family, 12 Nov 2026, on Investment performance reading "53 of 73 accounts covered".
+
+- The 20 accounts left out were private: MOPWM review blocks, the Glowterra/Glowsphere demats' unlisted shares, Franklin Credit AIF, India SME, Neo Infra and the like. `heldAtLastValue` (`periodRules.ts`) refused any private holding, so `periodSelection` dropped them (Stage 10la's rule 7, "private kept on its own line").
+- Rule 7 is replaced: a private holding no record measures is held at its latest valuation to the period's end, 0% and in the base, exactly as rule 8 holds a one-statement fund. Its reason is `PRIVATE_HELD`. A new valuation then counts the change. The Returns tab, Morning CIO's FYTD / YTD / available-history cards, the NAV card's line and the CIO report all read this one selection, so they move together; the figures fall as the base widens.
+- Investment performance's (i) lists "Held at latest valuation" accounts with their value and valuation date (`data-bridge-account-held`). Morning CIO's card captions count private holdings (`privateCoveredHoldings` / `privateHoldings`), and the Private row says "in this return" instead of "reported apart". The NAV card's hover reads "Covers N% of investments … ₹X of it private"; its `check:pages` probe follows.
+- Unchanged: Sector attribution's price-only market figure still reports private apart (no published price; its wording no longer says "as on the return cards"); the adjusted TWR columns still need a valuation series for a held unit; Since investment already held everything at value.
+
+### Stage 10ny — "Not split" counts accounts, not lines
 
 *"what is not split here?"* — the family, 12 Nov 2026, on Investment performance's breakdown: "Not split · 34 accounts" beside "53 accounts" at the top.
 

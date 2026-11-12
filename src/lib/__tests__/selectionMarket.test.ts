@@ -196,9 +196,15 @@ console.log('selection market: every holding its own return weighted by value, l
   same(tab('ytd', 'xirr'), cards.ytd.total, 'YTD');
   same(tab('inception', 'xirr'), cards.history.total, 'Since investment · XIRR');
   same(tab('inception', 'absolute'), cards.gain.total, 'Since investment · absolute');
-  // Market performance covers every holding the FYTD figure measures.
+  // Market performance covers every public holding the FYTD figure measures. The
+  // FYTD figure also holds every private investment at its latest valuation
+  // (Stage 10nu); a price figure has no price for them and reports them apart.
   const fy = tab('fytd', 'xirr'), m = selectionMarket(current, fy.units, fy.missing, periodStart('fytd', end), end);
-  const pooled = new Set(fy.units.flatMap((u) => u.positions.filter((p) => p.marketValue > 0).map((p) => `${p.accountId}|${p.securityKey}`)));
+  const pooled = new Set(fy.units.flatMap((u) => u.positions.filter((p) => p.marketValue > 0 && p.marketSide !== 'private').map((p) => `${p.accountId}|${p.securityKey}`)));
   assert.equal(m.count, current.filter((p) => pooled.has(`${p.accountId}|${p.securityKey}`)).length);
-  console.log(`the tab's selection: FYTD ${fy.returnPct!.toFixed(2)}% = card, YTD, since investment (XIRR and absolute) = cards; market over ${m.count} holdings.`);
+  const privateHeld = fy.units.filter((u) => u.held && u.positions.every((p) => p.marketSide === 'private'));
+  assert.ok(privateHeld.length > 0 && privateHeld.every((u) => u.gain === 0), 'private investments are in the FYTD figure, held at 0%');
+  assert.equal(m.gaps.filter((g) => g.position.marketSide === 'private' && g.position.marketValue > 0).length,
+    current.filter((p) => p.marketSide === 'private' && p.marketValue > 0).length, 'the price figure names every private investment apart');
+  console.log(`the tab's selection: FYTD ${fy.returnPct!.toFixed(2)}% = card, YTD, since investment (XIRR and absolute) = cards; market over ${m.count} holdings; ${privateHeld.length} private held at value.`);
 }
