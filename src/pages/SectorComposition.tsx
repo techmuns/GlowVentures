@@ -3,7 +3,8 @@ import { isTableExporting } from "@/lib/tableExportSnapshot";
 import { useNavigationState, useNavigationValue, nullableStringsNavigation } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useTableExportExpansion } from "@/lib/tableExportSnapshot";
-import { Fragment, useMemo } from "react";
+import { Fragment, useMemo, useState } from "react";
+import { EditColumns } from "@/components/EditColumns";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Check, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -280,7 +281,10 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   const [vsKey, setVs] = useViewParam<IndexPick>(INDEX_PICKS, {}, "vs");
   /** The index picked, read — or why it has no weights. `null` while the control is Off. */
   const vsIndex = vsKey === "off" ? null : indexSectors(vsKey);
-  const sectorView = useTableView("sectors", vsIndex?.ok ? SECTOR_COLS_VS : SECTOR_COLS, { reviewKind: "sector" });
+  // Edit Columns and Export Excel sit on the card's title row, not on two rows
+  // of their own above the header (Stage 10ng: "so much empty white space").
+  const sectorView = useTableView("sectors", vsIndex?.ok ? SECTOR_COLS_VS : SECTOR_COLS, { reviewKind: "sector", manualEditor: true });
+  const [sectorTools, setSectorTools] = useState<HTMLSpanElement | null>(null);
   /**
    * AN "OTHER ACCOUNTS" COLUMN ONLY WHERE THE BOOK HAS ONE. A company share in
    * an account that is neither the family's own nor a PMS mandate is named in
@@ -1242,9 +1246,13 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
           <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false}
             title={<span data-card-title-hint title={consolidatedView
               ? "Click a sector for the issuers in it — what the statements report and what the funds disclose."
-              : "Click a sector for its holdings."}>Sector breakdown{vs ? ` vs ${vs.bench.label}` : ""}</span>}>
+              : "Click a sector for its holdings."}>Sector breakdown{vs ? ` vs ${vs.bench.label}` : ""}</span>}
+            right={<div className="flex flex-wrap items-center justify-end gap-2">
+              <EditColumns view={sectorView} />
+              <span ref={setSectorTools} className="inline-flex" data-table-tools />
+            </div>}>
             <div className="mt-3 min-h-0 flex-1 overflow-auto" data-navigation-scroll="sectorcomposition-3">
-              <ExportableTable className="min-w-full text-[13px]" data-sector-table>
+              <ExportableTable className="min-w-full text-[13px]" data-sector-table controlsHost={sectorTools}>
                 <thead className="sticky top-0 z-10 bg-ink-800">
                   <Tr view={sectorView} className="border-b border-ink-700">
                     <SortHeader col="sector" view={sectorView} align="left" pad="px-3 py-2">Sector</SortHeader>

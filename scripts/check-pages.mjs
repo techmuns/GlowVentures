@@ -31356,28 +31356,14 @@ const INVARIANTS = {
       (t) => ["Nifty 50", "Nifty 500", "Nifty Midcap 150", "Nifty Smallcap 250"].every((label) =>
         new RegExp(`${label}\\s*\\n\\s*[\\d,]+\\.\\d+\\s*\\n\\s*-1\\.00%`).test(t))],
     /**
-     * AND THE GAP IS THE SUBTRACTION, NOT A RESTATEMENT OF ONE SIDE.
-     *
-     * +10.00% against −1.00% is 11.00 points. A card printing the book's own
-     * figure here, or the index's, would read plausibly and answer a different
-     * question — which is exactly what the family asked for ("my stocks are up,
-     * Sensex is down this much").
+     * THE BOOK-AGAINST-NIFTY-500 LINE STAYS REMOVED (Stage 10ng). The family
+     * highlighted "Direct equity is +1.33 pts against the Nifty 500 · session …"
+     * and asked for it to go: the book's move and the four indices' moves sit
+     * side by side on the same card, so the gap was a restatement. Struck on
+     * the sentence's own shape, in points or percent, either session wording.
      */
-    ["the book-against-Nifty-500 gap is the difference between the two, 11.00 points",
-      (t) => {
-        // The SUBJECT of that sentence is the scope's own — a sentence reading
-        // "Stocks and ETFs" over a set that no longer holds the ETFs would be
-        // the caption-that-widens failure this card has already paid for.
-        // A GAP BETWEEN TWO PERCENTAGES IS IN POINTS (MNT-20). The sign may be
-        // a real U+2212 minus, which `[+-]` alone does not match; and a gap
-        // printed as "%" — which reads as a return — fails rather than passing.
-        // "… against the Nifty 500 · today" since #104, which names the session
-        // the two moves are from rather than assuming it (Stage 10dc).
-        const m = /Direct equity is\s*([+−-]?)(\d+\.\d+)\s*pts\s*against the\s*\n?\s*Nifty 500\s*·\s*today/.exec(t);
-        if (!m) return false;
-        const v = (m[1] === "−" || m[1] === "-" ? -1 : 1) * Number(m[2]);
-        return Math.abs(v - 11) < 0.03 && !/Direct equity is\s*[+−-]?\d+\.\d+%/.test(t);
-      }],
+    ["the book-against-Nifty-500 gap line stays removed",
+      (t) => !/Direct equity is\s*[+−-]?\d+\.\d+\s*(?:pts|%)\s*against the\s*\n?\s*Nifty 500/.test(t)],
     /**
      * THE MOVERS SET IS DIRECT EQUITY, CHECKED ON A COUNT RATHER THAN ON NAMES.
      *
