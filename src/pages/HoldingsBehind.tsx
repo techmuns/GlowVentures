@@ -938,9 +938,9 @@ export function HoldingsBehind() {
               hidden that rather than fixed it: a long enough title would bring
               it straight back. `shrink-0` is the fix and the extra width is the
               request. */}
-          <Card className="mt-5" pad={false}
-            title="The holdings behind it"
-            right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-72 shrink-0"
+          <Card className={homeCash ? "mt-5 [&>div:first-child]:flex-wrap" : "mt-5"} pad={false}
+            title={homeCash ? "Holdings" : "The holdings behind it"}
+            right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className={homeCash ? "w-full sm:w-72" : "w-72 shrink-0"}
               suggestions={[...new Set(rows.map((r) => r.security))].sort()} />}>
             {shown.length === 0 && (
               <div className="px-5 pb-5 pt-4">
