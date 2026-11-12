@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AbsentCell } from "@/components/Absent";
 import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason, type BenchmarkKey } from "@/lib/benchmarks";
-import { BENCH_SHORT, benchGapLabel, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
+import { BENCH_SHORT, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
 import { closeOnOrBefore, fetchPriceHistory, priceErrorReason, settledPriceHistory, type PriceResult } from "@/lib/prices";
 import type { IndexLevel } from "@/lib/periodReturns";
 import { fmtPct } from "@/lib/format";
@@ -69,13 +69,14 @@ export function BenchLine({ hb, fig, holdingPct }: { hb: HoldingBenchmark; fig: 
   ].filter(Boolean).join(" ");
   return (
     <span data-bench={b.key} data-bench-source={hb.source} data-bench-pct={fig?.shown ? fig.pct : ""} data-bench-from={fig?.shown ? fig.from : undefined}
-      data-bench-to={fig?.shown ? fig.to : undefined} data-bench-annual={fig?.shown && fig.annual ? "true" : undefined} data-bench-feed={fig && !fig.shown && fig.feed ? "" : undefined}
+      data-bench-to={fig?.shown ? fig.to : undefined} data-bench-annual={fig?.shown && fig.annual ? "true" : undefined} data-bench-period={fig?.shown && fig.period ? "" : undefined}
+      data-bench-reason={fig && !fig.shown ? fig.reason : undefined} data-bench-feed={fig && !fig.shown && fig.feed ? "" : undefined}
       title={title} className="inline-block w-full whitespace-nowrap text-[10px] leading-tight text-slate-500">
       {BENCH_SHORT[b.key]}{guess && <sup data-bench-guess title="Benchmark is a best guess — to confirm with Yamini" className="text-amber-400/90">*</sup>}{" "}
-      {/* A gap in the record names its cause in a few words, as the return cell
-          above does; the feed's own state keeps the plain dash (Stage 10lc). */}
+      {/* The index's return, or a plain dash with its reason as the hover — no
+          words on the face (Stage 10nt: "remove all fluff and just add index return"). */}
       {fig?.shown ? <span className="mono">{fmtPct(fig.pct, { sign: true, decimals: 1 })}</span>
-        : <AbsentCell reason={fig?.reason} label={fig && !fig.feed ? benchGapLabel(fig.reason) : undefined} />}
+        : <AbsentCell reason={fig ? `No index figure: ${fig.reason}.` : "No index figure."} />}
     </span>
   );
 }
