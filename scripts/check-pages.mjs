@@ -19013,17 +19013,19 @@ const headlineMatches = (tile, expected, field = 'return') => {
     // A quote feed can add custody shares to this no-feed display baseline.
     && Number(raw.cardHoldings) >= expected.totalHoldings
     && Number(raw.cardAccounts) === expected.coveredAccounts
-    // The three return cards count the public holdings they cover over every public holding
-    // (the family, 5 Nov 2026). The gain card's coverage left its face for its info button
+    // The three return cards count the holdings they cover over every holding (the family,
+    // 5 Nov 2026) — public, plus private ones held at their latest valuation since Stage 10nu. The gain card's coverage left its face for its info button
     // (the family, 10 Nov 2026: "Remove this from this tile"; Stage 10mn), so the face carries no caption.
     && (raw.cardPeriod != null ? periodCountShown(tile.sub, raw)
       : raw.cardSince != null ? tile.sub == null : /Available data/.test(tile.sub ?? ''));
 };
-/** "N of M holdings" on a return card's face is its own handles' count, and N never exceeds M. */
+/** "N of M holdings" on a return card's face is its own handles' count — public plus private (Stage 10nu) — and N never exceeds M. */
 const periodCountShown = (sub, raw) => {
   const m = /([\d,]+) of ([\d,]+) holdings/.exec(sub ?? ''), n = (x) => Number(String(x).replace(/,/g, ''));
-  return !!m && n(m[1]) === n(raw.cardPublicCovered) && n(m[2]) === n(raw.cardPublicHoldings)
-    && n(raw.cardPublicCovered) <= n(raw.cardPublicHoldings) && !!raw.cardTo;
+  if (raw.cardPrivateCovered == null || raw.cardPrivateHoldings == null) return false;
+  const covered = n(raw.cardPublicCovered) + n(raw.cardPrivateCovered), holdings = n(raw.cardPublicHoldings) + n(raw.cardPrivateHoldings);
+  return !!m && n(m[1]) === covered && n(m[2]) === holdings
+    && n(raw.cardPublicCovered) <= n(raw.cardPublicHoldings) && n(raw.cardPrivateCovered) <= n(raw.cardPrivateHoldings) && !!raw.cardTo;
 };
 
 const CIO_SHARED = [
