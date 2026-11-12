@@ -156,7 +156,7 @@ export function MonthlyPerformance() {
     <Card className="mt-5" title="Month-on-month performance"
       subtitle={`Each month from ${fmtDate(rows[0].from)} to ${fmtDate(rows[rows.length - 1].to)}: its opening value, money in and out, gain, money-weighted return (Modified Dietz) and the Nifty 500 over the same month. Cumulative is the money-weighted return from the book's first measured month to that month — the available-history figure the Returns tab shows. Each month covers the accounts the book can value for it, so an opening value can step up as more accounts report; coverage reaches ${maxCovered} of ${accounts} accounts. Export to Excel from the table menu.`}>
       <div className="overflow-x-auto" data-navigation-scroll="monthly-performance" data-month-table>
-        <ExportableTable className="w-full text-[12.5px]">
+        <ExportableTable exportName="Month-on-month performance" className="w-full text-[12.5px]" data-table-static="one row per calendar month in order; the columns are a bridge read left to right — opening, money in and out, gain, closing, the month's return, the cumulative and the Nifty 500">
           <thead className="label-xs border-b border-ink-700">
             <tr>
               <th className="px-2 py-2 text-left">Month</th>
