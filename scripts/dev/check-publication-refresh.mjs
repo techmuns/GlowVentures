@@ -1,18 +1,35 @@
-// Local built-app regression. No production requests or statement uploads.
+// Local/immutable-preview regression. API fixtures are intercepted; no production requests or uploads.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import { chromium } from 'playwright-core';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
-assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
-const manifest = JSON.parse(await fs.readFile('src/data/readModels.json', 'utf8'));
+const local = ['localhost', '127.0.0.1'].includes(new URL(base).hostname);
+assert.ok(local || /^[a-f0-9]{8}\.glowventures-1xw\.pages\.dev$/.test(new URL(base).hostname), 'Use local or immutable staging only');
+const password = local ? null : execFileSync('/usr/bin/security', ['find-generic-password', '-s', 'codex.glowventures.dashboard', '-a', 'glowventures-1xw.pages.dev', '-w'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trimEnd();
+async function authenticate(context) {
+  if (local) return;
+  const login = await context.request.post(base + '/__auth/login?next=%2Faudit', { form: { password }, maxRedirects: 0 });
+  assert.equal(login.status(), 302);
+}
+const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
+let manifest;
+if (local) manifest = JSON.parse(await fs.readFile('src/data/readModels.json', 'utf8'));
+else {
+  const metadata = await browser.newContext(); await authenticate(metadata);
+  const pointer = await (await metadata.request.get(base + '/publication.json')).json();
+  const publication = await (await metadata.request.get(`${base}/views/${pointer.revision}/publication.json`)).json();
+  manifest = { revision: pointer.revision, readerRevision: publication.readerRevision };
+  await metadata.close();
+}
 const compiled = manifest.revision;
 const future = compiled === 'b'.repeat(20) ? 'c'.repeat(20) : 'b'.repeat(20);
-const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 const results = [];
 await fs.mkdir('.cache/publication-refresh-check', { recursive: true });
 try {
   for (const startup of ['compiled', 'unavailable', 'incompatible']) {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+    await authenticate(context);
     let published = { schemaVersion: 1, revision: compiled, readerRevision: manifest.readerRevision }, checks = 0;
     await context.route('**/api/**', route => route.fulfill({ json: { ok: false, reason: 'local publication fixture' } }));
     await context.route('**/api/statement-data', route => startup === 'compiled' ? route.fulfill({ status: 204 })
