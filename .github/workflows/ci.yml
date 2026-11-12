@@ -104,6 +104,9 @@ jobs:
       - name: Published financial graph, decimal journal and metric evidence
         run: npm run check:financial-integrity
 
+      - name: Number edits require a compatible immutable financial book
+        run: node scripts/dev/test-table-input-snapshots.mjs
+
       - name: Preserve financial integrity evidence
         if: always()
         uses: actions/upload-artifact@v4

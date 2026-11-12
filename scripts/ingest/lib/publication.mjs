@@ -11,15 +11,10 @@ import { sourceFor } from '../precedence.mjs';
 import { NON_STATEMENT_PROVIDERS } from './classify.mjs';
 import { currentIsin } from '../../../shared/isinSuccessors.mjs';
 import { securityKeyOf } from '../../../shared/securityKey.mjs';
+import { canonicalJson } from '../../../shared/canonicalJson.mjs';
 
 export const RECORD_SECTIONS = ['holdings', 'transactions', 'capitalGains', 'cashFlows', 'income', 'expenses', 'returns'];
-export const stable = value => JSON.stringify(canonical(value));
-function canonical(value) {
-  if (typeof value === 'number' && !Number.isFinite(value)) throw new Error('Non-finite number in statement data');
-  if (Array.isArray(value)) return value.map(canonical);
-  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().filter(k => value[k] !== undefined).map(k => [k, canonical(value[k])]));
-  return value;
-}
+export const stable = canonicalJson;
 export const digest = value => createHash('sha256').update(typeof value === 'string' || Buffer.isBuffer(value) ? value : stable(value)).digest('hex');
 export const safeKey = key => typeof key === 'string' && /^[a-z0-9][a-z0-9._-]*$/i.test(key) && !key.includes('..');
 export const accountKey = d => stable([d.provider, String(d.accountNo ?? '')]);
