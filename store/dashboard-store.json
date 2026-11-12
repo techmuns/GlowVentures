@@ -29,16 +29,16 @@
    }
   },
   "tile-set:real-estate": {
-   "value": "{\"page\":\"real-estate\",\"ids\":[\"value\",\"net-rent\",\"rent\",\"after-tax\"],\"updatedAt\":\"2026-11-12T05:38:07.778Z\"}",
+   "value": "{\"page\":\"real-estate\",\"ids\":[\"value\",\"net-rent\",\"gain\",\"after-tax\"],\"updatedAt\":\"2026-11-12T05:38:16.612Z\"}",
    "metadata": {
     "page": "real-estate",
     "ids": [
      "value",
      "net-rent",
-     "rent",
+     "gain",
      "after-tax"
     ],
-    "updatedAt": "2026-11-12T05:38:07.778Z"
+    "updatedAt": "2026-11-12T05:38:16.612Z"
    }
   }
  }
