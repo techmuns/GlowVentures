@@ -1695,3 +1695,10 @@ Codex's review of #352, verified against the code and the book:
 - A new app deployment can change the reader identifier before scheduled statement publication catches up. Number editing now accepts that older reader only when the canonical SHA-256 fingerprint of its complete received book equals the deployment's verified book. A changed valuation, cash-flow history, source pointer or other book fact still blocks an incompatible reader.
 - Build and edge validation share canonical JSON serialization. The server computes the fingerprint itself; a supplied hash cannot authorize a different book. Matching-reader statement updates retain their existing behavior.
 - Isolated API regressions cover identical books across readers, a real local correction, changed facts outside the editable columns, invalid reader metadata and absent fingerprint evidence. No manual production data publication is required.
+
+### Stage 10oa — Preserve established figures while keeping financial audits advisory
+
+- The family explicitly requires the existing dashboard's figures, coverage, curated assumptions and working flows to remain intact. Financial audits are additive observations and cannot introduce review-expiry publication holds, discard saved corrections or blanket-disable existing returns.
+- Capital relationships remain visible as audit warnings while single-cell edits and optional atomic groups both work. The input API follows the supported current published schema and retains per-record source/version protection; a deployment hash cannot lock an otherwise valid source record.
+- Independent arithmetic is compared beside the canonical result. Audit failures are contained, and existing source-scoped decisions survive reminder expiry without claiming a new review. The original new/worsening-source conflict protections remain in place.
+- Regression checks cover retained figures, capital corrections, dated-return coverage, current-source editing, expired reviews and audit failure isolation. Before/after comparison of the complete established book is retained with the local validation evidence.

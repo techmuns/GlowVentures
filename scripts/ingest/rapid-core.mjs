@@ -1,4 +1,4 @@
-import { buildFinancialIntegrity } from "./lib/financial-integrity.mjs";
+import { collectFinancialAudit } from "./lib/financial-integrity.mjs";
 // Trusted request-time ingestion. It prepares a complete candidate without
 // touching disk, a repository branch, or the currently published version.
 import path from 'node:path';
@@ -121,8 +121,7 @@ export async function prepareRapidStatement({ baseline, files, references, passw
     ...Object.fromEntries(records.map(r => [r.manifest.docKey, r.files['pages.json'].pages.map(p => p.text).join('\n')])) };
   const buildStart = performance.now();
   const book = canonicalBookValues(buildCanonicalBook(candidate.filter(d => d.status !== 'failed'), candidate.length, { ...references, pagesByDocument, financialRegistry: registry }));
-  const financialIntegrity = buildFinancialIntegrity(book, candidate, { report, registry, readerRevision, bookRevision: digest(book) });
-  if (financialIntegrity.issues.length) return { decision: 'needs_review', issues: financialIntegrity.issues, timings };
+  const financialIntegrity = collectFinancialAudit(book, candidate, { report, registry, readerRevision, bookRevision: digest(book) });
   // The same selected-record checks as statements:verify-book, in memory.
   const identities = new Set();
   const evidenceForPosition = positionEvidenceReader(candidate, book.BOOK_ACCOUNTS);

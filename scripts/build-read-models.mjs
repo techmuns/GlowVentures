@@ -1,4 +1,4 @@
-import { buildFinancialIntegrity } from "./ingest/lib/financial-integrity.mjs";
+import { collectFinancialAudit } from "./ingest/lib/financial-integrity.mjs";
 import { readerRevisionFor } from './ingest/reader-revision.mjs';
 // Build-server read models. Source absence is a build failure, never a silently
 // partial ledger. URLs are derived from output content, so book revisions cannot mix.
@@ -32,8 +32,7 @@ try {
     }
   }
 } catch (error) { if (error.code !== 'ENOENT') throw error; }
-const integrity = buildFinancialIntegrity(canonicalBook, docs, { readerRevision, bookRevision: digest(canonicalBook) });
-if (integrity.issues.length) throw Error(`Financial integrity failed: ${JSON.stringify(integrity.issues)}`);
+const integrity = collectFinancialAudit(canonicalBook, docs, { readerRevision, bookRevision: digest(canonicalBook) });
 put('financial/integrity.json', integrity);
 for (const name of ['graph', 'events', 'metrics', 'checks', 'reconciliationReviews', 'registry']) put(`financial/${name}.json`, integrity[name]);
 let originalIndex = null;

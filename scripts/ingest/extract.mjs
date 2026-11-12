@@ -677,7 +677,7 @@ function noTextLayer(grid) {
   // statements.
   const unitIssue = financialUnitIssue(doc, grid.pages?.map(p => p.text ?? '').join('\n') ?? '');
   if (unitIssue && ['holdings', 'transactions', 'cashFlows', 'capitalGains'].some(k => doc[k]?.length) && !doc.excludedFromBook) {
-    doc.status = 'partial'; doc.warnings.push({ code: 'unsupported-financial-units', detail: unitIssue });
+    doc.warnings.push({ code: 'financial-units-audit', detail: unitIssue });
   }
   return assertNormalized(rekey(doc));
 }

@@ -12,6 +12,7 @@ import { decimalMinor, sumMoney, moneyEqual, roundMoney } from '../../../shared/
 import { capitalIssues } from '../../../shared/capitalValidation.mjs';
 import { CAPITAL_TERMS } from '../../../shared/capitalTerms.mjs';
 import { reconciliationReview, RECONCILIATION_EXCEPTIONS, reviewDocumentRevision } from './reconciliation-policy.mjs';
+import { financialUnitIssue } from './financial-units.mjs';
 const canonical = v => Array.isArray(v) ? v.map(canonical) : v && typeof v === 'object'
   ? Object.fromEntries(Object.keys(v).sort().filter(k => v[k] !== undefined && k !== 'integrity').map(k => [k, canonical(v[k])])) : v;
 const hash = value => createHash('sha256').update(JSON.stringify(canonical(value))).digest('hex');
@@ -82,6 +83,10 @@ export function validateOwnershipGraph(nodes, edges) {
 export function buildFinancialIntegrity(book, documents, { report = null, registry = seedRegistry, readerRevision = null, bookRevision = null, evaluationDate = new Date().toISOString().slice(0, 10), ownership = ownershipRegistry, settlementMappings = settlementRegistry.mappings } = {}) {
   const positions = book.BOOK_POSITIONS ?? [], accounts = book.BOOK_ACCOUNTS ?? [], accountById = new Map(accounts.map(a => [a.accountId, a]));
   const identities = financialRegistry(positions, registry), issues = [...identities.issues];
+  for (const document of documents) {
+    const reason = financialUnitIssue(document) ?? document.warnings?.find(w => w.code === 'financial-units-audit')?.detail;
+    if (reason) issues.push({ code: 'FINANCIAL_UNITS_REVIEW', document: document.docKey, reason });
+  }
   if (!report) {
     const present = new Set(documents.map(d => d.docKey));
     report = {};
@@ -89,6 +94,7 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
       (report[e.section] ??= []).push(e.finding);
   }
   const reviews = reconciliationReview(report, { on: evaluationDate, documentRevisions: new Map(documents.map(d => [d.docKey, reviewDocumentRevision(d)])) });
+  const decisionOf = review => review.review ?? review.establishedDecision;
   if (!day(evaluationDate)) issues.push({ code: 'INVALID_REVIEW_EVALUATION_DATE' });
   for (const review of reviews) if (review.status === 'needs-review') issues.push({ code: 'RECONCILIATION_REVIEW_REQUIRED', id: review.id, section: review.section });
   const nodes = [], edges = [], metrics = [], checks = [], events = [];
@@ -122,16 +128,14 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
     edges.push({ id: `holds:${id}`, owner: `account:${p.accountId}`, owned: id, relationship: 'holds', fraction: 1, evidence: source(p, 'quantity') });
     edges.push({ id: `instrument:${id}`, owner: id, owned: instrument.id, relationship: 'position-in', evidence: source(p, 'securityKey') });
     const related = reviews.filter(r => r.finding.docKey === p.statementRecord?.document && (!r.finding.securityKey || r.finding.securityKey === p.securityKey)
-      && (!r.review?.affectedSecurityKeys || r.review.affectedSecurityKeys.includes(p.securityKey)));
+      && (!decisionOf(r)?.affectedSecurityKeys || decisionOf(r).affectedSecurityKeys.includes(p.securityKey)));
     const positionIndex = positions.indexOf(p);
     const selected = documents.find(d => d.docKey === p.statementRecord?.document)?.holdings?.[Number(p.statementRecord?.pointer?.split('/').at(-1))];
     const metric = (name, value, basis, formula, dependencies) => {
       const unit = name === 'quantity' ? 'units' : name === 'returnPct' ? 'percent' : ['currentPrice', 'avgCost'].includes(name) ? 'money-per-unit' : 'money';
-      const disputed = related.filter(r => r.review?.disposition === 'withhold-affected-claim' || !r.review)
-        .filter(r => { const affected = r.review?.affectedMetrics ?? [r.finding.field ?? 'marketValue']; return affected.includes(name) || dependencies.some(field => affected.includes(field)); });
+      const disputed = related.filter(r => decisionOf(r)?.disposition === 'withhold-affected-claim' || !decisionOf(r))
+        .filter(r => { const affected = decisionOf(r)?.affectedMetrics ?? [r.finding.field ?? 'marketValue']; return affected.includes(name) || dependencies.some(field => affected.includes(field)); });
       let status = value == null ? 'missing' : disputed.length ? 'disputed' : p.valuedAtCost && ['marketValue', 'unrealizedPnL'].includes(name) ? 'at-cost' : 'source-backed';
-      const required = name === 'unrealizedPnL' ? [p.marketValue, p.costBasis] : [value];
-      if (required.some(v => v == null)) status = 'missing';
       const effectiveDate = ['marketValue', 'currentPrice', 'unrealizedPnL', 'returnPct'].includes(name) ? p.priceAsOf ?? a.asOf : a.asOf;
       const item = { id: `${id}:${name}`, positionId: id, accountId: p.accountId, securityKey: p.securityKey, memberId: p.memberId ?? null,
         metric: name, value: status === 'missing' ? null : value, amountMinor: finite(value) && unit === 'money' ? String(decimalMinor(value)) : null,
@@ -157,7 +161,13 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
         : name === 'avgCost' ? p.avgCostDerived ? 'costBasis / quantity' : 'selected printed unit cost' : name === 'currentPrice' ? 'selected statement price' : 'selected source record';
       metric(name, p[name] ?? null, name === 'returnPct' ? 'derived-holding-period-return' : 'statement-or-reconciled-record', formula, name === 'returnPct' ? ['marketValue', 'costBasis', 'realizedPnL', 'costOfUnitsSold', 'dividendReceived'] : [name]);
     }
-    metric('unrealizedPnL', p.valuedAtCost || p.costBasis == null ? null : roundMoney(p.marketValue - p.costBasis), 'derived', 'marketValue - costBasis', ['marketValue', 'costBasis']);
+    metric('unrealizedPnL', p.unrealizedPnL ?? null, 'derived', 'retained canonical unrealized P&L; independent arithmetic is an advisory check', ['marketValue', 'costBasis']);
+    if ([p.marketValue, p.costBasis, p.unrealizedPnL].every(finite)) {
+      const expected = roundMoney(p.marketValue - p.costBasis);
+      checks.push({ kind: 'unrealized-arithmetic', positionId: id, status: moneyEqual(expected, p.unrealizedPnL) ? 'reconciled' : 'disputed',
+        expectedMinor: String(decimalMinor(expected)), reportedMinor: String(decimalMinor(p.unrealizedPnL)), currency: 'INR',
+        reason: 'Comparison only; the established dashboard result is retained.' });
+    }
     const key = `${p.accountId}|${p.securityKey}`, lots = book.BOOK_HOLDING_LOTS?.[key] ?? [];
     if (lots.length && p.quantity != null) {
       const units = lots.reduce((sum, lot) => sum + decimalMinor(lot.quantity, 9), 0n), expected = decimalMinor(p.quantity, 9);
@@ -268,8 +278,29 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
     reviewedExceptions: reviews.length, unresolvedExceptions: reviews.filter(r => r.status !== 'documented-decision').length,
     accountReturnCoverage: Object.values(book.BOOK_ACCOUNT_RETURN_RECORDS ?? {}).filter(r => r.record).length,
   };
-  return { schemaVersion: 1, formulaVersion: 'financial-integrity-v1', asOf: book.BOOK_AS_OF, readerRevision, bookRevision,
+  return { schemaVersion: 1, formulaVersion: 'financial-integrity-v1', mode: 'advisory', blockingIssues: [], asOf: book.BOOK_AS_OF, readerRevision, bookRevision,
     registry: identities.registry, graph: { nodes, edges }, ownership: [...new Set(accounts.map(a => `owner:${a.ownerId ?? 'unattributed'}`))].map(id => ownershipExposure({ nodes, edges }, metrics, id, book.BOOK_AS_OF)), events, metrics, checks, reconciliationReviews: reviews, issues, summary };
+}
+
+/** Optional evidence must never take the established financial book offline. */
+export function collectFinancialAudit(book, documents, options = {}) {
+  try {
+    const audit = buildFinancialIntegrity(book, documents, options);
+    return { ...audit, auditStatus: audit.issues.length || audit.checks.some(c => c.status === 'disputed') ? 'attention' : 'complete' };
+  } catch (error) {
+    const positions = book.BOOK_POSITIONS ?? [], accounts = book.BOOK_ACCOUNTS ?? [];
+    const previous = options.registry ?? seedRegistry;
+    const registry = Array.isArray(previous?.instruments) && previous.instruments.every(e => typeof e?.id === 'string' && e.id && Array.isArray(e.keys) && e.keys.every(k => typeof k === 'string') && Array.isArray(e.isins) && e.isins.every(i => typeof i === 'string'))
+      ? previous : seedRegistry;
+    return { schemaVersion: 1, formulaVersion: 'financial-integrity-v1', mode: 'advisory', auditStatus: 'unavailable', blockingIssues: [],
+      asOf: book.BOOK_AS_OF, readerRevision: options.readerRevision ?? null, bookRevision: options.bookRevision ?? null,
+      registry: structuredClone(registry), graph: { nodes: [], edges: [] }, ownership: [], events: [], metrics: [], checks: [], reconciliationReviews: [],
+      issues: [{ code: 'AUDIT_UNAVAILABLE', reason: error instanceof Error ? error.message : 'The optional audit could not be prepared.' }],
+      summary: { positions: positions.length, accounts: accounts.length, missingCost: positions.filter(p => p.costBasis == null).length,
+        atCost: positions.filter(p => p.valuedAtCost).length, unvaluedRows: book.BOOK_UNVALUED_HOLDINGS?.length ?? 0,
+        metricsByStatus: {}, checksByStatus: {}, reviewedExceptions: null, unresolvedExceptions: null,
+        accountReturnCoverage: Object.values(book.BOOK_ACCOUNT_RETURN_RECORDS ?? {}).filter(r => r?.record).length } };
+  }
 }
 
 export function positionIntegrity(integrity) {
