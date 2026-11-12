@@ -134,7 +134,19 @@ try {
   });
   assert.ok(exportedMatch, 'Excel exports a numeric percentage with the same value as the INR calculation');
   await page.setViewportSize({ width: 390, height: 844 });
-  await table.locator('[data-seg-cell="twrMtd"]').first().getByRole('button').click(); await dialog.waitFor();
+  const mobileInfo = table.locator('[data-seg-cell="twrMtd"]').first().getByRole('button');
+  await mobileInfo.scrollIntoViewIfNeeded();
+  // Native scrollIntoView can centre this control underneath the frozen name
+  // column. Pan it to the right edge of the visible table before a real tap.
+  await mobileInfo.evaluate(button => {
+    const port = button.closest('[data-navigation-scroll]');
+    port.scrollLeft += button.getBoundingClientRect().right - port.getBoundingClientRect().right + 6;
+  });
+  assert.ok(await mobileInfo.evaluate(button => {
+    const box = button.getBoundingClientRect();
+    return button.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
+  }), 'mobile return controls are reachable beside the frozen name column');
+  await mobileInfo.click(); await dialog.waitFor();
   assert.ok(await dialog.evaluate(el => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && el.scrollWidth <= el.clientWidth + 1; }));
   await page.screenshot({ path: path.join(out, 'mobile-info.png') }); await page.keyboard.press('Escape');
   // Recovery includes histories requested only for sold investments.

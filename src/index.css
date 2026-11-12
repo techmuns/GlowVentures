@@ -883,6 +883,14 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
     max-width: 10rem;
     overflow-wrap: anywhere;
   }
+  /* The attribution table inherits nowrap. Let pinned names wrap on phones so
+     their text cannot cover the return controls scrolling beside them. */
+  #root table[data-seg-table] > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
+    width: 10rem;
+    min-width: 10rem;
+    max-width: 10rem;
+    white-space: normal;
+  }
 }
 /* EVERY TABLE FREEZES ITS FIRST COLUMN (Stage 10nj). *"In the portfolio
    monitor, we have freezed the first column … we need to freeze the first
