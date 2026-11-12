@@ -107,6 +107,21 @@ try {
     await page.getByRole('button', { name: 'Return calculation and coverage', exact: true }).first().click();
     await page.getByRole('dialog', { name: 'Return calculation and coverage', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Close return coverage', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Return calculation and coverage', exact: true }).waitFor({ state: 'hidden' });
+    for (const selector of ['[data-home-performance-chart]', '[data-home-history]']) {
+      const chart = page.locator(selector);
+      for (const fraction of [.5, .9]) {
+        const box = await chart.boundingBox();
+        await chart.hover({ position: { x: box.width * fraction, y: box.height / 2 } });
+        const tooltip = chart.locator('.recharts-tooltip-wrapper');
+        await tooltip.waitFor({ state: 'visible' });
+        const fit = await tooltip.evaluate(el => {
+          const r = el.getBoundingClientRect(), panel = el.closest('.home-panel').getBoundingClientRect();
+          return { left: r.left, right: r.right, panelLeft: panel.left, panelRight: panel.right };
+        });
+        assert.ok(fit.left >= fit.panelLeft - 1 && fit.right <= fit.panelRight + 1, `Chart tooltip fits its card (${theme}, ${width}, ${selector}, ${fraction}): ${JSON.stringify(fit)}`);
+      }
+    }
     const pageFit = await page.locator('[data-home-overview]').evaluate(el => {
       const edge = el.getBoundingClientRect().right;
       return { client: el.clientWidth, scroll: el.scrollWidth, overflow: [...el.querySelectorAll('*')]
