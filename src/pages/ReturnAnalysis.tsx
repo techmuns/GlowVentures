@@ -32,6 +32,7 @@ import { bookDrawdown } from "@/lib/drawdown";
 import { wholeFamilyOnly } from "@/lib/memberScope";
 import { WHOLE_BOOK_NAV } from "@/lib/bookNavBook";
 import { bookNavStats } from "@/lib/bookNav";
+import { MonthlyPerformance } from "@/components/MonthlyPerformance";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
 
 const GAIN = "#10b981", LOSS = "#ef4444";
@@ -470,6 +471,8 @@ export function ReturnAnalysis() {
             icon={<TrendingDown className="h-4 w-4" />} />
         )}
       </div>
+
+      <MonthlyPerformance />
 
       <div className="mt-5 grid gap-5 lg:grid-cols-5 items-start">
         <Card className="lg:col-span-3" title="Return distribution"
