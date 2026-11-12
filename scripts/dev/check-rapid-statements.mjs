@@ -120,7 +120,7 @@ try {
     element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data }));
   }, bytes.toString('base64'));
   await page.locator('tr[data-upload-status="in-library"]').waitFor({ timeout: 30_000 });
-  assert.equal(await page.getByPlaceholder('Filter by provider or file type…').inputValue(), 'Bandhan', 'Search state survives the automatic publication refresh');
+  assert.equal(await page.getByPlaceholder('Filter by provider or file type…').inputValue(), 'Bandhan', 'Publication discovery keeps the current search in place');
   const readyMs = performance.now() - start; publishedAt = processor.status().revision;
   fs.writeFileSync(path.join(output, 'upload-timing.json'), JSON.stringify({ readyMs, queue: 'simulated immediate start', publishedAt }));
   await page.screenshot({ path: path.join(output, 'ready.png'), fullPage: true });

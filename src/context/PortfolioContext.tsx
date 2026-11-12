@@ -12,7 +12,7 @@ import { applyTableInputs } from "@/lib/applyTableInputs";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { startPublicationRefresh } from "../../shared/publicationRefresh.mjs";
 import { selectedReadModels as readModels, publicationDiscoveryPath, hasRuntimeBook, bootstrapWarning } from "@/lib/runtimeBook";
-import { subscribeToDeployment } from "@/lib/deploymentVersion";
+import { markDeploymentChanged, setDeploymentUpdateBlocked } from "@/lib/deploymentVersion";
 import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
@@ -704,10 +704,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const publicationRefresh = useRef<ReturnType<typeof startPublicationRefresh> | null>(null);
   useEffect(() => {
-    const controller = startPublicationRefresh({ revision: bootstrapWarning ? '0'.repeat(20) : readModels.revision, path: publicationDiscoveryPath, intervalMs: hasRuntimeBook() || bootstrapWarning ? 5_000 : 30_000 });
-    const unsubscribe = subscribeToDeployment(() => { void controller.check(); });
+    const controller = startPublicationRefresh({ revision: readModels.revision, readerRevision: readModels.readerRevision,
+      path: publicationDiscoveryPath, intervalMs: hasRuntimeBook() || bootstrapWarning ? 5_000 : 30_000,
+      onAvailable: markDeploymentChanged, onBlocked: setDeploymentUpdateBlocked });
     publicationRefresh.current = controller;
-    return () => { unsubscribe(); controller.stop(); publicationRefresh.current = null; };
+    return () => { controller.stop(); publicationRefresh.current = null; };
   }, []);
   useEffect(() => { void publicationRefresh.current?.check(); }, [location.pathname]);
   const navigate = useNavigate();

@@ -4,53 +4,83 @@ import fs from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
-const compiled = JSON.parse(await fs.readFile('src/data/readModels.json', 'utf8')).revision;
+const manifest = JSON.parse(await fs.readFile('src/data/readModels.json', 'utf8'));
+const compiled = manifest.revision;
 const future = compiled === 'b'.repeat(20) ? 'c'.repeat(20) : 'b'.repeat(20);
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 const results = [];
 await fs.mkdir('.cache/publication-refresh-check', { recursive: true });
 try {
-  for (const editing of [false, true]) {
-    const context = await browser.newContext();
-    let published = compiled;
+  for (const startup of ['compiled', 'unavailable', 'incompatible']) {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+    let published = { schemaVersion: 1, revision: compiled, readerRevision: manifest.readerRevision }, checks = 0;
     await context.route('**/api/**', route => route.fulfill({ json: { ok: false, reason: 'local publication fixture' } }));
-    await context.route('**/api/statement-data**', route => route.fulfill({ status: 204 }));
-    await context.route('**/publication.json', route => route.fulfill({ json: { schemaVersion: 1, revision: published } }));
+    await context.route('**/api/statement-data', route => startup === 'compiled' ? route.fulfill({ status: 204 })
+      : startup === 'unavailable' ? route.fulfill({ status: 503, json: { error: 'Temporary fixture outage' } })
+      : route.fulfill({ json: { schemaVersion: 1, revision: future, readerRevision: 'd'.repeat(64) } }));
+    const publication = route => { checks++; return route.fulfill({ json: published }); };
+    await context.route('**/publication.json', publication);
+    await context.route('**/api/statement-data?status=1', publication);
     await context.addInitScript(() => {
       if (location.protocol.startsWith('http')) sessionStorage.setItem('publication-test-loads', String(Number(sessionStorage.getItem('publication-test-loads') || 0) + 1));
+      // Exercise many real poll rounds without a multi-minute browser test.
+      const interval = window.setInterval;
+      window.setInterval = (fn, delay, ...args) => interval(fn, [5_000, 30_000].includes(delay) ? 100 : delay, ...args);
     });
     const page = await context.newPage(), errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    const initial = `${base}/audit?members=ajay-jaisinghani&consolidated=Consolidated%20View&proof=keep#holding`;
-    await page.goto(initial);
+    await page.goto(`${base}/audit?members=ajay-jaisinghani&consolidated=Consolidated%20View&proof=keep#holding`);
     await page.locator('[data-consolidated="ready"]').waitFor();
     await page.bringToFront();
-    if (editing) {
-      await page.getByRole('textbox', { name: 'Search consolidated sheet' }).fill('HDFC');
-      await page.evaluate(() => document.activeElement?.blur());
-    }
-    const currentURL = page.url();
-    published = future;
-    if (editing) {
-      await Promise.all([page.waitForResponse(r => r.url().endsWith('/publication.json')), page.evaluate(() => window.dispatchEvent(new Event('focus')))]);
-      await page.waitForTimeout(200);
-      assert.equal(await page.evaluate(() => Number(sessionStorage.getItem('publication-test-loads'))), 1, 'Editing does not discard the draft/query');
-      await Promise.all([
-        page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
-        page.locator('a[href^="/monitor"]').first().click(),
-      ]);
-      assert.equal(new URL(page.url()).pathname, '/monitor');
-      assert.equal(new URL(page.url()).searchParams.get('members'), 'ajay-jaisinghani');
-    } else {
-      await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.evaluate(() => window.dispatchEvent(new Event('focus')))]);
-      assert.equal(page.url(), currentURL, 'A read-only refresh preserves the exact current URL');
-    }
+    // The exact production failure: a processor advertises an incompatible book.
+    published = { schemaVersion: 1, revision: future, readerRevision: 'd'.repeat(64) };
+    const firstChecks = checks;
+    await page.waitForTimeout(600);
+    assert.ok(checks >= firstChecks + 3, 'multiple incompatible-pointer polls were exercised');
+    assert.equal(await page.locator('[data-dashboard-update]').count(), 0, 'an incompatible book cannot advertise a reload loop');
+    const search = page.getByRole('textbox', { name: 'Search consolidated sheet' });
+    await search.fill('HDFC');
+    await page.evaluate(() => {
+      document.activeElement?.blur();
+      window.__publicationMain = document.querySelector('main');
+      window.__publicationSheet = document.querySelector('[data-consolidated="ready"]');
+      document.querySelector('main').scrollTop = 180;
+      window.__publicationScroll = document.querySelector('main').scrollTop;
+    });
+    published = { schemaVersion: 1, revision: future, readerRevision: manifest.readerRevision };
+    const update = page.getByRole('button', { name: 'Load latest dashboard', exact: true });
+    await update.waitFor();
     await page.waitForTimeout(300);
-    assert.equal(await page.evaluate(() => Number(sessionStorage.getItem('publication-test-loads'))), 2, 'Exactly one document reload; a stale HTML response cannot loop');
+    assert.equal(await update.isDisabled(), true, 'a draft blocks the explicit update action');
+    for (let i = 0; i < 8; i++) {
+      published = { ...published, revision: i % 2 ? future : 'e'.repeat(20) };
+      await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+      await page.waitForTimeout(100);
+    }
+    assert.equal(await search.inputValue(), 'HDFC', 'background refresh preserves the current search');
+    assert.ok(await page.evaluate(() => window.__publicationMain === document.querySelector('main')
+      && window.__publicationSheet === document.querySelector('[data-consolidated="ready"]')
+      && window.__publicationScroll === document.querySelector('main').scrollTop), 'the same page, table and scroll position stay mounted');
+    assert.equal(await page.getByRole('heading', { name: 'A new dashboard version is ready' }).count(), 0);
+    assert.equal(await page.getByText('Loading dashboard…', { exact: true }).count(), 0);
+    assert.equal(await page.evaluate(() => Number(sessionStorage.getItem('publication-test-loads'))), 1, 'polling and focus never reload the document');
+    await page.screenshot({ path: `.cache/publication-refresh-check/${startup}.png` });
+    // Navigation clears the draft block but still cannot reload automatically.
+    await page.locator('a[href^="/monitor"]').first().click();
+    await page.locator('[data-monitor-table]').first().waitFor();
+    await page.waitForFunction(() => !document.querySelector('[data-dashboard-update]')?.disabled);
+    assert.equal(await page.evaluate(() => Number(sessionStorage.getItem('publication-test-loads'))), 1);
+    assert.equal(new URL(page.url()).searchParams.get('members'), 'ajay-jaisinghani');
+    const currentURL = page.url();
+    await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), update.click()]);
+    await page.locator('[data-monitor-table]').first().waitFor();
+    await page.waitForTimeout(400);
+    assert.equal(page.url(), currentURL, 'the explicit update preserves URL and member scope');
+    assert.equal(await page.evaluate(() => Number(sessionStorage.getItem('publication-test-loads'))), 2, 'exactly one reload, only after an explicit click');
     assert.deepEqual(errors, []);
-    results.push({ editing, refreshedURL: page.url(), reloads: 1, errors });
+    results.push({ startup, checks, spontaneousReloads: 0, explicitReloads: 1, retainedSearchAndScroll: true, errors });
     await context.close();
   }
   await fs.writeFile('.cache/publication-refresh-check/results.json', JSON.stringify(results, null, 2));
-  console.log('PASS publication refresh preserves URL/member scope, defers drafts until navigation and reloads once');
+  console.log('PASS quiet publication discovery: incompatible pointers, repeated polls, startup failures, drafts, scroll, focus, navigation and explicit updates');
 } finally { await browser.close(); }
