@@ -40,9 +40,11 @@ export function homeAssets(values: HomeValue[]) {
     positiveAssets: values.length ? values.reduce((s, row) => s + Math.max(0, row.value), 0) : null };
 }
 
+export const currentHomeHoldings = (positions: Position[]) => dedupedPositions(positions).filter(p => p.marketValue !== 0);
+
 export function currentHomeValues(positions: Position[], accounts: Account[]): HomeValue[] {
   const idx = accountIndex(accounts);
-  return dedupedPositions(positions).filter(p => p.marketValue !== 0).map(p => ({
+  return currentHomeHoldings(positions).map(p => ({
     key: groupKeyFor('assetClass', idx, p), label: p.security, value: p.marketValue,
     date: p.navDate ?? idx.get(p.accountId)?.asOf ?? null, accountId: p.accountId, securityKey: p.securityKey,
   }));

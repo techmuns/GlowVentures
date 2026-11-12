@@ -596,7 +596,7 @@ export function HoldingsBehind() {
     ? d.facets.find((f) => f.key === d.activeFacet)
     : null;
   const crumbTrail = [
-    { label: "Morning CIO", to: "/cio" },
+    d.id === "home-cash" ? { label: "Home", to: "/home" } : { label: "Morning CIO", to: "/cio" },
     facet ? { label: d.crumb, to: drilldownHref(d.id, d.key || undefined) } : { label: d.crumb },
     ...(facet ? [{ label: facet.label }] : []),
   ];
