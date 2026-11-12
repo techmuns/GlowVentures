@@ -71,23 +71,30 @@ await test('a changed reader with the identical complete book permits an audited
   });
 });
 
-await test('an incompatible changed book is refused for reads and writes even with a claimed correct hash', async () => {
+await test('a published schema-compatible book remains editable across deployment readers, with stale edits protected', async () => {
   const value = snapshot({ bookRevision: manifest.bookRevision });
-  value.book.BOOK_POSITIONS[0].marketValue += 1;
+  const position = value.book.BOOK_POSITIONS.find(p => `holding:${p.accountId}|${p.securityKey}|${p.memberId ?? ''}` === validChange.id);
+  position.marketValue += 1;
   await withSnapshot(value, async ({ call, writes }) => {
-    assert.equal((await call()).status, 502);
-    assert.equal((await call([validChange])).status, 502);
+    const response = await call(); assert.equal(response.status, 200);
+    const current = await response.json();
+    const input = current.catalog.find(r => r.id === validChange.id);
+    assert.equal(input.values.marketValue, position.marketValue, 'the published source supplies the number');
+    assert.equal((await call([validChange])).status, 409, 'a stale source fingerprint cannot overwrite new facts');
     assert.equal(writes(), 0);
+    const fresh = { ...validChange, source: input.source, version: input.versions.marketValue ?? '', value: input.values.marketValue + 1 };
+    assert.equal((await call([fresh])).status, 200);
+    assert.equal(writes(), 1);
   });
 });
 
-await test('changes outside editable amounts still make the complete book incompatible', async () => {
+await test('unrelated published history does not disable the established number-editing workflow', async () => {
   const value = snapshot();
   const trades = Object.values(value.book.BOOK_HOLDING_TRADES).find(rows => rows.length);
   assert.ok(trades, 'The source fixture includes dated trade history');
   trades[0].date = trades[0].date === '2000-01-01' ? '2000-01-02' : '2000-01-01';
   await withSnapshot(value, async ({ call, writes }) => {
-    assert.equal((await call()).status, 502);
+    assert.equal((await call()).status, 200);
     assert.equal(writes(), 0);
   });
 });
@@ -98,12 +105,12 @@ await test('a malformed reader identifier cannot use identical-book compatibilit
   });
 });
 
-await test('missing deployment fingerprint evidence fails closed for an older reader', async () => {
+await test('a deployment fingerprint is not a new requirement for editing the active source record', async () => {
   const fingerprint = manifest.bookRevision;
   try {
     delete manifest.bookRevision;
     await withSnapshot(snapshot(), async ({ call, writes }) => {
-      assert.equal((await call()).status, 502); assert.equal(writes(), 0);
+      assert.equal((await call()).status, 200); assert.equal(writes(), 0);
     });
   } finally { manifest.bookRevision = fingerprint; }
 });

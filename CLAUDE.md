@@ -43,6 +43,14 @@ the data defects still open. It is built in Stages 10la and 10le. Read it before
 
 ## The standing rule
 
+**Preserve established work (12 November 2026, user instruction):** financial
+audit additions are advisory. Preserve the dashboard's established figures,
+coverage, curated assumptions and working edit/publication flows. New audit
+metadata must not erase values, discard family corrections, blanket-disable
+returns or add review-expiry gates. Keep existing source-validation and stale-
+overwrite protections. Prove numerical improvements before changing established
+results; missing evidence in a new audit is not permission to downgrade them.
+
 **Latest verified data (15 October 2026):** always select the newest usable source record for each
 metric when new documents arrive. Money-weighted returns use the newest account closing valuation
 with matching reconciled dated capital through that valuation date, independently of an older

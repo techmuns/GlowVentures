@@ -1,4 +1,4 @@
-import { buildFinancialIntegrity } from "./lib/financial-integrity.mjs";
+import { collectFinancialAudit } from "./lib/financial-integrity.mjs";
 import { performance } from 'node:perf_hooks';
 import { createHash } from 'node:crypto';
 import { prepareRapidStatement } from './rapid-core.mjs';
@@ -17,7 +17,7 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
   const integrityFor = snap => {
     if (!snap.financialIntegrity && snap.readerRevision !== initial.readerRevision)
       throw new ReaderVersionChanged('Financial evidence requires the matching reader; the old source facts remain inspectable');
-    if (!integrityBySnapshot.has(snap)) integrityBySnapshot.set(snap, snap.financialIntegrity ?? buildFinancialIntegrity(snap.book, snap.documents, { readerRevision: snap.readerRevision, bookRevision: digest(snap.book) }));
+    if (!integrityBySnapshot.has(snap)) integrityBySnapshot.set(snap, snap.financialIntegrity ?? collectFinancialAudit(snap.book, snap.documents, { readerRevision: snap.readerRevision, bookRevision: digest(snap.book) }));
     return integrityBySnapshot.get(snap);
   };
   const evidenceFor = snap => {

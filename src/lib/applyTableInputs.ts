@@ -1,6 +1,5 @@
 import type { Portfolio } from "./types";
 import { buildInputCatalog, applySavedInputs, positionInputId, privateCapitalId, capitalInputId, type SavedInput } from "./tableInputs";
-import { capitalIssues } from "../../shared/capitalValidation.mjs";
 import { publicPrivateSplit } from "./analytics";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 
@@ -17,11 +16,8 @@ export function applyTableInputs(book: Portfolio | null, saved: readonly SavedIn
     const hasCap = cap && Object.keys(cap.versions).length > 0 && Object.values(cap.values).some(value => value !== null);
     const paidChanged = cap?.versions.paid != null || accountCapital?.versions.paid != null;
     if (!fields.length && !hasCap && !paidChanged) return original;
-    // A retained old correction is rechecked against today's complete source
-    // record, not trusted because it once passed the cell-range validator.
-    if (hasCap && capitalIssues(cap.values, cap.capitalTerms).length) return original;
     const p = { ...original, enteredNumbers: fields, enteredCapital: hasCap ? cap.values : undefined };
-    if (paidChanged || fields.some(field => field !== 'marketValue')) p.returnInputsUnavailableReason = 'A saved correction changes units, cost, income or paid-in capital, but the dated transaction record has not been corrected to reconcile with it.';
+    if (paidChanged || fields.some(field => field !== 'marketValue')) p.returnInputsAuditReason = 'The family correction is retained separately from the recorded dated transactions; established return methods continue to use their own source evidence.';
     for (const field of fields) Object.assign(p, { [field]: input!.values[field] });
     // A newly supplied valuation supersedes the old "held at cost" treatment.
     // A cost-only correction keeps that treatment and carries its value with it.
@@ -62,7 +58,7 @@ export function applyTableInputs(book: Portfolio | null, saved: readonly SavedIn
   });
   const commitments = book.commitments.map(c => {
     const r = by.get(capitalInputId(c.accountId));
-    if (!r || !Object.keys(r.versions).length || capitalIssues(r.values, r.capitalTerms).length) return c;
+    if (!r || !Object.keys(r.versions).length) return c;
     const next = { ...c };
     for (const key of Object.keys(r.versions)) Object.assign(next, { [key]: r.values[key] });
     return next;

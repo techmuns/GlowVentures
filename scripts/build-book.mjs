@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { buildFinancialIntegrity, positionIntegrity } from "./ingest/lib/financial-integrity.mjs";
+import { collectFinancialAudit, positionIntegrity } from "./ingest/lib/financial-integrity.mjs";
 import { reconciledWeightedCapital } from "../shared/flowTiming.mjs";
 // Build src/data/glowData.ts from the audit archive.
 //
@@ -5747,10 +5747,12 @@ function build(archived, archiveCount = archived.length, references = {}) {
     unclassified: [...unclassified.entries()].map(([providerSector, count]) => ({ providerSector, count })),
     notes,
   };
-  const integrity = buildFinancialIntegrity(canonicalBookValues(result), archived, { registry: references.financialRegistry });
-  if (integrity.issues.length) throw Error(`Financial identity/ownership validation failed: ${JSON.stringify(integrity.issues)}`);
+  const integrity = collectFinancialAudit(canonicalBookValues(result), archived, { registry: references.financialRegistry });
   const positionChecks = positionIntegrity(integrity);
-  for (const p of positions) p.integrity = positionChecks.get(JSON.stringify([p.accountId, p.memberId ?? null, p.securityKey]));
+  for (const p of positions) {
+    const checks = positionChecks.get(JSON.stringify([p.accountId, p.memberId ?? null, p.securityKey]));
+    if (checks) p.integrity = checks;
+  }
   return result;
 }
 

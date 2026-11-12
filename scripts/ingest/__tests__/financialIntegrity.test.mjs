@@ -8,7 +8,7 @@ import { weightedCapital, reconciledWeightedCapital } from '../../../shared/flow
 const position = { accountId: 'account-a', securityKey: 'integrity-fixture-fund', security: 'Integrity fixture fund', isin: 'INF000000001', quantity: 10, marketValue: 120, costBasis: 100, currentPrice: 12, unrealizedPnL: 20, returnPct: 20 };
 const account = { accountId: 'account-a', accountNo: 'A', ownerId: 'owner-a', owner: 'Fixture owner', asOf: '2026-11-01' };
 const book = (ps = [position]) => ({ BOOK_AS_OF: '2026-11-01', BOOK_POSITIONS: ps, BOOK_ACCOUNTS: [account], BOOK_OWNERS: [], BOOK_COMMITMENTS: [], BOOK_HOLDING_TRADES: {}, BOOK_HOLDING_INCOME: {}, BOOK_CAPITAL_MOVES: [] });
-test('normalization refuses explicit foreign currency and unconverted lakh/crore scales', () => {
+test('unit checks identify foreign currency and scale declarations without rechecking an explicit normalized adapter', () => {
   assert.equal(financialUnitIssue({}, 'A US company holds the shares'), null);
   assert.ok(financialUnitIssue({}, 'All amounts in USD'));
   for (const currency of ['SGD', 'AED', 'JPY', 'CAD', 'AUD']) {
@@ -22,6 +22,7 @@ test('normalization refuses explicit foreign currency and unconverted lakh/crore
   assert.ok(financialUnitIssue({ currency: 'USD' }));
   assert.ok(financialUnitIssue({ financialUnits: { canonicalMultiplier: 100000 } }));
   assert.equal(financialUnitIssue({ financialUnits: { canonicalCurrency: 'INR', canonicalMultiplier: 1 } }), null);
+  assert.equal(financialUnitIssue({ financialUnits: { sourceCurrency: 'USD', canonicalCurrency: 'INR', canonicalMultiplier: 1 } }, 'Amounts in USD'), null, 'an established normalization adapter is not downgraded by the source header');
 });
 test('ownership identities survive renaming and refuse a contradictory identifier', () => {
   const a = financialRegistry([position], { instruments: [] });
@@ -34,13 +35,13 @@ test('a complete book version carries source dates, units, exact cash and missin
   b.BOOK_HOLDING_TRADES = { 'account-a|integrity-fixture-fund': [{ date: '2026-01-01', side: 'buy', amount: 100, quantity: 10 }] };
   const f = buildFinancialIntegrity(b, [], { registry: { instruments: [] } });
   assert.equal(f.metrics.find(m => m.metric === 'costBasis').value, null);
-  assert.equal(f.metrics.find(m => m.metric === 'unrealizedPnL').value, null);
+  assert.equal(f.metrics.find(m => m.metric === 'unrealizedPnL').value, position.unrealizedPnL, 'an audit preserves the established result even when its cost witness is absent');
   assert.equal(f.metrics.find(m => m.metric === 'quantity').currency, null);
   assert.equal(f.events[0].postings.reduce((sum, p) => sum + BigInt(p.amountMinor), 0n), 0n);
   assert.equal(f.events[0].amountMinor, '-10000');
   assert.equal(f.checks.find(c => c.kind === 'bank-trade-settlement').status, 'unavailable');
 });
-test('contradictory source capital holds book preparation, while partial balances stay partial', () => {
+test('capital audit reports contradictory and partial balances without manufacturing missing facts', () => {
   const b = book(); b.BOOK_COMMITMENTS = [{ accountId: account.accountId, committed: 100, called: 10, paid: 5000 }];
   assert.ok(buildFinancialIntegrity(b, []).issues.some(i => i.code === 'CAPITAL_DOES_NOT_RECONCILE'));
   b.BOOK_COMMITMENTS = [{ accountId: account.accountId, committed: 100, called: null, paid: 50 }];
@@ -50,7 +51,7 @@ test('contradictory source capital holds book preparation, while partial balance
   b.BOOK_COMMITMENTS = [{ accountId: account.accountId, committed: 100, called: 50, paid: 40, undrawn: 50, pending: 10 }];
   assert.equal(buildFinancialIntegrity(b, []).checks.find(c => c.kind === 'capital').status, 'reconciled');
 });
-test('static preparation blocks an expired source review using the publication day', () => {
+test('review expiry is recorded using the publication day as advisory information', () => {
   const entries = JSON.parse(readFileSync(new URL('../../../config/reconciliation-exceptions.json', import.meta.url))).entries;
   const key = entries.find(e => e.section === 'rowSumChecks').finding.docKey;
   const document = JSON.parse(readFileSync(new URL(`../../../public/audit/${key}/document.json`, import.meta.url)));
