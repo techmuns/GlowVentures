@@ -200,7 +200,7 @@ function stepOf(u: ReturnUnit, b: BridgeBook): BridgeAccount {
       const sold = w.capitalOut - u.assumption.income > 0.005;
       return { ...base, from: w.openDate, to: w.closeDate, opening: w.openValue, added: w.capitalIn, takenOut: w.capitalOut,
         split: sold ? null : { realised: 0, unrealised: u.gain - u.assumption.income, income: u.assumption.income, charges: null, source: 'assumed-holding',
-          note: 'Assumed unchanged holding: published prices and gross dividend entitlements; no sale or withdrawal is claimed.' },
+          note: 'Holding carried forward unchanged: published prices and gross dividend entitlements; no sale or withdrawal is claimed.' },
         unsplitReason: sold ? 'a sale on its purchase record realised part of its gain, and no cost here says how much' : null };
     }
     const own = u.key === u.accountId;
