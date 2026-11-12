@@ -1,5 +1,20 @@
 import assert from 'node:assert/strict';
 
+// Bring an offscreen control beside the pinned column, then use a real click.
+// Native scrollIntoView can centre the control underneath that sticky cell.
+export async function clickTableControl(control) {
+  await control.scrollIntoViewIfNeeded();
+  await control.evaluate(button => {
+    const port = button.closest('[data-navigation-scroll]');
+    port.scrollLeft += button.getBoundingClientRect().right - port.getBoundingClientRect().right + 6;
+  });
+  assert.ok(await control.evaluate(button => {
+    const box = button.getBoundingClientRect();
+    return button.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
+  }), 'table control is reachable beside the frozen first column');
+  await control.click();
+}
+
 // Exercise the actual scroll surface and require new rows after every append.
 export async function appendByScrolling(table) {
   const end = table.locator('[data-table-scroll-end]');

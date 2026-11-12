@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 import { installReadModelRoutes } from './read-model-api.mjs';
+import { clickTableControl } from './table-scroll.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const out = '.cache/market-returns'; await fs.mkdir(out, { recursive: true });
@@ -140,7 +141,7 @@ try {
  await page.waitForTimeout(1000);
  assert.equal(requests, kept, 'a reload draws the kept histories instead of refetching them');
  await page.setViewportSize({width:390,height:844});
- await summary.getByRole('button', {name:'What is included in total market return?',exact:true}).click(); await dialog.waitFor();
+ await clickTableControl(summary.getByRole('button', {name:'What is included in total market return?',exact:true})); await dialog.waitFor();
  // The tab is kept with its history entry (`useNavigationState`): the retry above left it on Missing, and the reload is the same entry.
  assert.equal(await dialog.locator('[data-market-tab="missing"]').getAttribute('aria-selected'),'true','reopening keeps the tab this history entry left it on');
  for(const tab of ['overview','included','missing']) {
