@@ -883,6 +883,15 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
     max-width: 10rem;
     overflow-wrap: anywhere;
   }
+  /* Keep frozen Returns names inside their cell so they cannot cover the
+     adjacent return figures and info buttons on narrow screens. */
+  #root [data-seg-table] > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
+    width: 10rem;
+    min-width: 10rem;
+    max-width: 10rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }
 /* EVERY TABLE FREEZES ITS FIRST COLUMN (Stage 10nj). *"In the portfolio
    monitor, we have freezed the first column … we need to freeze the first
