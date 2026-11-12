@@ -69,6 +69,12 @@ export type CapitalBridge = {
   realisedGains: number | null; realisedLosses: number | null; unrealisedGains: number | null; unrealisedLosses: number | null;
   /** The gain of the accounts no record splits — named in `rows`. */
   unsplit: number; splitCount: number; unsplitCount: number;
+  /**
+   * DISTINCT accounts, not rows (Stage 10nu): a row is a whole account or one
+   * holding measured on its own, so one account can give several rows.
+   * `accounts` is every account the bridge covers; `unsplitAccounts` those with a row not split.
+   */
+  accounts: number; unsplitAccounts: number;
   /** Purchase cost of what these accounts hold now (whole mandates at capital paid in), and the holdings that carry none. */
   heldCost: { invested: number | null; uncosted: number; uncostedValue: number } | null;
 };
@@ -252,5 +258,7 @@ export function capitalBridge(units: readonly ReturnUnit[], book: BridgeBook): C
     charges: charged.length ? charged.reduce((s, r) => s + r.split!.charges!, 0) : null,
     unsplit: rows.filter((r) => !r.split).reduce((s, r) => s + r.gain, 0),
     splitCount: split.length, unsplitCount: rows.length - split.length, heldCost,
+    accounts: new Set(rows.map((r) => r.accountId)).size,
+    unsplitAccounts: new Set(rows.filter((r) => !r.split).map((r) => r.accountId)).size,
   };
 }

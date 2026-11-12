@@ -1656,3 +1656,11 @@ Codex's review of #352, verified against the code and the book:
 - Where a row's purchases are not each dated, its index line is the index's move over the holding period instead of "— No buy dates / Dates incomplete / Range only": from its first investment (Invested on), else the inception of the account that holds it, else a lot register's date, to the row's value date (`holdingPeriodStart` in `investedOn.ts`, `indexOverPeriod` in `holdingBenchmark.ts`). Rows whose lines are valued on different days strike each line on its own start, cost and value date (`periodLegsOf`). The hover names the window and its basis; `data-bench-period` marks it.
 - Section and footer totals pool those same legs; rows no equity index measures (cash, debt, hybrid) are left out of the total's index and named in its hover.
 - A dash that remains carries its reason as the hover only (`data-bench-reason`); `benchGapLabel` is gone. The `monitor` check now asks for that hover instead of a face label.
+
+### Stage 10nu — "Not split" counts accounts, not lines
+
+*"what is not split here?"* — the family, 12 Nov 2026, on Investment performance's breakdown: "Not split · 34 accounts" beside "53 accounts" at the top.
+
+- The top line counted distinct accounts; "Not split · N accounts" and How it is built's "covers the same N accounts" counted bridge rows, and a row is a whole account or one holding measured on its own, so one account could be counted several times.
+- `capitalBridge` now carries `accounts` and `unsplitAccounts` (distinct account ids). The Not split row, its hover, How it is built's coverage line and its Not split heading use them; the hover gives the line count where it differs. Handles: `data-bridge-accounts` (now distinct accounts), `data-bridge-rows`, `data-bridge-split-rows`, `data-bridge-unsplit-accounts`.
+- No figure changes. `capitalBridge.test.ts` adds two holdings of one account: two rows, one account not split.
