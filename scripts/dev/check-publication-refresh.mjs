@@ -98,6 +98,19 @@ try {
     results.push({ startup, checks, spontaneousReloads: 0, explicitReloads: 1, retainedSearchAndScroll: true, errors });
     await context.close();
   }
+  // A deployed asset mismatch used to replace the whole application with an alert.
+  const context = await browser.newContext(); await authenticate(context);
+  await context.route('**/api/**', route => route.fulfill({ json: { ok: false } }));
+  await context.route('**/api/statement-data', route => route.fulfill({ status: 204 }));
+  await context.route('**/publication.json', route => route.fulfill({ json: { schemaVersion: 1, revision: compiled } }));
+  await context.route('**/api/stock-exposure', route => route.fulfill({ status: 409, json: { status: 'revision_changed' } }));
+  const mismatch = await context.newPage();
+  await mismatch.goto(base + '/monitor');
+  await mismatch.locator('[data-dashboard-update]').waitFor();
+  assert.ok(await mismatch.locator('[data-monitor-table]').count() > 0, 'a 409 retains the dashboard and withholds unavailable exposure');
+  assert.equal(await mismatch.getByRole('heading', { name: 'A new dashboard version is ready' }).count(), 0);
+  await context.close();
+  results.push({ startup: 'deployment-mismatch', pageRetained: true });
   await fs.writeFile('.cache/publication-refresh-check/results.json', JSON.stringify(results, null, 2));
   console.log('PASS quiet publication discovery: incompatible pointers, repeated polls, startup failures, drafts, scroll, focus, navigation and explicit updates');
 } finally { await browser.close(); }
