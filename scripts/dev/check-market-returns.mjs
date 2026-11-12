@@ -34,7 +34,12 @@ try {
  });
  await page.goto(base + '/cio?tab=returns&tiles=value,gain,fytd');
  const table = page.locator('[data-segment-returns]'), summary = table;
- await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.marketPending === '0');
+ // The fixed TWR columns also load sold holdings through the shared loader.
+ // Include that initial work before measuring requests caused by date changes.
+ await page.waitForFunction(() => {
+  const d = document.querySelector('[data-segment-returns]')?.dataset;
+  return d?.marketPending === '0' && d?.twrPending === '0';
+ });
  assert.ok(Number(await summary.getAttribute('data-market-covered')) > 20, 'stock and fund histories resolve from the actual book');
  assert.ok(requests > 10);
  assert.ok(nseSourceFailures > 0, 'the missing-listing-history fixture was exercised');
