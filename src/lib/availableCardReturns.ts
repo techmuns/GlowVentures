@@ -70,6 +70,9 @@ export function statementReturnInputs(statement: Portfolio, unitWindows: Readonl
     });
 }
 
+/** Why a private investment is held flat: it has no published price, only the valuations its company or fund sends. */
+export const PRIVATE_HELD = 'A private investment: it has no published price, so it is held at its latest valuation from the company or fund until a new one arrives.';
+
 /**
  * THE THREE RETURN CARDS, ONE RULE (Stage 10la; the family, 4 Nov 2026): each
  * account and holding from its first value on record in the period — the
@@ -88,10 +91,12 @@ export function periodSelection({ inputs, current, accounts, end, assumptions, o
   const first = [...picked.windows.map(w => w.openDate), ...(picked.assumedUnits ?? []).flatMap(u => u.from ? [u.from] : [])].sort()[0] ?? null;
   const start = book.open ?? first;
   /**
-   * HELD AT ITS LAST VALUE (the family, 4 Nov 2026). A public holding no
-   * record measures this period is carried flat from its latest valuation to
-   * the end: in the base at 0%, and named. One still waiting on its price
-   * history is not held — it is loading, and says so.
+   * HELD AT ITS LAST VALUE (the family, 4 Nov 2026). A holding no record
+   * measures this period is carried flat from its latest valuation to the
+   * end: in the base at 0%, and named. One still waiting on its price
+   * history is not held — it is loading, and says so. Private investments are
+   * held the same way (Stage 10nu, the family, 12 Nov 2026), so every account
+   * holding value is in the figure; a new valuation then counts the change.
    */
   const accountOf = new Map(accounts.map(a => [a.accountId, a]));
   const whole = new Set(picked.windows.map(w => w.accountId));
@@ -99,11 +104,12 @@ export function periodSelection({ inputs, current, accounts, end, assumptions, o
   const measured = new Set((picked.assumedUnits ?? []).flatMap(u => u.positions.map(keyOf)));
   // Prices still loading, or a price service that did not answer, wait for prices: never held.
   const pending = new Set((picked.assumptionGaps ?? []).filter(g => /still loading|could not load/i.test(g.reason)).map(keyOf));
-  const held = assumptions ? current.filter(p => p.marketSide !== 'private' && !whole.has(p.accountId) && !measured.has(keyOf(p)) && !pending.has(keyOf(p)))
+  const held = assumptions ? current.filter(p => !whole.has(p.accountId) && !measured.has(keyOf(p)) && !pending.has(keyOf(p)))
     .flatMap(p => {
       const a = accountOf.get(p.accountId);
       const g = picked.assumptionGaps?.find(x => keyOf(x) === keyOf(p)) ?? picked.excluded.find(x => x.accountId === p.accountId);
-      const u = a ? heldAtLastValue(p, a, start, end, g?.reason ?? 'No second value on record this period.') : null;
+      const u = a ? heldAtLastValue(p, a, start, end, p.marketSide === 'private' ? PRIVATE_HELD
+        : g?.reason ?? 'No second value on record this period.') : null;
       return u ? [u] : [];
     }) : [];
   const heldKeys = new Set(held.flatMap(u => u.positions.map(keyOf)));
@@ -202,14 +208,17 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
     const fullPeriod = !!selection.start && starts.length > 0 && starts.every(s => s.date == null || s.date <= selection.start!);
     /**
      * COVERAGE BY VALUE, OF THE PUBLIC INVESTMENTS (the family, 4 Nov 2026):
-     * a holding count read as broken. Private investments are their own line;
-     * what is held at its last value is said apart from what is measured, so
-     * the caption never widens the figure it describes. An overdrawn balance
-     * is not an investment, so the public total is of holdings with value.
+     * a holding count read as broken. What is held at its last value is said
+     * apart from what is measured, so the caption never widens the figure it
+     * describes. An overdrawn balance is not an investment, so the public
+     * total is of holdings with value. Private investments are in the figure
+     * since Stage 10nu, held at their latest valuation: counted on their own
+     * line (`private*`), so the public split above still reads as before.
      */
     const coveredKeys = new Set(result.total.units.flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`)));
     const heldKeys = new Set(result.total.units.filter(u => u.held).flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`)));
     const publicRows = current.filter(p => isPublic(p) && p.marketValue > 0), valueOf = (ps: Position[]) => ps.reduce((t, p) => t + p.marketValue, 0);
+    const privateRows = current.filter(p => !isPublic(p) && p.marketValue > 0);
     const rowKey = (p: Position) => `${p.accountId}|${p.securityKey}`;
     const coverage = { publicValue: valueOf(publicRows),
       // The same public holdings by count (the family, 5 Nov 2026: "number of records covered over total records").
@@ -224,7 +233,13 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
       // What the figure MEASURES, apart from what it holds flat: holdings and accounts.
       measuredHoldings: new Set(result.total.units.filter(u => !u.held).flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`))).size,
       measuredAccounts: new Set(result.total.units.filter(u => !u.held).map(u => u.accountId)).size,
-      privateValue: valueOf(current.filter(p => !isPublic(p))) };
+      privateValue: valueOf(current.filter(p => !isPublic(p))),
+      // Private investments in the figure: held at their latest valuation unless a record measures them.
+      privateHoldings: privateRows.length,
+      privateCoveredHoldings: privateRows.filter(p => coveredKeys.has(rowKey(p))).length,
+      privateTotalValue: valueOf(privateRows),
+      privateCoveredValue: valueOf(privateRows.filter(p => coveredKeys.has(rowKey(p)))),
+      privateHeldValue: valueOf(privateRows.filter(p => heldKeys.has(rowKey(p)))) };
     return { ...result, selection, coveredAccounts, totalAccounts, totalHoldings: current.length,
       from: dates[0] ?? null, to: closes.at(-1) ?? null, notes, starts, fullPeriod, coverage };
   };

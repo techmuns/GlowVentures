@@ -143,7 +143,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, e
     add(a.total);
     return m;
   }, [a, selection, benchLevels, benchCtx]);
-  // Since investment covers every holding; a period, the public ones — private investments are reported apart, as on the cards.
+  // Since investment covers every holding; a period, the public ones — private investments have no price, so this price figure reports them apart.
   const marketBase = useMemo(() => current.filter(p => p.marketValue > 0 && (selection.inception || p.marketSide !== 'private')), [current, selection.inception]);
   const marketPrivate = selection.inception ? 0 : current.filter(p => p.marketValue > 0 && p.marketSide === 'private').length;
   const marketOf = (ps: readonly typeof current[number][]) => {

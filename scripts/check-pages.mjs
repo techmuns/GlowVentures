@@ -20635,11 +20635,11 @@ const NAV_CARD_LINE = [
     const r = AVAILABLE_CARDS_BOOK?.[chip.period];
     return !!r?.from && !!r?.to && c.window === `${navDay(r.from)} → ${navDay(r.to)}`;
   }],
-  ["the book's hover says what each investment counts from, what the line covers and that private investments are apart", (t, ctx) => {
+  ["the book's hover says what each investment counts from, what the line covers and how much of it is private, held at its last value", (t, ctx) => {
     const h = navBookChip(ctx)?.title;
     if (h == null) return navBasisMissing(ctx);
-    return /first value on record in the period/.test(h) && /Covers \d+% of public investments/.test(h)
-      && /Private investments, ₹[\d,.]+\s*(?:Cr|L|K)?, are reported apart/.test(h) && /the card's figure/.test(h);
+    return /first value on record in the period/.test(h) && /Covers \d+% of investments/.test(h)
+      && /₹[\d,.]+\s*(?:Cr|L|K)? of it private/.test(h) && /the card's figure/.test(h);
   }],
 ];
 
