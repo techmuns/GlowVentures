@@ -12,14 +12,18 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-// INSIDE node_modules, not in the system temp dir. `--packages=external` leaves
-// real dependencies as bare imports, and Node resolves those by walking UP from
-// the bundle — so a bundle in /tmp cannot find `exceljs`, while one here reaches
-// the repo's own node_modules one level up. (It stays out of the working tree
-// either way: node_modules is ignored.)
-const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
+// Keep generated bundles in this checkout even when dependencies are reused by symlink.
+// Bare imports still resolve through the checkout's node_modules ancestor.
+const TEMP_ROOT = path.join(ROOT, ".cache", "family-tests");
+fs.mkdirSync(TEMP_ROOT, { recursive: true });
+const DIR = fs.mkdtempSync(path.join(TEMP_ROOT, "run-"));
 
 const SUITES = [
+  ["capital integrity", "src/lib/__tests__/capitalIntegrity.test.ts"],
+  ["financial solver integrity", "src/lib/__tests__/xirrIntegrity.test.ts"],
+  ["Home dashboard dates and history", "src/lib/__tests__/homeDashboard.test.ts"],
+  ["home overview", "src/lib/__tests__/homeOverview.test.ts"],
+  ["INR adjusted time-weighted returns", "src/lib/__tests__/adjustedTwr.test.ts"],
   ["navigation snapshots", "src/lib/__tests__/navigationMemory.test.ts"],
   ["archive sheet decoding", "src/lib/__tests__/auditSheet.test.ts"],
   ["ETF unit continuity", "src/lib/__tests__/fundUnitActions.test.ts"],
@@ -34,6 +38,7 @@ const SUITES = [
   ["custody audit source rows", "src/lib/__tests__/custodyAudit.test.ts"],
   ["available headline returns", "src/lib/__tests__/availableCardReturns.test.ts"],
   ["ytd from the first date", "src/lib/__tests__/ytdAvailable.test.ts"],
+  ["period rules", "src/lib/__tests__/periodRules.test.ts"],
   ["return tiles against the index", "src/lib/__tests__/cardBenchmark.test.ts"],
   ["published data lineage", "src/lib/__tests__/publicationViews.test.ts"],
   ["selected attribution periods and coverage", "src/lib/__tests__/selectedSegmentReturns.test.ts"],
@@ -157,7 +162,10 @@ SUITES.push(["table number corrections and Excel uploads", "src/lib/__tests__/ta
 SUITES.push(["private market capital cells", "src/lib/__tests__/capitalEntry.test.ts"]);
 SUITES.push(["under a year absolute", "src/lib/__tests__/underAYear.test.ts"]);
 SUITES.push(["holdings against their own index", "src/lib/__tests__/holdingBenchmark.test.ts"]);
+SUITES.push(["returns-tab rows against their own index", "src/lib/__tests__/lineBenchmark.test.ts"]);
 SUITES.push(["private company funding rounds", "src/lib/__tests__/privateRounds.test.ts"]);
+SUITES.push(["the returns tab's one selection", "src/lib/__tests__/selectionMarket.test.ts"]);
+SUITES.push(["moved holdings", "src/lib/__tests__/familyPlacements.test.ts"]);
 for (const [name, rel] of SUITES) {
   if (ONLY.length && !ONLY.includes(name)) continue;
   const out = path.join(DIR, path.basename(rel).replace(/\.ts$/, ".mjs"));

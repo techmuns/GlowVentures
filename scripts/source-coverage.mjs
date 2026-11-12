@@ -30,6 +30,8 @@
 //   never-arrived         — a mail server's removal notice in place of a statement
 //                           (`attachment-removed`): read, and nothing in it. Each is
 //                           named; the sender has to re-send the statement
+//   re-sent               — such a notice whose statement the sender has since
+//                           sent again, under the same file name, and that copy is read
 //   not-read              — every document from it FAILED. Named here, and judged
 //                           by `check:reads`, which fails on any it does not accept
 //   unread                — anything else. This list must be empty, and the run
@@ -176,7 +178,7 @@ for (const f of files) {
   byHash.get(h).push(f);
 }
 
-const CLASSES = ["read", "read-via-duplicate", "read-as-witness", "read-by-build-book", "held-out-by-decision", "read-as-profile", "not-a-document", "excluded-by-policy", "never-arrived", "not-read", "unread"];
+const CLASSES = ["read", "read-via-duplicate", "read-as-witness", "read-by-build-book", "held-out-by-decision", "read-as-profile", "not-a-document", "excluded-by-policy", "never-arrived", "re-sent", "not-read", "unread"];
 const rows = [];
 for (const f of files) {
   // A PROFILE FILE IS READ BY `build-profiles`, whatever `extract` made of it —
@@ -204,9 +206,10 @@ for (const f of files) {
     // A FILE WHOSE EVERY DOCUMENT FAILED WAS NOT READ, whatever the archive holds for it.
     const failed = !reviewSource && !heldOut && docs.every((d) => d.status === "failed");
     const removed = failed && docs.every((d) => d.failedBecause === "attachment-removed");
-    rows.push({ f, cls: reviewSource ? "read-by-build-book" : heldOut ? "held-out-by-decision" : removed ? "never-arrived"
+    const resent = removed && docs.every((d) => d.resentAs);
+    rows.push({ f, cls: reviewSource ? "read-by-build-book" : heldOut ? "held-out-by-decision" : resent ? "re-sent" : removed ? "never-arrived"
       : failed ? "not-read" : witness ? "read-as-witness" : "read", docs,
-      note: witness ? `witness of ${docs.map((d) => d.twinOf).join(", ")}` : docs.map((d) => d.docKey).join(", ") });
+      note: witness ? `witness of ${docs.map((d) => d.twinOf).join(", ")}` : resent ? `re-sent as ${docs[0].resentAs}` : docs.map((d) => d.docKey).join(", ") });
     continue;
   }
   if (isResourceFork(f)) { rows.push({ f, cls: "not-a-document", docs: [], note: "macOS AppleDouble resource fork" }); continue; }
@@ -242,6 +245,7 @@ if (count("read-as-profile")) say(`| Read as a profile | ${count("read-as-profil
 say(`| Not a document | ${count("not-a-document")} | macOS \`__MACOSX/._*\` resource forks — checked, not assumed |`);
 say(`| Excluded by policy | ${count("excluded-by-policy")} | the drop's own password notes |`);
 if (count("never-arrived")) say(`| **Never arrived** | **${count("never-arrived")}** | **a mail server's removal notice in place of the statement — ask the sender to re-send it** |`);
+if (count("re-sent")) say(`| Never arrived, then re-sent | ${count("re-sent")} | a removal notice whose statement the sender sent again — the copy is read |`);
 if (count("not-read")) say(`| Not read | ${count("not-read")} | every document from it failed — \`check:reads\` names why |`);
 say(`| **Unread** | **${unread.length}** | **must be zero** |`);
 say(`| **Total leaf files** | **${rows.length}** | |`);
@@ -263,6 +267,13 @@ if (count("never-arrived")) {
   say("There is nothing in the file to read; the statement has to be re-sent another way and uploaded.");
   say();
   for (const r of rows.filter((x) => x.cls === "never-arrived")) say(`- \`${r.f}\``);
+  say();
+}
+
+if (count("re-sent")) {
+  say("## Never arrived, then re-sent");
+  say();
+  for (const r of rows.filter((x) => x.cls === "re-sent")) say(`- \`${r.f}\` — ${r.note}`);
   say();
 }
 

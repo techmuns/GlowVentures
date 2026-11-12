@@ -9,6 +9,8 @@ type Props = {
   label: string; value: string; units: readonly MarketUnit[]; gaps: readonly MarketGap[]; positions: readonly Position[]; accounts: readonly Account[];
   totalValue: number; from: string | null; to: string | null; requestedStart: string | null; requestedEnd: string | null;
   annual: boolean; pending: number; inception: boolean; money: (n: number) => string; onRetry?: () => void;
+  /** Private investments a period reports apart (Stage 10lh): out of these lists and totals, and named. */
+  privateApart?: { count: number; value: number };
 };
 const percent = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 export function MarketReturnInfo(props: Props) {
@@ -18,7 +20,7 @@ export function MarketReturnInfo(props: Props) {
   </ReturnCalculationInfo>;
 }
 /** Keep this calculation's tab and searches with the originating history entry. */
-function MarketReturnDetails({ label, units, gaps, positions, accounts, totalValue, from, to, requestedStart, requestedEnd, annual, pending, inception, money, onRetry }: Props) {
+function MarketReturnDetails({ label, units, gaps, positions, accounts, totalValue, from, to, requestedStart, requestedEnd, annual, pending, inception, money, onRetry, privateApart }: Props) {
   const [tab, setTab] = useNavigationState<string>(`market-info:${label}:tab`, 'overview', ['overview','included','missing']), [includedSearch, setIncludedSearch] = useNavigationState<string>(`market-info:${label}:included`, ''), [missingSearch, setMissingSearch] = useNavigationState<string>(`market-info:${label}:missing`, '');
   const id = useId();
   const accountMap = useMemo(() => new Map(accounts.map(a => [a.accountId, a])), [accounts]);
@@ -69,6 +71,7 @@ function MarketReturnDetails({ label, units, gaps, positions, accounts, totalVal
       {tab==='overview' && <div className="space-y-3" data-market-overview>
         {!units.length && !pending && missingCount > 0 && <p className="rounded-lg bg-ink-900 p-3">We can’t calculate this market return yet. Open Missing Values to see what’s needed.</p>}
         <p><strong>{units.length} of {positions.length} holdings</strong> are included. <strong>{missingCount}</strong> are left out{pending>0?`, including ${waiting.length} still loading`:''}.</p>
+        {privateApart && privateApart.count > 0 && <p data-market-private-apart={privateApart.count}><strong>{privateApart.count} private investments</strong> ({money(privateApart.value)}) have no published price, so this price-based figure reports them apart. The return figures hold them at their latest valuation. They are not in these lists or totals.</p>}
         <dl className="grid grid-cols-2 gap-3 rounded-lg bg-ink-900 p-3">
           <div><dt className="text-xs text-slate-400">Value included</dt><dd className="font-semibold tabular">{money(covered)}</dd></div>
           <div><dt className="text-xs text-slate-400">Total current value</dt><dd className="font-semibold tabular">{money(totalValue)}</dd></div>
@@ -83,20 +86,20 @@ function MarketReturnDetails({ label, units, gaps, positions, accounts, totalVal
         <p><strong>{units.length} holdings · {money(covered)}</strong> included. Each account holding has its own entry.</p>
         <label className="mt-3 block"><span className="sr-only">Search included holdings</span><input value={includedSearch} onChange={e=>setIncludedSearch(e.target.value)} placeholder="Search security, fund, owner or account" className="ring-focus w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-sm" /></label>
         {includedSearch && <p className="mt-2 text-xs text-slate-400">Showing {included.length} of {units.length} included holdings</p>}
-        <ul className="mt-3 space-y-3">{included.map(u=><li key={marketHoldingKey(u.position)} className="rounded-lg border border-ink-700 p-3" data-market-source data-market-holding-key={marketHoldingKey(u.position)}>
+        <ul className="mt-3 space-y-3">{included.map(u=><li key={marketHoldingKey(u.position)} className="rounded-lg border border-ink-700 p-3" data-market-source data-market-side={u.position.marketSide ?? ''} data-market-holding-key={marketHoldingKey(u.position)} data-market-pct={u.periodPct} data-market-value={u.position.marketValue}>
           {identity(u.position)}
           <p className="mt-2 text-xs"><strong>{money(u.position.marketValue)}</strong> · {covered>0?(u.position.marketValue/covered*100).toFixed(2):'0'}% of included value · {percent(u.periodPct)} for the period</p>
-          <p className="mt-1 text-xs text-slate-400">Price source: {u.history.source} · {u.history.symbol}</p>
+          <p className="mt-1 text-xs text-slate-400">{u.history ? <>Price source: {u.history.source} · {u.history.symbol}</> : <>Measured from: {u.source ?? 'the statement records'} · {u.from} → {u.to}</>}</p>
         </li>)}</ul>
         {!included.length && <p className="mt-3">{includedSearch?'No included holdings match this search.':'No holdings are included yet. See Missing Values for the reason.'}</p>}
       </div>}
       {tab==='missing' && <div>
         <div className="flex flex-wrap items-center justify-between gap-2"><p><strong>{missingCount} holdings · {money(missingValue)}</strong> left out{pending>0?` · ${waiting.length} still loading`:''}.</p>
-          {onRetry && gaps.some(g=>g.code==='source') && <button type="button" className="btn-secondary text-xs" onClick={onRetry}>Retry missing histories</button>}</div>
+          {onRetry && gaps.some(g=>g.code==='source') && <button type="button" className="btn-secondary text-xs" onClick={onRetry} data-market-retry>Retry missing histories</button>}</div>
         {(requestedStart || from) && (requestedEnd || to) && <p className="mt-1 text-xs text-slate-400">Dates requested: {fmtDate((requestedStart || from)!)} → {fmtDate((requestedEnd || to)!)}</p>}
         <label className="mt-3 block"><span className="sr-only">Search missing holdings</span><input value={missingSearch} onChange={e=>setMissingSearch(e.target.value)} placeholder="Search security, fund, owner or account" className="ring-focus w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-sm" /></label>
         {missingSearch && <p className="mt-2 text-xs text-slate-400">Showing {missing.length+loading.length} of {missingCount} left-out holdings</p>}
-        <ul className="mt-3 space-y-3">{missing.map(g=>{ const explanation=marketGapExplanation(g,requestedStart,requestedEnd); return <li key={marketHoldingKey(g.position)} className="rounded-lg border border-ink-700 p-3" data-market-gap data-market-holding-key={marketHoldingKey(g.position)}>
+        <ul className="mt-3 space-y-3">{missing.map(g=>{ const explanation=marketGapExplanation(g,requestedStart,requestedEnd); return <li key={marketHoldingKey(g.position)} className="rounded-lg border border-ink-700 p-3" data-market-gap data-market-side={g.position.marketSide ?? ''} data-market-holding-key={marketHoldingKey(g.position)}>
           {identity(g.position, true)}
           <p className="mt-2 text-sm" data-market-missing-data><strong>Missing: </strong>{explanation.missing}</p>
           <p className="mt-1 text-sm" data-market-needed><strong>Needed: </strong>{explanation.needed}</p>

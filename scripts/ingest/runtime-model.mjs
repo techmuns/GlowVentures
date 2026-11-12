@@ -8,7 +8,7 @@ import { CANONICAL_BOOK_KEYS } from '../../shared/canonicalBookKeys.mjs';
 export async function prepareRuntimeModel(root = process.cwd()) {
   const keys = CANONICAL_BOOK_KEYS;
   const compiled = await build({ stdin: { resolveDir: root, contents:
-    'export * from "./src/lib/ledgerModel"; export { buildConsolidatedSheet } from "./src/lib/consolidatedSheet"; export { investedOnOf } from "./src/lib/investedOn"; export { loadStockExposure } from "./src/lib/lookthrough";' },
+    'export * from "./src/lib/ledgerModel"; export { buildConsolidatedSheet, deriveHoldingLedgers, deriveHoldingLedger } from "./src/lib/consolidatedSheet"; export { investedOnOf } from "./src/lib/investedOn"; export { loadStockExposure } from "./src/lib/lookthrough";' },
     bundle: true, write: false, format: 'cjs', platform: 'node', alias: { '@': path.join(root, 'src') }, logLevel: 'error',
     plugins: [{ name: 'one-complete-canonical-book', setup(builder) {
       builder.onResolve({ filter: /(?:^|\/)glowData$/ }, () => ({ path: 'book', namespace: 'runtime-book' }));

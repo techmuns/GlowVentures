@@ -99,8 +99,8 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-08-31 | — | Opening valuation and complete dated cash flows are missing |
 | Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-08-31 | — | Opening valuation and complete dated cash flows are missing |
 | Sky Capital Rising Titans Fund | SKY024 | Bharat Jaisinghani Family Trust 3 | 2026-08-31 | — | Opening valuation and complete dated cash flows are missing |
-| SVAN Investment Managers LLP | 8710067 | Ajay Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
-| SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
+| SVAN Investment Managers LLP | 8710067 | Ajay Jaisinghani | 2026-11-04 | — | Opening valuation and complete dated cash flows are missing |
+| SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-11-04 | — | Opening valuation and complete dated cash flows are missing |
 | Transition Venture Capital | TVC262 | Bharat Jaisinghani Family Trust 2 | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
 | Transition Venture Capital | TVC263 | Bharat Jaisinghani Family Trust 3 | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
 | V.E.C Assago Capital Management LLP | 128004 | Ankita Jaisinghani | 2026-10-07 | 2026-10-07 | Complete through the selected date |

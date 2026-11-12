@@ -315,7 +315,7 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
   nav.forEach((n, i) => {
     if (i > 0) {
       const open = n.linkOpen ?? nav[i - 1].nav, close = n.linkClose ?? n.nav;
-      if (open > 0) v *= (close - (n.flowIn ?? 0)) / open;
+      if (open > 0) v *= 1 + (close - open - (n.flowIn ?? 0)) / (open + (n.flowWeighted ?? 0));
     }
     idx.push({ date: n.date, v });
   });

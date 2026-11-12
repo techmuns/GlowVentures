@@ -12,7 +12,7 @@ import { applyTableInputs } from "@/lib/applyTableInputs";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { startPublicationRefresh } from "../../shared/publicationRefresh.mjs";
 import { selectedReadModels as readModels, publicationDiscoveryPath, hasRuntimeBook, bootstrapWarning } from "@/lib/runtimeBook";
-import { subscribeToDeployment } from "@/lib/deploymentVersion";
+import { markDeploymentChanged, setDeploymentUpdateBlocked } from "@/lib/deploymentVersion";
 import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
@@ -26,6 +26,7 @@ import { fmtCurrency } from "@/lib/format";
 import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
 import { WHOLE_BOOK_NAV } from "@/lib/bookNavBook";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
+import { useFamilyPlacements } from "@/lib/familyPlacements";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   MEMBERS_PARAM, accountIdsFor, memberOptions, parseMembersParam, scopeLabel, scopePortfolio, serializeMembers,
@@ -35,7 +36,7 @@ import {
   BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_OWNERS, BOOK_POSITIONS, BOOK_CAPITAL_GAINS,
   BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURN_RECORDS, BOOK_ENTITY_CASH_FLOWS,
   BOOK_PE_FUNDS, BOOK_PREIPO_FUNDS, BOOK_UNLISTED_COMPANIES, BOOK_DEBT_FUNDS, BOOK_CLOSED_FUNDS, BOOK_STARTUPS,
-  BOOK_COMMITMENTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS,
+  BOOK_COMMITMENTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS, BOOK_TAPE_ROWS,
 } from "@/data/glowData";
 
 /**
@@ -402,7 +403,18 @@ const PRIORITY_SYMBOLS = (() => {
 export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // The book as ingested. Live prices are layered on top in `portfolio` below,
   // so the statement figures stay available and unmutated underneath.
-  const [basePortfolio, setPortfolio] = useState<Portfolio | null>(() => defaultPortfolio());
+  const [bookPortfolio, setPortfolio] = useState<Portfolio | null>(() => defaultPortfolio());
+  /**
+   * THE FAMILY'S MOVES REISSUE THE BOOK (Stage 10lm). A row moved to another tab
+   * changes the section it sits in on every surface (`familyPlacements.ts`), and
+   * those surfaces memoise on the positions and accounts arrays — so a move hands
+   * the same rows out in new arrays and every table re-sections. Nothing in a
+   * position or an account changes.
+   */
+  const placements = useFamilyPlacements();
+  const basePortfolio = useMemo(() => bookPortfolio && placements.version > 0
+    ? { ...bookPortfolio, positions: bookPortfolio.positions.slice(), accounts: bookPortfolio.accounts.slice() }
+    : bookPortfolio, [bookPortfolio, placements.version]);
   const inputState = useTableInputs();
   const enteredPortfolio = useMemo(() => applyTableInputs(basePortfolio, inputState.saved), [basePortfolio, inputState.saved]);
   const [corporateActions, setCorporateActions] = useState<ActionFeed | null>(null);
@@ -593,8 +605,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // `basePortfolio` is kept intact alongside and handed out as
   // `statementPortfolio`, so a page that must reconcile has the printed figures
   // available rather than having to un-mix them.
+  // A PMS account's own tape rolled past its statement also BOUGHT names the
+  // statement never held (Stage 10mh, `BOOK_TAPE_ROWS`): live rows only, through
+  // the same layer, so a quote prices them and the statement basis never sees them.
   const corporateActionLayer = useMemo(() => applyCorporateActionQuotes(
-    enteredPortfolio?.positions ?? [], enteredPortfolio?.accounts ?? [], quotes, corporateActions,
+    enteredPortfolio ? [...enteredPortfolio.positions, ...BOOK_TAPE_ROWS] : [], enteredPortfolio?.accounts ?? [], quotes, corporateActions,
   ), [enteredPortfolio, quotes, corporateActions]);
   const portfolio = useMemo<Portfolio | null>(() => {
     if (!basePortfolio) return null;
@@ -689,10 +704,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const publicationRefresh = useRef<ReturnType<typeof startPublicationRefresh> | null>(null);
   useEffect(() => {
-    const controller = startPublicationRefresh({ revision: bootstrapWarning ? '0'.repeat(20) : readModels.revision, path: publicationDiscoveryPath, intervalMs: hasRuntimeBook() || bootstrapWarning ? 5_000 : 30_000 });
-    const unsubscribe = subscribeToDeployment(() => { void controller.check(); });
+    const controller = startPublicationRefresh({ revision: readModels.revision, readerRevision: readModels.readerRevision,
+      path: publicationDiscoveryPath, intervalMs: hasRuntimeBook() || bootstrapWarning ? 5_000 : 30_000,
+      onAvailable: markDeploymentChanged, onBlocked: setDeploymentUpdateBlocked });
     publicationRefresh.current = controller;
-    return () => { unsubscribe(); controller.stop(); publicationRefresh.current = null; };
+    return () => { controller.stop(); publicationRefresh.current = null; };
   }, []);
   useEffect(() => { void publicationRefresh.current?.check(); }, [location.pathname]);
   const navigate = useNavigate();

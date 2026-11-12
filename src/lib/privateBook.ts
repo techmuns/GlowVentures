@@ -1,5 +1,5 @@
 // THE PRIVATE MARKET BOOK AS ONE TABLE — every fund, every folio behind it,
-// and the capital account each folio sends, in three sections.
+// and the capital account each folio sends, in four sections.
 //
 //   *"Why are these two tables separate they need to be in one master table
 //    itself … make one consolidated structured table instead of breaking it
@@ -26,9 +26,11 @@
 // The two groupings share every column, so switching between them changes which
 // rows are drawn and never what a column means.
 //
-// ── THE THREE SECTIONS, AND WHY THE LAST STARTS CLOSED ─────────────────────
+// ── THE FOUR SECTIONS, AND WHY THE LAST STARTS CLOSED ──────────────────────
 //
-//   private    the private side of the book with a measured value — open.
+//   private    the private funds with a measured value — open.
+//   company    private companies held directly with a measured value — open.
+//              A company is not a fund (`isPrivateCompany`).
 //   atCost     private investments the family's consolidated review records at
 //              what was paid and no valuation (Stage 10dh) — open. Their value is
 //              their cost, so they carry no gain and no return, and a section of
@@ -113,7 +115,7 @@ import { investedOnOf } from "./investedOn";
 import { brandNameOf, type BrandBasis, type BrandName } from "./brandNames";
 import { matchProfiles, combineProfiles, type InvestmentIdentity, type InvestmentProfile, type SuppliedProfiles } from "./investmentProfiles";
 
-export type BookSectionId = "private" | "atCost" | "unvalued";
+export type BookSectionId = "private" | "company" | "atCost" | "unvalued";
 export type BookGrouping = "fund" | "owner" | "brand";
 
 /**
@@ -207,7 +209,7 @@ function brandLabel(fs: BookFolio[]): string {
 /** Why a folio carries (or does not carry) a value. */
 export type FolioStatus = "valued" | UnvaluedKind;
 
-export const BOOK_SECTIONS: readonly BookSectionId[] = ["private", "atCost", "unvalued"];
+export const BOOK_SECTIONS: readonly BookSectionId[] = ["private", "company", "atCost", "unvalued"];
 
 /** One account's view of one fund — the atom every row of the table is built from. */
 export type BookFolio = {
@@ -619,8 +621,19 @@ function accountCategory(a: Account | undefined): string | null {
  */
 function sectionOf(p: Position): BookSectionId | null {
   if (!isPrivateClass(p)) return null;
-  return isValuedAtCost(p) ? "atCost" : "private";
+  if (isValuedAtCost(p)) return "atCost";
+  return isPrivateCompany(p) ? "company" : "private";
 }
+
+/**
+ * A SHARE IN A PRIVATE COMPANY, held directly — never a fund's units, never a
+ * loan. *"Zepto is a private market company not a fund"*: a company the review
+ * VALUES (Zepto, Direct Equity - Unlisted) stood in the Private funds band
+ * because that band was every valued private holding. It sits in a companies
+ * band of its own now, beside the ones held at cost.
+ */
+const COMPANY_CLASSES = new Set(["Unlisted", "Equity"]);
+const isPrivateCompany = (p: Position) => !isFundVehicle(p) && COMPANY_CLASSES.has(p.assetClass);
 
 /**
  * EVERY FOLIO ON THE PAGE, with its capital account attached by ACCOUNT.
@@ -1019,7 +1032,8 @@ function capitalToValuation(c: Commitment, valuedAt: string | null): BookFolio["
  *   DPI  = distributions ÷ paid in      RVPI = value ÷ paid in
  *   TVPI = DPI + RVPI = (distributions + value) ÷ paid in
  *
- * Struck over the holdings the "Private funds" band values, each counted once —
+ * Struck over the holdings the "Private funds" and valued companies bands value
+ * (a company the review values carries its dated purchases like a fund), each counted once —
  * never over a line held at cost, whose value IS what was paid, so its RVPI
  * would be 1.0× by construction rather than by measurement (counted apart in
  * `atCost`). A distribution is counted only to the date the value is struck
@@ -1196,6 +1210,24 @@ function navOf(held: BookFolio[], funds: number): Pick<BookFigures, "nav" | "nav
   return { nav: { perUnit: sum(held.map((f) => f.value!)) / sum(held.map((f) => f.units!)), date: dates[0] }, navWhy: null };
 }
 
+/**
+ * THE WEIGHT DENOMINATOR OVER THE BANDS THE TABLE DRAWS. *"When we are seeing
+ * only the companies filter or the funds filter then the weightage … should be
+ * measured for that particular filter only"* — so Companies weighs each row
+ * against the private companies alone, Funds against the private funds alone,
+ * and Both against the whole private book (`privateValue` / `privateCost`).
+ * Same basis as those two: valued holdings, each counted once, a costless one
+ * named and kept out of the cost.
+ */
+export function weightBase(book: PrivateBook, sections: readonly BookSectionId[]): { value: number; cost: number | null; costless: string[] } {
+  const valued = book.folios.filter((f) => f.section !== "unvalued" && sections.includes(f.section));
+  return {
+    value: figuresOf(valued, true).value ?? 0,
+    cost: figuresOf(valued, true).cost,
+    costless: [...new Set(valued.filter((f) => f.position && f.counted && f.cost == null).map((f) => f.fundName))],
+  };
+}
+
 export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigures {
   const held = folios.filter((f) => f.position && (!consolidated || f.counted));
   // THE CAPITAL ON THE SAME BASIS AS THE HOLDING: every statement's own on a
@@ -1345,7 +1377,7 @@ const byValueThenPaid = (a: { value: number | null; paid: number | null; committ
   (b.value ?? -1) - (a.value ?? -1) || (b.paid ?? -1) - (a.paid ?? -1) || (b.committed ?? -1) - (a.committed ?? -1);
 
 /**
- * THE TABLE: three sections of rows, grouped by fund or by family member, and the
+ * THE TABLE: four sections of rows, grouped by fund or by family member, and the
  * one total every figure on the page ties to.
  */
 export function privateBook(folios: BookFolio[], grouping: BookGrouping): PrivateBook {

@@ -627,6 +627,34 @@ export const UNROUTED_EQUITY_BUCKET = "Equity — how it is held is not stated";
  * uncovered: a return there is refused and says why.
  */
 export const AT_COST_BUCKET = "Private investments at cost";
+
+/**
+ * ── REAL ESTATE HELD AS COMPANY SHARES (Stage 10mg) ─────────────────────────
+ *
+ *   "Glowterra LLP and Glowsphere LLP: show their Nzuri Pune Knowledge Park
+ *    holdings under Real Estate … as line items on the Real Estate tab and as
+ *    real-estate exposure on the Category / Asset class views, counted once in
+ *    the total."
+ *
+ * The two LLPs hold Nzuri Pune Knowledge Park's unlisted equity and preference
+ * shares, at cost (Stage 10jq). This map is the one list of book holdings the
+ * family files as real estate, and three surfaces read it: the Category axis
+ * (`holdingBucket`, ahead of the at-cost section), the family's asset class
+ * (`FAMILY_SAID_CLASS`) and the Real Estate page's line items. Each is the same
+ * book position, so no total moves: a line leaves "Private investments at cost"
+ * or "Alternate" for "Real Estate" and is still counted once.
+ *
+ * Held at cost, a Real Estate section carries no gain and refuses its return
+ * through `costCoversSet`, as the at-cost section did.
+ */
+export const REAL_ESTATE_KEYS: Readonly<Record<string, string>> = {
+  "nzuri-pune-knowledge-park": "Nzuri Pune Knowledge Park equity shares — Glowterra LLP and Glowsphere LLP",
+  "nzuri-pune-knowledge-park-private-limited-pref-24sp46": "Nzuri Pune Knowledge Park preference shares — Glowterra LLP and Glowsphere LLP",
+};
+export const REAL_ESTATE_BUCKET = "Real Estate";
+/** Is this a book holding the family files as real estate? */
+export const isRealEstateHolding = (p: { securityKey?: string }): boolean =>
+  !!p.securityKey && Object.prototype.hasOwnProperty.call(REAL_ESTATE_KEYS, p.securityKey);
 /** Is this a review line held at cost — a value that is its cost, and no measured gain? */
 export const isValuedAtCost = (p: { valuedAtCost?: boolean }): boolean => p.valuedAtCost === true;
 /** The reason a return is absent on a line held at cost, in one wording for every surface. */
@@ -922,6 +950,9 @@ export function holdingBucket(p: { assetClass: string | null; securityKey?: stri
    * the identical reason the ordinary cash sleeve is not lifted either.
    */
   if (isCashEquivalent(p)) return "Cash";
+  // Real estate before at cost: the family files these by what they ARE, and
+  // the section still carries no gain; see `REAL_ESTATE_KEYS`.
+  if (isRealEstateHolding(p)) return REAL_ESTATE_BUCKET;
   // A review line held at cost has no measured gain; see `AT_COST_BUCKET`.
   if (isValuedAtCost(p)) return AT_COST_BUCKET;
   /**
@@ -1634,26 +1665,34 @@ export type ReturnMeasureDef = {
   label: string;
   /** The tag printed beside the figure, so a cell states which return it is. */
   tag: string;
+  /**
+   * The column heading. The tag, except where the family asked the heading to
+   * say more than the tag: "HPR - Absolute" (Stage 10ml), so a reader sees the
+   * holding-period return is not annualised. Cells keep the short tag.
+   */
+  heading: string;
   /** One line under the picker and in the column caption. */
   hint: string;
 };
 
 /** The picker's options, in reading order — `auto` first, as the default. */
 export const RETURN_MEASURES: ReturnMeasureDef[] = [
-  { key: "auto", label: "By methodology", tag: "AUTO",
+  { key: "auto", label: "By methodology", tag: "AUTO", heading: "Return",
     hint: "Held under a year, or bought on several dates: holding-period return. One purchase held a year or more: CAGR. Fixed income, and an account funded over several dated payments: XIRR. Only debt is annualised under a year. Each cell says which one it is." },
   // The measure KEY stays "absolute" — the URL is `?ret=absolute`, and the
   // internal ReturnMode and HoldingReturn kind are "absolute" too, so the whole
   // not-annualised basis shares one identifier. Only the reader-facing label and
   // tag became "Holding Period Return" / "HPR", at the family's request; every
   // branch that prints the total return on cost is tagged "HPR" below.
-  { key: "absolute", label: "Holding Period Return", tag: "HPR",
-    hint: "FIFO return on deployed capital, not annualised. Individual-share returns exclude separately paid dividends; dividend-inclusive period returns are on Corporate actions & dividends." },
-  { key: "cagr", label: "CAGR — annualised", tag: "CAGR",
+  { key: "absolute", label: "Holding Period Return", tag: "HPR", heading: "HPR - Absolute",
+    // Stage 10fb put the dividends a statement records into every FIFO return;
+    // this hint said the opposite until Stage 10mj.
+    hint: "FIFO return on deployed capital, not annualised: unrealised plus realised gain plus the dividends the statements record, over the cost of the units held and sold." },
+  { key: "cagr", label: "CAGR — annualised", tag: "CAGR", heading: "CAGR",
     hint: "The return on cost annualised — struck only where the money went in on one dated payment at least a year ago; under a year the holding-period return shows instead (debt alone is annualised), and money that went in over several dates a year or more ago is XIRR's." },
-  { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR",
+  { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR", heading: "XIRR",
     hint: "A money-weighted return across every cash flow. It needs each payment's date and amount — which the statements carry for a whole account, and for a holding whose every unit its account's dated trades or lot register account for — so it shows on those rows, and is absent, with the reason, everywhere else. Under a year the holding-period return shows instead, never an annual rate (debt alone is annualised)." },
-  { key: "ytd", label: "Year to date", tag: "YTD",
+  { key: "ytd", label: "Year to date", tag: "YTD", heading: "YTD",
     hint: "The holding's own return since 1 January — measurable only where it was opened during the year, because otherwise its value on 1 January is missing." },
 ];
 
@@ -2040,13 +2079,14 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
         note: `Opened ${y.since}, during the current year, so its year-to-date return is its whole return since purchase.` };
     }
     /**
-     * …OR FROM THE FIRST DATE WE HAVE THIS YEAR (Stage 10jl): *"for YTD at
-     * least for this year lets show from the date we have"*. Tagged with its
-     * start date, so it never reads as a full year to date.
+     * …OR ON THE ROW'S YEAR-TO-DATE RECORD (`ytdBook.of`): since Stage 10nv
+     * every part opens on 31 December, or at nil on a holding bought this
+     * year, so a shown figure is a full year to date. A `from` tag survives
+     * only for a book built with no opening day.
      */
     const a = p.ytdFrom;
     if (a?.shown) return { shown: true, pct: a.pct, tag: a.fullYear ? "YTD" : `from ${ytdTagDay(a.from)}`, note: a.note, from: a.from, ...(a.assumed ? { assumed: true } : {}) };
-    return { shown: false, tag: "YTD", reason: a ? `${y.reason.replace(/\.?$/, ".")} From a later date this year: ${a.reason}` : y.reason };
+    return { shown: false, tag: "YTD", reason: a ? `${y.reason.replace(/\.?$/, ".")} On its dated record: ${a.reason}` : y.reason };
   }
 
   if (measure === "xirr") {

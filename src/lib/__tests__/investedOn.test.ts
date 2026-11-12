@@ -96,8 +96,8 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
   const partial = BOOK_POSITIONS.filter((p) => p.tradeRecord && !p.tradeRecord.held && (p.tradeRecord.unaccounted ?? 0) > 0
     && !p.heldSince && !p.investedDates && !p.recoveredCost?.heldPurchases);
   ok("the book carries holdings the trades only partly account for", partial.length > 0, `${partial.length} holdings`);
-  ok("incomplete trades date a holding only with an exact saved bonus bridge", partial.every((p) => {
-    const d=investedOnOf([p]);return !d || d.sources.includes("bonus-trades");
+  ok("incomplete trades date a holding only with an exact saved bonus bridge or a reconciled action replay", partial.every((p) => {
+    const d=investedOnOf([p]);return !d || d.sources.includes("bonus-trades") || (d.sources.includes("action-trades") && !!p.actionRecord);
   }));
   ok("each says why, in the window's own terms", partial.every((p) => {
     if (investedOnOf([p])) return true;
@@ -183,6 +183,30 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
   const p=BOOK_POSITIONS.find(p=>p.accountId==='lkp-securities-98245'&&p.securityKey==='crompton-greaves-consumer-electrical')!;
   const d=investedOnOf([p]);
   ok('the 5,000-share Crompton balance keeps both dated lots, not only its oldest date',p.quantity===5000&&d?.first==='2025-03-04'&&d.last==='2025-11-12'&&d.payments===2);
+}
+
+// ── SVAN'S SHARES THROUGH THEIR SPLITS, BONUSES AND DEMERGERS (Stage 10ly) ──
+{
+  const svan = (acct: string, key: string) => BOOK_POSITIONS.find((p) => p.accountId === `svan-investment-managers-llp-${acct}` && p.securityKey === key);
+  const cases: [string, string, string, string][] = [
+    ["8710067", "v2-retail", "Split", "2024-09-04"],
+    ["8710067", "heg-graphite", "Demerger", "2024-09-04"],
+    ["8710067", "shankara-buildpro", "Demerger", "2024-10-29"],
+    ["8710090", "heg-graphite", "Demerger", "2024-12-03"],
+  ];
+  for (const [acct, key, kind, first] of cases) {
+    const p = svan(acct, key), d = p ? investedOnOf([p]) : null;
+    ok(`SVAN ${acct} ${key}: dated through its ${kind.toLowerCase()}, first paid ${first}`,
+      !!p?.actionRecord && p.tradeRecord?.held === null && (p.tradeRecord?.unaccounted ?? 0) > 0
+        && d?.first === first && d.sources.includes("action-trades") && !!d.adjustments?.some((a) => a.includes(kind)),
+      JSON.stringify(d));
+  }
+  // The money-weighted readers see the trades alone: a demerged holding's units
+  // were paid for as its parent, so its record stays not trade-complete.
+  ok("an action-dated line keeps tradeRecord's own meaning (its trades alone do not hold every unit)",
+    BOOK_POSITIONS.filter((p) => p.actionRecord).every((p) => !p.tradeRecord?.held && (p.tradeRecord?.unaccounted ?? 0) > 0));
+  const g = svan("8710067", "heg-graphite");
+  ok("without its action record the same line is undated", !!g && investedOnOf([{ ...g, actionRecord: undefined }]) === null);
 }
 
 if (fails) { console.log(`\n${fails} failed`); process.exit(1); }

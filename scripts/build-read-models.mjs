@@ -1,3 +1,4 @@
+import { collectFinancialAudit } from "./ingest/lib/financial-integrity.mjs";
 import { readerRevisionFor } from './ingest/reader-revision.mjs';
 // Build-server read models. Source absence is a build failure, never a silently
 // partial ledger. URLs are derived from output content, so book revisions cannot mix.
@@ -7,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { build } from 'esbuild';
 import { archiveRevision, documentEvidence, positionEvidenceReader, safeKey, digest } from './ingest/lib/publication.mjs';
 const root = process.cwd();
-const compiled = await build({ stdin: { contents: 'export * from "./src/lib/ledgerModel"; export { buildConsolidatedSheet } from "./src/lib/consolidatedSheet"; export { investedOnOf } from "./src/lib/investedOn"; export * from "./src/data/glowData";', resolveDir: root }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': path.join(root, 'src') }, logLevel: 'error' });
+const compiled = await build({ stdin: { contents: 'export * from "./src/lib/ledgerModel"; export { buildConsolidatedSheet, deriveHoldingLedgers, deriveHoldingLedger } from "./src/lib/consolidatedSheet"; export { investedOnOf } from "./src/lib/investedOn"; export * from "./src/data/glowData";', resolveDir: root }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': path.join(root, 'src') }, logLevel: 'error' });
 const model = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`);
 const read = async (p) => JSON.parse(await fs.readFile(path.join(root, 'public', p), 'utf8'));
 const manifest = await read('audit/manifest.json');
@@ -31,6 +32,13 @@ try {
     }
   }
 } catch (error) { if (error.code !== 'ENOENT') throw error; }
+const integrity = collectFinancialAudit(canonicalBook, docs, { readerRevision, bookRevision: digest(canonicalBook) });
+put('financial/integrity.json', integrity);
+for (const name of ['graph', 'events', 'metrics', 'checks', 'reconciliationReviews', 'registry']) put(`financial/${name}.json`, integrity[name]);
+let originalIndex = null;
+try { originalIndex = JSON.parse(await fs.readFile(path.join(root, 'public/statement-files/index.json'), 'utf8')); }
+catch (error) { if (error.code !== 'ENOENT') throw error; }
+if (originalIndex && originalIndex.manifestHash !== digest(JSON.stringify(manifest))) originalIndex = null;
 put('canonical/book.json', canonicalBook);
 if (model.BOOK_POSITIONS.some(p => !p.review && !p.statementRecord)) throw new Error('Regenerate the book: a statement position has no selected source record.');
 const evidenceForPosition = positionEvidenceReader(docs, model.BOOK_ACCOUNTS);
@@ -42,22 +50,24 @@ put('provenance/positions.json', model.BOOK_POSITIONS.map(p => ({ ...evidenceFor
 for (const doc of docs) {
   const source = rawSources.get(`${doc.docKey}|${digest(doc)}`);
   put(`canonical/documents/${doc.docKey}.json`, doc);
-  put(`provenance/documents/${doc.docKey}.json`, { ...documentEvidence(doc, { readerRevision, sourceSha256: source?.sha256 ?? null }),
+  put(`provenance/documents/${doc.docKey}.json`, { ...documentEvidence(doc, { readerRevision, sourceSha256: source?.sha256 ?? originalIndex?.files?.[doc.docKey]?.sha256 ?? null }),
     normalizedDocument: `canonical/documents/${doc.docKey}.json`, receipt: source?.receipt ?? null });
 }
 put('publication.json', { schemaVersion: 1, archiveRevision: archiveRevision(docs), bookRevision: digest(canonicalBook), readerRevision,
   statementDocuments: docs.map(d => ({ document: d.docKey, revision: digest(d), evidence: `provenance/documents/${d.docKey}.json` })),
-  canonical: 'canonical/book.json', positions: 'provenance/positions.json',
+  canonical: 'canonical/book.json', positions: 'provenance/positions.json', financialIntegrity: 'financial/integrity.json',
   overlays: { livePrices: 'Quotes and NAVs retain their own provider/time; they do not overwrite the statement evidence.',
     enteredData: 'Entered capital calls and investment profiles retain their separate dashboard-store history.' } });
 put('ledger/transactions.json', model.deriveTransactions(docs));
 put('ledger/lots.json', model.deriveRealisedLots(docs));
 put('ledger/income.json', model.deriveIncome(docs));
 put('ledger/sales.json', model.deriveSales(docs));
-put('consolidated/book.json', model.buildConsolidatedSheet(docs));
+const consolidated = model.buildConsolidatedSheet(docs);
+put('consolidated/book.json', consolidated);
 const keys = new Set([...model.BOOK_POSITIONS.map(p => p.securityKey), ...docs.flatMap(d => ['transactions','capitalGains','holdings','income','openLots'].flatMap(k => (d[k] || []).map(r => r.securityKey)))]);
 const stockKeys = [...keys].filter(Boolean).sort();
-for (const [key, ledger] of Object.entries(model.deriveStockLedgers(docs, stockKeys))) {
+// Each holding's ledger carries its rows of the sheet above (Stage 10lt).
+for (const [key, ledger] of Object.entries(model.deriveHoldingLedgers(docs, stockKeys, consolidated))) {
   if (!/^[a-z0-9-]+$/.test(key)) throw new Error(`Invalid security key: ${key}`);
   put(`ledger/stocks/${key}.json`, ledger);
 }
@@ -93,7 +103,7 @@ for (const [name, body] of outputs) {
 // companies held only through funds. A missing file for a listed key is an outage.
 const manifestPath = path.join(root, 'src/data/readModels.json');
 const manifestTemporary = `${manifestPath}.${process.pid}.tmp`;
-await fs.writeFile(manifestTemporary, JSON.stringify({ revision, readerRevision, stockKeys, emptyLedger: model.deriveStockLedger(docs, ''), publication: 'publication.json' }) + '\n');
+await fs.writeFile(manifestTemporary, JSON.stringify({ revision, readerRevision, bookRevision: integrity.bookRevision, stockKeys, emptyLedger: model.deriveHoldingLedger(docs, ''), publication: 'publication.json' }) + '\n');
 await fs.rename(manifestTemporary, manifestPath);
 // Stable discovery URL. The immutable revision below it pins an audit/export to
 // one dataset; deployment promotes this pointer with all other Pages assets.

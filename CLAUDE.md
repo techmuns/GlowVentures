@@ -36,7 +36,20 @@ comment citing "CLAUDE.md §…" or "Stage 10xx" resolves there:
 `grep -n 'Stage 10ak' docs/history/*.md`. Read the stage before changing the
 code it describes.
 
+**Return cards' method:** `docs/RETURN-COVERAGE-REVIEW.md` (4 Nov 2026, Stage 10lf) records
+why the cards measure from the first value on record, the rules the family approved, and
+the data defects still open. It is built in Stages 10la and 10le. Read it before touching
+`availableCardReturns.ts`, `periodRules.ts`, `periodLine.ts` or the ICICI, MOPWM or NSE records.
+
 ## The standing rule
+
+**Preserve established work (12 November 2026, user instruction):** financial
+audit additions are advisory. Preserve the dashboard's established figures,
+coverage, curated assumptions and working edit/publication flows. New audit
+metadata must not erase values, discard family corrections, blanket-disable
+returns or add review-expiry gates. Keep existing source-validation and stale-
+overwrite protections. Prove numerical improvements before changing established
+results; missing evidence in a new audit is not permission to downgrade them.
 
 **Latest verified data (15 October 2026):** always select the newest usable source record for each
 metric when new documents arrive. Money-weighted returns use the newest account closing valuation
@@ -172,8 +185,9 @@ One line per area; the history files explain each in depth.
   (`concentrationNames`), never by share-class key (Stage 10fz).
 - `src/lib/accounts.ts` (registry), `securityKey.ts` (join key), `securityLabel.ts`
   (one name per key), `schemeLabel.ts` (AMFI scheme names by ISIN), `sectors.ts`
-  (three sector tiers: statement → fund filing by ISIN → screener.in by symbol;
-  lower tiers only fill).
+  (one classification: screener.in for every listed company, by NSE symbol or
+  BSE code, off its Broad Industry; a fund filing, then the statement, only where it
+  has no page — Stage 10md; Sector Composition counts equity lines only).
 - `src/lib/groupAxis.ts` (Category / Asset class / Basket / All Securities axes),
   `familyTaxonomy.ts` (the family's review-cited baskets and asset classes),
   `drilldown.ts` (which holdings are behind a figure; `/holdings`).
@@ -192,7 +206,9 @@ One line per area; the history files explain each in depth.
   security key → ISIN → name → brand → folio; Stage 10eo),
   `investedOn.ts` (a holding's Invested on and its dated trades, every holdings
   table; built off `Position.tradeRecord` / `BOOK_HOLDING_TRADES` from
-  `scripts/lib/holdingTrades.mjs`; Stage 10fm).
+  `scripts/lib/holdingTrades.mjs`; Stage 10fm; through splits, bonuses and
+  demergers, `Position.actionRecord` from `scripts/lib/shareActions.mjs` and
+  `shared/demergers.mjs`, Stage 10ly).
 - `src/lib/privateRounds.ts` + `pages/PrivateCompany.tsx` — a private company's
   funding rounds, valuations and stake (`/private-company/:id`, Private Market's
   valuation columns), off `src/data/privateRounds.json`: public reporting, every
@@ -215,7 +231,7 @@ One line per area; the history files explain each in depth.
 - `src/lib/navSeries.ts`, `benchCompare.ts` (the NAV card's one start, one end for the book and
   every benchmark; it starts only on `comparableStarts` in `bookNav.ts`, Stage 10iv),
   `attribution.ts` (no caller; kept, tested),
-  `benchmarks.ts` (seven indices, name-checked), `cardBenchmark.ts` (a return tile against the index on the same dated money; Stage 10ji), `holdingBenchmark.ts` (each Monitor row's own index — manager's printed benchmark, AMFI size class, fund category — on the row's dated money, under its return; Stage 10kd), `indexSectors.ts` (their sector
+  `benchmarks.ts` (seven indices, name-checked), `cardBenchmark.ts` (a return tile against the index on the same dated money; Stage 10ji), `holdingBenchmark.ts` (each Monitor row's own index — manager's printed benchmark, AMFI size class, fund category — on the row's dated money, under its return; Stage 10kd), `lineBenchmark.ts` (the Returns attribution table's Benchmark return: each row's units in their own index on their own money, on the Return column's measure; Stage 10mr), `indexSectors.ts` (their sector
   weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`
   (Morning CIO Returns tab), `segmentReturns.ts` (its attribution section:
   FIFO gain and contribution by any axis, tied to the Gain / Loss tile; its
@@ -223,9 +239,15 @@ One line per area; the history files explain each in depth.
   its Portfolio Monitor holding columns are `lineHoldingFigures.ts`, Stage 10hz),
   `capitalBridge.ts` (the tab's start → money in/out → gain → end bridge, gain split
   only by a statement P&L or fund unit record; Stage 10gu), `ytdAvailable.ts` (the
-  Monitor's YTD from the first dated value this year, on those records; Stage 10jl), `useMarketReturns.ts` +
+  Monitor's YTD, every row from 31 December or a dash, Stage 10jl, 10nv; the cards' YTD from the first dated value this year;
+  any period's open, `periodSelection` + `periodRules.ts` for Morning CIO's three
+  return cards, Stage 10la; `periodLine.ts`, the NAV chart drawn as the card, Stage 10le; `useReturnSelection.ts`, every Returns-tab
+  period on that one selection, and `selectionMarket.ts`, Market performance over its units, Stage 10lg), `useMarketReturns.ts` +
   `marketHistoryStore.ts` (public histories kept in the browser, warmed by Morning CIO),
   `returnMeasures.ts`, `returnColumns.ts`.
+- `scripts/lib/tradeOpenings.mjs` — a PMS account's 31 Dec / 31 Mar value rebuilt from its own from-inception ledgers at
+  exchange closes (`opening-closes.json`, `npm run build-opening-closes`), kept only where it reproduces the manager's
+  totals; `BOOK_TRADE_OPENINGS`, read by `withTradeOpening` in `availableCardReturns.ts` (Stage 10ni).
 - `src/lib/fundNavs.ts` (AMFI NAV overlay; never sets `live`; depository cash and
   fund rows on the live basis only), `depositoryShares.ts`, `recordedHoldings.ts`,
   `corporateActions.ts`, `dailyMovers.ts`, `quotes.ts`, `quoteCache.ts`,
@@ -286,8 +308,11 @@ Two LKP workbooks in `october-2026-c/` never arrived — the mail server replace
 each with a removal notice — and stay listed as never arrived until LKP re-sends
 them. The adviser's consolidated review
 workbook, the family's investment register and MOPWM's family transaction
-report (`october-2026-e/`, Stage 10hu) are read and **held out by decision** as
-statement sources. A monthly drop reissues the same filenames, so
+report (`october-2026-e/`, Stage 10hu) are read and are not statement
+sources: no extractor reads them. They supply dated records where a statement
+has none: the review values the private book, and the review, the register and
+the report supply costs, while the register also dates four holdings' money
+(Stage 10mv, `scripts/lib/registerRecords.mjs`), and its day stands where it and the review date one payment differently — Zepto, Ankita's Transition VC (Stage 10ne, the family's choice). A monthly drop reissues the same filenames, so
 extraction mirrors each archive's own path under `source/`.
 
 **Accounts.** One row per account, regenerated from `BOOK_POSITIONS` by
@@ -317,12 +342,12 @@ extraction mirrors each archive's own path under `source/`.
 | Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-06-30 | ₹19.57 Cr |
 | Goldstandard Wealth Private Limited | 100023 | Ajay Jaisinghani | 2026-10-06 | ₹18.03 Cr |
 | Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-07-31 | ₹16.31 Cr |
-| SVAN Investment Managers LLP | 8710067 | Ajay Jaisinghani | 2026-09-30 | ₹16.22 Cr |
 | HDFC Bank (NSDL demat) | 67776424 | Glowsphere LLP | 2026-10-29 | ₹15.87 Cr |
+| SVAN Investment Managers LLP | 8710067 | Ajay Jaisinghani | 2026-11-04 | ₹15.47 Cr |
 | Green Lantern Capital LLP | 510861 | Ajay Jaisinghani | 2026-07-27 | ₹11.45 Cr |
 | Motilal Oswal Delphi Equity Fund | 9049241536 | Ajay Jaisinghani | 2026-06-30 | ₹11.13 Cr |
 | Motilal Oswal Founders Fund | 90410016093 | Ankita Jaisinghani | 2026-09-30 | ₹11.11 Cr |
-| SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-09-30 | ₹10.71 Cr |
+| SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-11-04 | ₹10.21 Cr |
 | India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | ₹9.56 Cr |
 | Kotak Mahindra Mutual Fund | 7111389 | Ajay Jaisinghani | 2026-11-02 | ₹8.50 Cr |
 | Helios Mutual Fund | 10056154 | Ankita Jaisinghani | 2026-11-03 | ₹7.98 Cr |
@@ -452,7 +477,13 @@ Never derive one side from the others.
   owner/ISIN/date/quantity reconciliation; MOPWM's transaction report
   (`scripts/lib/mopwmTransactions.mjs`, Stage 10hu) is tried only where both
   leave a holding unrecovered, replayed to the statement's own date. It never replaces a statement's
-  quantity, valuation, date or existing cost. Every join and unresolved balance
+  quantity, valuation, date or existing cost. The investment register also dates
+  money no statement does (Stage 10mv, `scripts/lib/registerRecords.mjs`, one
+  committed entry per row): Sotefin's purchases through its prospectus's bonus,
+  the payment that opened V.E.C 128005 and Goldstandard 100022/100023 (held to
+  the manager's inception date and 1 Apr 2026 opening balance; the TDS gap is a
+  `assumedDate` outflow), and Ankita's NSE payments (her cost; Ajay's is the
+  review's rest). Every join and unresolved balance
   is in `docs/COST-RECOVERY.md`. Closing rows keep fund folios separate; a known
   cost with unverified sale proceeds carries `hprUnavailableReason`, withholding
   its realised gain and HPR; the Portfolio Monitor's pooled return and Realised
@@ -461,12 +492,27 @@ Never derive one side from the others.
   (`AT_COST_BUCKET`, `AT_COST_RETURN`).
 - **The Motilal CDSL "rate" is the last movement's price**, not a mark or a cost
   (Stage 10cz); those rows are quantities on the statement basis.
-- **MOPWM's transaction report moves Motilal demat SHARES only** (Stage 10iw):
-  its later NSE/BSE trades roll those balances forward on the live basis
-  (`BOOK_SHARE_ROLLS`), through a SPLIT block that restates every lot at its own
-  amount (Stage 10kk, TAAL); the gate does not apply a split the roll carries
-  (`shareEvents`). Its fund rows move no quantity until the family answers
-  about the 1 Oct 2026 "redemptions".
+- **Later trades in MOPWM's transaction report move the holdings they reconcile
+  with** (live basis; the statement basis keeps the snapshot). Its NSE/BSE trades
+  roll Motilal demat shares (Stage 10iw), through a SPLIT block that restates
+  every lot at its own amount (Stage 10kk, TAAL); the gate does not apply a split
+  the roll carries (`shareEvents`). Its fund trades roll Motilal demat fund
+  lines (`rollMopwmFundTrades`, Stage 10me, `BOOK_SHARE_ROLLS` with sheet
+  "Mutual Funds"): one group of the owner's rows naming AMFI's scheme must hold
+  the line's exact units on its date. **A transfer is not a sale**: the 1 Oct
+  2026 demat-folio "redemptions" reappear unit for unit on AMC folio statements,
+  so a whole-balance demat redemption on such a day moves custody and sells
+  nothing (`transferredOn`). A PMS/AIF folio it pays out in full (at least the
+  statement's value, nothing paid in) is redeemed (`mopwmCapitalExits`, MO
+  Delphi); smaller capital rows carry no units and are named, not applied.
+- **A PMS account's own tape rolls the whole mandate** (Stage 10mh,
+  `scripts/lib/tapeRoll.mjs`, live basis): where its transaction statements run
+  past its holdings and a later fact sheet prints every line's value
+  (`factSheetValues`, adding to its portfolio value), every line, the cash and
+  the names it bought (`BOOK_TAPE_ROWS`) roll together — only if the fact sheet
+  lists exactly the names the roll holds and each value over the rolled units is
+  a price the tape bears out. A name sold after the capital-gain statement
+  carries no cost. Green Lantern 510854/510861.
 - **The family's liquid-holdings note of 21 Oct 2026** (Stage 10ka,
   `scripts/ingest/reference/familyAdvisedBalances.mjs`) carries five Motilal demat
   fund balances (Ajay's Motilal Arbitrage; Liquid BeES on four demats) to its
@@ -549,8 +595,8 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   (`attachment-removed`) is listed as NEVER ARRIVED, neither passed nor failed:
   the fix is the sender re-sending it. The upload refuses one outright
   (`shared/statementBytes.mjs`); inside a ZIP the intake lands the other files.
-- **Every file feeds the dashboard** (the family, 21 Oct 2026), except the held-
-  out review/register/transaction report by decision; `acceptedUnread.mjs` is empty. Hope India
+- **Every file feeds the dashboard** (the family, 21 Oct 2026); the review,
+  register and transaction report feed it as records, not as statements; `acceptedUnread.mjs` is empty. Hope India
   Trust is its own entity in the book (`shared/owners.mjs`), not a person's.
 
 ## The live layer
@@ -659,6 +705,8 @@ And:
 - `npm run import-private-market` — Inc42 funding rows and private-company headlines
   from Glow Central Research's site (`--offline` re-matches the rows held).
 - `npm run accounts-table` — the accounts table above (`-- --write` splices).
+- `npm run client:request` — the client's "records still needed" PDF in `docs/client/`
+  (Stage 10mq); stops on a hand-written request the book no longer bears out.
 - Replays (each `--check` is a no-op control; follow with `build-book`):
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,
   `replay:movements`, `replay:flows`, `replay:flow-lines`,

@@ -9,6 +9,9 @@ const source = fs.readFileSync(process.env.GLOW_BOOK_TS ?? path.join(ROOT, 'src/
 const { code } = await transform(source, { loader: 'ts', format: 'esm' });
 const book = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
 const docs = readArchive(process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, 'public/audit'));
+const { buildFinancialIntegrity } = await import('./lib/financial-integrity.mjs');
+const financial = buildFinancialIntegrity(book, docs);
+if (financial.issues.length) throw Error(`Financial identity/ownership violations: ${JSON.stringify(financial.issues)}`);
 const keys = new Set();
 const evidenceForPosition = positionEvidenceReader(docs, book.BOOK_ACCOUNTS);
 for (const position of book.BOOK_POSITIONS) {
@@ -19,3 +22,5 @@ for (const position of book.BOOK_POSITIONS) {
   evidenceForPosition(position);
 }
 console.log(`Verified ${keys.size} canonical holding identities and their selected source records.`);
+
+console.log(`Verified financial graph: ${financial.graph.nodes.length} entities, ${financial.events.length} events; ${financial.summary.missingCost} missing costs and ${financial.summary.atCost} carrying-cost marks remain explicit.`);

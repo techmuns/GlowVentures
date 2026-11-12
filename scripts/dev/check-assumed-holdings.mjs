@@ -44,13 +44,14 @@ try {
  await page.locator('[data-returns-period="custom"]').click();
  const inputs=page.locator('input[type="date"]'); await inputs.nth(0).fill('2026-09-01'); await inputs.nth(1).fill('2026-10-22');
  await page.waitForFunction(()=>Number(document.querySelector('[data-segment-returns]')?.dataset.segAssumed)>0);
- await page.waitForFunction(()=>document.querySelector('[data-market-summary]')?.dataset.marketPending==='0');
+ await page.waitForFunction(()=>document.querySelector('[data-segment-returns]')?.dataset.marketPending==='0');
  const assumed=Number(await panel.getAttribute('data-seg-assumed')); assert.ok(assumed>=10);
  const hdfc=panel.locator('[data-seg-row]').filter({hasText:'Smartworks'}); await hdfc.first().waitFor();
  assert.ok(await hdfc.first().locator('[data-holding-assumption]').count()>0,'March HDFC shares now carry a period return');
  await hdfc.first().locator('[data-seg-toggle]').click();
  const ownerRow=panel.locator('[data-seg-child]').filter({hasText:'Bharat Jaisinghani · HDFC Bank'}).first();
- await ownerRow.getByRole('button',{name:'Why is this holding assumed?',exact:true}).first().click();
+ assert.doesNotMatch(await page.locator('main').innerText(),/\bassumed\b/i,'Returns has no assumed labels, including summary cards and TWR cells');
+ await ownerRow.getByRole('button',{name:'How is this holding valued?',exact:true}).first().click();
  const dialog=page.getByRole('dialog'); await dialog.waitFor();
  assert.match(await dialog.locator('[data-assumption-explanation]').innerText(),/No sale appears in the records we have\. We assume Bharat Jaisinghani still holds these shares\./);
  await page.screenshot({path:out+'/owner-explanation.png'}); await page.keyboard.press('Escape');
@@ -63,8 +64,13 @@ try {
  const download=await pending; const file=out+'/assumed-holdings.xlsx'; await download.saveAs(file);
  const workbook=new ExcelJS.Workbook(); await workbook.xlsx.readFile(file); const sheet=workbook.worksheets[0];
  assert.equal(sheet.views[0].state,'frozen'); assert.ok(sheet.columns.every(c=>c.width>=12));
- const values=sheet.getSheetValues().flat(2); assert.ok(values.includes('Holding basis')); assert.ok(values.some(v=>typeof v==='string'&&v.includes('Assumed held')));
+ const values=sheet.getSheetValues().flat(2); assert.ok(values.includes('Holding basis')); assert.ok(values.some(v=>typeof v==='string'&&v.includes('Carried forward')));
+ assert.ok(values.every(v=>typeof v!=='string'||!/\bassumed\b/i.test(v)),'Returns exports have no assumed labels');
  assert.ok(values.some(v=>typeof v==='number'&&Number.isFinite(v)));
+ // The card ends today; the custom period above left the toolbar's end on 22 Oct. Every record is
+ // carried to its period's end (Stage 10la), so the two are compared over the same days.
+ const today=await page.evaluate(()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;});
+ await inputs.nth(1).fill(today);
  await page.locator('[data-returns-period="fytd"]').click(); await page.locator('[data-returns-type-select]').selectOption('xirr');
  const card=page.locator('[data-tile-slot="fytd"] [data-card-coverage]');
  await page.waitForFunction(()=>Number(document.querySelector('[data-tile-slot="fytd"] [data-holding-assumption]')?.dataset.assumedCount)>0);

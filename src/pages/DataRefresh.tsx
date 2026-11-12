@@ -125,9 +125,8 @@ export function DataRefresh() {
   const sectorsSettled = exposure.status !== "loading";
   const coverage = shareMV > 0 && sectorsSettled ? (classified / shareMV) * 100 : null;
   const notCompany = excludedClasses(held, isCompanyShare);
-  // WHICH TIER PLACED EACH COMPANY, counted over COMPANIES — the unit a sector
-  // is a property of — so a reader can see how much of the ratio is borrowed
-  // evidence (a fund's filing, screener.in) rather than the family's statement.
+  // WHICH SOURCE PLACED EACH COMPANY, counted over COMPANIES — the unit a
+  // sector is a property of (screener.in first since Stage 10md).
   const shareKeys = [...new Set(shareRows.map((x) => x.securityKey))];
   const placedBy = { book: 0, disclosure: 0, vendor: 0 };
   const unplacedKeys: string[] = [];
@@ -363,7 +362,7 @@ export function DataRefresh() {
               + (dominated && dominantPct !== null ? ` · one holding is ${dominantPct.toFixed(0)}% of that value` : "")}
             hint={[
               "Company shares only — a GICS sector is a property of a company, and a fund unit, an ETF or a cash row has none of its own.",
-              "Placed by the same three tiers Sector Composition reads: the family's own statement, then a fund's SEBI filing joined on the ISIN, then screener.in on the NSE symbol — a lower tier only ever fills a sector the statements left empty.",
+              "Placed the way Sector Composition places them: screener.in's classification for every company it has a page for, and only for the rest a fund's SEBI filing joined on the ISIN, then the family's own statement.",
               exposure.status === "unreachable" ? "The funds' filings could not be read on this visit, so this is a floor: no company is placed by a fund's filing." : "",
               notCompany.length > 0
                 ? `Measured over ${shareRows.length} of ${held.length} current holdings; what a fund holds is derived on Sector Composition from the fund's own filing and is not a holding of this book, so ${notCompany.map((c) => `${assetClassLabel(c.key)} ${fmtFromBase(c.mv, { compact: true })}`).join(" · ")} sit outside both sides of the ratio rather than being counted as unclassified.`

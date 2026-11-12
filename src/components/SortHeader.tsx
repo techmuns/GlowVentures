@@ -281,10 +281,9 @@ export function Tr({ view, children, reviewScope, sourcePositions, investmentDat
 /**
  * ── AND A FOOTER FOLLOWS THE SAME ORDER, OR IT TOTALS THE WRONG COLUMN ──────
  *
- * A footer's label covers the leading columns that have no total — "Total · 73
- * rows" in the security's column, one blank cell over the rest of the run — and
- * the rest carry one cell each. The run is therefore a FUNCTION of the current
- * order rather than a literal:
+ * A footer's label spans the leading columns that have no total — "Total · 73
+ * rows" over the security and its chips — and the rest carry one cell each. The
+ * span is therefore a FUNCTION of the current order rather than a literal:
  * computed as the leading run of columns with no cell in the map, it reproduces
  * today's markup exactly while nothing has been dragged, and it follows when
  * something has.
@@ -297,9 +296,9 @@ export function Tr({ view, children, reviewScope, sourcePositions, investmentDat
  * The caller supplies whole `<td>` elements, because a footer cell's alignment,
  * colour and popover belong to the table that knows what the figure is.
  */
-export function TrFoot({ view, label, labelTitle, cells, sourcePositions, sourceColumns, className = "", ...rest }: {
+export function TrFoot({ view, label, labelTitle, labelInFirstColumn = false, cells, sourcePositions, sourceColumns, className = "", ...rest }: {
   view: TableView;
-  /** The label cell's CONTENT — `TrFoot` computes the run it covers. */
+  /** The label cell's CONTENT — `TrFoot` computes its `colSpan`. */
   label: ReactNode;
   /**
    * A hover on the LABEL CELL, never on the row. A claim about what a total
@@ -308,6 +307,8 @@ export function TrFoot({ view, label, labelTitle, cells, sourcePositions, source
    * own totals.
    */
   labelTitle?: string;
+  /** Keep a frozen row label in one column without covering neighbouring totals. */
+  labelInFirstColumn?: boolean;
   /** One `<td>` per column that carries a total, keyed by column id. */
   cells: Record<string, ReactNode>;
   sourcePositions?: readonly TracePosition[];
@@ -321,14 +322,15 @@ export function TrFoot({ view, label, labelTitle, cells, sourcePositions, source
   // A footer with a total in its very first column has no label span at all,
   // which is legitimate and must not become `colSpan={0}`.
   const span = Math.max(lead, 1);
-  // The label sits in the FIRST column, which is frozen (Stage 10la), and the
-  // rest of its run is one blank cell. A label spanning the run could not be
-  // pinned without sliding over the totals beside it. `data-foot-span` keeps
-  // the run's length readable as one number.
   return (
     <tr {...rest}>
-      <td className={className} title={labelTitle} data-foot-span={span}>{label}</td>
-      {span > 1 && <td colSpan={span - 1} className={className} />}
+      {/* A label spanning the lead columns scrolls with them, so its text is
+          pinned to the left of the scroll container inside its own cell —
+          beside every table's frozen first column (Stage 10nj). */}
+      <td colSpan={labelInFirstColumn ? 1 : span} className={className} title={labelTitle}>
+        {labelInFirstColumn || span === 1 ? label : <span className="sticky left-3 inline-block" data-foot-label>{label}</span>}
+      </td>
+      {labelInFirstColumn && span > 1 && <td colSpan={span - 1} className={className} />}
       {/* A COLUMN WITH NO TOTAL STILL NEEDS ITS CELL, and it takes the row's
           own class: the footer carries a top rule, and an unstyled filler
           breaks that line across the table. */}

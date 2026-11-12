@@ -32,7 +32,7 @@ function harness({ refuseSave = false, decision = 'verified', copyInBatch = fals
     } };
   const model = Object.fromEntries(['deriveTransactions', 'deriveRealisedLots', 'deriveIncome', 'deriveSales', 'buildConsolidatedSheet']
     .map(name => [name, docs => { projections.push({ name, docs: docs.map(d => d.docKey) }); return docs; }]));
-  model.deriveStockLedger = (docs, securityKey) => ({ securityKey, txns: docs });
+  model.deriveHoldingLedger = (docs, securityKey) => ({ securityKey, txns: docs });
   const processor = rapidProcessor({ store, inbox, initial, references: {}, passwords: [], dashboardPassword: '',
     instantiate: () => model, baseAsset: async () => null, processorName, dispatchFallback,
     prepare: async ({ baseline, files }) => {
@@ -107,6 +107,7 @@ test('old source facts remain inspectable but newer rules cannot compute an old 
   h.versions.set(old.revision, old);
   assert.deepEqual(await h.processor.asset(old.revision, 'canonical/book.json'), h.initial.book);
   await assert.rejects(h.processor.asset(old.revision, 'ledger/transactions.json'), ReaderVersionChanged);
+  await assert.rejects(h.processor.asset(old.revision, 'financial/integrity.json'), ReaderVersionChanged);
   assert.equal(h.projections.length, 0);
 });
 

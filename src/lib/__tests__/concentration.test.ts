@@ -55,10 +55,17 @@ ok("no securityKey is rewritten", names.every((g) => g.rows.every((p) => g.secur
   const byIsin = new Map<string, Set<string>>();
   for (const p of book) if (p.isin) (byIsin.get(p.isin.trim().toUpperCase()) ?? byIsin.set(p.isin.trim().toUpperCase(), new Set()).get(p.isin.trim().toUpperCase())!).add(p.securityKey);
   const split = [...byIsin].filter(([, ks]) => ks.size > 1);
-  ok("the book carries a security under two keys — else the join below is unchecked", split.length > 0, split.map(([i]) => i).join(", "));
-  for (const [isin, ks] of split) {
-    const g = names.find((x) => [...ks].every((k) => x.securityKeys.includes(k)));
-    ok(`${isin}: its ${ks.size} keys are one name`, !!g, [...ks].join(" + "));
+  // Stage 10me sold the book's last such pair, so where it carries none the
+  // join is struck on a constructed one: a fund row restated under a second key.
+  const seed = book.find((p) => !!p.isin && p.assetClass === "Mutual Fund");
+  const twin = seed ? { ...seed, securityKey: `${seed.securityKey}-restated`, accountId: `${seed.accountId}-twin` } : null;
+  const cases = split.length ? split.map(([isin, ks]) => ({ isin, ks: [...ks], within: names }))
+    : seed && twin ? [{ isin: seed.isin!, ks: [seed.securityKey, twin.securityKey], within: concentrationNames([...book, twin]) }] : [];
+  ok("a security under two keys is checked — the book's own, else a constructed one", cases.length > 0,
+    split.length ? split.map(([i]) => i).join(", ") : `constructed on ${seed?.securityKey}`);
+  for (const c of cases) {
+    const g = c.within.find((x) => c.ks.every((k) => x.securityKeys.includes(k)));
+    ok(`${c.isin}: its ${c.ks.length} keys are one name`, !!g, c.ks.join(" + "));
   }
 }
 // ── THE LARGEST NAME IS THE LARGEST INVESTMENT, NOT THE LARGEST CLASS ───────

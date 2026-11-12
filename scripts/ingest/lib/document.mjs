@@ -210,6 +210,13 @@ export function makeHolding(input) {
      * document's shape changes.
      */
     ...(input.valueWhenRun != null ? { valueWhenRun: num(input.valueWhenRun) } : {}),
+    /**
+     * THE UNITS A BROKER'S PORTFOLIO PRINTS AS LONG-TERM — held past the
+     * s.2(42A) period on its own lot record. Not a date and never one; a check
+     * a dated purchase record must agree with (`reviewPurchaseDates.mjs`,
+     * Stage 10ms). Written only where a reader sets it.
+     */
+    ...(input.longTermQuantity != null ? { longTermQuantity: num(input.longTermQuantity) } : {}),
 
     // ── DERIVED — filled by deriveHolding(); null until then ────────────────
     marketValue: null,
@@ -588,6 +595,7 @@ export function makeCashFlow(input) {
 export function makeTransaction(input) {
   const named = namedSecurity(input);
   return {
+    ...(input.reference ? { reference: String(input.reference) } : {}),
     date: input.date ?? null,                    // ISO trade date
     settlementDate: input.settlementDate ?? null,
     side: input.side ?? null,                    // "buy" | "sell"
@@ -790,6 +798,7 @@ function normalizeCommitment(c) {
 
 export function makeDocument(input) {
   return {
+    ...(input.financialUnits ? { financialUnits: input.financialUnits } : {}),
     docKey: input.docKey,
     provider: input.provider,
     accountNo: input.accountNo ?? null,
@@ -897,6 +906,14 @@ export function makeDocument(input) {
     excludedFromBook: input.excludedFromBook ?? null,
     /** A fund's own holdings, for look-through. Never summed into the book. */
     schemeHoldings: input.schemeHoldings ?? [],
+    /**
+     * A FACT SHEET'S PRINTED MARKET VALUE AND WEIGHT PER LINE (Stage 10mh) —
+     * `{ security, securityKey, sector, marketValue, pctAssets }`, no quantity.
+     * Never a holding (see `readSectors`): read only as the dated marks of an
+     * account's own tape roll, and only where the lines add to the printed
+     * portfolio value. Present only on a fact sheet that prints them.
+     */
+    ...(input.factSheetValues?.length ? { factSheetValues: input.factSheetValues } : {}),
     /** AIF income split by tax head — see providers/aifDistribution.mjs. */
     aifEarnings: input.aifEarnings ?? null,
     /**
@@ -934,7 +951,9 @@ export function makeDocument(input) {
  * extractor's result against this and warns, so the next field added to a reader
  * and forgotten here fails loudly instead of vanishing.
  */
-export const DOCUMENT_FIELDS = Object.freeze(Object.keys(makeDocument({ docKey: "", provider: "", sourcePath: "" })));
+// …and the fields carried only where a document prints them, so every other
+// document stays byte-identical (Stage 10mh's `factSheetValues`).
+export const DOCUMENT_FIELDS = Object.freeze([...Object.keys(makeDocument({ docKey: "", provider: "", sourcePath: "" })), "factSheetValues", "financialUnits"]);
 
 /** Throw if a document breaks the contract — called on every extractor result. */
 export function assertNormalized(doc) {

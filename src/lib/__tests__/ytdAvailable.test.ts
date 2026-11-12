@@ -1,8 +1,9 @@
 // YTD FROM THE FIRST DATE WE HAVE (Stage 10jl).   npm run test:family (ONLY="ytd from the first date")
 import assert from 'node:assert/strict';
-import { ytdBook } from '../ytdAvailable';
+import { ytdBook, ytdSelection } from '../ytdAvailable';
 import { measuredReturn } from '../analytics';
 import { statementReturnInputs } from '../availableCardReturns';
+import { capitalBridge } from '../capitalBridge';
 import type { AccountInput } from '../periodReturns';
 import type { Account, Portfolio, Position } from '../types';
 import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURN_RECORDS } from '../../data/glowData';
@@ -18,8 +19,14 @@ const input: AccountInput = { accountId: 'a', label: 'Manager · 111', owner: 'A
 const money = String;
 const book = ytdBook({ inputs: [input], held, accounts, end: '2026-10-30', assumptions: null, money });
 
-// A WHOLE ACCOUNT, from its first verified value this year — Modified Dietz.
-const whole = book.of(held);
+// EVERY ROW OPENS ON 31 DECEMBER (Stage 10nv): a whole account first valued on
+// 31 March is a dash naming both dates, never a "from 31 Mar" figure.
+const late = book.of(held);
+assert.ok(!late.shown && /31 Dec 2025/.test(late.reason) && /31 Mar 2026/.test(late.reason), late.shown ? `${late.pct}` : late.reason);
+const lateCell = measuredReturn({ returnPct: 32, heldSince: null, assetClass: 'Equity', ytdFrom: late }, 'ytd', '2026-09-30');
+assert.ok(!lateCell.shown && /31 Dec 2025/.test(lateCell.reason));
+// With no opening day the same window is struck from its first record — Modified Dietz.
+const whole = ytdBook({ inputs: [input], held, accounts, end: '2026-10-30', assumptions: null, money, open: null }).of(held);
 assert.ok(whole.shown);
 if (whole.shown) {
   assert.equal(whole.from, '2026-03-31'); assert.equal(whole.to, '2026-09-30');
@@ -27,12 +34,19 @@ if (whole.shown) {
   const D = 183, w = 92;   // 31 Mar → 30 Sep; the 30 Jun money is at work for 92 of them
   near(whole.pct, (132 - 100 - 20) / (100 + 20 * w / D) * 100);
   assert.match(whole.note, /not annualised/); assert.match(whole.note, /31 Mar 2026/);
+  const r = measuredReturn({ returnPct: 32, heldSince: null, assetClass: 'Equity', ytdFrom: whole }, 'ytd', '2026-09-30');
+  assert.ok(r.shown && r.tag === 'from 31 Mar' && r.from === '2026-03-31');
 }
-// …tagged with its start under the YTD measure, never as a full year to date.
-const r = measuredReturn({ returnPct: 32, heldSince: null, assetClass: 'Equity', ytdFrom: whole }, 'ytd', '2026-09-30');
-assert.ok(r.shown && r.tag === 'from 31 Mar' && r.from === '2026-03-31');
+// AN ACCOUNT FIRST FUNDED THIS YEAR opens at nil: its return since then is its
+// year to date, tagged YTD with no later start.
+const fresh: AccountInput = { ...input, valuations: [{ date: '2026-09-30', value: 132 }], flows: [{ date: '2026-03-02', amount: -120 }], knownFrom: null };
+const freshRow = ytdBook({ inputs: [fresh], held, accounts, end: '2026-10-30', assumptions: null, money }).of(held);
+assert.ok(freshRow.shown && freshRow.fullYear && freshRow.bought === '2026-03-02', freshRow.shown ? freshRow.from : freshRow.reason);
+if (freshRow.shown) assert.match(freshRow.note, /nothing was held on 1 January/);
+const freshCell = measuredReturn({ returnPct: 10, heldSince: null, assetClass: 'Equity', ytdFrom: freshRow }, 'ytd', '2026-09-30');
+assert.ok(freshCell.shown && freshCell.tag === 'YTD');
 // A holding opened this year keeps its full year to date, whatever the account says.
-const opened = measuredReturn({ returnPct: 12.5, heldSince: '2026-03-02', assetClass: 'Equity', ytdFrom: whole }, 'ytd', '2026-09-30');
+const opened = measuredReturn({ returnPct: 12.5, heldSince: '2026-03-02', assetClass: 'Equity', ytdFrom: late }, 'ytd', '2026-09-30');
 assert.ok(opened.shown && opened.tag === 'YTD' && opened.pct === 12.5);
 
 // PART OF AN ACCOUNT is never handed the account's return: with no published
@@ -40,12 +54,12 @@ assert.ok(opened.shown && opened.tag === 'YTD' && opened.pct === 12.5);
 const part = ytdBook({ inputs: [input], held: [...held, pos({ securityKey: 'z', security: 'Share Z' })], accounts, end: '2026-10-30', assumptions: null, money }).of([held[0]]);
 assert.ok(!part.shown && /prices are still loading/i.test(part.reason) && part.pending === true);
 const dash = measuredReturn({ returnPct: 32, heldSince: null, assetClass: 'Equity', ytdFrom: part }, 'ytd', '2026-09-30');
-assert.ok(!dash.shown && /1 January/.test(dash.reason) && /From a later date this year/.test(dash.reason));
+assert.ok(!dash.shown && /1 January/.test(dash.reason) && /On its dated record/.test(dash.reason));
 
 // A VALUE ON 31 DECEMBER IS A FULL YEAR TO DATE, and is tagged as one.
 const full = ytdBook({ inputs: [{ ...input, valuations: [{ date: '2025-12-31', value: 90 }, ...input.valuations], knownFrom: '2025-06-30' }],
   held, accounts, end: '2026-10-30', assumptions: null, money }).of(held);
-assert.ok(full.shown && full.fullYear && full.from === '2025-12-31');
+assert.ok(full.shown && full.fullYear && full.from === '2025-12-31' && !full.bought);
 const fullTag = measuredReturn({ returnPct: 32, heldSince: null, assetClass: 'Equity', ytdFrom: full }, 'ytd', '2026-09-30');
 assert.ok(fullTag.shown && fullTag.tag === 'YTD');
 
@@ -53,21 +67,29 @@ assert.ok(fullTag.shown && fullTag.tag === 'YTD');
 const refused = ytdBook({ inputs: [{ ...input, valuations: [], flows: [], flowsUnknown: 'no dated record' }], held, accounts, end: '2026-10-30', assumptions: null, money }).of(held);
 assert.ok(!refused.shown && /no dated record/.test(refused.reason));
 
-// THE REAL ARCHIVE: Carnelian 3517383 opens on its verified 31 March value.
+// THE REAL ARCHIVE: Carnelian 3517383's verified record opens on 31 March, so
+// its YTD is a dash naming that date; from its first record it is measured.
 const empty = { peFunds: [], preIpoFunds: [], unlistedCompanies: [], debtFunds: [], closedFunds: [], startups: [] };
 const statement = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS,
   accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: empty } as unknown as Portfolio;
 const real = ytdBook({ inputs: statementReturnInputs(statement), held: BOOK_POSITIONS, accounts: BOOK_ACCOUNTS, end: '2026-10-30', assumptions: null, money });
+const realFromFirst = ytdBook({ inputs: statementReturnInputs(statement), held: BOOK_POSITIONS, accounts: BOOK_ACCOUNTS, end: '2026-10-30', assumptions: null, money, open: null });
 const id = 'carnelian-asset-management-and-advisors-pvt-ltd-3517383';
-const carnelian = real.of(BOOK_POSITIONS.filter((p) => p.accountId === id));
-assert.ok(carnelian.shown && carnelian.from === '2026-03-31' && carnelian.accounts.join() === id && Number.isFinite(carnelian.pct));
+const carnelianRows = BOOK_POSITIONS.filter((p) => p.accountId === id);
+const carnelian = real.of(carnelianRows);
+assert.ok(!carnelian.shown && /31 Mar 2026/.test(carnelian.reason) && /31 Dec 2025/.test(carnelian.reason), carnelian.shown ? `${carnelian.pct}` : carnelian.reason);
+const carnelianFirst = realFromFirst.of(carnelianRows);
+assert.ok(carnelianFirst.shown && carnelianFirst.from === '2026-03-31' && carnelianFirst.accounts.join() === id && Number.isFinite(carnelianFirst.pct));
 // …AND PARTS VALUED ON DIFFERENT DATES ARE NOT POOLED: V.E.C 128005 closes on
 // 13 Aug and 128004 on 7 Oct, and pooled the earlier value would read as money
 // taken out. Each account still carries its own.
 const vec = ['v-e-c-assago-capital-management-llp-128005', 'v-e-c-assago-capital-management-llp-128004'];
-const vecRow = real.of(BOOK_POSITIONS.filter((p) => vec.includes(p.accountId)));
+const vecRow = realFromFirst.of(BOOK_POSITIONS.filter((p) => vec.includes(p.accountId)));
 assert.ok(!vecRow.shown && /different dates/.test(vecRow.reason), vecRow.shown ? `${vecRow.pct}` : vecRow.reason);
-for (const v of vec) { const one = real.of(BOOK_POSITIONS.filter((p) => p.accountId === v)); assert.ok(one.shown && one.from === '2026-03-31'); }
+for (const v of vec) {
+  assert.ok(realFromFirst.of(BOOK_POSITIONS.filter((p) => p.accountId === v)).shown);
+  assert.ok(!real.of(BOOK_POSITIONS.filter((p) => p.accountId === v)).shown, 'no 31 December value, so no year to date');
+}
 
 // A FULL YEAR TO DATE FROM THE PURCHASE RECORD (Stage 10jo): the units held on
 // 1 January at 31 December's close, this year's sales on their dates, and the
@@ -100,5 +122,62 @@ for (const v of vec) { const one = real.of(BOOK_POSITIONS.filter((p) => p.accoun
   const split = ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', money,
     assumptions: { ...(assumptions as object), histories: { 'example-d': { ...hist, splits: [{ date: '2026-03-01', factor: 2 }] } } } as never }).of([held]);
   assert.ok(!split.shown || split.from !== '2025-12-31', 'no 1 January start across an unchecked split');
+  // ANY OPENING DAY (Stage 10kq). 31 March: the units held then at that day's
+  // close, and the sales after it; null: from the record's first row at nil.
+  const marched = { ...hist, t: ['2025-12-31', '2026-03-31', '2026-07-31', '2026-10-29'], v: [1, 1, 1, 1], c: [100, 120, 140, 150] };
+  const withMarch = { ...(assumptions as object), histories: { 'example-d': marched } } as never;
+  const fy = ytdSelection(ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', assumptions: withMarch, money, open: '2026-03-31' }), [], [held]).assumedUnits![0];
+  assert.equal(fy.from, '2026-03-31'); near(fy.window!.openValue, 90 * 120); near(fy.gain, 43 * 150 - 90 * 120 + 4200 + 1560);
+  const sinceFirst = ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', assumptions, money, open: null });
+  assert.equal(sinceFirst.open, null);
+  const life = ytdSelection(sinceFirst, [], [held]).assumedUnits![0];
+  assert.equal(life.from, '2024-11-12'); assert.equal(life.window!.openValue, 0); assert.ok(life.window!.openedInWindow);
+  near(life.gain, 43 * 150 - 9000 + 4200 + 1560);
+  // Left out, the opening is 31 December — the year to date, unchanged.
+  assert.equal(ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', assumptions, money }).open, '2025-12-31');
+  // THE POOLED SURFACES READ THE SAME RECORD (Stage 10kq): the purchase record's
+  // full year is a unit, said to be assumed from the statement on.
+  const pooledBook = ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', assumptions, money });
+  const pooled = ytdSelection(pooledBook, [], [held]);
+  assert.equal(pooled.assumedUnits!.length, 1); assert.equal(pooled.windows.length, 0);
+  const u = pooled.assumedUnits![0];
+  assert.equal(u.from, '2025-12-31'); assert.equal(u.assumption?.owner, 'Owner D'); assert.equal(u.assumption?.statementDate, '2026-07-31');
+  near(u.gain, u.window!.gain); near(u.close, 43 * 150);
+  // THE BRIDGE READS ITS PURCHASES AND SALES (Stage 10mm): start + added − taken
+  // out + gain = end on every such row. Read as nothing added, a record's buy fell
+  // out of the bridge, ₹28.5 L on main's book from 5 Nov. A sale on the record
+  // realised part of the gain, which no cost here splits, so it stays unsplit.
+  const bridgeBook = { accounts: [acct], positions: [held], bridges: {}, moves: [], income: {} };
+  const ties = (b: NonNullable<ReturnType<typeof capitalBridge>>) => near(b.opening + b.added - b.takenOut + b.gain, b.closing);
+  const lifeBridge = capitalBridge([life], bridgeBook)!;
+  ties(lifeBridge); near(lifeBridge.added, 9000); near(lifeBridge.takenOut, 4200 + 1560);
+  assert.equal(lifeBridge.rows[0].split, null); assert.match(lifeBridge.rows[0].unsplitReason!, /sale on its purchase record/);
+  near(lifeBridge.unsplit, life.gain); assert.equal(lifeBridge.realised, null);
+  ties(capitalBridge([fy], bridgeBook)!);
+  // Bought inside the period and never sold: the price change is the units' unrealised gain.
+  const bought = { ...record, quantity: 43, cashRecord: [{ date: '2026-05-18', side: 'buy' as const, amount: 4300 }], unitRecord: [{ date: '2026-05-18', units: 43 }] };
+  const boughtHeld = { ...held, recoveredCost: bought } as unknown as Position;
+  const boughtUnit = ytdSelection(ytdBook({ inputs: [], held: [boughtHeld], accounts: [acct], end: '2026-10-30', money, open: '2026-03-31',
+    assumptions: { ...(withMarch as object), positions: [boughtHeld] } as never }), [], [boughtHeld]).assumedUnits![0];
+  near(boughtUnit.window!.capitalIn, 4300); near(boughtUnit.gain, 43 * 150 - 4300);
+  const boughtBridge = capitalBridge([boughtUnit], { ...bridgeBook, positions: [boughtHeld] })!;
+  ties(boughtBridge); near(boughtBridge.opening, 0); near(boughtBridge.added, 4300); near(boughtBridge.takenOut, 0);
+  assert.equal(boughtBridge.rows[0].split?.source, 'assumed-holding'); near(boughtBridge.unrealised!, 43 * 150 - 4300); near(boughtBridge.realised!, 0);
+}
+// A whole account takes its own window and its holdings none; an account with
+// no window this year names each holding's reason instead.
+{
+  const pooled = ytdSelection(book, [input], held);
+  assert.deepEqual(pooled.windows.map((w) => w.accountId), ['a']);
+  // An account's window opens at the later of the period's open and its own first record.
+  for (const open of ['2026-03-31', null]) {
+    const w = ytdSelection(ytdBook({ inputs: [input], held, accounts, end: '2026-10-30', assumptions: null, money, open }), [input], held).windows[0];
+    assert.equal(w.openDate, '2026-03-31'); near(w.gain, 132 - 100 - 20);
+  }
+  assert.equal(pooled.assumedUnits!.length, 0); assert.equal(pooled.excluded.length, 0);
+  const refused = { ...input, flowsUnknown: 'No opening valuation or dated money record' };
+  const gaps = ytdSelection(ytdBook({ inputs: [refused], held, accounts, end: '2026-10-30', assumptions: null, money }), [refused], held);
+  assert.equal(gaps.windows.length, 0); assert.match(gaps.excluded[0].reason, /No opening valuation/);
+  assert.deepEqual(gaps.assumptionGaps!.map((g) => g.securityKey), ['x']); assert.match(gaps.assumptionGaps![0].reason, /Prices are still loading/);
 }
 console.log('ok   ytd from the first date we have — whole accounts, part accounts, a full year, a refused record, parts valued apart, the purchase record and the archive');

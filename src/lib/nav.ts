@@ -1,6 +1,6 @@
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
-  Activity, Table2, Calculator, Gauge, Handshake, Cable, Library, Building2, FolderOpen,
+  Activity, Table2, Calculator, Gauge, Handshake, Cable, Library, Building2, FolderOpen, Home,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -33,6 +33,7 @@ export const NAV: readonly NavEntry[] = [
   // ring-fence moves with it — the promoter holding is still kept out of every
   // other route's figures by `RINGFENCED_SECURITY_KEYS` in build-book.mjs, and
   // a nav position was never what enforced that.
+  { to: "/home", label: "Home", icon: Home, group: "Daily" },
   { to: "/cio", label: "Morning CIO", icon: Sunrise, group: "Daily" },
   { to: "/monitor", label: "Portfolio Monitor", icon: LineChart, group: "Daily" },
   { to: "/private-market", label: "Private Market", icon: Handshake, group: "Daily" },

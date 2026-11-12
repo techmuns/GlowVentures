@@ -133,16 +133,18 @@
  */
 import type { Position } from "./types";
 import { isCashEquivalent } from "./analytics";
+import { placementOf } from "./familyPlacements";
 
 export type FamilyBasket =
   | "Stable Growth" | "Entrepreneurial Growth" | "Thematic & Tactical" | "Liquidity";
-export type FamilyAssetClass = "Equity" | "Debt" | "Alternate" | "Cash";
+/** Real Estate is the family's word for the LLPs' Nzuri shares (Stage 10mg; `REAL_ESTATE_KEYS`). */
+export type FamilyAssetClass = "Equity" | "Debt" | "Alternate" | "Real Estate" | "Cash";
 
 /** Reading order for the two new axes. Sections sort by this, never alphabetically. */
 export const BASKET_ORDER: readonly FamilyBasket[] =
   ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"];
 export const FAMILY_CLASS_ORDER: readonly FamilyAssetClass[] =
-  ["Equity", "Debt", "Alternate", "Cash"];
+  ["Equity", "Debt", "Alternate", "Real Estate", "Cash"];
 
 /**
  * WHAT A HOLDING THE FAMILY HAS NOT CLASSIFIED IS CALLED, and it is deliberately
@@ -163,8 +165,11 @@ export const UNCLASSIFIED_WHY =
  *   `cash-rule` — their instruction that ARBITRAGE AND LIQUID FUNDS ARE CASH,
  *                 wherever the review files one elsewhere or does not name it.
  *   `derived`   — our own asset class already answered it beyond doubt.
- *   `family`    — the family's own word on a holding the review cannot name,
- *                 because it was bought after it (`FAMILY_SAID_CLASS`).
+ *   `family`    — the family's own word on a holding the review does not name,
+ *                 because it was bought after it or left out of it
+ *                 (`FAMILY_SAID_CLASS`, `FAMILY_SAID_BASKET`).
+ *   `moved`     — the family moved the row to this section on the Portfolio
+ *                 Monitor itself (`familyPlacements.ts`, Stage 10lm).
  *
  * TWO RULES, TWO SOURCES, and that is not pedantry. Both are the family
  * speaking, and on screen a section heading prints how much of it a rule
@@ -173,7 +178,7 @@ export const UNCLASSIFIED_WHY =
  * to Thematic & Tactical", which is a sentence about the wrong rule, under the
  * wrong basket, attached to the largest figure in the section.
  */
-export type TaxonomySource = "review" | "rule" | "cash-rule" | "derived" | "family";
+export type TaxonomySource = "review" | "rule" | "cash-rule" | "derived" | "family" | "moved";
 
 export type TaxonomyEntry = {
   assetClass: FamilyAssetClass;
@@ -374,6 +379,13 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "HDFC Balanced Advantage Fund" },
   "sec:hdfc-baf-r-grow":
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "HDFC Balanced Advantage Fund" },
+  // Stage 10lb — the same fund on HDFC Mutual Fund's own folio statements
+  // (15644806 Ajay, 16002141 Ankita), which spell the scheme out in full. The
+  // short key above matches only the Motilal demat's unvalued rows, so the
+  // valued units fell to "not classified". Both folios tie to the review's
+  // "Transactions since inception" by units: 83,001.863 and 49,917.632.
+  "sec:hdfc-balanced-advantage-fund-regular-plan-growth":
+    { assetClass: "Equity", basket: "Liquidity", reviewProduct: "HDFC Balanced Advantage Fund" },
   "sec:icici-pru-baf-dp-grw":
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "ICICI Pru Balanced Advantage Fund" },
   "sec:woc-maaf-d-grow":
@@ -471,17 +483,53 @@ const classByDerivation = (p: Classifiable): FamilyAssetClass | null =>
 export type Resolved<T> = { value: T; source: TaxonomySource; reviewProduct: string | null };
 
 /**
- * THE FAMILY'S ASSET CLASS FOR A HOLDING THE 30 JUNE REVIEW PREDATES (Stage 10js).
+ * THE FAMILY'S PLACEMENT FOR HOLDINGS THE 30 JUNE REVIEW DOES NOT NAME.
  *
- *   "in asset class you can show it under as debt, and in basket you can show
- *    it as not classified."
+ * Franklin was Debt with no basket on the family's earlier instruction (Stage
+ * 10js). On 12 Nov 2026 they asked to research it and classify the remaining
+ * holding. Its private-credit / operating-cashflow strategy fits Stable Growth
+ * alongside the review's Debt / Neo Infra Income Opportunities AIF. This is a
+ * placement under the new request, not a claim that the June workbook names it.
+ * Fund-authored investor deck (financial-services credit, senior securities):
+ * https://www.scribd.com/document/1038011103/Franklin-India-Credit-AIF-Scheme-I-Investor-Deck-Regular
+ * A later review naming it takes over, because that map is read first.
  *
- * Asset class only, so no `FAMILY_TAXONOMY` entry: that map carries a basket too
- * and cites a workbook row, and this holding has neither. A later review naming
- * it takes over, because the map is read first.
+ * THE SIX THE REVIEW DOES NOT NAME (Stage 10lb, 4 Nov 2026: "Apply all seven").
+ * Active Momentum (6 Aug), Vantage Oak (31 Jul) and Nzuri (25 Sep and 1 Oct)
+ * were bought after it; the Low Volatility FOF (Oct 2024) and Aarti's Kotak
+ * Flexi Cap (2018) were held on 30 June and are on none of its 25 tabs. Each
+ * placement follows the review's own treatment of its nearest kind:
+ *
+ *   - Active Momentum: AMFI's Sectoral/Thematic, which the family's email puts
+ *     in Thematic & Tactical.
+ *   - Kotak Flexi Cap and the Low Volatility FOF: diversified equity funds,
+ *     which the review files Stable Growth without exception.
+ *   - Vantage Oak (a privately placed AIF) and both Nzuri lines (a Pune office
+ *     developer's unlisted equity and preference shares): private capital,
+ *     which the review files Alternate / Entrepreneurial Growth. The Nzuri
+ *     lines' asset class became Real Estate on the family's word (Stage 10mg).
  */
 export const FAMILY_SAID_CLASS: Readonly<Record<string, FamilyAssetClass>> = {
   "sec:franklin-india-credit-aif-scheme-i-unit-class-db2": "Debt",
+  "sec:motilal-oswal-active-momentum-fund-direct-plan-growth-option": "Equity",
+  "sec:kotak-flexi-cap-fund-direct-growth": "Equity",
+  "sec:icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth": "Equity",
+  "sec:vof-i-class-a2": "Alternate",
+  // Real Estate since Stage 10mg ("show their Nzuri … holdings under Real
+  // Estate"); the basket below is unchanged.
+  "sec:nzuri-pune-knowledge-park": "Real Estate",
+  "sec:nzuri-pune-knowledge-park-private-limited-pref-24sp46": "Real Estate",
+};
+
+/** …and their basket, under the same family instructions and research above. */
+export const FAMILY_SAID_BASKET: Readonly<Record<string, FamilyBasket>> = {
+  "sec:franklin-india-credit-aif-scheme-i-unit-class-db2": "Stable Growth",
+  "sec:motilal-oswal-active-momentum-fund-direct-plan-growth-option": "Thematic & Tactical",
+  "sec:kotak-flexi-cap-fund-direct-growth": "Stable Growth",
+  "sec:icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth": "Stable Growth",
+  "sec:vof-i-class-a2": "Entrepreneurial Growth",
+  "sec:nzuri-pune-knowledge-park": "Entrepreneurial Growth",
+  "sec:nzuri-pune-knowledge-park-private-limited-pref-24sp46": "Entrepreneurial Growth",
 };
 
 /**
@@ -518,11 +566,36 @@ const cashByInstruction = (p: Classifiable, isMandate: boolean): boolean =>
   !isMandate && isCashEquivalent(p);
 
 /**
+ * ── A ROW THE FAMILY MOVED ON THE PAGE, READ BEFORE EVERYTHING ELSE ────────
+ *
+ * Their move is the newest word on that one product, so it wins over the
+ * review, both rules and the derivation alike — including the cash instruction,
+ * which is itself only a default for products nobody has spoken about since.
+ * A placement naming a section this axis does not have is ignored, never drawn
+ * as a heading of its own. The review's citation is kept: the product is still
+ * the row the workbook names, and the review columns still join to it.
+ */
+function moved<T extends string>(
+  axis: "basket" | "assetClass", order: readonly T[], p: Classifiable, isMandate: boolean,
+  stated: Resolved<T> | null,
+): Resolved<T> | null {
+  const to = placementOf(axis, productKeyOf(p, isMandate))?.section;
+  if (!to || !(order as readonly string[]).includes(to)) return null;
+  return { value: to as T, source: "moved", reviewProduct: stated?.reviewProduct ?? null };
+}
+
+/**
  * WHICH BASKET, AND ON WHOSE AUTHORITY. `null` where nobody has said — which is
  * a section on screen with its reason, never a holding quietly dropped from the
  * table or swept into whichever basket happens to be first.
  */
 export function familyBasket(p: Classifiable, isMandate: boolean): Resolved<FamilyBasket> | null {
+  const stated = statedBasket(p, isMandate);
+  return moved("basket", BASKET_ORDER, p, isMandate, stated) ?? stated;
+}
+
+/** The basket before any move on the page — where "Move back" returns a row to. */
+export function statedBasket(p: Classifiable, isMandate: boolean): Resolved<FamilyBasket> | null {
   const hit = FAMILY_TAXONOMY[productKeyOf(p, isMandate)];
   if (cashByInstruction(p, isMandate)) {
     return hit?.basket === "Liquidity"
@@ -532,6 +605,8 @@ export function familyBasket(p: Classifiable, isMandate: boolean): Resolved<Fami
   if (hit) return { value: hit.basket, source: "review", reviewProduct: hit.reviewProduct };
   // A line the review itself is the source for carries the review's own code (Stage 10dh).
   if (p.reviewTaxonomy) return { value: p.reviewTaxonomy.basket, source: "review", reviewProduct: null };
+  const said = FAMILY_SAID_BASKET[productKeyOf(p, isMandate)];
+  if (said) return { value: said, source: "family", reviewProduct: null };
   // A mandate is never rule-filled: see `basketByRule`.
   const byRule = isMandate ? null : basketByRule(p);
   return byRule ? { value: byRule, source: "rule", reviewProduct: null } : null;
@@ -539,6 +614,12 @@ export function familyBasket(p: Classifiable, isMandate: boolean): Resolved<Fami
 
 /** The family's asset class, same contract. */
 export function familyAssetClass(p: Classifiable, isMandate: boolean): Resolved<FamilyAssetClass> | null {
+  const stated = statedAssetClass(p, isMandate);
+  return moved("assetClass", FAMILY_CLASS_ORDER, p, isMandate, stated) ?? stated;
+}
+
+/** The asset class before any move on the page. */
+export function statedAssetClass(p: Classifiable, isMandate: boolean): Resolved<FamilyAssetClass> | null {
   const hit = FAMILY_TAXONOMY[productKeyOf(p, isMandate)];
   if (cashByInstruction(p, isMandate)) {
     return hit?.assetClass === "Cash"
@@ -579,8 +660,8 @@ export function taxonomyCoverage(
   rows: readonly { position: Position; isMandate: boolean; marketValue: number }[],
   axis: "basket" | "assetClass",
 ) {
-  const count = { review: 0, rule: 0, "cash-rule": 0, derived: 0, family: 0, none: 0 };
-  const value = { review: 0, rule: 0, "cash-rule": 0, derived: 0, family: 0, none: 0 };
+  const count = { review: 0, rule: 0, "cash-rule": 0, derived: 0, family: 0, moved: 0, none: 0 };
+  const value = { review: 0, rule: 0, "cash-rule": 0, derived: 0, family: 0, moved: 0, none: 0 };
   for (const r of rows) {
     const res = axis === "basket" ? familyBasket(r.position, r.isMandate) : familyAssetClass(r.position, r.isMandate);
     const k: TaxonomySource | "none" = res?.source ?? "none";

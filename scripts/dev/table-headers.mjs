@@ -73,6 +73,46 @@ export async function assertStickyTableHeaders(page, label) {
             port.scrollTop = saved;
             await frame();
           }
+          // A frozen label must cover exactly its column, including the total:
+          // pinning a merged footer label would hide neighbouring figures.
+          if (port && table.dataset.monitorTable === 'holdings' && port.scrollWidth-port.clientWidth > 32) {
+            const security = head.querySelector('[data-col="security"]');
+            const name = table.querySelector(':scope > tbody > tr > td:first-child:is(:not([colspan]), [colspan="1"])');
+            const total = table.tFoot?.rows[0]?.cells[0];
+            if (security && name && total) {
+              const saved = port.scrollLeft;
+              port.scrollLeft = Math.min(150,port.scrollWidth-port.clientWidth);
+              await frame();
+              const box = port.getBoundingClientRect();
+              const origin = box.left + parseFloat(getComputedStyle(port).borderLeftWidth)*box.width/port.offsetWidth;
+              const h = security.getBoundingClientRect(), n = name.getBoundingClientRect(), f = total.getBoundingClientRect();
+              report.frozenLabels = { heading:h.left-origin, name:n.left-origin, total:f.left-origin, width:f.width-h.width };
+              port.scrollLeft = saved;
+              await frame();
+            }
+          }
+          // Every table freezes its first column (Stage 10nj): scrolled sideways,
+          // the first unspanned heading and body cell stay at the scrollport's
+          // left edge, and the body cell paints an opaque surface under itself.
+          let xport = table.parentElement;
+          while (xport && !/auto|scroll/.test(getComputedStyle(xport).overflowX)) xport = xport.parentElement;
+          if (xport && table.closest('#root') && !table.hasAttribute('data-freeze-off') && xport.scrollWidth-xport.clientWidth > 32) {
+            const first = ':first-child:is(:not([colspan]), [colspan="1"])';
+            const th = table.querySelector(`:scope > thead > tr > ${first}`);
+            const td = table.querySelector(`:scope > tbody > tr > ${first}`);
+            if (th && td) {
+              const saved = xport.scrollLeft;
+              xport.scrollLeft = Math.min(150,xport.scrollWidth-xport.clientWidth);
+              await frame();
+              const box = xport.getBoundingClientRect();
+              const origin = box.left + parseFloat(getComputedStyle(xport).borderLeftWidth)*box.width/xport.offsetWidth;
+              const surface = getComputedStyle(td,'::before').backgroundColor;
+              report.firstColumn = { heading:th.getBoundingClientRect().left-origin, body:td.getBoundingClientRect().left-origin,
+                opaque: /^rgb\(/.test(surface) || /^rgba\(.*,\s*1\)$/.test(surface) };
+              xport.scrollLeft = saved;
+              await frame();
+            }
+          }
           reports.push(report);
         }
       }
@@ -83,6 +123,10 @@ export async function assertStickyTableHeaders(page, label) {
     const context = `${label}, ${r.theme}, ${r.heading}`;
     assert.ok(r.sticky, `header is pinned: ${context}`);
     assert.ok(r.opaque && r.aboveRows, `header covers scrolling cells: ${context}`);
+    if (r.frozenLabels) assert.ok(Object.values(r.frozenLabels).every(delta=>Math.abs(delta)<2),
+      `Security and Total stay in one aligned frozen column: ${context}: ${JSON.stringify(r.frozenLabels)}`);
+    if (r.firstColumn) assert.ok(Math.abs(r.firstColumn.heading)<2 && Math.abs(r.firstColumn.body)<2 && r.firstColumn.opaque,
+      `the first column stays frozen and opaque while the table scrolls sideways: ${context}: ${JSON.stringify(r.firstColumn)}`);
     if ('scrolled' in r) {
       assert.ok(r.scrolled, `body actually scrolls: ${context}`);
       assert.ok(r.pinned && r.groupIntact, `header stays fixed without overlapping header rows: ${context}`);

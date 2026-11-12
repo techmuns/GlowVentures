@@ -41,13 +41,20 @@ import { fundNavFor, isArbitrageFund } from "./fundNavs";
 import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
 import nseSymbols from "@/data/nseSymbols.json";
 import screenerSectors from "@/data/screenerSectors.json";
+import screenerKeys from "@/data/screenerKeys.json";
 import { quoteSymbolFor } from "./quotes";
 
 const KEY_TO_SYMBOL = nseSymbols as Record<string, string>;
 const VENDOR_SECTORS = screenerSectors as Record<
   string,
-  { gics: string; screenerSector: string; screenerBroadSector: string | null; screenerIndustry: string | null; joinedBy: string | null }
+  { gics: string; screenerSector: string; screenerBroadSector: string | null; screenerBroadIndustry: string | null; screenerIndustry: string | null; joinedBy: string | null }
 >;
+/**
+ * The screener.in listing of every company the app's own symbol tier does not
+ * reach — a fund-held company by its ISIN or name in NSE's master, a BSE-only
+ * listing by its scrip code (Stage 10md, `npm run build-sectors`).
+ */
+const VENDOR_KEYS = screenerKeys as Record<string, string>;
 
 export type LookthroughHolding = {
   name: string;
@@ -670,11 +677,10 @@ export type StockExposureState =
  * `total` adds the derived half in, so a caller can print either and can never
  * blend them by accident.
  *
- * THE BOOK'S OWN SECTOR WINS WHERE IT HAS ONE. That comes from the family's own
- * statement through `build-book`; the disclosed one is a third party's reading
- * of somebody else's filing. But "Unclassified" is the ABSENCE of an answer
- * rather than an answer, so a book row that carries it falls through to the
- * disclosed sector rather than overriding it with nothing.
+ * ONE CLASSIFICATION FOR EVERY COMPANY (Stage 10md): screener.in's, wherever
+ * it has a page, and the others only where it has none — see `sectorFrom`.
+ * "Unclassified" is the ABSENCE of an answer rather than an answer, so a source
+ * that carries it falls through to the next rather than overriding it.
  */
 export type CompanyExposure = {
   key: string;
@@ -708,26 +714,35 @@ export type CompanyExposure = {
    * in no index comparison.
    */
   derivedGross: number;
-  /** GICS. Three tiers, strongest first — see `sectorFrom`. */
+  /** GICS, from one classification — see `sectorFrom`. */
   sector: string;
   /**
    * WHICH SOURCE PLACED THIS COMPANY, so a caller can count each and a reader
-   * is never left to assume. The order is the strength of the evidence and
-   * nothing else:
+   * is never left to assume.
    *
-   *   `book`       the family's OWN statement printed a sector for this holding.
-   *   `disclosure` a fund they hold filed one against the same ISIN with SEBI.
-   *   `vendor`     screener.in publishes one against the NSE symbol NSE itself
-   *                issued (`npm run build-sectors`).
+   *   `vendor`     screener.in — NSE's industry classification, read off the
+   *                company's page by its NSE symbol or BSE scrip code
+   *                (`npm run build-sectors`). EVERY company it has a page for.
+   *   `disclosure` a company screener has no page for (unlisted, or a fresh
+   *                demerger): the AMFI industry its funds' filings agree on —
+   *                the same vocabulary, screener's Broad Industry level.
+   *   `book`       neither has one: the family's own statement's label.
    *
-   * A LOWER TIER ONLY EVER FILLS AN EMPTY SECTOR — it can never overrule a
-   * statement. Measured on the 84 company shares where the book and the vendor
-   * both have an answer, they agree on 80; the four that differ are taxonomy
-   * judgements (GICS files a cinema under Communication Services and several
-   * Indian providers under Consumer Discretionary) and the STATEMENT keeps its
-   * answer on every one of them. `docs/SCREENER-SECTORS.md` names them.
+   * ONE SOURCE WINS, AND IT IS THE SAME SOURCE FOR EVERY COMPANY THAT HAS IT
+   * (Stage 10md, the family: "if you're using sector classification based on
+   * screener.in then every holding should be based on it only"). Before this a
+   * statement won where it printed anything, so a company read the private
+   * taxonomy of whichever platform held it — Engineers India was Information
+   * Technology because one PMS files it under "Consulting Services".
    */
   sectorFrom: "book" | "disclosure" | "vendor" | null;
+  /**
+   * The finer industry under `sector`, for the sub-industry drill-down (#406):
+   * screener.in's Broad Industry (Financials → Banks / Finance / Insurance /
+   * Capital Markets, etc.). Only the `vendor` tier carries it; `null` where the
+   * sector came from a filing or the statement, or screener names none.
+   */
+  subIndustry: string | null;
   /** The book rows behind `measured`, for a drill-down. Empty on a derived-only company. */
   positions: Position[];
   /**
@@ -759,6 +774,9 @@ function symbolFor(key: string, positions: Position[]): string | null {
  */
 export const companySymbol = (e: Pick<CompanyExposure, "key" | "positions">): string | null =>
   symbolFor(e.key, e.positions);
+/** The listing screener.in was asked about: the app's own symbol, or the one `build-sectors` joined (Stage 10md). */
+export const companyListing = (e: Pick<CompanyExposure, "key" | "positions">): string | null =>
+  symbolFor(e.key, e.positions) ?? VENDOR_KEYS[e.key] ?? null;
 
 /**
  * WHETHER A FUND'S DISCLOSED LINES ARE AN EQUITY POSITION OF THE FAMILY'S, for
@@ -792,19 +810,20 @@ export function companyExposure(
   exposure: StockExposureState,
 ): CompanyExposure[] {
   const byKey = new Map<string, CompanyExposure>();
+  // Each source's answer, kept apart until all three are known.
+  const bookSector = new Map<string, string>();
+  const filedSector = new Map<string, string>();
   for (const p of positions) {
     const e = byKey.get(p.securityKey) ?? {
       key: p.securityKey, name: p.security, isin: p.isin ?? null,
       measured: 0, derived: 0, total: 0, derivedEquity: 0, derivedGross: 0,
-      sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[], classes: [] as string[],
+      sector: UNCLASSIFIED, sectorFrom: null, subIndustry: null, positions: [] as Position[], classes: [] as string[],
     };
     e.measured += p.marketValue;
     e.positions.push(p);
     if (!e.classes.includes("Equity")) e.classes.push("Equity");
     if (!e.isin && p.isin) e.isin = p.isin;
-    if (e.sectorFrom !== "book" && p.sector && p.sector !== UNCLASSIFIED) {
-      e.sector = p.sector; e.sectorFrom = "book";
-    }
+    if (!bookSector.has(p.securityKey) && p.sector && p.sector !== UNCLASSIFIED) bookSector.set(p.securityKey, p.sector);
     byKey.set(p.securityKey, e);
   }
   if (exposure.status === "ok") {
@@ -812,7 +831,7 @@ export function companyExposure(
       const e = byKey.get(x.key) ?? {
         key: x.key, name: x.name, isin: x.isin,
         measured: 0, derived: 0, total: 0, derivedEquity: 0, derivedGross: 0,
-        sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[], classes: [] as string[],
+        sector: UNCLASSIFIED, sectorFrom: null, subIndustry: null, positions: [] as Position[], classes: [] as string[],
       };
       e.derived += x.total;
       // The equity half, line by line, and the gross half apart (Stage 10fz).
@@ -824,29 +843,32 @@ export function companyExposure(
       }
       for (const c of x.classes) if (!e.classes.includes(c)) e.classes.push(c);
       if (!e.isin && x.isin) e.isin = x.isin;
-      if (e.sectorFrom === null && x.sector) { e.sector = x.sector; e.sectorFrom = "disclosure"; }
+      if (x.sector) filedSector.set(x.key, x.sector);
       byKey.set(x.key, e);
     }
   }
   /**
-   * ── TIER 3, AND IT RUNS LAST BECAUSE IT IS THE WEAKEST EVIDENCE ────────────
+   * ── ONE CLASSIFICATION, SCREENER.IN'S, WHEREVER IT HAS ONE (Stage 10md) ────
    *
-   * A depository statement prints an ISIN, a quantity and a rate and NO
-   * industry, so before this every company the family bought in its own demat
-   * reached the sector table unplaced — 37 of 37 on the Direct Equity view, a
-   * single grey wedge covering the whole of it.
+   * `screenerSectors.json` is keyed on the NSE symbol (or the BSE scrip code
+   * where NSE lists none) and generated by `npm run build-sectors`, which asks
+   * about EVERY company this function can return, fetches its page, REQUIRES it
+   * to name the identifier back, and resolves screener's Broad Industry through
+   * `shared/sectors.mjs`. A fund-held company the app carries no symbol for
+   * reaches its listing through `screenerKeys.json`, joined on its ISIN or its
+   * name in NSE's own master. Nothing here infers a sector.
    *
-   * `screenerSectors.json` is keyed on the NSE symbol and generated by
-   * `npm run build-sectors`, which fetches each company's page, REQUIRES it to
-   * name the symbol back, and resolves the label through `shared/sectors.mjs` —
-   * the same committed table `build-book` resolves the book's own labels
-   * through. Nothing here infers a sector; this reads one somebody published.
+   * The funds' filing (the same industry vocabulary) and then the statement
+   * place only what screener has no page for.
    */
   for (const e of byKey.values()) {
-    if (e.sectorFrom !== null) continue;
     const symbol = symbolFor(e.key, e.positions);
-    const hit = symbol ? VENDOR_SECTORS[symbol] : undefined;
-    if (hit && hit.gics && hit.gics !== UNCLASSIFIED) { e.sector = hit.gics; e.sectorFrom = "vendor"; }
+    const hit = (symbol ? VENDOR_SECTORS[symbol] : undefined) ?? (VENDOR_KEYS[e.key] ? VENDOR_SECTORS[VENDOR_KEYS[e.key]] : undefined);
+    const filed = filedSector.get(e.key);
+    const book = bookSector.get(e.key);
+    if (hit && hit.gics && hit.gics !== UNCLASSIFIED) { e.sector = hit.gics; e.sectorFrom = "vendor"; e.subIndustry = hit.screenerBroadIndustry ?? null; }
+    else if (filed) { e.sector = filed; e.sectorFrom = "disclosure"; }
+    else if (book) { e.sector = book; e.sectorFrom = "book"; }
   }
   for (const e of byKey.values()) { e.total = e.measured + e.derived; e.classes.sort(); }
   return [...byKey.values()].sort((a, b) => b.total - a.total);

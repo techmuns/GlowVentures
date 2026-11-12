@@ -18,7 +18,7 @@ import {
   isCompanyShare, isFundVehicle, isCashEquivalent, isDirectEquity, isMandateHeld, excludedClasses, assetClassLabel,
   holdingBucket, bucketLabel, holdingRoute, mandateLabel, ROUTE_LABEL, ROUTE_NOTE,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
-  DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, AT_COST_BUCKET,
+  DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, AT_COST_BUCKET, REAL_ESTATE_BUCKET,
   strikesGain, isValuedAtCost, AT_COST_RETURN, AT_COST_PNL,
 } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf, unvaluedStatementLinesOf } from "@/lib/accounts";
@@ -100,7 +100,7 @@ function unvaluedKinds(reasons: readonly (string | null | undefined)[]): string 
  * in that state; spelling it `"Equity"` here would make the entry dead and sort
  * the section below Cash the first time one arrived.
  */
-const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", AT_COST_BUCKET, "Cash"];
+const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", REAL_ESTATE_BUCKET, AT_COST_BUCKET, "Cash"];
 const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i < 0 ? BUCKET_ORDER.length : i; };
 
 /**
@@ -1522,12 +1522,14 @@ export function FamilyEntities() {
                     which is correct, because a sector is a property of the
                     company. Bharat's four come from exactly that, and "their"
                     would have claimed his own statements printed them. */}
-                <span><span className="mono text-slate-200">{selPlaced.book}</span> from a statement in this book</span>
-                {selPlaced.disclosure > 0 && <span><span className="mono text-slate-200">{selPlaced.disclosure}</span> from a fund&rsquo;s filing</span>}
-                {selPlaced.vendor > 0 && <span><span className="mono text-slate-200">{selPlaced.vendor}</span> from screener.in</span>}
+                {/* Stage 10md: screener.in first — the one classification —
+                    and the two fallbacks only for what it has no page for. */}
+                <span><span className="mono text-slate-200">{selPlaced.vendor}</span> from screener.in</span>
+                {selPlaced.disclosure > 0 && <span><span className="mono text-slate-200">{selPlaced.disclosure}</span> unlisted, from a fund&rsquo;s filing</span>}
+                {selPlaced.book > 0 && <span><span className="mono text-slate-200">{selPlaced.book}</span> from a statement in this book</span>}
                 {selPlaced.unplaced.length > 0 && (
                   <span className="text-slate-500"
-                    title={`No tier places these — a statement that printed no industry, no fund filing naming the ISIN and no NSE symbol to look one up on. ${selPlaced.unplaced.length} companies: ${selPlaced.unplaced.join(", ")}`}>
+                    title={`No source places these — no screener.in page joins to them, no fund filing names the ISIN, and no statement prints an industry. ${selPlaced.unplaced.length} companies: ${selPlaced.unplaced.join(", ")}`}>
                     <span className="mono">{selPlaced.unplaced.length}</span> unplaced ·{" "}
                     <span className="mono">{money(selUnclassifiedMV)}</span>
                   </span>
@@ -1757,7 +1759,7 @@ export function FamilyEntities() {
                       data-unvalued-lines-elsewhere={g.reportedElsewhere} data-unvalued-lines-sold={g.sold}>
                       <details data-navigation-details="familyentities-2">
                         <summary className="flex cursor-pointer items-baseline justify-between gap-3"
-                          title={`The ${g.account.provider} statement for ${g.account.accountNo} records ${notValued} holding${notValued === 1 ? "" : "s"} with a quantity and no value, which nothing in this book values.${liveNav ? ` ${liveNav} more ${liveNav === 1 ? "is" : "are"} recorded the same way and valued here at AMFI's published NAV — a sibling statement from the same depository proves the units are on its basis — so ${liveNav === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${liveQuote ? ` ${liveQuote} more ${liveQuote === 1 ? "is a listed share" : "are listed shares"} recorded the same way and valued here at the live quote, only while the quote feed prices ${liveQuote === 1 ? "it" : "them"} — so ${liveQuote === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${g.reportedElsewhere ? ` ${g.reportedElsewhere} more ${g.reportedElsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, and ${g.reportedElsewhere === 1 ? "is" : "are"} in the table above through that fund.` : ""}${g.sold ? ` ${g.sold} more ${g.sold === 1 ? "was" : "were"} sold to nil after the statement, on exchange trades MOPWM's transaction report records, and ${g.sold === 1 ? "is" : "are"} not held.` : ""}`}>
+                          title={`The ${g.account.provider} statement for ${g.account.accountNo} records ${notValued} holding${notValued === 1 ? "" : "s"} with a quantity and no value, which nothing in this book values.${liveNav ? ` ${liveNav} more ${liveNav === 1 ? "is" : "are"} recorded the same way and valued here at AMFI's published NAV — a sibling statement from the same depository proves the units are on its basis — so ${liveNav === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${liveQuote ? ` ${liveQuote} more ${liveQuote === 1 ? "is a listed share" : "are listed shares"} recorded the same way and valued here at the live quote, only while the quote feed prices ${liveQuote === 1 ? "it" : "them"} — so ${liveQuote === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${g.reportedElsewhere ? ` ${g.reportedElsewhere} more ${g.reportedElsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, and ${g.reportedElsewhere === 1 ? "is" : "are"} in the table above through that fund.` : ""}${g.sold ? ` ${g.sold} more ${g.sold === 1 ? "was" : "were"} sold to nil after the statement, on sales MOPWM's transaction report records, and ${g.sold === 1 ? "is" : "are"} not held.` : ""}`}>
                           <span className="text-slate-300">
                             {g.account.provider}
                             <span className="text-slate-500"> · {g.account.accountNo}</span>

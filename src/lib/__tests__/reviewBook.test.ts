@@ -393,20 +393,50 @@ console.log("\n5. Each member's share is the review's own Investorwise figure");
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-console.log("\n6. Every dated private-market flow is the review's own Transactions row");
+console.log("\n6. Private-market flows retain their source rows, including approved register dates");
 {
-  type Flow = { accountId: string; securityKey: string; security: string; date: string; kind: string; amount: number; units: number | null; rate: number | null; reviewRow: number };
-  const flows = BOOK_REVIEW_FLOWS as Flow[];
+  type Flow = { accountId: string; securityKey: string; security: string; date: string; kind: string; amount: number; units: number | null; rate: number | null; reviewRow: number | null; register?: { sheet: string; row: number } };
+  // The rows the investment register dates instead are their own document's (Stage 10mv):
+  // Ankita's two NSE payments, and nothing else.
+  const registered = (BOOK_REVIEW_FLOWS as Flow[]).filter((f) => f.reviewRow === null);
+  ok("the flows the review does not print are the investment register's, each naming its row — Ankita's two NSE payments",
+    registered.length === 2 && registered.every((f) => f.register && f.securityKey === "national-stock-exchange-of-india" && f.accountId === "review-ankita-jaisinghani"),
+    registered.map((f) => `${f.accountId} ${f.securityKey} ${f.date}`).join("; "));
+  const flows = (BOOK_REVIEW_FLOWS as Flow[]).filter((f) => f.reviewRow !== null) as (Flow & { reviewRow: number })[];
   const want = txRows.filter((t) => !/^closing$/i.test(t.kind));
   ok("the book's review flows are exactly the review's non-closing private-market Transactions rows",
     flows.map((f) => f.reviewRow).sort((a, b) => a - b).join() === want.map((t) => t.row).sort((a, b) => a - b).join(),
     `${flows.length} flows, ${want.length} rows`);
   const kindOf = (k: string) => (/^purchase$/i.test(k) ? "purchase" : /^sale$/i.test(k) ? "sale" : /div|int/i.test(k) ? "income" : "?");
+  // Stage 10ne: only these two purchases use the register's day. Read that
+  // workbook independently, rather than calling the generator's redating code.
+  const dateChoices: Record<number, { key: string; account: string; sheet: string; sr: string; name: RegExp; owner: string }> = {
+    443: { key: "zepto", account: "review-ajay-jaisinghani", sheet: "AJAY SIR - AARTI", sr: "25", name: /^KIRANAKART TECHNOLOGIES PRIVATE - ZEPTO$/, owner: "AJAY" },
+    82: { key: "transition-venture-capital-fund-i-class-a1", account: "review-ankita-jaisinghani", sheet: "FUND HOUSE", sr: "23", name: /^TRANSITION VENTURE CAPITAL FUND - I$/, owner: "ANKITA" },
+  };
+  const registerBook = XLSX.readFile(path.join(process.cwd(), "source/august-2026-f/NEW INVESTMENT SHEET.xlsx"));
+  ok("only the two family-approved review purchases cite a register date",
+    flows.filter((f) => f.register).length === Object.keys(dateChoices).length
+      && Object.entries(dateChoices).every(([r, s]) => flows.some((f) => f.reviewRow === Number(r) && f.securityKey === s.key && f.accountId === s.account && f.register)));
   const bad: string[] = [];
   for (const f of flows) {
     const t = want.find((x) => x.row === f.reviewRow);
     if (!t) continue;
-    if (f.date !== isoOf(t.date)) bad.push(`row ${t.row}: date ${f.date} vs ${isoOf(t.date)}`);
+    const choice = dateChoices[t.row];
+    if (choice) {
+      const rows = XLSX.utils.sheet_to_json<unknown[]>(registerBook.Sheets[choice.sheet], { header: 1, raw: true, defval: null });
+      const headers = rows[0].map(text);
+      const at = (r: unknown[], name: string) => r[headers.indexOf(name)];
+      const matches = rows.map((r, i) => ({ r, row: i + 1 })).filter(({ r }) =>
+        text(at(r, "SR. NO.")) === choice.sr && choice.name.test(text(at(r, "INVESTMENT NAME")))
+          && text(at(r, "INVESTMENT DONE UNDER")) === choice.owner);
+      const match = matches.length === 1 ? matches[0] : null;
+      const date = match && at(match.r, "INVESTMENT DATE"), amount = match && at(match.r, "INVESTMENT AMOUNT");
+      if (!match || f.securityKey !== choice.key || f.accountId !== choice.account || f.kind !== "purchase"
+          || f.register?.sheet !== choice.sheet || f.register?.row !== match.row
+          || typeof date !== "number" || f.date !== isoOf(date) || typeof amount !== "number" || Math.abs(f.amount - amount) > 1)
+        bad.push(`row ${t.row}: approved register date does not tie to its named holder, payment and source row`);
+    } else if (f.register || f.date !== isoOf(t.date)) bad.push(`row ${t.row}: date ${f.date} vs ${isoOf(t.date)}`);
     if (Math.abs(f.amount - Math.abs(t.value)) > 1) bad.push(`row ${t.row}: amount ${f.amount} vs ${Math.abs(t.value)}`);
     if (f.kind !== kindOf(t.kind)) bad.push(`row ${t.row}: kind ${f.kind} vs ${t.kind}`);
     // Units are kept to three decimals, the precision every statement in this
@@ -416,7 +446,7 @@ console.log("\n6. Every dated private-market flow is the review's own Transactio
       bad.push(`row ${t.row}: units ${f.units} vs ${t.qty}`);
     if ((f.rate ?? null) !== (t.rate ?? null)) bad.push(`row ${t.row}: rate ${f.rate} vs ${t.rate}`);
   }
-  ok("each flow's date, amount, kind, units and rate are its row's", bad.length === 0, bad.slice(0, 4).join("; "));
+  ok("each flow's date is its cited source's; amount, kind, units and rate stay the review's", bad.length === 0, bad.slice(0, 4).join("; "));
   const pairs = new Set(REV.map((p) => `${p.accountId}|${p.securityKey}`));
   ok("each flow belongs to a review row the book carries", flows.every((f) => pairs.has(`${f.accountId}|${f.securityKey}`)));
   const carriedProducts = new Set([...LINES.values()].filter((l) => l.tab !== PI).map((l) => norm(l.product)));

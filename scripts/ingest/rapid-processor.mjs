@@ -1,3 +1,4 @@
+import { collectFinancialAudit } from "./lib/financial-integrity.mjs";
 import { performance } from 'node:perf_hooks';
 import { createHash } from 'node:crypto';
 import { prepareRapidStatement } from './rapid-core.mjs';
@@ -12,7 +13,13 @@ export class ReaderVersionChanged extends Error {}
 
 export function rapidProcessor({ store, inbox, initial, references, instantiate, passwords, dashboardPassword, baseAsset, prepare = prepareRapidStatement, seed = false, processorName = 'rapid', recover = true, dispatchFallback = true }) {
   let current = initial, state = null, queue = Promise.resolve(), ready = false;
-  const versions = new Map(), models = new Map(), jobs = new Map(), evidenceReaders = new WeakMap();
+  const versions = new Map(), models = new Map(), jobs = new Map(), evidenceReaders = new WeakMap(), integrityBySnapshot = new WeakMap();
+  const integrityFor = snap => {
+    if (!snap.financialIntegrity && snap.readerRevision !== initial.readerRevision)
+      throw new ReaderVersionChanged('Financial evidence requires the matching reader; the old source facts remain inspectable');
+    if (!integrityBySnapshot.has(snap)) integrityBySnapshot.set(snap, snap.financialIntegrity ?? collectFinancialAudit(snap.book, snap.documents, { readerRevision: snap.readerRevision, bookRevision: digest(snap.book) }));
+    return integrityBySnapshot.get(snap);
+  };
   const evidenceFor = snap => {
     if (!evidenceReaders.has(snap)) evidenceReaders.set(snap, positionEvidenceReader(snap.documents, snap.book.BOOK_ACCOUNTS));
     return evidenceReaders.get(snap);
@@ -91,7 +98,8 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
       files.push({ ...file, bytes, size: bytes.length });
     }
     let candidate = await prepare({ baseline: current.documents, files, references, passwords,
-      sourcePrefix: `source/uploads-rapid-${id}`, readerRevision: initial.readerRevision });
+      sourcePrefix: `source/uploads-rapid-${id}`, readerRevision: initial.readerRevision,
+      registry: integrityFor(current).registry });
     if (candidate.decision === 'slow_path') return fullReader();
     const verified = candidate.decision === 'verified', duplicate = candidate.decision === 'duplicate';
     const now = new Date().toISOString();
@@ -187,11 +195,11 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
   };
   return {
     initialize, submit, version,
-    stockLedgers: () => modelFor(current).deriveStockLedgers(current.documents, stockKeys(current)),
+    stockLedgers: () => modelFor(current).deriveHoldingLedgers(current.documents, stockKeys(current)),
     status: () => ({ ready, revision: current.revision, readerRevision: current.readerRevision, receipts: state?.state?.receipts ?? {} }),
     published: () => ({ manifest: current.manifest, index: { files: current.originals, missing: current.missingOriginals ?? {} } }),
     snapshot: () => ({ schemaVersion: 1, revision: current.revision, readerRevision: current.readerRevision, book: current.book,
-      stockKeys: stockKeys(current), emptyLedger: modelFor(current).deriveStockLedger(current.documents, '') }),
+      stockKeys: stockKeys(current), emptyLedger: modelFor(current).deriveHoldingLedger(current.documents, '') }),
     async exposure(revision, body) {
       const snap = await version(revision), model = modelFor(snap);
       const result = await model.loadStockExposure(body.funds, new Map(body.identities), {
@@ -203,10 +211,12 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     async asset(revision, name) {
       const snap = await version(revision);
       if (name === 'canonical/book.json') return snap.book;
+      const financial = /^financial\/(integrity|graph|events|metrics|checks|reconciliationReviews|registry)\.json$/.exec(name);
+      if (financial) return financial[1] === 'integrity' ? integrityFor(snap) : integrityFor(snap)[financial[1]];
       if (name === 'publication.json') return { schemaVersion: 1, readerRevision: snap.readerRevision,
         archiveRevision: snap.archiveRevision, bookRevision: digest(snap.book),
         statementDocuments: snap.documents.map(d => ({ document: d.docKey, revision: digest(d), evidence: `provenance/documents/${d.docKey}.json` })),
-        canonical: 'canonical/book.json', positions: 'provenance/positions.json',
+        canonical: 'canonical/book.json', positions: 'provenance/positions.json', financialIntegrity: 'financial/integrity.json',
         overlays: { livePrices: 'Quotes and NAVs retain their own provider/time; they do not overwrite the statement evidence.',
           enteredData: 'Entered capital calls and investment profiles retain their separate dashboard-store history.' } };
       if (name === 'audit/manifest.json') return snap.manifest;
@@ -244,7 +254,7 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
         'ledger/income.json': 'deriveIncome', 'ledger/sales.json': 'deriveSales', 'consolidated/book.json': 'buildConsolidatedSheet' };
       if (simple[name]) return model[simple[name]](snap.documents);
       const stock = /^ledger\/stocks\/([a-z0-9-]+)\.json$/.exec(name);
-      if (stock) return model.deriveStockLedger(snap.documents, stock[1]);
+      if (stock) return model.deriveHoldingLedger(snap.documents, stock[1]);
       if (name === 'fund-disclosures.json') return model.deriveFundDisclosures(snap.documents, new Set(snap.book.BOOK_POLYCAB.map(p => p.securityKey)));
       if (name === 'statement-securities.json') return model.deriveStatementSecurities(snap.documents, {
         keys: new Set(snap.book.BOOK_POLYCAB.map(p => p.securityKey)),

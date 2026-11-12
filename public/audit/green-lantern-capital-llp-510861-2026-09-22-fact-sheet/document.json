@@ -1442,6 +1442,239 @@
  "securityNameSource": null,
  "excludedFromBook": null,
  "schemeHoldings": [],
+ "factSheetValues": [
+  {
+   "security": "HEG Graphite Limited",
+   "securityKey": "heg-graphite",
+   "sector": "Equity",
+   "marketValue": 1217450,
+   "pctAssets": 1.05
+  },
+  {
+   "security": "Punjab National Bank",
+   "securityKey": "punjab-national-bank",
+   "sector": "Banks",
+   "marketValue": 967707,
+   "pctAssets": 0.83
+  },
+  {
+   "security": "State Bank Of India",
+   "securityKey": "state-bank-of-india",
+   "sector": "Banks",
+   "marketValue": 5023830,
+   "pctAssets": 4.33
+  },
+  {
+   "security": "Engineers India Ltd",
+   "securityKey": "engineers-india",
+   "sector": "Consulting Services",
+   "marketValue": 7553463,
+   "pctAssets": 6.51
+  },
+  {
+   "security": "Exide Industries Ltd",
+   "securityKey": "exide-industries",
+   "sector": "Auto Parts & Equipment",
+   "marketValue": 6037285,
+   "pctAssets": 5.2
+  },
+  {
+   "security": "Jamna Auto Ind Ltd",
+   "securityKey": "jamna-auto-ind",
+   "sector": "Auto Parts & Equipment",
+   "marketValue": 1819122,
+   "pctAssets": 1.57
+  },
+  {
+   "security": "ZF Commercial Vehicle Control Systems India Ltd",
+   "securityKey": "zf-commercial-vehicle-control-systems-india",
+   "sector": "Auto Parts & Equipment",
+   "marketValue": 2437790,
+   "pctAssets": 2.1
+  },
+  {
+   "security": "Power Finance Corporation Ltd",
+   "securityKey": "power-finance",
+   "sector": "Finance (including NBFCs)",
+   "marketValue": 2880514,
+   "pctAssets": 2.48
+  },
+  {
+   "security": "Rural Electrification Corporation Ltd",
+   "securityKey": "rural-electrification",
+   "sector": "Finance (including NBFCs)",
+   "marketValue": 1284599,
+   "pctAssets": 1.11
+  },
+  {
+   "security": "Tech Mahindra Ltd",
+   "securityKey": "tech-mahindra",
+   "sector": "IT Consulting & Software",
+   "marketValue": 2404980,
+   "pctAssets": 2.07
+  },
+  {
+   "security": "Intellect Design Arena Ltd",
+   "securityKey": "intellect-design-arena",
+   "sector": "IT Software Products",
+   "marketValue": 2801519,
+   "pctAssets": 2.41
+  },
+  {
+   "security": "Aarti Drugs Ltd",
+   "securityKey": "aarti-drugs",
+   "sector": "Pharmaceuticals",
+   "marketValue": 2371428,
+   "pctAssets": 2.04
+  },
+  {
+   "security": "Aurobindo Pharma Ltd",
+   "securityKey": "aurobindo-pharma",
+   "sector": "Pharmaceuticals",
+   "marketValue": 4377500,
+   "pctAssets": 3.77
+  },
+  {
+   "security": "Glenmark Pharmaceuticals Ltd",
+   "securityKey": "glenmark-pharmaceuticals",
+   "sector": "Pharmaceuticals",
+   "marketValue": 4972028,
+   "pctAssets": 4.29
+  },
+  {
+   "security": "Elgi Equipments Ltd",
+   "securityKey": "elgi-equipments",
+   "sector": "Industrial Machinery",
+   "marketValue": 1296455,
+   "pctAssets": 1.12
+  },
+  {
+   "security": "Ingersollrand India Ltd",
+   "securityKey": "ingersollrand-india",
+   "sector": "Industrial Machinery",
+   "marketValue": 1845282,
+   "pctAssets": 1.59
+  },
+  {
+   "security": "Isgec Heavy Engineering Ltd",
+   "securityKey": "isgec-heavy-engineering",
+   "sector": "Industrial Machinery",
+   "marketValue": 4344155,
+   "pctAssets": 3.74
+  },
+  {
+   "security": "KSB Ltd",
+   "securityKey": "ksb",
+   "sector": "Industrial Machinery",
+   "marketValue": 4567415,
+   "pctAssets": 3.94
+  },
+  {
+   "security": "Kaveri Seed Company Ltd",
+   "securityKey": "kaveri-seed",
+   "sector": "Other Agricultural Prod",
+   "marketValue": 3565671,
+   "pctAssets": 3.07
+  },
+  {
+   "security": "Thermax Ltd",
+   "securityKey": "thermax",
+   "sector": "Heavy Electrical Equipmen",
+   "marketValue": 1958321,
+   "pctAssets": 1.69
+  },
+  {
+   "security": "Triveni Turbine Ltd",
+   "securityKey": "triveni-turbine",
+   "sector": "Heavy Electrical Equipmen",
+   "marketValue": 2381698,
+   "pctAssets": 2.05
+  },
+  {
+   "security": "Vedanta Aluminium Metal Limited",
+   "securityKey": "vedanta-aluminium-metal",
+   "sector": "Aluminium",
+   "marketValue": 3644824,
+   "pctAssets": 3.14
+  },
+  {
+   "security": "Bharat Heavy Electricals Ltd",
+   "securityKey": "bharat-heavy-electricals",
+   "sector": "Heavy Electrical Equip",
+   "marketValue": 6469179,
+   "pctAssets": 5.58
+  },
+  {
+   "security": "HEG Advanced Materials Limited",
+   "securityKey": "heg-advanced-materials",
+   "sector": "Other Industrial Goods",
+   "marketValue": 605540,
+   "pctAssets": 0.52
+  },
+  {
+   "security": "Indian Energy Exchange Ltd",
+   "securityKey": "indian-energy-exchange",
+   "sector": "Financial Institutions",
+   "marketValue": 1108791,
+   "pctAssets": 0.96
+  },
+  {
+   "security": "Hindustan Aeronautics Ltd",
+   "securityKey": "hindustan-aeronautics",
+   "sector": "Airlines",
+   "marketValue": 4027200,
+   "pctAssets": 3.47
+  },
+  {
+   "security": "The Anup Engineering Ltd",
+   "securityKey": "the-anup-engineering",
+   "sector": "Engineering",
+   "marketValue": 2092054,
+   "pctAssets": 1.8
+  },
+  {
+   "security": "Alivus Life Sciences Ltd",
+   "securityKey": "alivus-life-sciences",
+   "sector": "Pharmaceuticals",
+   "marketValue": 6486224,
+   "pctAssets": 5.59
+  },
+  {
+   "security": "Mishra Dhatu Nigam Ltd",
+   "securityKey": "mishra-dhatu-nigam",
+   "sector": "Miscellaneous",
+   "marketValue": 3106942,
+   "pctAssets": 2.68
+  },
+  {
+   "security": "Vedanta Ltd",
+   "securityKey": "vedanta",
+   "sector": "Diversified Metals",
+   "marketValue": 2253647,
+   "pctAssets": 1.94
+  },
+  {
+   "security": "Cash",
+   "securityKey": "cash",
+   "sector": "Cash and Equivalent",
+   "marketValue": 10114232,
+   "pctAssets": 8.72
+  },
+  {
+   "security": "Axis Liquid Fund - Direct Plan - Growth Option",
+   "securityKey": "axis-liquid-fund-direct-plan-growth-option",
+   "sector": "Mutual Fund",
+   "marketValue": 9902638,
+   "pctAssets": 8.54
+  },
+  {
+   "security": "Dividend / Interest receivable",
+   "securityKey": "dividend-interest-receivable",
+   "sector": "Dividend / Interest receivable",
+   "marketValue": 100365,
+   "pctAssets": 0.09
+  }
+ ],
  "aifEarnings": null,
  "jointHolders": [],
  "checks": null,

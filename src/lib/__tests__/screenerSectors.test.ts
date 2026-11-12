@@ -57,7 +57,9 @@ type Vendor = {
   screenerSector: string;
   screenerSectorCode: string;
   screenerBroadSector: string;
+  screenerBroadIndustry: string | null;
   screenerIndustry: string;
+  gicsFrom: "broadIndustry" | "sector";
   joinedBy: string;
 };
 const MAP = screenerSectors as Record<string, Vendor>;
@@ -66,7 +68,7 @@ const entries = Object.entries(MAP);
 
 console.log("\n── the store is well formed, and every field is populated ──");
 ok("the store is not empty", entries.length > 0, `${entries.length} symbols`);
-ok("every key is an NSE trading symbol",
+ok("every key is an NSE trading symbol, or a BSE scrip code where NSE lists none",
   entries.every(([s]) => /^[A-Z0-9&*\-]+$/.test(s)),
   entries.filter(([s]) => !/^[A-Z0-9&*\-]+$/.test(s)).map(([s]) => s).join(", ") || "all");
 ok("every entry carries a GICS sector, and none is the absent one",
@@ -88,12 +90,12 @@ ok("every entry keeps screener's own words beside the GICS one",
 console.log("\n── every page was proved to be the company it was asked for ──");
 const joins = new Set(entries.map(([, v]) => v.joinedBy));
 ok("no entry was accepted without a round-trip guard",
-  [...joins].every((j) => j === "nse-symbol" || j === "name"),
+  [...joins].every((j) => j === "nse-symbol" || j === "bse-code" || j === "name"),
   [...joins].join(", "));
-const bySymbol = entries.filter(([, v]) => v.joinedBy === "nse-symbol").length;
+const bySymbol = entries.filter(([, v]) => v.joinedBy === "nse-symbol" || v.joinedBy === "bse-code").length;
 ok("and the identifier guard carries the great majority",
   bySymbol / entries.length >= 0.9,
-  `${bySymbol} of ${entries.length} echoed their own NSE symbol`);
+  `${bySymbol} of ${entries.length} echoed their own NSE symbol or BSE scrip code`);
 
 /*
  * ── EVERY LABEL RESOLVES THROUGH THE ONE COMMITTED MAP ─────────────────────
@@ -106,8 +108,15 @@ ok("and the identifier guard carries the great majority",
  * script decided on its own.
  */
 console.log("\n── the GICS answer is the committed map's, not the script's ──");
-const mismatched = entries.filter(([, v]) => resolveSector(v.screenerSector).sector !== v.gics);
-eq("every stored GICS is `resolveSector(screenerSector)`", mismatched.map(([s]) => s), []);
+// Stage 10md: off the BROAD INDUSTRY — the AMFI industry list a fund's filing
+// uses, so a fund-placed company and a screener-placed one share the entry —
+// and the Sector level only where the map carries no entry for it.
+const viaMap = (v: Vendor) => {
+  const bi = v.screenerBroadIndustry ? resolveSector(v.screenerBroadIndustry) : null;
+  return bi?.matchedBy ? { gics: bi.sector, from: "broadIndustry" } : { gics: resolveSector(v.screenerSector).sector, from: "sector" };
+};
+const mismatched = entries.filter(([, v]) => viaMap(v).gics !== v.gics || viaMap(v).from !== v.gicsFrom);
+eq("every stored GICS is the committed map's answer for the stored Broad Industry, else the Sector", mismatched.map(([s]) => s), []);
 
 /*
  * ── IT ACTUALLY PLACES COMPANIES THE BOOK CANNOT ───────────────────────────
@@ -135,17 +144,18 @@ ok("the vendor tier places company shares no statement placed",
   `${rescued.length} of ${unplacedByBook.size} unclassified shares that resolve a symbol`);
 
 /*
- * ── AND IT NEVER OVERRULES A STATEMENT — MEASURED, NOT ASSERTED ────────────
+ * ── WHERE IT OVERRULES A STATEMENT — MEASURED, NOT ASSERTED ────────────────
  *
  * Where the book and the vendor BOTH have an answer they are compared, and the
  * disagreements are counted rather than suppressed: they are genuine taxonomy
  * judgements (GICS files a cinema under Communication Services, several Indian
- * providers under Consumer Discretionary) and the STATEMENT keeps its answer on
- * every one of them. The gate is on the AGREEMENT RATE, so a store that started
+ * providers under Consumer Discretionary), and since Stage 10md screener.in's
+ * answer is the one every page shows — one classification for every company.
+ * The gate is on the AGREEMENT RATE, so a store that started
  * disagreeing wholesale — a shifted column, a renamed label, a wrong page —
  * fails here rather than quietly re-sectoring the book on the next drop.
  */
-console.log("\n── where both have an answer they agree, and the book still wins ──");
+console.log("\n── where both have an answer they mostly agree, and screener.in wins (Stage 10md) ──");
 // PER COMPANY, NOT PER POSITION. One company can be held in several accounts
 // and each row would count its own agreement again — inflating the sample and
 // printing the same disagreement three times, which reads as three findings.
@@ -166,7 +176,7 @@ ok("the two sources have both been measured against each other", both > 0, `${bo
 ok("and they agree on the overwhelming majority",
   both > 0 && agree / both >= 0.9,
   `${agree} of ${both} (${((agree / both) * 100).toFixed(1)}%)`);
-for (const d of differ) console.log(`     · ${d} — the statement keeps its answer`);
+for (const d of differ) console.log(`     · ${d} — screener.in's answer is the one every page shows`);
 
 console.log(fails === 0 ? "\nAll screener-sector checks passed." : `\n${fails} FAILED`);
 if (fails) process.exit(1);

@@ -53,7 +53,7 @@ import { isValuedByNoStatement, unvaluedAifFolios } from "@/lib/aifCategory";
 import fs from "node:fs";
 import path from "node:path";
 import { schemeCalls, callTotals } from "@/lib/capitalCalls";
-import { bookFolios, privateBook, figuresOf, privateBookFolios, privateMultiples, writtenOffNote, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
+import { bookFolios, privateBook, figuresOf, privateBookFolios, privateMultiples, writtenOffNote, weightBase, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
 import { BRAND_NAMES, brandNameOf } from "@/lib/brandNames";
 import type { SchemeCall } from "@/lib/capitalCalls";
 import type { Position } from "@/lib/types";
@@ -144,14 +144,22 @@ console.log("\n── the private total is the book's private side ──");
    * on its own folios, so adding the two bands is a second path to the figure
    * `privateBook` takes over their union.
    */
-  const bands = (byFund.sections.private.value ?? 0) + (byFund.sections.atCost.value ?? 0);
-  near("…and privateValue is the valued and at-cost bands' own consolidated values, added",
+  const bands = (byFund.sections.private.value ?? 0) + (byFund.sections.company.value ?? 0) + (byFund.sections.atCost.value ?? 0);
+  near("…and privateValue is the valued funds, valued companies and at-cost bands' own consolidated values, added",
     byFund.privateValue, bands);
-  near("the two bands add to the private total (nothing unvalued adds any)", bands, byFund.privateTotal.value);
+  near("the valued bands add to the private total (nothing unvalued adds any)", bands, byFund.privateTotal.value);
   ok("the at-cost band is real on this book — the review's lines held at what was paid",
     (byFund.sections.atCost.value ?? 0) > 1 && byFund.sections.atCost.folios > 0,
     `${byFund.sections.atCost.folios} folios · ₹${((byFund.sections.atCost.value ?? 0) / 1e7).toFixed(2)} Cr`);
   ok("the unvalued section carries NO value — absent, never a zero", byFund.sections.unvalued.value === null);
+  // *"Zepto is a private market company not a fund"*: a company the review
+  // values sits in the companies band, and no company stands under Private funds.
+  const companyKeys = byFund.sections.company.groups.flatMap((g) => g.folios.map((f) => f.securityKey));
+  ok("Zepto — a company the review values — is in the valued companies band", companyKeys.includes("zepto"), companyKeys.join(", "));
+  ok("…and the Private funds band holds no company's shares",
+    byFund.sections.private.groups.flatMap((g) => g.folios).every((f) => !f.position || !["Unlisted", "Equity"].includes(f.position.assetClass)));
+  ok("…and nothing in the valued companies band is a fund",
+    byFund.sections.company.groups.flatMap((g) => g.folios).every((f) => f.position && !["AIF", "Mutual Fund", "ETF"].includes(f.position.assetClass)));
 }
 
 function capitalColumns({ label, b, overlap }: Run) {
@@ -317,7 +325,7 @@ function countedOnce({ label, b, overlap }: Run) {
   // The two bands that carry a value — the valued funds and the review's lines
   // held at cost (Stage 10dh) — are where every private holding's value is, so
   // a member's printed rows are read over both.
-  const valued = (["private", "atCost"] as const).map((id) => byOwner.sections[id]);
+  const valued = (["private", "company", "atCost"] as const).map((id) => byOwner.sections[id]);
   const lineOf = (k: "value" | "committed" | "called" | "paid" | "uncalled") =>
     sum(valued.map((s) => s.overlap?.[k] ?? 0));
   near("the member rows add to the PRINTED total",
@@ -326,7 +334,7 @@ function countedOnce({ label, b, overlap }: Run) {
   else ok("…and no band draws a 'Counted once' line, there being nothing to take back", valued.every((s) => s.overlap == null));
   near("…and the bands less those lines are the consolidated private total",
     sum(valued.map((s) => s.value ?? 0)) - lineOf("value"), byFund.privateTotal.value);
-  for (const id of ["private", "atCost"] as const) {
+  for (const id of ["private", "company", "atCost"] as const) {
     for (const k of ["committed", "called", "paid", "uncalled"] as const) {
       near(`…in the capital columns too: the member ${id} band's ${k} less its line is the fund band's`,
         (byOwner.sections[id][k] ?? 0) - (byOwner.sections[id].overlap?.[k] ?? 0), byFund.sections[id][k] ?? 0);
@@ -690,8 +698,19 @@ console.log("\n── the funds the audit named (Stage 10fz): before → after �
     `₹${bt.distributed} (${bt.distributedOf} of ${bt.distributionAccounts}) → ₹${at.distributed} (${at.distributedOf} of ${at.distributionAccounts})`);
 
   // ── DPI / RVPI / TVPI, by a second path ──
-  const mult = privateMultiples(folios);
-  const band = folios.filter((f) => f.section === "private" && f.position && f.counted && !isValuedAtCost(f.position));
+  // VANTAGE OAK (Stage 10lb) is in the band, and no capital account or review row
+  // records what was paid in, so the book's multiple is REFUSED naming it — the
+  // family chose that over leaving the fund off this page. The arithmetic is
+  // checked on the band without it; the day its paid-in lands, this must fail.
+  const noPaidIn = new Set(["vof-i-class-a2"]);
+  const onBook = privateMultiples(folios);
+  ok("the book's multiple is refused, naming only the holdings no document records a paid-in for",
+    onBook.tvpi == null && onBook.dpi == null && onBook.missing.length > 0
+      && onBook.missing.every((x) => noPaidIn.has(x.folio.securityKey ?? "") && x.why.length > 0),
+    onBook.missing.map((x) => `${x.folio.accountId}: ${x.why}`).join("; "));
+  const counted = folios.filter((f) => !noPaidIn.has(f.securityKey ?? ""));
+  const mult = privateMultiples(counted);
+  const band = counted.filter((f) => (f.section === "private" || f.section === "company") && f.position && f.counted && !isValuedAtCost(f.position));
   const paidInOf = (f: BookFolio) => {
     const at = valuedAtOf(f.position!)!;
     if (f.distributedBasis === "review") return BOOK_REVIEW_FLOWS.filter((r) => r.accountId === f.accountId && r.securityKey === f.fundKey && r.kind === "purchase" && r.date <= at).reduce((t, r) => t + r.amount, 0);
@@ -704,7 +723,7 @@ console.log("\n── the funds the audit named (Stage 10fz): before → after �
     const c = BOOK_COMMITMENTS.find((x) => x.accountId === f.accountId)!;
     return (c.payouts ?? []).filter((p) => p.kind !== "equalisation" && p.date <= at).reduce((t, p) => t + p.gross, 0);
   };
-  ok("every holding of the Private funds band can say what went in and came back, so the multiple is struck",
+  ok("every holding of the Private funds and valued companies bands can say what went in and came back, so the multiple is struck",
     mult.tvpi != null && mult.missing.length === 0 && mult.parts.length === band.length,
     mult.missing.map((x) => `${x.folio.accountId}: ${x.why}`).join("; "));
   const pIn = sum(band.map(paidInOf)), pOut = sum(band.map(distOf)), nav = sum(band.map((f) => f.value ?? 0));
@@ -736,8 +755,11 @@ console.log("\n── the review's write-offs are named wherever the private boo
 
 console.log("\n── units never add across funds ──");
 {
-  ok("no band or total carries a unit count",
-    BOOK_SECTIONS.every((s) => byFund.sections[s].units === null)
+  // A band holding ONE company (the valued companies band: Zepto alone) is that
+  // company's own count; a band across several funds carries none.
+  const fundsIn = (s: (typeof BOOK_SECTIONS)[number]) => new Set(byFund.sections[s].groups.flatMap((g) => g.folios.map((f) => f.fundKey))).size;
+  ok("no band across several funds, and no total, carries a unit count",
+    BOOK_SECTIONS.filter((s) => fundsIn(s) > 1).every((s) => byFund.sections[s].units === null)
     && byFund.privateTotal.units === null);
   const multi = byFund.sections.private.groups.filter((g) => g.folios.filter((f) => f.position).length > 1);
   ok("a fund row held in several folios adds the units it counts",
@@ -801,13 +823,27 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
 // Neo Infra's capital redemption — load-bearing, or the page's "on ₹X" marker
 // is a claim nothing here could fail.
 {
-  const priv = byFund.sections.private;
-  const held = folios.filter((f) => f.section === "private" && f.position && f.counted);
+  // A VALUED HOLDING WITH NO COST (Vantage Oak, Stage 10lb) leaves the band's
+  // cost short of its value, so the band and the total refuse a return rather
+  // than divide one set by another. The arithmetic below is struck on the build
+  // without it; the day its cost lands, the first check fails.
+  const costless = (p: Position) => p.marketSide === "private" && p.marketValue > 0 && p.costBasis == null && !isValuedAtCost(p);
+  ok("the band refuses a return while a valued private holding reports no cost",
+    byFund.sections.private.returnPct == null && byFund.sections.private.deployed == null && byFund.privateTotal.deployed == null
+      && current.some(costless),
+    current.filter(costless).map((p) => p.security).join("; "));
+  const without = build(BOOK_POSITIONS.filter((p) => !costless(p)));
+  const priv = without.byFund.sections.private;
+  const held = without.folios.filter((f) => f.section === "private" && f.position && f.counted);
   const sold = held.reduce((t, f) => t + (f.position!.costOfUnitsSold ?? 0), 0);
   const costHeld = held.reduce((t, f) => t + (f.cost ?? 0), 0);
   ok("a private holding here has redeemed units (so the denominator differs from the Cost column)", sold > 1, `₹${sold.toFixed(2)}`);
   near("the band's deployed is the cost held plus what the redeemed units cost", priv.deployed, costHeld + sold);
-  near("…and the total's is the same", byFund.privateTotal.deployed, costHeld + sold);
+  // The total also strikes the valued companies band (Zepto), which no fund's figure carries.
+  const cmpHeld = without.folios.filter((f) => f.section === "company" && f.position && f.counted);
+  near("…and the total's is the same, with the valued companies' own added",
+    without.byFund.privateTotal.deployed,
+    costHeld + sold + cmpHeld.reduce((t, f) => t + (f.cost ?? 0) + (f.position!.costOfUnitsSold ?? 0), 0));
   ok("…and it is NOT the Cost column", priv.deployed != null && priv.cost != null && Math.abs(priv.deployed - priv.cost) > 1);
   // …AND THE INCOME EACH HOLDING CARRIES (Stage 10fz): FIFO's gain is the
   // unrealised and realised gain plus `dividendReceived`, gross of TDS, over the
@@ -857,6 +893,29 @@ for (const run of RUNS) doubleCountHoldings(run);
   ok("some private fund strikes a NAV", struck > 0);
   ok("a band over several funds strikes none", byFund.sections.private.nav == null && !!byFund.sections.private.navWhy);
   for (const g of byFund.sections.atCost.groups) ok(`${g.label}: held at cost, so no NAV`, g.nav == null);
+}
+
+// ── [F] THE WEIGHTS ARE OF THE BANDS SHOWN ──────────────────────────────────
+{
+  // "When we are seeing only the companies filter or the funds filter then the
+  // weightage … should be measured for that particular filter only" — so each
+  // filter's rows weigh to 100% of their own bands, and Both is the whole book.
+  console.log("\n── weights: Companies and Funds each weigh against their own bands ──");
+  const all = weightBase(byFund, BOOK_SECTIONS);
+  near("Both's value base is the private value", all.value, byFund.privateValue);
+  near("Both's cost base is the private cost", all.cost, byFund.privateCost);
+  const cmp = weightBase(byFund, ["company", "atCost"]), fnd = weightBase(byFund, ["private", "unvalued"]);
+  ok("both filters have a subject on this book", cmp.value > 1 && fnd.value > 1);
+  near("Companies' value base is the two company bands'", cmp.value,
+    (byFund.sections.company.value ?? 0) + (byFund.sections.atCost.value ?? 0));
+  near("Funds' value base is the private funds band's", fnd.value, byFund.sections.private.value);
+  near("…and the two add to the whole", cmp.value + fnd.value, all.value);
+  near("…on cost too", (cmp.cost ?? 0) + (fnd.cost ?? 0), all.cost);
+  for (const [name, b, ids] of [["Companies", cmp, ["company", "atCost"]], ["Funds", fnd, ["private"]]] as const) {
+    const gs = ids.flatMap((id) => byFund.sections[id].groups);
+    near(`${name}: its rows' value weights add to 100%`, sum(gs.map((g) => ((g.value ?? 0) / b.value) * 100)), 100, 1e-6);
+    near(`${name}: its rows' cost weights add to 100%`, sum(gs.map((g) => ((g.cost ?? 0) / b.cost!) * 100)), 100, 1e-6);
+  }
 }
 
 if (fails) {

@@ -11,6 +11,9 @@ export async function readerRevisionFor(root = process.cwd()) {
     }
   }
   await pipelineTree('scripts/ingest'); await pipelineTree('scripts/lib'); await pipelineTree('shared'); await pipelineTree('src/lib');
+  for (const name of ['financial-identities', 'ownership-relationships', 'reconciliation-exceptions', 'settlement-accounts']) {
+    const file = `config/${name}.json`; pipelineFiles.push([file, digest(await fs.readFile(path.join(root, file), 'utf8'))]);
+  }
   pipelineFiles.push(['scripts/build-book.mjs', digest(await fs.readFile(path.join(root, 'scripts/build-book.mjs'), 'utf8'))]);
   return digest(pipelineFiles);
 }

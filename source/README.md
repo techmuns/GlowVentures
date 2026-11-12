@@ -67,7 +67,11 @@ as 3 November.
 - An equity order book whose every trade settles into that account.
 - HDFC Securities' InvestRight equity and demat portfolios for Ajay's trading account 3110320, exported on 2 November and read as one snapshot.
 
-Its fifth file, `3110320_Equity_Trade_Details_Report (3).xlsx`, NEVER ARRIVED: the mail server left its 85-byte removal notice. Ask for it again (Stage 10kn).
+Its fifth file, `3110320_Equity_Trade_Details_Report (3).xlsx`, NEVER ARRIVED: the mail server left its 85-byte removal notice (Stage 10kn). The client re-sent it on 4 November, and the copy in `november-2026-c/` is read.
+
+`november-2026-c/` holds that re-sent workbook, HDFC Securities' equity trade details report for Ajay's trading account 3110320. It covers 1 April–31 October 2026, downloaded 2 November, with one row per fill. It has 466 sales: Vedanta 67,000 (23 and 29 July), all 1,77,000 of each of the three Vedanta demerger shares (Iron and Steel, Power, Oil and Gas; 23–29 July), and Man Industries 37,317 (23 September). The client sent the ZIP's other four files again with it, byte-identical to the copies in `november-2026-b/`, so they are recorded here and not added (Stage 10ld).
+
+`november-2026-d/` holds five SVAN Velocity PMS reports as of 4 November 2026, sent by the client on 5 November: the Portfolio Appraisal and Capital Register for Ajay's 8710067 and for Bharat's 8710090, and Bharat's Bank Book. Every file differs from the 30 September set in `october-2026-c/`. Both registers run from inception to 4 November (Stage 10lw). The same day the client sent the rest of the set: the Transaction Statement and Capital Gain statement for both accounts, and Ajay's Bank Book. Each runs from the account's inception to 4 November (Stage 10lx).
 
 **These files never reach the browser.** `source/` sits at the repo root, outside
 `public/`, so nothing here is copied into the build or served by the site. Only

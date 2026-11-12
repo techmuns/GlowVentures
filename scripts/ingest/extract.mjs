@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { financialUnitIssue } from "./lib/financial-units.mjs";
 // Extraction pass — statements in source/ become a checkable audit archive.
 //
 //   npm run extract
@@ -349,6 +350,18 @@ export function gridFromSpreadsheet(buf) {
   };
 }
 
+/**
+ * A STATEMENT THAT NEVER ARRIVED AND WAS THEN SENT AGAIN.
+ *
+ * `november-2026-b`'s ZIP carries `3110320_Equity_Trade_Details_Report (3).xlsx`
+ * as an 85-byte removal notice; the client re-sent the workbook itself, and it
+ * sits in `november-2026-c/` under the same name. The notice stays what it is —
+ * that delivery never carried the statement — but it no longer asks for a file
+ * that is here. Notice path → the re-sent copy's path, filled in `main` from
+ * every file under `source/`: the same file name, and not itself a notice.
+ */
+const RESENT = new Map();
+
 /** A removal notice, as a grid with nothing on it and the notice's own words. */
 function removalNoticeGrid(buf) {
   const text = buf.toString("latin1").replace(/\s+/g, " ").trim();
@@ -398,10 +411,15 @@ function extractOne(file, grid, part = null, providerWitness = null) {
   };
 
   if (grid.removalNotice) {
-    return makeDocument({ ...base, status: "failed", warnings: [{ code: "attachment-removed",
-      detail: `${fileName} NEVER ARRIVED: a mail server removed the attachment in transit and left this ${grid.noticeBytes}-byte `
-        + `notice under its name — "${grid.noticeText}". There is no statement here to read; ask the sender to re-send `
-        + "it another way (a download link, or zipped), and upload it on the Statement Library." }] });
+    const resent = RESENT.get(file);
+    const removed = `a mail server removed the attachment in transit and left this ${grid.noticeBytes}-byte `
+      + `notice under its name — "${grid.noticeText}".`;
+    return makeDocument({ ...base, status: "failed", warnings: resent
+      ? [{ code: "attachment-removed", detail: `${fileName} never arrived in this delivery: ${removed} It was sent again, and \`${rel(resent)}\` is read.` },
+        { code: "attachment-resent", detail: rel(resent) }]
+      : [{ code: "attachment-removed",
+        detail: `${fileName} NEVER ARRIVED: ${removed} There is no statement here to read; ask the sender to re-send `
+          + "it another way (a download link, or zipped), and upload it on the Statement Library." }] });
   }
   if (grid.error) {
     return makeDocument({ ...base, status: "failed", warnings: [{ code: "pdf-read-failed", detail: grid.error }] });
@@ -657,6 +675,10 @@ function noTextLayer(grid) {
   // here: `G100023_100023_PortFolioFactSheet.pdf` prints `Account: 100022`, and
   // keying that document under 100023 files Ankita's fact sheet with Ajay's
   // statements.
+  const unitIssue = financialUnitIssue(doc, grid.pages?.map(p => p.text ?? '').join('\n') ?? '');
+  if (unitIssue && ['holdings', 'transactions', 'cashFlows', 'capitalGains'].some(k => doc[k]?.length) && !doc.excludedFromBook) {
+    doc.warnings.push({ code: 'financial-units-audit', detail: unitIssue });
+  }
   return assertNormalized(rekey(doc));
 }
 
@@ -1067,6 +1089,28 @@ function ensureUniqueDocKeys(docs) {
  * `GLOW_ALLOW_ARCHIVE_SHRINK=1` overrides both, for the legitimate case of
  * deliberately removing a delivery.
  */
+/**
+ * A FACT SHEET'S FIGURES ARE PUBLISHED ONLY WHERE THE BOOK CAN USE THEM (Stage
+ * 10mh): on an account's NEWEST fact sheet, and only where it is dated after the
+ * account's newest holding statement — the later mark a tape roll needs
+ * (`scripts/lib/tapeRoll.mjs`). Everywhere else the holding statement is the
+ * later record, the figures would say nothing it does not, and the document
+ * stays exactly as it was published.
+ */
+function keepUsableFactSheetValues(docs) {
+  const account = (d) => `${d.provider}|${d.accountNo}`;
+  const holdingsAsOf = new Map(), newestSheet = new Map();
+  for (const d of docs) {
+    if (!d.asOf) continue;
+    if (d.reportType !== "fact-sheet" && (d.holdings ?? []).length && (holdingsAsOf.get(account(d)) ?? "") < d.asOf) holdingsAsOf.set(account(d), d.asOf);
+    if (d.reportType === "fact-sheet" && d.factSheetValues && (newestSheet.get(account(d))?.asOf ?? "") < d.asOf) newestSheet.set(account(d), d);
+  }
+  for (const d of docs) {
+    if (!d.factSheetValues) continue;
+    if (newestSheet.get(account(d)) !== d || !(d.asOf > (holdingsAsOf.get(account(d)) ?? ""))) delete d.factSheetValues;
+  }
+}
+
 function guardAgainstShrinkingTheArchive(docs) {
   if (process.env.GLOW_ALLOW_ARCHIVE_SHRINK === "1") return;
   let existing;
@@ -1405,6 +1449,9 @@ export function archiveRecord(doc, grid) {
       warnings: doc.warnings.length,
       // WHY A DOCUMENT FAILED, for the Statement Library's status ("Never arrived").
       ...(doc.status === "failed" ? { failedBecause: doc.warnings?.[0]?.code ?? null } : {}),
+      // …and, for one that never arrived, the copy the sender re-sent (`RESENT`).
+      ...(doc.warnings?.some((w) => w.code === "attachment-resent")
+        ? { resentAs: doc.warnings.find((w) => w.code === "attachment-resent").detail } : {}),
       // A file printing the same text as this document's (read once), and the
       // document an export witnesses — provenance, never a second source.
       twinOf: doc.twinOf,
@@ -1448,6 +1495,11 @@ async function main() {
   const files = [];
   walk(SOURCE_DIR, (f) => files.push(f));
   files.sort((a, b) => rel(a).localeCompare(rel(b)));
+  for (const f of files) {
+    if (!isRemovalNotice(fs.readFileSync(f))) continue;
+    const copy = files.find((g) => g !== f && path.basename(g) === path.basename(f) && !isRemovalNotice(fs.readFileSync(g)));
+    if (copy) RESENT.set(f, copy);
+  }
 
   // The SAME FILE, delivered twice. A drop assembled by hand routinely carries
   // `X (1).pdf` beside `X.pdf` — this one carries two VEC bank books and two
@@ -1599,6 +1651,7 @@ async function main() {
     console.log(`witness of ${primary.docKey}: ${doc.status}`);
   }
   ensureUniqueDocKeys(docs);
+  keepUsableFactSheetValues(docs);
   // A document whose every warning describes the STATEMENT — not the reading —
   // was read completely. See lib/readStatus.mjs; this only ever promotes.
   for (const d of docs) settleStatus(d);

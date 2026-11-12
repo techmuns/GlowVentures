@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/Card";
+import { ReturnCalculationInfo } from "@/components/ReturnCalculation";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex, engagementOf } from "@/lib/accounts";
@@ -323,6 +324,12 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
   const clock = firstObserved && lastObserved && firstObserved !== lastObserved
     ? `${firstObserved}–${lastObserved}` : firstObserved;
 
+  const dailyImpactText = fmtFromBase(model.dayChange, { compact: true, sign: true });
+  const dailyPercentText = model.dayPct == null ? DASH : fmtPct(model.dayPct, { sign: true });
+  const coverageDetail = `${model.impactNames > 0
+    ? `The move is struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(model.scopeValue, { compact: true })} held, across ${model.impactNames} of ${model.distinct} ${SCOPE.noun} names — the rest lack a quote or a verified share count and are excluded from the money total.`
+    : `No money move is struck: none of the ${model.distinct} ${SCOPE.noun} names has both a live quote and a verified share count, so the ${fmtFromBase(model.scopeValue, { compact: true })} held carries no rupee figure here.`}${model.priceOnlyNames.length ? ` By % move the gainers and losers rank ${model.pricedNames} names, the ${model.priceOnlyNames.length} whose share count is unverified included.` : ""}${model.qtyDates.length ? ` The share counts are as of ${model.qtyDates.length === 1 ? model.qtyDates[0] : `${model.qtyDates[0]} to ${model.qtyDates[model.qtyDates.length - 1]}`}, the date of the statement that printed each.` : ""}${clock ? ` Quotes as of ${clock}.` : ""}`;
+
   return (
     /* THE SUBTITLE IS GONE AT THE FAMILY'S REQUEST, AND THE TITLE CARRIES THE
        SCOPE INSTEAD. What that sentence did that a reader still needs is name
@@ -331,7 +338,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
        reporting exactly that kind of heading. So the scope moves into the
        heading, where it cannot be removed as chrome, and the quote timestamp
        moves to the tile that is actually as-of it. */
-    <Card className="lg:col-span-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col" title={`${model.session === istDate() ? "Today’s movers" : model.session ? "Latest session movers" : "Latest price movers"} · ${SCOPE.label}`}
+    <Card className="min-w-0 lg:col-span-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col" title={`${model.session === istDate() ? "Today’s movers" : model.session ? "Latest session movers" : "Latest price movers"} · ${SCOPE.label}`}
       right={
         /* TWO CONTROLS, AND THEY ANSWER DIFFERENT QUESTIONS. The SCOPE toggle
            (owned by `DailyMovers`) switches which MEASUREMENT this card shows —
@@ -438,103 +445,51 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
               {model.priceOnlyNames.length} name{model.priceOnlyNames.length === 1 ? "" : "s"} {rank === "impact" ? "left out" : "ranked by % move only"} · share count{model.priceOnlyNames.length === 1 ? "" : "s"} unverified
             </p>
           )}
-          {/* ── The book's own move, and the four indices beside it ───────── */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
-              <div className="label-xs">{SCOPE.label} &middot; {sessionLabel}</div>
-              <div className={`mt-2 font-display text-[22px] font-bold tabular ${changeColor(model.dayChange)}`}>
-                {fmtFromBase(model.dayChange, { compact: true, sign: true })}
+          {/* Compact figures; source coverage stays available through the shared info dialog. */}
+          <div className="grid gap-2 lg:grid-cols-3" data-movers-summary>
+            <div className="rounded-lg border border-ink-700 bg-ink-900/60 px-3 py-2" data-movers-daily>
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[10px] font-medium uppercase tracking-[.08em] text-slate-500">{SCOPE.label} &middot; {sessionLabel}</div>
+                <span data-testid="movers-coverage" title={coverageDetail}>
+                  <ReturnCalculationInfo label="Direct equity daily move" value={`${dailyImpactText} · ${dailyPercentText}`}
+                    intro="Coverage and quote times" triggerLabel="Daily move coverage">
+                    <p>{coverageDetail}</p>
+                  </ReturnCalculationInfo>
+                </span>
               </div>
-              {model.dayChange === null && <p className="mt-1 text-xs text-slate-500">Money impact awaits verified share counts</p>}
-              <div className={`mt-0.5 text-[13px] font-semibold tabular ${changeColor(model.dayPct)}`}>
-                {model.dayPct == null ? DASH : fmtPct(model.dayPct, { sign: true })}
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <div className={`font-display text-xl font-bold tabular ${changeColor(model.dayChange)}`}>{dailyImpactText}</div>
+                <div className={`text-xs font-semibold tabular ${changeColor(model.dayPct)}`}>{dailyPercentText}</div>
               </div>
-              {/* THE COVERAGE IS ON THE TILE, NOT IN A TOOLTIP. This percentage is
-                  struck over the priced subset and a reader will compare it with
-                  an index; the scope has to be visible at the same glance. */}
-              <p className="mt-2 text-[11px] leading-relaxed text-slate-500" data-testid="movers-coverage"
-                title={`${model.impactNames > 0
-                  ? `The move is struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(model.scopeValue, { compact: true })} held, across ${model.impactNames} of ${model.distinct} ${SCOPE.noun} names — the rest lack a quote or a verified share count and are excluded from the money total.`
-                  : `No money move is struck: none of the ${model.distinct} ${SCOPE.noun} names has both a live quote and a verified share count, so the ${fmtFromBase(model.scopeValue, { compact: true })} held carries no rupee figure here.`}${model.priceOnlyNames.length ? ` By % move the gainers and losers rank ${model.pricedNames} names, the ${model.priceOnlyNames.length} whose share count is unverified included.` : ""}${model.qtyDates.length ? ` The share counts are as of ${model.qtyDates.length === 1 ? model.qtyDates[0] : `${model.qtyDates[0]} to ${model.qtyDates[model.qtyDates.length - 1]}`}, the date of the statement that printed each.` : ""}${clock ? ` Quotes as of ${clock}.` : ""}`}>
-                {/* THE VALUE THIS PERCENTAGE COVERS, BESIDE THE VALUE IT DOES
-                    NOT. A name count alone hides how much of a scope a figure
-                    stands on: the mutual-fund tab prices ONE of 20 schemes and
-                    that one is worth ₹18,822 of ₹99.9 Cr, so "1 of 20" and
-                    "₹18,822 of ₹99.9 Cr" are very different disclosures of the
-                    same fact — and the second is the one a reader needs beside
-                    a percentage printed at 22px. `scopeValue` was already
-                    computed for this and rendered nowhere, which is this book's
-                    most-repeated defect. */}
-                {/* THE FACE IS THE TWO FIGURES; WHY THE REST ARE NOT COUNTED IS
-                    THE HOVER — the family asked for the lines that explain the
-                    card to go, and a count is not an explanation. The share
-                    counts' own date rides in the hover beside it (MNT-15): a
-                    day's move is today's price on a quantity a statement
-                    printed, and that statement has a date. */}
-                {/* FIGURES ONLY (Stage 10dc). #104 lengthened this into "N of M
-                    names with price changes · … · K of M names with verified
-                    impact", a sentence by Stage 10cp's own measure. The % move
-                    ranks P names and the money total covers K; the line above
-                    names the difference, and the hover says it in words. */}
-                {/* AND NO RUPEE FIGURE OVER AN EMPTY SET. With every name's share
-                    count unverified — the evidence still loading, or a reload
-                    from a saved snapshot — the money total covers nothing, and
-                    "₹0 of ₹64.8 Cr held" read as a measured zero. The count
-                    stays; the value clause is drawn only over names it covers. */}
-                {model.impactNames > 0 && <>{fmtFromBase(model.movedValue, { compact: true })} of {fmtFromBase(model.scopeValue, { compact: true })} held · </>}
-                {model.impactNames} of {model.distinct} names{clock ? ` · quotes ${clock}` : ""}
-              </p>
             </div>
 
-            <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4 sm:col-span-1 lg:col-span-2">
-              {/* THE SESSION THE LEVELS ARE FROM (MNT-19): "today" only where it is. */}
-              <div className="label-xs" data-testid="movers-index-session">
+            <div className="rounded-lg border border-ink-700 bg-ink-900/60 px-3 py-2 lg:col-span-2" data-movers-indices>
+              <div className="text-[10px] font-medium uppercase tracking-[.08em] text-slate-500" data-testid="movers-index-session">
                 NSE indices · {(() => { const sess = indexSession(indices); return sess.today || !sess.date ? "today" : `session ${sess.date}`; })()}
               </div>
               {!indices && indexState === "loading" ? (
-                <p className="mt-2 text-[11.5px] text-slate-500">Fetching index levels…</p>
+                <p className="mt-1 text-[11px] text-slate-500">Fetching index levels…</p>
               ) : !indices ? (
-                <p className="mt-2 text-[11.5px] text-slate-500" title="Nothing has been substituted for a level.">
+                <p className="mt-1 text-[11px] text-slate-500" title="Nothing has been substituted for a level.">
                   Index levels unavailable — the feed did not respond
                 </p>
               ) : (
-                <div className="mt-2 grid grid-cols-2 gap-x-5 gap-y-2 sm:grid-cols-4">
+                <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
                   {STRIP_INDEX_IDS.map((id) => {
                     const q = indices.indices.find((x) => x.id === id);
                     if (!q) return null;
                     return (
                       <div key={id}>
                         <div className="truncate text-[11px] text-slate-500" title={q.label}>{q.label}</div>
-                        <div className="tabular text-[13px] font-semibold text-slate-200">
-                          {q.level == null ? DASH : fmtNum(q.level, 2)}
-                        </div>
-                        <div className={`tabular text-[11.5px] ${changeColor(q.changePct)}`}>
-                          {q.changePct == null ? DASH : fmtPct(q.changePct, { sign: true })}
+                        <div className="flex flex-wrap items-baseline gap-x-1.5">
+                          <div className="tabular text-[13px] font-semibold text-slate-200">{q.level == null ? DASH : fmtNum(q.level, 2)}</div>
+                          <div className={`tabular text-[11px] ${changeColor(q.changePct)}`}>{q.changePct == null ? DASH : fmtPct(q.changePct, { sign: true })}</div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               )}
-              {indices && model.dayPct != null && indexSession(indices).date === model.session && (() => {
-                const n500 = indices.indices.find((x) => x.id === "nifty-500");
-                if (!n500 || n500.changePct == null || n500.sessionDate !== model.session) return null;
-                const gap = model.dayPct - n500.changePct;
-                return (
-                  /* "THE PRICED BOOK" WAS TRUE AND IS NOT ANY MORE. This figure
-                     is struck over the ACTIVE SCOPE, and a sentence that called
-                     it the book would be the caption-that-widens failure the
-                     Capital invested tile already cost this page once — so the
-                     subject is the scope's own, and it moves with the tab. */
-                  <p className="mt-3 border-t border-ink-700 pt-2 text-[11.5px] text-slate-400" data-testid="movers-vs-index"
-                    title={`Struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(portfolio.totalValue, { compact: true })} book. Both are one session, and neither is a return over any longer window. The gap is the difference between two percentages, so it is in percentage points rather than a percentage of anything.`}>
-                    {/* A GAP BETWEEN TWO PERCENTAGES IS IN POINTS (MNT-20), not a
-                        percentage of anything — "+11.00%" read as a return. */}
-                    {SCOPE.subject} {SCOPE.verb} <strong className={changeColor(gap)}>{`${gap > 0 ? "+" : gap < 0 ? "−" : ""}${fmtNum(Math.abs(gap), 2)} pts`}</strong> against the
-                    Nifty 500 · {sessionLabel}
-                  </p>
-                );
-              })()}
             </div>
           </div>
 

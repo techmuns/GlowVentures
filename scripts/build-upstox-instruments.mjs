@@ -8,6 +8,7 @@ import { dirname, join } from "node:path";
 import { build } from "esbuild";
 import { cashInstruments, instrumentIndex, resolveInstrument, quoteSymbol } from "../shared/upstoxInstrumentLookup.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
+import { ISIN_SUCCESSORS } from "../shared/isinSuccessors.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CHECK = process.argv.includes("--check");
@@ -40,24 +41,8 @@ const ALIASES = {
   // "POOJAA PRECISION ENGG. LIMITED", so the statement's spelling never matches.
   "poojaa-precision-engineering": ["BSE:PPEL", "INE288301026"],
 };
-// AN ISIN A FACE-VALUE SPLIT RETIRED, AND THE ONE THAT REPLACED IT (Stage 10he).
-// A statement or fund filing dated before the split still prints the old ISIN,
-// which no listing carries any more, so the holding lost its quote identity.
-// Used only where the old ISIN has no listing left; each pair must be the same
-// issuer and instrument class (the first nine characters), and the successor
-// must still carry any symbol the statement printed.
-const ISIN_SUCCESSORS = {
-  // Shankara Buildpro: ₹10 → ₹2 sub-division, ex 8 Oct 2026 (NSE, in the saved
-  // corporate-action capture); Upstox lists BUILDPRO under INE24OJ01029 only.
-  INE24OJ01011: "INE24OJ01029",
-  // JSW Dulux: 1:10 sub-division, record date 22 Oct 2026 (the company's
-  // notice, reported by Kotak Neo on 22 Sep 2026); Upstox lists JSWDULUX under
-  // INE133A01029 only.
-  INE133A01011: "INE133A01029",
-};
-for (const [from, to] of Object.entries(ISIN_SUCCESSORS)) {
-  if (from.slice(0, 9) !== to.slice(0, 9)) throw new Error(`build-upstox-instruments: ${from} -> ${to} is not the same issuer and class`);
-}
+// ISIN_SUCCESSORS (a split's retired ISIN and the one that replaced it) is
+// shared with build-book: shared/isinSuccessors.mjs.
 const read = (p) => JSON.parse(readFileSync(join(ROOT, p), "utf8"));
 const die = (m) => { throw new Error(`build-upstox-instruments: ${m}`); };
 function bookArray(src, name) {

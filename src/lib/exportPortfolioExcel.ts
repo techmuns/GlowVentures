@@ -921,7 +921,7 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   const n = (k: number) => `${k} row${k === 1 ? "" : "s"}`;
   const xirrRows = tagged("XIRR");
   noteRow(ws, cols, r, `Return is the Portfolio Monitor's default measure. HPR (${n(tagged("HPR"))}): `
-    + `the FIFO return on the capital deployed — unrealised plus realised, over the cost of the units still held and of`
+    + `the FIFO return on the capital deployed — unrealised plus realised plus the dividends the statements record, over the cost of the units still held and of`
     + ` the units already sold — not annualised; it stands wherever a holding is under a year old or no statement dates`
     + ` its purchase. CAGR (${n(tagged("CAGR"))}): the same return annualised over a window of a year or longer, where a`
     + ` lot register dates every unit held, or the row is a whole account the family funded in one dated payment.`
@@ -930,7 +930,7 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
         + ` row is, where the money went in on several dates a year or more ago — the record the Transactions card solves over.`
       : ``)
     + ` Unreal. P&L excludes gains already realised, so a Return can differ from P&L ÷ cost — Notes names the realised`
-    + ` figure where there is one. Individual-share returns exclude separately paid dividends.`);
+    + ` figure where there is one.`);
 }
 
 /**

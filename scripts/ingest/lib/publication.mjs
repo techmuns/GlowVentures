@@ -1,3 +1,5 @@
+import { financialUnitIssue } from "./financial-units.mjs";
+import { RECONCILIATION_EXCEPTIONS, reconciliationReview, reviewDocumentRevision } from "./reconciliation-policy.mjs";
 // The publication boundary consumes normalized documents, never filenames or UI rows.
 // A delivery can propose facts; only a complete, reconciled, identity-safe version
 // may become a book. Historical exceptions do not authorize a new exception.
@@ -7,15 +9,12 @@ import { resolveOwner } from '../../../shared/owners.mjs';
 import { readGaps } from './readStatus.mjs';
 import { sourceFor } from '../precedence.mjs';
 import { NON_STATEMENT_PROVIDERS } from './classify.mjs';
+import { currentIsin } from '../../../shared/isinSuccessors.mjs';
+import { securityKeyOf } from '../../../shared/securityKey.mjs';
+import { canonicalJson } from '../../../shared/canonicalJson.mjs';
 
 export const RECORD_SECTIONS = ['holdings', 'transactions', 'capitalGains', 'cashFlows', 'income', 'expenses', 'returns'];
-export const stable = value => JSON.stringify(canonical(value));
-function canonical(value) {
-  if (typeof value === 'number' && !Number.isFinite(value)) throw new Error('Non-finite number in statement data');
-  if (Array.isArray(value)) return value.map(canonical);
-  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().filter(k => value[k] !== undefined).map(k => [k, canonical(value[k])]));
-  return value;
-}
+export const stable = canonicalJson;
 export const digest = value => createHash('sha256').update(typeof value === 'string' || Buffer.isBuffer(value) ? value : stable(value)).digest('hex');
 export const safeKey = key => typeof key === 'string' && /^[a-z0-9][a-z0-9._-]*$/i.test(key) && !key.includes('..');
 export const accountKey = d => stable([d.provider, String(d.accountNo ?? '')]);
@@ -33,7 +32,7 @@ function walk(value, visit, pointer = '') {
   else visit(value, pointer);
 }
 const nonempty = v => v !== null && v !== undefined && v !== '';
-const numericFields = new Set(['quantity', 'unitCost', 'totalCost', 'marketPrice', 'marketValue', 'amount', 'gross', 'net', 'price', 'units', 'accruedIncome', 'distributedIncome', 'realized', 'positionIrrPct', 'benchmarkIrrPct', 'purchaseAmount', 'saleAmount', 'shortTerm', 'longTerm']);
+const numericFields = new Set(['quantity', 'unitCost', 'totalCost', 'marketPrice', 'marketValue', 'amount', 'gross', 'net', 'price', 'units', 'accruedIncome', 'distributedIncome', 'realized', 'positionIrrPct', 'benchmarkIrrPct', 'purchaseAmount', 'saleAmount', 'shortTerm', 'longTerm', 'longTermQuantity']);
 const identity = d => stable([d.provider, d.accountNo, d.reportType, d.asOf, d.periodFrom, d.periodTo]);
 const content = d => {
   const copy = structuredClone(d);
@@ -96,13 +95,13 @@ const issuerNamesFund = (d, r) => / Mutual Fund$/.test(d.provider ?? '') && d.re
   && r.assetClass === 'Mutual Fund' && /^INF/.test(r.isin);
 
 /** No fuzzy owner, account or security matching is allowed at this boundary. */
-export function assessPublication({ baseline, documents, baselineReport = {}, report = {}, expected = {} }) {
+export function assessPublication({ baseline, documents, baselineReport = {}, report = {}, expected = {}, exceptions = RECONCILIATION_EXCEPTIONS, evaluationDate = new Date().toISOString().slice(0, 10) }) {
   // Evaluation-scoped caches: documents may mutate during reconciliation, so
   // no revision is ever cached across candidates or in global state.
   const revisions = new WeakMap(), contents = new WeakMap();
   const revisionOf = d => { if (!revisions.has(d)) revisions.set(d, documentRevision(d)); return revisions.get(d); };
   const contentOf = d => { if (!contents.has(d)) contents.set(d, content(d)); return contents.get(d); };
-  const issues = [], duplicates = [];
+  const issues = [], duplicates = [], auditWarnings = [];
   const add = (code, d, reason, pointer = '') => issues.push({ code, document: d?.docKey ?? null, pointer, reason });
   const old = new Map(baseline.map(d => [d.docKey, d]));
   const byKey = new Map();
@@ -131,12 +130,26 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   for (const d of baseline) {
     remember(ownerByAccount, accountKey(d), d.ownerId);
     for (const section of RECORD_SECTIONS) for (const r of d[section] ?? []) {
-      if (r.isin && r.securityKey) { remember(isinByKey, r.securityKey, r.isin); remember(keyByIsin, r.isin, r.securityKey); remember(accountsByIsin, r.isin, accountKey(d)); }
+      if (!r.isin || !r.securityKey) continue;
+      const isin = currentIsin(r.isin);
+      // The key a reviewed KEY_ALIASES entry now files an archived key under is
+      // the verified pairing too (`securityKeyOf` is idempotent on a key and
+      // then applies the alias): `rekey:archive` moving that row moves no
+      // identity the book had not verified (Stage 10lx, Vedanta INE205A01025 on
+      // Ajay's Motilal demat).
+      for (const key of new Set([r.securityKey, securityKeyOf(r.securityKey)])) {
+        if (key) { remember(isinByKey, key, isin); remember(keyByIsin, isin, key); }
+      }
+      remember(accountsByIsin, isin, accountKey(d));
     }
   }
   const seenContent = new Map(baseline.map(d => [contentOf(d), d.docKey]));
   for (const d of changed) {
     try { assertNormalized(d); stable(d); } catch (error) { add('INVALID_DOCUMENT', d, error.message); continue; }
+    const unitIssue = financialUnitIssue(d);
+    // Keep the existing canonical-unit contract for genuinely new invalid
+    // data; advisory review dates never impose a new gate on accepted records.
+    if (unitIssue) add('UNSUPPORTED_FINANCIAL_UNITS', d, unitIssue);
     if (unsafeSource(d.sourcePath)) add('UNSAFE_SOURCE_PATH', d, 'Statement evidence must refer to a source file inside the repository.');
     if (neverArrived(d) || heldOutByDecision(d)) continue;
     if (d.status !== 'ok' || readGaps(d).length) add('READ_GAP', d, 'The reader must account for the whole statement before publication.');
@@ -165,7 +178,10 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
     const other = seenContent.get(contentOf(d));
     if (other && other !== d.docKey) duplicates.push({ document: d.docKey, sameAs: other });
     else seenContent.set(contentOf(d), d.docKey);
-    const sameIssue = baseline.find(x => x.docKey !== d.docKey && identity(x) === identity(d));
+    // A declared twin (HDFC Securities' demat view of its own equity portfolio)
+    // is the same statement's witness, not a second issue of it (Stage 10ms).
+    const sameIssue = baseline.find(x => x.docKey !== d.docKey && identity(x) === identity(d)
+      && x.twinOf !== d.docKey && d.twinOf !== x.docKey);
     if (sameIssue && contentOf(sameIssue) !== contentOf(d)) add('CONFLICTING_ISSUE', d, `A different statement already covers the same account, report and date (${sameIssue.docKey}). A correction requires review.`);
     const previous = baseline.filter(x => accountKey(x) === accountKey(d) && x.reportType === d.reportType && x.asOf && x.asOf <= d.asOf)
       .sort((a, b) => b.asOf.localeCompare(a.asOf))[0];
@@ -191,11 +207,14 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
           // it already carries — an AIF's units under the depository's name and
           // under the fund's own (`sanshi-trust-fd-i-cl-e-…` and
           // `sanshi-fund-i-class-e`) — is the reviewed state, and a row filed
-          // under one of its keys is not a new split (Stage 10gk).
-          const isins = isinByKey.get(r.securityKey), keys = keyByIsin.get(r.isin);
-          if (isins?.size && !isins.has(r.isin)) add('SECURITY_CONFLICT', d, 'One security key carries conflicting ISINs.', ptr);
-          if (keys?.size && !keys.has(r.securityKey) && (accountsByIsin.get(r.isin)?.has(accountKey(d)) || !issuerNamesFund(d, r))) add('SECURITY_SPLIT', d, 'One ISIN is being filed under different security keys.', ptr);
-          remember(isinByKey, r.securityKey, r.isin); remember(keyByIsin, r.isin, r.securityKey); remember(accountsByIsin, r.isin, accountKey(d));
+          // under one of its keys is not a new split (Stage 10gk). A split's
+          // retired ISIN and its recorded successor are one ISIN here, as in the
+          // book (`shared/isinSuccessors.mjs`, Stage 10lx).
+          const isin = currentIsin(r.isin);
+          const isins = isinByKey.get(r.securityKey), keys = keyByIsin.get(isin);
+          if (isins?.size && !isins.has(isin)) add('SECURITY_CONFLICT', d, 'One security key carries conflicting ISINs.', ptr);
+          if (keys?.size && !keys.has(r.securityKey) && (accountsByIsin.get(isin)?.has(accountKey(d)) || !issuerNamesFund(d, r))) add('SECURITY_SPLIT', d, 'One ISIN is being filed under different security keys.', ptr);
+          remember(isinByKey, r.securityKey, isin); remember(keyByIsin, isin, r.securityKey); remember(accountsByIsin, isin, accountKey(d));
         }
         if (section === 'holdings') {
           const key = stable([r.memberId, r.securityKey]);
@@ -209,6 +228,10 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
       }
     }
   }
+  const documentRevisions = new Map(documents.map(d => [d.docKey, reviewDocumentRevision(d)]));
+  const reconciliationReviews = reconciliationReview(report, { exceptions, on: evaluationDate, documentRevisions });
+  for (const review of reconciliationReviews) if (review.status === 'needs-review')
+    auditWarnings.push({ code: 'RECONCILIATION_REVIEW_REQUIRED', id: review.id, section: review.section });
   // Compare actual findings, not counts: a new error must not hide behind an old
   // error that disappeared. Include checks involving an unchanged sibling too.
   for (const name of ['rowSumChecks', 'derivedVsPrinted', 'datedTableChecks']) {
@@ -227,7 +250,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   if (duplicates.length && duplicates.length !== changed.length) add('MIXED_DUPLICATE_DELIVERY', null, 'Remove repeated documents and reprepare; a mixed delivery must not discard its new statements.');
   const decision = issues.length ? 'needs_review' : duplicates.length ? 'duplicate' : changed.length ? 'verified' : 'unchanged';
   return { schemaVersion: 1, decision, baselineRevision: archiveRevision(baseline, revisionOf), candidateRevision: archiveRevision(documents, revisionOf),
-    changed: [...touched].sort(), duplicates, issues };
+    changed: [...touched].sort(), duplicates, issues, auditWarnings, reconciliationReviews };
 }
 
 /** Content-addressed field evidence. Pointers refer to the immutable normalized

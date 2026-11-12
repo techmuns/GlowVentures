@@ -13,7 +13,8 @@ import { closeOnOrBefore, fetchPriceHistory, priceErrorReason, settledPriceHisto
 import type { IndexLevel } from "@/lib/periodReturns";
 import { fmtPct } from "@/lib/format";
 
-export type BenchLevels = (key: BenchmarkKey) => { level: IndexLevel } | { reason: string };
+/** `pending`: the closes are still loading, not a failure (Stage 10mr). */
+export type BenchLevels = (key: BenchmarkKey) => { level: IndexLevel } | { reason: string; pending?: true };
 
 /**
  * Every index the table needs, each fetched once through the NAV card's own
@@ -31,12 +32,12 @@ export function useBenchmarkLevels(keys: readonly BenchmarkKey[]): BenchLevels {
     return () => { live = false; };
   }, [wanted]);
   return useMemo<BenchLevels>(() => {
-    const cache = new Map<BenchmarkKey, { level: IndexLevel } | { reason: string }>();
+    const cache = new Map<BenchmarkKey, { level: IndexLevel } | { reason: string; pending?: true }>();
     return (key) => {
       let hit = cache.get(key);
       if (hit) return hit;
       const b = BENCHMARKS.find((x) => x.key === key)!, h = hist[key];
-      if (!h) hit = { reason: `Fetching the ${b.name} closes` };
+      if (!h) hit = { reason: `Fetching the ${b.name} closes`, pending: true };
       else if (!h.ok) hit = { reason: priceErrorReason(h, true) };
       else {
         const id = benchmarkIdentity(h, b);
@@ -53,7 +54,7 @@ const PRICE_BASIS = "A price index: dividends are not in it.";
 /**
  * The line itself. `inline-block w-full` puts it under the figure without a
  * line break in the cell's text, which the page sweep reads row by row.
- * Quieter than the holding's figure above it (Stage 10lb): the index's name is
+ * Quieter than the holding's figure above it (Stage 10oc): the index's name is
  * a small-caps label and its return a lighter figure beside it, so the cell
  * reads as the holding first and its index second.
  */
@@ -64,17 +65,23 @@ export function BenchLine({ hb, fig, holdingPct }: { hb: HoldingBenchmark; fig: 
     return <span data-bench="none" title={hb.why} className={LINE}>no index</span>;
   }
   const b = hb.bench;
+  const guess = hb.source === "rule";
   const gap = fig?.shown && holdingPct != null ? holdingPct - fig.pct : null;
   const title = [`${b.name}. ${hb.why}`,
+    guess ? "This benchmark is assigned by rule — a best guess, to confirm with Yamini." : "This is the benchmark the manager's own report names.",
     fig?.shown ? `${fig.how} ${PRICE_BASIS}` : fig ? `No index figure: ${fig.reason}.` : null,
     gap != null ? `The holding ${gap >= 0 ? "is ahead of" : "trails"} it by ${Math.abs(gap).toFixed(1)} percentage points.` : null,
   ].filter(Boolean).join(" ");
   return (
-    <span data-bench={b.key} data-bench-pct={fig?.shown ? fig.pct : ""} data-bench-from={fig?.shown ? fig.from : undefined}
-      data-bench-to={fig?.shown ? fig.to : undefined} data-bench-annual={fig?.shown && fig.annual ? "true" : undefined}
+    <span data-bench={b.key} data-bench-source={hb.source} data-bench-pct={fig?.shown ? fig.pct : ""} data-bench-from={fig?.shown ? fig.from : undefined}
+      data-bench-to={fig?.shown ? fig.to : undefined} data-bench-annual={fig?.shown && fig.annual ? "true" : undefined} data-bench-period={fig?.shown && fig.period ? "" : undefined}
+      data-bench-reason={fig && !fig.shown ? fig.reason : undefined} data-bench-feed={fig && !fig.shown && fig.feed ? "" : undefined}
       title={title} className={LINE}>
-      <span className="bench-name">{BENCH_SHORT[b.key]}</span>{" "}
-      {fig?.shown ? <span className="mono ml-0.5 font-medium text-slate-400">{fmtPct(fig.pct, { sign: true, decimals: 1 })}</span> : <AbsentCell reason={fig?.reason} />}
+      <span className="bench-name">{BENCH_SHORT[b.key]}</span>{guess && <sup data-bench-guess title="Benchmark is a best guess — to confirm with Yamini" className="text-amber-400/90">*</sup>}{" "}
+      {/* The index's return, or a plain dash with its reason as the hover — no
+          words on the face (Stage 10nt: "remove all fluff and just add index return"). */}
+      {fig?.shown ? <span className="mono ml-0.5 font-medium text-slate-400">{fmtPct(fig.pct, { sign: true, decimals: 1 })}</span>
+        : <AbsentCell reason={fig ? `No index figure: ${fig.reason}.` : "No index figure."} />}
     </span>
   );
 }

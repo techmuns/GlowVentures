@@ -33,7 +33,7 @@ sector weights a run can read, and no third-party figure is substituted.
 | Realty | 1.42 | Real Estate |
 | Textiles | 0.25 | Consumer Discretionary (prefix) |
 | Media, Entertainment & Publication | 0.13 | Communication Services |
-| Diversified | 0.02 | **Unclassified** — no single GICS sector |
+| Diversified | 0.02 | Industrials |
 
 ## Nifty 50 — 2026-10-30
 
@@ -102,7 +102,7 @@ sector weights a run can read, and no third-party figure is substituted.
 | Construction Materials | 1.57 | Materials |
 | Textiles | 0.87 | Consumer Discretionary (prefix) |
 | Construction | 0.26 | Industrials |
-| Diversified | 0.10 | **Unclassified** — no single GICS sector |
+| Diversified | 0.10 | Industrials |
 
 ## Nifty Smallcap 250 — 2026-10-30
 

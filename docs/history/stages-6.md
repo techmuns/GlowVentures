@@ -1076,16 +1076,635 @@
 - Record: 104 → 141 rounds, valued rounds 29 → 39 (companies with a valuation 13 → 19), per-share prices 22 → 55 (offer documents: InCred, Integris, Electromech, Sotefin, Radiant, EMA), family lines 7 → 40 (allottee tables, round reports, LLP partner registers), websites 26 → 41. Sixteen companies still print no round anywhere public; their notes say what was searched.
 - Page: a valuation only a data vendor's page states is marked so (tiles, table `v`, chart tooltip); "Named in the filings" shows without rounds too; an absent valuation tile carries one line with the research note as its hover.
 
-### Stage 10la — Every table's first column is frozen
+### Stage 10kq — RETURN THIS CALENDAR YEAR: YTD FROM THE FIRST DATE WE HAVE, NOT ONE FUND
 
-- *"Freeze the first column of every table so even when we are scrolling right we can easily see and compare."* One rule in `index.css`: each row's first cell is `position: sticky; left: 0` against the table's own scroller, on every table in `#root` and the return-calculation popover. Its right edge is the section rule (`--table-section-width`), as the heading's bottom edge is.
-- The pinned cell is opaque in two layers under its content: `::before` paints the surface the table sits on (`--table-surface`, set by `.card`, `.bg-ink-800/900/950` in both themes; the heading uses `--table-header-bg`), and `::after` repeats the cell's own paint — the row's colour (inherited only where the cell sets none), the sorted-column fill and the child-row guide. Zebra, hover, section, child and total rows keep their shades while columns scroll under them.
-- A first cell spanning several columns (empty-state, detail and load-more rows) stays in the flow. `TrFoot`'s label now sits in the first column with one blank cell over the rest of its run, so "Total · N rows" freezes too; `data-foot-span` carries the run, and the `monitor-arrange` probe reads it. A sticky footer sits above the frozen cells (`z-index: 20`), as the heading does.
-- Checked in the browser on each nav route that draws a table, light and dark: no table's surface differs from what it is drawn on, and expanded child rows keep their guide.
-- `check-source-trace` opens the Quantity evidence list before it scrolls the tables 65px: at that offset the Quantity column sits under the frozen one, and the click would scroll it back.
+- The family (4 Nov 2026) found Morning CIO's "Return this calendar year" card reading −3.5% on "1 of 509 holdings · ₹29.9 Cr · 1 accounts": Ajay's Helios 10355977 alone. The card opened every account on 31 Dec 2025 (`windowReturns`) and carried a holding only from a share count dated by then (`assumedHolding`). No statement here is dated before 31 Mar 2026, so the only account it could measure was the one bought in August, which opens at nil. The Returns tab's YTD, which the card opens, read the same single fund.
+- The Portfolio Monitor's YTD has measured from the first date we have since Stage 10jl (with Stage 10jo's 1 January opening from a purchase record). The card and the Returns tab's YTD now read that record: `ytdSelection` in `ytdAvailable.ts`, off `ytdBook`'s `account` and `holding`. Each account is measured from its first verified value this year; otherwise each of its holdings is measured, either for the full year from its purchase record or carried from its statement balance at published closes (assumed). The whole account or its holdings, never both. Gaps keep their reasons.
+- Offline (no price feed) the card reads 192 of 452 holdings across 20 accounts, +19.83%; listed shares and funds add more once prices load. Not a full year, so the card reads "YTD from first dated value"; its hover lists the value measured from each start date. Money first invested this year counts as a full year. `fullPeriod` and `starts` ride on every `availableCardReturns` result. "1 accounts" now reads "1 account".
+- Checks: `availableCardReturns.test.ts` (YTD from 31 Mar, opened-at-nil full year, the archive reads at least FYTD's accounts) and `ytdAvailable.test.ts` (the pooled selection: purchase-record unit, whole account, refused account). `check:pages` route `cio-ytd-card` re-derives the card off `glowData.ts`. `cio-returns` fails the same four invariants as on main (DL-11, the period/type picker pair, missing-gain dashes), so they are left as found.
+- **CI, red on main since Stage 10kl and 10kn.** This branch carries #334's fixes (Stage 10kv) file for file — the NSE `differs` test, the rapid-statement rehearsal leaving out folio 8652064's other statements, and the sector check's `securityLabel` — so either can land first. Of its own: `check-selected-attribution` re-derives YTD through `ytdSelection`, and `table-excel.mjs`'s Private Market filter check compares the Funds export with the complete one row for row on every column both carry. Stage 10kw gives each filter its own columns (Quarterly NAV and IRR, no YTD); the rows, 161 of them, are unchanged.
+- **`ytdBook` takes the period's opening day** (`open`), so the three return cards share one engine. Leaving it out keeps 31 December, the year to date. A date opens any other period (31 March for the financial year). `null` opens each account at its own first record and each purchase-record holding at nil, the day before its first row. Only the parts after the open move: each account's start, each holding's anchor, and `recordedYearWindow`'s units, split check and dated rows. `YtdBook.yearOpen` becomes `open`.
 
-### Stage 10lb — The Monitor's return cells: the holding's figure leads, its index under it
+### Stage 10kp — ICICI's "Cumulative" option is the growth option; Deepak Fertilisers gets its NSE symbol
 
-- *"make the main return bold and the bottom benchmark also better ui so can easily read the cell"*. In every return column of the Portfolio Monitor (HPR, XIRR, YTD…) a shown figure is a size up (13px in a 12px table) and semibold, in its gain/loss colour. A withheld figure keeps its plain "— reason".
-- The index line under it (`BenchLine`, Stage 10kd) sits 4px lower, so the figure's dashed formula underline belongs to the figure. Its name is a small-caps label (`.bench-name`: 9.5px, semibold, letter-spaced, muted), and the index's return is a medium-weight figure beside it, one shade stronger than the label. The cell's text is unchanged ("S250 +20.9%"), so nothing that reads it moves.
-- Checked with before/after screenshots in both themes on a named stand-in index feed. `check:pages ONLY=monitor,monitor-arrange` matches main (the money-heading sort invariant fails on both); `check-assumed-holdings`, `check-investment-dates` and the `holdingBenchmark` suite pass.
+*"This is showing only 362"* — the family, 4 Nov 2026, on Morning CIO's Return over available history card (362 of 509 holdings).
+
+- Most of the 147 holdings left out are left out correctly: review lines valued on one date, AIFs with one valuation and no dated capital, holdings at cost, later trades with no newer balance, funds that pay out.
+- `assumedHolding` refused every NAV whose scheme name did not end in Growth or Accumulation. ICICI Prudential files its growth option as "Cumulative", which `fundNavs` has always read as growth, so Equity Savings and India Opportunities (four holdings on the Motilal demats, ~₹48 Cr) were refused as payers. `Cumulative` / `Cumulative Option` now passes; a payout word still refuses. `assumedHoldingReturns.test.ts` covers both, plus a "Cumulative" strategy name with an IDCW option.
+- `build-nse-symbols` override `deepak-fertilisers-and-petrochemicals` → `DEEPAKFERT`. HDFC Securities prints "Fertilisers" and no ISIN; NSE lists "Fertilizers" (INE501A01019). The book changed by that one symbol.
+- HEG Graphite stays unmapped. SVAN's 30 Sep appraisal splits the same 8,220 HEG Ltd shares into HEG Advanced Materials (117.96) and HEG Graphite (309.42), which sum to the old 427.37: a demerger. HEG Graphite is on no NSE master, and `HEGAM` is the parent's price.
+- DSP Gold and Silver ETFs (3 holdings, ~₹20.7 Cr on the Motilal demats) had no history. DSP split both ten for one on 28 Aug 2026 under new ISINs (Stage 10hq), and AMFI publishes only the successor. `marketInstruments` now asks for a fund by its `pricingIsin`. `market-history` puts a successor's NAVs before the ex-date on today's unit from `FUND_UNIT_ACTIONS` and lists the split, as Yahoo's close is split-adjusted. `assumedHolding` converts the 31 Jul count through `fundUnitBasis` and refuses when the history's splits and the documented terms disagree. A bullion ETF ("ETFs - Gold ETF" / "Silver ETF", AMFI's category now on the history) counts as the growth option. A plain ISIN alias would have read the tenfold drop as a ~90% loss.
+- Measured off the book with today's public histories and corporate-action capture: the card's cover goes from 359 to 367 holdings (the page adds the live-priced shares). DSP Gold −3.7%, Silver −19.2% since 31 Jul; each close ties to the NAV overlay's value.
+
+### Stage 10la — The three return cards: each investment from its first value on record, the rest held at last value
+
+*"approve"* — the family, 4 Nov 2026, on the three cards' design (financial year, calendar year, available history).
+
+- One selection for every card and the Returns tab: `periodSelection` in `src/lib/availableCardReturns.ts` runs the Monitor's `ytdBook` with the period's `open` (31 Mar, 31 Dec, or `null` for each part's first record), so a card and its table never disagree.
+- Further first values, each only where its own evidence holds (`src/lib/periodRules.ts`, off `scripts/lib/periodEvidence.mjs` → `BOOK_EARLIER_BALANCES`, `BOOK_STATEMENT_UNIT_NAVS`, `BOOK_UNIT_WINDOWS`):
+  - consecutive statements with the same units, so no money moved between them (Buoyant, Founders, Mirae, ABSL);
+  - fund units at a NAV a later statement prints, linked by units that tie (Sanshi on Ajay's ICICI demat);
+  - an older balance plus the broker's dated trades, which must reconcile to the units held now (Yash, the bank shares);
+  - an older balance of the same units, opened on the first exchange close if the holding listed later (ESDS, NSE).
+- Whatever public holding none of these measures is **held at its last value**: 0%, in the base from its valuation date, and named in the ⓘ with its reason. A price service that did not answer is "waiting for prices", never held.
+- Every part is carried at its latest value to the card's end in the pooled measure (`AccountWindow.carriedTo`). A record that closes on 30 Sep is no longer read as money withdrawn that day, and each record keeps the date it actually measures.
+- The caption shows coverage of public investments by value, split into measured and held, with private investments on their own line (Private Market's value and gain since investment, not this period's). There is one ⓘ per card, and the assumed label sits on the face.
+- Merges #331 (DSP bullion ETFs across their split, ICICI "Cumulative", Deepak) and #342 (`ytdBook({ open })`). `build-upstox-instruments` is re-run, so Deepak (now on NSE) carries its listed ISIN to Glow Central Research, and the map also covers Man Industries, Kingfa and Sotefin on BSE.
+
+### Stage 10lb — The seven "Not classified" holdings placed on the family's two axes
+
+- *"Why are these not classified? … tell me where these need to go"* then *"Apply all seven"* — 4 Nov 2026. ₹96.7 Cr sat under "Not classified in the family's review" on the Monitor's asset-class axis.
+- **HDFC Balanced Advantage · Regular (₹6.82 Cr) was a map gap, not a missing answer.** The review names it (Liquid sheet r4, Equity sheet r23) and both folios tie to its Transactions since inception by units (Ajay 83,001.863, Ankita 49,917.632). The map was keyed on the Motilal demat's `hdfc-baf-r-grow`, which matches only unvalued demat rows; HDFC MF's own folio statements spell the scheme out. One `FAMILY_TAXONOMY` entry, cited and checked against the workbook: Equity / Liquidity.
+- **The other six are on none of the review's 25 tabs**, so they are the family's word (`source: "family"`), not citations: `FAMILY_SAID_CLASS` gains them and `FAMILY_SAID_BASKET` (new) carries their basket. Active Momentum: Equity / Thematic & Tactical (AMFI Sectoral/Thematic; the email's sectoral clause). Kotak Flexi Cap (Aarti) and the Nifty 100 Low Volatility 30 ETF FOF: Equity / Stable Growth, like every diversified equity fund in the review. Vantage Oak Fund I and both Nzuri lines (equity and Pref 24SP46): Alternate / Entrepreneurial Growth, like every private company and fund in the review.
+- Asset-class axis: nothing current is unclassified. Basket axis: Franklin alone, as the family asked in Stage 10js (plus two sub-₹1,000 bank balances that `currentHoldings` drops).
+- **Monitor tabs follow the table.** On Holdings the section tabs now come from `currentHoldings`, so a section only closed ₹0 funds sit in (asset class, once the seven were placed) offers no tab onto an empty table. Transactions keeps every position.
+- **Vantage Oak on the Private side** (*"Move it now anyway"*): `DECLARED_AIF_CATEGORY` gains it as Category II on the family's word (no statement prints one), so `unplacedValue` ₹4.10 Cr → 0 and Private Market shows it under Private funds (₹274.6 → ₹278.7 Cr). The family accepted the cost: no document records its paid-in or cost, so the band's DPI/RVPI/TVPI are refused naming it, and the band's and the private total's HPR are refused (cost covers under 99.5% of value). The pooled XIRR still strikes over 7 of 9 funds and names it. Its own row reads cost —, every return — with the reason. `BRAND_NAMES` maps it; the book report's declared-category note now says a declared fund the family have not placed takes its category's side.
+- Wording: a band's or the total's refused HPR now names every valued holding that reports no cost ("No cost is reported for …"), where it read only "covers only part of this row's value". A fund with no capital account whose statement prints no cost no longer reads "its statements report the holding and its cost".
+- `check-pages.mjs`: `PM_RETURN_BOOK` re-expresses the page's 99.5% cost-coverage gate (`costCovers`, `costless`), and the four checks on the book's HPR footer (DL-16, PM-C1, FIFO hover, FIFO footer) hold a refused footer to its reason and names (`pmFootRefused`) when the book says the gate trips.
+- Checks: `familyTaxonomy.test.ts` asserts the HDFC entry is the review's, each of the six lands on the family's word on both axes and repeats no review product, and no fund or company but Franklin is left without a basket. `aifCategory.test.ts` takes three declarations; a declared, unplaced fund's side is its category's. `privateBook.test.ts` asserts the band's multiple and HPR are refused naming only Vantage Oak, and strikes the DPI/RVPI/TVPI and DL-16 arithmetic on a build without it, so the day its paid-in lands those first checks fail. `privateMarket.test.ts` and `fundReturns.test.ts` follow. `check-pages.mjs`'s drill-down re-derivation reads `FAMILY_SAID_BASKET`.
+
+### Stage 10ld — HDFC Securities 3110320's trade details report arrives: 466 dated sales, April–October 2026
+
+- The client re-sent `3110320_Equity_Trade_Details_Report (3).xlsx` (523 KB), the file `november-2026-b`'s ZIP carried only as an 85-byte removal notice (Stage 10kn). It is in `source/november-2026-c/`. The other four files sent with it are byte-identical to the ZIP's and are not added.
+- `providers/hdfcSecurities.mjs` `readTradeDetails` reads one transaction per fill. Holder, trading ID and window (1 Apr–31 Oct 2026) come from the header. Each row checks QTY × MARKET PRICE = MARKET VALUE to the paisa, and value less the nine charges and STT = NET AMOUNT to the rupee (the largest gap over 466 rows is ₹0.82). The printed holder must agree with `HOLDER_BY_TRADING_ACCOUNT`, and a fill outside the window is refused.
+- The report prints no broker name. `classify.mjs` claims it for HDFC Securities only for a trading ID an InvestRight equity portfolio prints (`HDFC_SECURITIES_TRADING_IDS`).
+- `lib/sheet.mjs` `readXlsx` now reads `<v xml:space="preserve">`; it had read the report's four two-line headers as blank cells. No other archived document changed.
+- The 466 trades: Vedanta 67,000 and Man Industries 37,317, which tie the 30 June review's HDFC Bank block (1,77,000 and 5,17,317) to the 2 Nov portfolio (1,10,000 and 4,80,000), plus all 1,77,000 of each of Vedanta Iron and Steel, Vedanta Power and Vedanta Oil and Gas. `MAN INDUSTRIES (I) LTD.` is named onto the held `man-industries-india` on that evidence (`EVIDENCED_SCRIPS`, note `scrip-name-evidenced`).
+- Book: 439 of the trades sit behind the two held positions (`BOOK_HOLDING_TRADES` 1,082 → 1,521). The 27 spin-off fills have no holding. Totals are unchanged. The account stays described by its equity portfolio, because the report sets no `providerEngagement`.
+- A removal notice whose file is in `source/` under the same name is now "re-sent" (`attachment-resent`, manifest `resentAs`), not "never arrived". This flows through check:reads, coverage:source (class `re-sent`) and the Statement Library ("Re-sent" pill, no folder flag). The LKP pair stays never arrived.
+
+### Stage 10lc — Every Monitor return carries its index line; a gap names its cause
+
+- *"It should never show blank … read how we have fixed a lot of things here which would fill in a lot of blanks so no confusion."* — the family, 4 Nov 2026, on "N500 —" under a return and a total with nothing under it.
+- Checked first: Sanshi Fund-I's N500 −0.4% is right. Its ten payments (21 Mar–16 Dec 2025, ₹157.5 Cr) bought into the Nifty 500 on their own days and valued on Sanshi's own 30 Jun 2026 statement date are worth ₹156.95 Cr (−0.35%), recomputed off Yahoo's ^CRSLDX closes.
+- Filled (`PortfolioMonitor.tsx`, `holdingBenchmark.ts`):
+  - an opened row's lines (each holder, unit class, mandate account, share in a mandate) carry their own index on their own dated money, a mandate account by its manager's printed index. Before this, about 600 figures in the Category view had nothing under them.
+  - each contribution under a fund buys the index with its one payment (`onePaymentLeg`).
+  - a holding bought once and never sold (the CAGR gate's own proof, `singlePurchaseGap`) buys the index on that day for its HPR and a YTD opened this year.
+  - the footer and each section pool every row's legs, each closed on its own value date (`closeLegsOn`, `pooledLegs`), against the index the rows share, else the Nifty 500.
+- A gap names its cause on its face, as the return cell's own dash does (Stage 10jm): `benchGapLabel` gives "No buy dates", "Dates incomplete", "Range only", "No dated capital" and so on. The hover now gives the row's actual cause (`undatedMoneyWhy`), for example units bought before a PMS manager's transaction statements begin, 86 of 516 units on a dated trade, or a review that dates only a span.
+- Left as a dash on purpose: 91 of the default view's 94 HPR dashes are holdings no record dates, so their Investment date cell is "—" too. The other three are dated only as a span or in part: NSE and Manorama by the review's range, ZF Commercial Vehicle with 86 of 516 units on a dated trade. Mostly they are PMS shares (Goldstandard, Green Lantern, etc.) bought before each manager's transaction statements in the drop begin on 1 Apr 2026. They fill when those statements arrive back to purchase.
+- Which money buys the index is decided before any close arrives, so a record gap shows at once. The feed's own state (closes loading, the price service down) keeps the plain dash with its reason as the hover (`IndexFigure.feed`, `data-bench-feed`). A label that changed as the fetch failed reflowed the table, and CI's navigation check restored scroll 16px short.
+- `check:pages` (monitor): new invariant "every return carries its index line, and a gap in it names its cause" (`monitorBench`). Removing the footer's line makes it fail. The footer and section captures read the figure without its `[data-bench]` line, so "only the figure on its face" still holds.
+
+### Stage 10lt — A holding's Transactions tab lists every buy, sell, switch and income
+
+- *"If there is any transaction on any security or asset where dividends, or any income etc is coming it will show in transactions as buy sell or income … if now tomorrow interest payments come in how will you show and also say what happens when I redeem from somewhere and I invest somewhere else … populate if we have missed anything at all"* — the family, 4 Nov 2026, on Buoyant A4's Transactions tab, which showed one purchase out of ten.
+- A holding's Transaction history now draws Data Audit → Transactions' own rows for it (`holdingRecordsFrom` in `consolidatedSheet.ts`, carried in `ledger/stocks/<key>.json` as `records` by `deriveHoldingLedgers`, on the build and the statement publication alike). These are trades, purchases, redemptions and contributions, switches, income and non-cash actions, each badged BUY / SELL / INCOME. Tax lots stay on Data Audit. First bought and Last added read the same rows (Buoyant: 1 Jun 2024, not 2026). 210 holdings gain rows; none loses one.
+- Across a class switch the holding keeps its history. The Class A1 deposits the book carried into A4 (`carriedFrom`) are on the A4 page, marked "bought as Class A1". Each switch's two legs are one neutral SWITCH row, so Buoyant A4's buys add to the ₹70.85 Cr paid, and with the ₹58,862 reinvested gain distribution they add to its cost.
+- Data Audit gains what it missed:
+  - **Switches**: 186 legs (`kind: "reclassification"`), each its holding's Buy or Sell. They count as "Internal switch", are signed like a trade, and each names its other leg (the nearest-dated partner).
+  - **Income on a fund's unit record**: 687 rows for IDCW reinvestments and payouts and Buoyant's reinvested gain distribution. That was ₹48.2 L the returns counted with no row. `build-book` now tags those `BOOK_HOLDING_INCOME` entries `via: "unit-record"` (and `earnedOn` where income followed a class switch); no figure moved. Every statement-sourced holding's Income rows now add to the income its return counts.
+- **Interest is income the day it arrives.** `shared/incomeKind.mjs` is the single cash rule that `build-book` and `deriveIncome` both read: dividend, IDCW, interest, coupon, distribution. Bonus, split, spin-off, rights and mergers stay non-cash. Before this, an interest row would have been a blank corporate action, outside income. Today's archive has none, so nothing moves.
+- Redeeming and reinvesting elsewhere: through the bank it is a Sell (redemption) on one holding and a Buy (purchase) on the other, each external capital to its account. As a switch it is a Sell leg and a Buy leg that name each other, internal, with no capital flow.
+- The type badges are one `.txn-type` class with both themes defined. The old BUY tag was indigo-300 on ivory in light mode.
+- Checks: `consolidatedSheet.test.ts` (cash rule, unit-record rows, income tie, switch legs, Buoyant's lineage, holding records); `readModels.test.ts` against `deriveHoldingLedger`.
+
+### Stage 10lf — Return card coverage review: findings, the approved method and its outcome
+
+- Why: the FYTD card read +20.0% over "203 of 509 holdings · ₹167.3 Cr" — about 13–15% of the book by value; the family read it as broken.
+- Recorded in `docs/RETURN-COVERAGE-REVIEW.md`: the method discussed on 4 Nov 2026 (measure from the first value on record, labelled; mid-year arrivals in at market value; newly listed from listing day; private on its own line; coverage against public only), and the figure it gives — +13.0% (+₹55.8 Cr) on ₹932 Cr of ₹992 Cr public (94%), statement values and market closes to 3 Nov. Decided: build it (preview first); one-statement funds held at their last value until the next statement, which gives +12.3% on 99% of public.
+- Six data defects: the ICICI "31 March 2026" holding statement is valued at 20 Jul closes; MOPWM share rolls do not reproduce sale proceeds; Clean Max 94,967 on two demats; NSE (listed 24 Sep) at the review's unlisted mark on the statement basis only, since the live basis prices it at BSE since 22 Oct; VOF (Vantage Oak Fund I) unplaced; Grand Continent and Parth are NSE SME listings, not private.
+- Outcome: the family approved the method on 4 Nov 2026, and it is built in Stages 10la (#343: the three cards) and 10le (#350: the chart drawn as the card, Gain / Loss at 100%). Of the six defects, the ICICI 31 Mar pricing is fixed by Stage 10ku (#337) and Clean Max by Stage 10ky (#341). Each remaining one is in the review's own list.
+
+### Stage 10le — Our book vs benchmarks draws the return card's own line; Gain / Loss covers every investment
+
+*"how can our book by 6.1% when all the above things are showing 12% … everything should match … as i change time filters it would change"* and *"make coverage 100%"*, from the family on 4 Nov 2026.
+
+- **The chart is the card.** `NavVsIndex` draws the selected card's selection (`availableCardReturns`, the same rows, histories and records as Morning CIO's cards). On each day it shows the card's figure as if the period ended there (`src/lib/periodLine.ts`), so its last point is the card to the decimal.
+  - Each benchmark is the same dated money put into the index (`pmeWindowRows`), which is the card's own "vs" figure.
+  - The picker offers the three cards' periods: financial year, calendar year and available history.
+  - Over the available history the line is cumulative and the card is a rate a year (+70.7% over the period = +16.9% a year). A few small holdings reach back to 2023 and most of the money joins in 2026, so its early points rest on little money, and the hover says so.
+  - Records carry their dated values between open and close (`AccountWindow.marks`: statement marks, published closes, printed NAVs). Nothing is interpolated.
+- **Gain / Loss: 100% of investments.**
+  - A holding is measured from its purchase record where there is one, otherwise from its first value on record. That second case uses the available-history card's unit, marked `sinceFirst`.
+  - What neither measures is held at its value: no gain, in the base, named with the record it needs.
+  - The caption reads "S% since investment · F% from first value · H% held at value".
+  - Since investment accepts only units marked `sinceFirst` or `held`, so an assumed holding never stands in for a purchase cost.
+- A held value is measured on its valuation date and only carried to the end, so it sets neither a card's dates nor its end (Stage 10la follow-up, `heldAtLastValue`).
+- Checks:
+  - `scripts/dev/page-book.ts` gives the page's own rows with no quote feed, and the cards are re-derived from it exactly.
+  - Thirteen NAV checks that asserted the old engine (chained links, statement series, valuation-day starts) are retired. `NAV_CARD_LINE` strikes the new line against the cards.
+  - `check-nav-assumed` is rewritten for the new line.
+
+### Stage 10lg — Every Returns-tab period, panel and subtab reads the cards' one selection
+
+*"Can you please sync all … FYTD +13.02%, Market performance +29.09% 362 of 509 holdings, YTD different, 1 Y different … it should all follow the logics and be complete for all holdings"*, then *"same since investement"* and *"invested this year fix all"*, from the family on 5 Nov 2026.
+
+- **One selection per period** (`src/lib/useReturnSelection.ts`, `returnSelectionFor`). FYTD, MTD, YTD, 1Y, 2Y, 3Y and a custom date all read `periodSelection`, the cards' rule, each with its own opening.
+  - Since investment, XIRR: the available-history card's selection.
+  - Since investment, absolute: the Gain / Loss card's selection (`sinceInvestmentSelection`, now exported).
+  - The headline, the attribution table, the capital bridge, Market performance and the Benchmarks subtab (`compareToIndex` on the same pool) all strike it.
+  - A node test strikes FYTD, YTD and both since-investment figures against the cards on the page's own rows, to the decimal.
+- **Market performance covers every holding** (`src/lib/selectionMarket.ts`). It is each holding's return over its own part of the period, from the same units, weighted by today's value.
+  - The sources are a published close, a printed NAV or a statement value. A holding held at its last value counts 0%, and a whole mandate's return is each of its holdings'.
+  - It is the period's move whatever the type picked, never annualised.
+  - Private investments are reported apart on a period, as on the cards.
+  - A history that failed to load is named with the source's answer (`code: 'source'`, the `detail` now carried through `ytdBook`). It no longer waits for prices forever.
+  - The old figure was price-only on one shared pair of dates, so mandates, AIFs and unpriced units were out, and "since investment" opened on the youngest listing's first close.
+- **Invested this year places every holding** (`placeEveryHolding`). A holding with no purchase lots this year is placed by the financial year's selection:
+  - "held before this year" if it opens on a value on or before 31 March, or an older statement holds it then;
+  - otherwise "first valued this year", counted from that value as the cards count it and named so in the table;
+  - only what no record values stays in "dates or values to check".
+- The capital bridge steps a period unit with no inception row from its first value, so Since investment · absolute no longer throws on a held unit.
+- `check-market-returns` is rewritten for the new figure:
+  - the total ties to its rows' value-weighted returns and is the same for every type;
+  - its dates stay inside the period, allowing the 7-day opening tolerance;
+  - NSE's 404 and Karur's failed load are named, and retry recovers them;
+  - its clock moves to 5 Nov so the 31 Oct ICICI balances date the counts.
+
+### Stage 10lu — Zepto is a company: Private Market draws a valued companies band
+
+- *"Zepto is a private market company not a fund"* — the family, 5 Nov 2026, on Private market → By brand, where Zepto sat under PRIVATE FUNDS.
+- The Private funds band was every private holding with a measured value, so Zepto — the one company the review values (Direct Equity - Unlisted, ₹22.8 Cr) rather than holds at cost — fell in with the funds.
+- `privateBook.ts` now has a fourth section, `company` ("Private Companies ( Valued )"): a private, valued holding whose class is Unlisted or Equity and not a fund vehicle (`isPrivateCompany`). It is drawn under Companies and Both and starts open. Private funds keeps the funds; K M Global's loan (Bond) stays where it was.
+- The Funds tile names the valued companies apart. The TVPI / DPI multiple's set is unchanged: valued funds and valued companies, never at-cost lines.
+- `check:pages` follows it: `pmBandOf` re-expresses the band, PM_C_BOOK splits `funds.company` out of `funds.valued`, and the Companies view must draw the band while the book holds one.
+
+### Stage 10lh — Review fixes to Stage 10lg: Invested this year places a holding only on its own evidence
+
+Codex's review of #352, verified against the code and the book:
+
+- **Held before this year** needs the same units on an older statement dated on or before 31 March, with no trade since (`heldBeforeYear`). Any older balance used to be enough, which hid units bought this year (2 holdings).
+- **A mixed or partly sold record stays to check, with its reason.**
+  - A record held before the year that money was also added to: 16 accounts, which used to be counted as older.
+  - A record first valued this year that money was taken out of.
+- **A first-valued row is purchase to value** like every other row. Its first value plus the money added since is what was paid, shared across a whole account's holdings by today's value, so value − paid = gain on every row and in the total. The row's value is the record's own close on its own date, never a later quote over money the record has not seen. It used to scale the account's gain, which did not tie.
+- **Only a missing-purchases gap is placed** (`YearGap.need`). A verified purchase with no usable value, or a holding valued at cost, keeps its own reason.
+- **XIRR and CAGR** annualise a first-valued debt holding as they do a purchased one. Equities under a year stay absolute.
+- **Only a sale or withdrawal counts as money taken out.** A dividend or other income paid out, and the tax withheld on it (TDS on Payout, TDS Trf to Capital A/c), leaves the units held, so the holding is still placed. A redemption, or any outgoing flow the book can't classify, still counts.
+- **A value dated before the first value is no closing value.** That holding stays to check.
+- **"Held before" rests on the family's assumed-continued-ownership rule** (22 Oct): a dated balance that no later recorded trade contradicts.
+- **An account opened inside the year starts on its first money in.** It used to open at nil on 31 March and was then read as "held before, with money added".
+- **Market performance:**
+  - a period reports private holdings apart even when a measured account holds them (`selectionMarket(…, { inception })`). That account's public holdings are left unmeasured too, since its return carries the private ones, under their own gap (`code: 'mixed'`) that asks for the holding's own return, not prices;
+  - a holding held at its last value sets no row's dates (`MarketUnit.held`), and a row, or a total, that measured no dates claims none: it no longer falls back to the portfolio's dates.
+  - on a period, its details list the public holdings with value, as the face's denominator does. The private investments reported apart are named in the Overview, with their count and value, and are out of the lists and totals. A row of private holdings alone still lists them.
+- `check-nav-assumed` compares the line and its card on one snapshot of all four figures (return and gain, line and card). It waits until that snapshot matches and holds still for a second, since histories arrive one by one and the two redraw apart. A missing attribute fails rather than reading as 0, and a failure prints the snapshot.
+
+### Stage 10lm — Right-click a holding to move it to another tab
+
+- *"Allow the ability for any security or row to move any sub tab by doing right click — for example if i want to move DSP gold from alternate to any other i should be able to do so"* — the family, 4 Nov 2026.
+- On the Portfolio Monitor's Holdings table, on the Category, Asset class and Basket axes, right-clicking a row (or the menu key on a focused control in it) opens a menu of that axis's tabs. The row's current tab is ticked. Once a row has been moved, the menu also offers "Move back". A toast confirms the move and offers Undo. A moved row carries a `moved` pill, with the tab it came from in the hover, and its tab heading says "N moved here". All Securities has no tabs, so right-clicking there keeps the browser's own menu.
+- A move is a section name keyed by PRODUCT (`productKeyOf`), so a whole mandate, or every class of a fund, moves together. It is saved for everyone through `/api/placements` (the shared store, `placement:<axis>:<product>`), and painted first from `localStorage`. A move made while the store is down stays in the browser, and the menu says where it went; it is pushed on the next load.
+- `familyPlacements.ts` is read first by `familyAssetClass`, `familyBasket` and the category branch of `groupKeyFor` (`categoryKeyFor`), with the new source `moved`. That puts the moved row in the same tab on Morning CIO, the drill-down, transactions, both Excel sheets and `isDebtHolding`. The review's citation is kept, so the review columns still join. `PortfolioContext` re-issues the book's arrays when a placement changes, so every memoised table re-sections. Morning CIO's allocation note names the moved value.
+- Not offered as targets: "Not classified" (it names an absence), and on Category the PMS mandates, at-cost and unrouted headings, because each makes a claim a move cannot make true. A row already under one of them can still go back to it.
+- Checks: `familyPlacements.test.ts` (`moved holdings`) covers the store (stale list, null clears, refusals, NOT_CONFIGURED) and DSP Gold moving from Alternate to Equity and back. It also checks that the citation is kept, an unknown tab is ignored, Carnelian moves whole on Category, and which targets are offered.
+
+### Stage 10lv — Morning CIO's three return cards, minimal: the return, and how many holdings it covers
+
+- *"We need to change the design of these card to make it more minimal … Return % in big bold … I rather see number of records covered over total records like before. Rest all … in (i) button"* — the family, 5 Nov 2026.
+- Face (Annualised / history, calendar year, financial year): the label, the return large (`TileMetric.large` → `Kpi large`, 30px), then "N of M holdings" — public holdings covered (measured + held at last value) over every public holding with value (`coverage.publicHoldings`, `measuredPublicHoldings`, `heldPublicHoldings` in `availableCardReturns.ts`) — and a muted line with the measured end date (the standing rule) and "assumed" / "not annualised" where they qualify the figure. The value bar and the three caption lines are gone.
+- The ⓘ opens on a short summary (`data-card-summary`): period and dates, gain, the Nifty 500 line on the same money (`CardBenchmarkLine`, moved off the face), holdings measured vs held, coverage by value with what waits for prices, and the private investments reported apart. The full working follows unchanged.
+- Gain / Loss and Consolidated return keep their captions.
+- Checks: `headlineMatches` reads "N of M holdings" against `data-card-public-covered` / `data-card-public-holdings`; the Stage 10ji face-index invariant skips the three cards and `check-selected-attribution.mjs` finds the index in their ⓘ; FYTD/YTD/history read the label, hover and caption where they read the removed second line; `check-latest-account-returns.mjs` takes the new caption.
+
+### Stage 10lw — SVAN's 4 November reports: holdings and since-inception capital to 4 Nov
+
+- *"Integrate all of these files into the dashboard end - to - end. These are futher data that we're received from the client"* — 5 Nov 2026. `source/november-2026-d/` holds five SVAN Velocity reports as of 4 Nov: the appraisal and capital register for 8710067 (Ajay) and 8710090 (Bharat), and 8710090's bank book. All five are read `ok` by the existing PMS-system readers. No reader change was needed.
+- **Holdings move to 4 Nov** through SVAN's `newestWins` rule. 8710067 is ₹15.47 Cr over 46 equities and cash (was ₹16.22 Cr at 30 Sep). 8710090 is ₹10.21 Cr (was ₹10.71 Cr).
+- **The mandate's capital since inception is now set** (`Account.capital`, `source: "capital-record"`). The fallback that builds it from the dated capital record checked the TYPED rows' reach (`capitalRecordTo`, 31 Jul for 8710067). It ignored the reach a tying register had just extended (`acct.capitalRecordTo`, 4 Nov). It now reads the extended reach. 8710067 has ₹14.50 Cr in and ₹1,66,345.65 out; 8710090 has ₹9.50 Cr in and ₹1,01,151.60 out. Both equal the registers' printed Total row to the paisa. The whole mandate is now struck on its capital, as for other PMS accounts.
+- **A reissued bank book is no longer double-counted** in the unwitnessed-capital note (`bankBookCapitalWitnessed`). The 4 Nov bank book slots a late-settled dividend in earlier, so the 13 Jul and 25 Aug TDS rows print on a new running balance. A row key that includes the balance could not match the 30 Sep copy, so both copies were summed. Each day is now taken from the newest issue whose window covers it. Only 8710090's false "2 moves not carried" note changes.
+- Still `—`: the FY-period return. No SVAN statement values the account at 31 Mar 2026, so `RETURN-COVERAGE.md` keeps "Opening valuation … missing". Eleven SVAN holdings also lose their Invested on date (240 → 229 book-wide), because the trade tapes end 30 Sep and no longer reach the 4 Nov holdings. The first needs a 31 Mar 2026 valuation; the second, SVAN's transaction statements through 4 Nov.
+- `docs/INGEST-INVENTORY.md` / `ingest-inventory.json` are main's copies. A local inventory run without the vault passwords degrades them.
+- Tests: `calcAudit` A8 now checks the rule on every PMS account whose capital comes from its dated record: the record must reach the holdings' date. It also pins 8710067's register totals. `datedCapital` takes its share-versus-mandate case from the first dated mandate holding one share its trades fully date and one they do not, since no SVAN share is fully dated any more.
+
+### Stage 10lx — SVAN's trade tapes to 4 Nov: holdings dated, Shankara keeps its post-split ISIN
+
+- *"integrate these as well"* — 5 Nov 2026. Five more SVAN Velocity reports, all to 4 Nov and all from each account's inception, went into `source/november-2026-d/`: the transaction statement and capital gain statement for 8710067 and 8710090, and 8710067's bank book. The existing readers read all five `ok` (285 and 224 trades, 85 and 69 realised lots).
+- **Invested on returns to SVAN.** 41 of 47 held lines in each account are now dated by their own trades (0 before: the tapes stopped at 30 Sep). Book-wide, 311 of 435 holdings are dated (was 229). The FIFO realised gain on SVAN's current holdings now covers the whole life of each account: 8710067 rises from ₹41.0 L to ₹47.6 L, and 8710090 from ₹25.3 L to ₹29.3 L. The mandate's capital and its whole-mandate return are unchanged (Stage 10lw).
+- **Still undated, with the reason shown:** HEG Graphite, Shankara Buildpro, Sharda Motor, Time Technoplast and V2 Retail. The tapes print trades only, never the bonus, split, demerger or rename that took each holding to its current count (Sharda and Time Technoplast hold exactly twice their bought units; V2 Retail ten times). Dating them needs each corporate action with its own source.
+- **A split's retired ISIN and its successor are one security.** The 4 Nov capital gain statements reprint Shankara Buildpro's 19 May sale under INE24OJ01029, the ISIN after the ₹10 → ₹2 split; the 30 Sep issues printed INE24OJ01011. build-book's identity check read that as one key naming two securities and stripped the holding's ISIN. `ISIN_SUCCESSORS` moved from `build-upstox-instruments.mjs` to `shared/isinSuccessors.mjs` (`currentIsin`). The identity check, the publication verifier and the ledger's lot-ISIN borrowing (`ledgerModel.ts`) now compare through it, and the holding carries INE24OJ01029.
+- **Vedanta INE205A01025 is one key.** SVAN prints the ISIN as `Vedanta Ltd` (`vedanta`, the book's key). Ajay's Motilal demat prints it as `VEDANTA LIMITED#EQUITY SHARES OF RE 1/- AFTER SPLIT`. A `KEY_ALIASES` entry joins the two, and `rekey:archive` moved the demat's 4 rows (the book was already joining them by ISIN, so `glowData.ts` does not change). The verifier's baseline now also remembers the key a `KEY_ALIASES` entry files each archived key under (`securityKeyOf(storedKey)`), so a reviewed re-key is not a "new split".
+- `build-upstox-instruments --check` reports WOULD CHANGE on main too (it would drop HEGAM); left alone here.
+- Tests: `publication.test.mjs` adds the successor-ISIN case (a third ISIN still conflicts) and the alias re-key case (an unaliased key still splits). `ledgerJoins` re-reads lot ISINs through `currentIsin`.
+
+### Stage 10ly — Purchase dates carried through splits, bonuses and demergers
+
+- Follow-up to Stage 10lx, at the family's go-ahead (5 Nov 2026). Five SVAN holdings per account held units no dated buy printed, so Invested on read `—`:
+  - V2 Retail (10-for-1 split, ex 25 Mar 2026);
+  - Sharda Motor (1:1 bonus, ex 4 Jul 2025) and Time Technoplast (1:1 bonus, ex 23 Sep 2025);
+  - Shankara Buildpro (1-for-1 demerger from Shankara Building Products, record date 24 Sep 2025, then a 5-for-1 split, ex 8 Oct 2026);
+  - HEG Graphite (1-for-1 demerger from HEG Advanced Materials, record date 7 Sep 2026, whose own 5-for-1 split was ex 18 Oct 2024).
+- **`actionReplay` (`scripts/lib/holdingTrades.mjs`) replays a holding's trades through those actions, first-in, first-out.** An action applies before that day's trades. A split or bonus multiplies the lots held, keeping their dates. A demerger hands the child the parent's lots held on the record date, times the entitlement, with the parent's purchase dates. SVAN's own capital gain statement dates the 19 May 2026 Buildpro sale to the 29 Oct 2024 parent purchase, and the replay sells exactly that lot.
+- **Every action is sourced, and every replay must land on the statement (`scripts/lib/shareActions.mjs`):**
+  - Splits and bonuses are rows of the saved NSE capture, refreshed here to 5 Nov (`import-corporate-actions`). They are read only inside the capture's verified window and only where the symbol's rows name one ISIN (through `currentIsin`).
+  - Demergers are cited in `shared/demergers.mjs`: Shankara's 12 Sep 2025 record-date filing to NSE, and HEG's record date from the capture with the 1:1 entitlement as reported from its filing.
+  - Any other non-dividend action in the window refuses the replay. So do Goldstandard's Zydus buyback and Carnelian's PVR INOX buyback, and LIC, whose window starts after the units were bought (each named in BOOK-REPORT).
+  - The replay must end on exactly the units held. A demerger's parent must also close on exactly what the statements hold of it (nil for both parents here), which proves its trades started from nothing.
+- **`Position.actionRecord`, read by the Invested on column only (source `action-trades`).** `tradeRecord` keeps its meaning (the trades alone hold every unit). Its `unaccounted === 0` readers (`holdingFlows`, `holdingPeriodOf`, `investedThisYear`, check-pages' money-weighted mirror) replay the trades' money, and a demerged unit's money was paid for the parent. The display-time bonus rule (`bonusPurchaseDates`) is checked first, so ZF keeps its `bonus-trades` source.
+- Dated now: every share line in both SVAN accounts (only the cash lines stay `—`). Sharda Motor and Time Technoplast show through the display-time bonus rule once the capture covers 4 Nov, and the other six through `action-trades`. V.E.C 128004's Nuvama is also dated (353 bought on 5 Aug 2025, 1,765 after the 5-for-1 split of 26 Dec 2025). No figure changes: `glowData.ts` only gains `actionRecord` on 13 positions.
+- `fundNavs.test.ts`: the refreshed capture now names TEGA, which the adviser report's trades roll to 8 Oct. Its fixed 25 Sep quote check now leaves out shares rolled past that quote, which are priced by design only on a later one.
+- Tests: `holdingTrades.test.mjs` adds 8 constructed cases covering split, FIFO after a split, a bonus, a one-unit miss, a buyback refusal, a stale capture and a demerger, with and without the parent's control. `investedOn.test.ts` checks four SVAN lines and that every action-dated line keeps a not-trade-complete `tradeRecord`.
+
+### Stage 10lz — Returns tab: no separate Market performance card
+
+*"What is the Market performance section … is it causing unnecessary confusion and doesn't make sense. Either remove it if it is showing any redundant data …"* — the family, 6 Nov 2026.
+
+- The card was the attribution table's Total row Market return cell set beside Investment performance as a second headline: same holdings, same figure (`check-market-returns` already asserted the two were equal), same details popover and Retry. It is gone. The market return stays a column, per row and on the Total row.
+- Investment performance is the one summary block and spans the row: the return beside its opening → closing ledger on a wide screen, stacked on a narrow one.
+- The panel wrapper (`[data-segment-returns]`) carries the total's `data-market-*` handles; Retry is the Total row details' Missing tab (`data-market-retry`). The column's hover says it is how today's holdings moved, not the return on the money invested.
+
+### Stage 10ma — DSP Silver ETF: the sale the family confirmed is applied
+
+*"according to the client they have sold dsp silver etf and it should not be showing up in holdings"* — the family, 6 Nov 2026.
+
+- Shown on Ankita's Motilal demat 1201090012838316: 1,23,000 units on the 31 Jul statement, valued live as 12,30,000 at AMFI's NAV across DSP's 28 Aug 1:10 split (Stage 10hq). MOPWM's 23 Oct report (folio 466887, rows 21484–21488) shows 2,30,000 bought on 30 Sep 2025, 1,07,000 sold on 22 Jan, the Corpus Out/In split on 28 Aug, and all 12,30,000 redeemed on 13 Oct for ₹2,56,48,310.01. ₹2,55,04,778.88 of Liquid BeES was bought the same day. The fund-row hold (Stage 10iw) kept it on screen.
+- **`FAMILY_CONFIRMED_FUND_SALES` + `rollMopwmFundSales` (`scripts/lib/mopwmTransactions.mjs`).** A confirmed owner/ISIN releases its report rows. They roll the balance to nil only where: the name is an exact alias; the rows sit in one folio; every row is a tied purchase or redemption, or the Corpus block of the split `shared/fundUnitSplits.mjs` records; one demat records the ISIN; the replay holds exactly the statement's units on its date; and the record ends at nil. The roll joins `BOOK_SHARE_ROLLS` with `report.sheet` "Mutual Funds" (realised ₹2,30,93,912.99 over the whole record).
+- `unpricedStatementUnits` gate 8 (`soldSinceStatement`): a fund line sold to nil is not held on the live basis. The statement basis keeps the 31 Jul snapshot. check-pages' re-expressed model carries the same gate. The account note and Family Entities hover say "sales", not "exchange trades", when a fund is among them.
+- **`recordedLines` (`src/lib/recordedHoldings.ts`) drops a statement line `soldSinceStatement` finds.** The stock page, Monitor pick-list and search read it. They still listed a balance sold to nil as "units held · not valued". That covered the five shares Stage 10iw rolled to nil (Ankita ICICI 14,500, Axis 7,300, SBI 27,750; Ajay IFB, NLC). /stock/dsp-silver-etf now reads Position closed.
+- Not applied, still waiting on the family: every other fund row, including Ankita's DSP Gold ETF (2,05,000 → 20,50,000, redeemed 23 Sep on the same folio).
+- Tests: `mopwmTransactions.test.mjs` adds the gate cases and the real folio; `shareRolls`, `unpricedUnits`, `fundUnitActions` and `recoveredCosts` read the split mechanics without the rolls and assert the sold line is gone.
+
+### Stage 10mb — DSP Gold ETF: the same folio's sale applied
+
+*"Yes, remove Gold"* — the family, 6 Nov 2026, on Stage 10ma's open item.
+
+- Ankita's Motilal demat 1201090012838316 records 2,05,000 DSP Gold ETF units on 31 Jul. MOPWM's folio 466887 (rows 21164–21167) shows them bought on 22 Jan for ₹3,01,93,698.90, split 1:10 on 28 Aug, and all 20,50,000 redeemed on 23 Sep for ₹2,99,99,805.02 (realised −₹1,93,893.88).
+- One entry added to `FAMILY_CONFIRMED_FUND_SALES`, plus the `DSP Gold ETF-G` alias. `rollMopwmFundSales` reconciles it on the same gates; the book changes by that one roll.
+- Aarti's DSP Gold (1201090012838335, 11,95,000 → 1,19,50,000) is untouched and still valued; her folio 470582 shows no sale.
+- Tests: the split-mechanics suites read Ankita's lines without the rolls, and assert only Aarti still holds DSP Gold.
+
+### Stage 10md — Sectors: screener.in for every company; Sector Composition counts equity only
+
+*"Make sure to use same sector classification for all the holdings, for eg. if you're using sector classification based on screener.in then every holding should be based on it only"* and *"in sector composition we need to show only equity asset class exposure in sectors … gold/silver/debt holdings … should not be included"* — the family, 6 Nov 2026.
+
+- **One classification.** `companyExposure` placed a company by the first source that answered: its statement (each platform's own taxonomy), then a fund's AMFI industry, then screener.in. Before: 90 by a statement, 327 by a filing, 57 by screener, 174 issuers unplaced (₹43 Cr). Now screener.in places every company it has a page for. A fund's filing places a company only where screener has no page, and the statement only where neither does.
+- **`npm run build-sectors` asks about every company the page can draw.** `scripts/lib/sectorUniverse.ts` runs `companyExposure` itself over the book, the depository's funds and shares, and every equity line the funds disclose (550 companies). Each is joined to a listing in this order: the app's symbol, exact ISIN in NSE's mainboard/SME masters, a unique issuer code, a unique `securityKeyOf` name, or the reviewed `LISTED_AS` table (BSE-only listings such as Yash Highvoltage, Sotefin Bharat, NSE India's own BSE listing 544937; renames such as Affle 3i and LTM; listed REITs/InvITs). Each page must echo its NSE symbol or BSE code, or agree on name. 542 of 550 are placed. `src/data/screenerKeys.json` carries company key → listing for the ones the app's symbol does not reach.
+- **GICS comes from screener's Broad Industry**, which is the AMFI industry list funds file under, so a filing-placed company and a screener-placed one go through the same `shared/sectors.mjs` entry. The Sector level is used only where the map has no entry. `"Diversified"` → Industrials was added (3M India, Godrej Industries).
+- **Sector Composition is the equity sleeve** (`equityOnly` in `sectorRollup.ts`). A Consolidated row's derived half is `derivedEquity`: no debt paper, no CD/CP by ISIN type, no liquid/overnight scheme, and no balanced-advantage equity disclosed gross of hedges. Debt-only issuers (T-bills, NABARD, bank CDs) are no longer rows. What is left out (`fundsLeftOut`) is named under "Not on this page" and in the derived figure's hover. The figure is now "Equity their funds disclose". The Returns tab's sector attribution reads the same sets.
+- On the committed book: 425 issuers on Consolidated, 421 placed by screener.in, 4 unplaced (₹0.76 Cr: HEG Graphite, Gujarat Gas, GSPL India Transco, Talwandi Sabo — demerged or merged, no classified page). Direct Equity: 28 of 28 by screener.in.
+- Captions on Family & Entities, Data Refresh, Monitor and Returns name the new order. check-pages' tier re-expressions (`placeOf`, `MANDATE_SECTOR_BOOK`, XA-11, the Monitor index) read screener first. `SECURITY_AXIS_BOOK.sector` carries the equity sleeve the page is held to.
+- Tests: `screenerSectors.test.ts` (Broad-Industry mapping, BSE-code joins), `monitorSectors.test.ts` (a filing moves only a company screener has no page for).
+
+### Stage 10mc — Realised and unrealised: gains and losses apart
+
+*"Show realised losses separately and confirm to Yamini that realised gain is net of them"* — the family, 6 Nov 2026.
+
+- **Checked: realised is net on every account.** Every record behind it is signed: a statement's realised line (5 PMS accounts on FYTD), a fund folio's FIFO `realizedPnL` per scheme redeemed in the window (12), and since investment each holding's FIFO result or a whole mandate's capital residual (105). FYTD to 6 Nov: net +₹4.98 Cr = gains +₹7.04 Cr − losses ₹2.06 Cr.
+- `capitalBridge` adds `realisedGains / realisedLosses / unrealisedGains / unrealisedLosses`: each record's signed figure by sign, at the finest record that carries it. A fund record keeps `realisedBy` per scheme.
+- **Capital gain lots.** `realisedByYear` entries now carry `gains` and `losses` (Σ of lots by sign; `gains + losses = st + lt`). Where a statement's FY or since-inception lots add to its realised line within ₹1, the bridge reads them (`lotsBehind`). Carnelian 3517383's −₹17.6 L FYTD is +₹1.88 Cr lot gains and −₹2.06 Cr lot losses, 29 lots. Before this, a per-account split would have shown its loss as −₹17.6 L.
+- The Gain breakdown shows Realised · net and Unrealised · net, each with Gains and Losses beneath it (`data-bridge-part="realised-gains"` and the other three). By account adds Realised gains and Realised losses columns, and the total ties. The info card names every loss-making record and every statement whose realised is one line with no lots (Goldstandard 100022, 100023).
+- Window unrealised is still an account's residual, so its gains and losses are netted per account. Since investment they are per holding or mandate.
+
+### Stage 10me — Later transactions update the holdings: MOPWM's fund trades and full exits
+
+*"why were we not considering the sale transactions to update the holdings data? … If we have transaction data that shows buy or sale transactions then those should be considered to update the portfolio"* — the family, 6 Nov 2026.
+
+- **Root cause.** The live roll-forward of MOPWM's 23 Oct report covered SHARES only (Stage 10iw, at the family's 28 Oct choice). Its Mutual Funds and PMS_AIF_SP rows waited on the family's answer about the 1 Oct "redemptions". So every fund sold after a 31 Jul Motilal statement stayed on screen. Stages 10ma/10mb released DSP Silver and Gold one confirmation at a time.
+- **The 1 Oct question, answered from the data.** On 1 Oct the report "redeems" every fund balance on all five Motilal demats. Seven of them reappear unit for unit on AMC folio statements dated after that day (Kotak 5372722/7111389, Bandhan 8652064/8691267, Helios 10056128/10056154/10063876), and none contradicts. So a demat-folio redemption of a whole balance on a day another statement of the owner witnesses is a **transfer of custody**, never a sale.
+- **`rollMopwmFundTrades`** (replaces `FAMILY_CONFIRMED_FUND_SALES` / `rollMopwmFundSales`) rolls each Motilal demat fund line on the report's later fund trades where:
+  - ONE group of the owner's rows names AMFI's scheme for the line's ISIN (`sameScheme`, plans told apart);
+  - that group holds the line's exact units on the statement date;
+  - every row ties;
+  - no sale over-sells.
+  The roll stops at a transfer (`transferredOn`). Applied: Ankita ABSL BAF 3,93,096 → 0, HDFC BAF 37,755 → 0, DSP Silver/Gold → 0; Bharat ABSL BAF 1,83,500 → 7,660, ABSL Liquid 2,64,721 → 1,856, ICICI BAF 1,46,857 → 33,257; Bharat's family trust Kotak Arbitrage 6,13,294 → 32,694. A sub-division alone is no roll (`fundUnitSplits` converts it).
+- `unpricedStatementUnits` values a rolled line at the roll's units and FIFO cost (`rolledSinceStatement`); check-pages' model mirrors it.
+- **`mopwmCapitalExits`**: a PMS/AIF folio the report pays out in full after its statement (at least the value it struck, nothing paid in) rolls to nil on the live basis: MO Delphi, ₹11.25 Cr on 16 Jul vs ₹11.13 Cr on 30 Jun. Smaller capital rows carry no units and are named in BOOK-REPORT (Neo Infra's 9 Jul distribution).
+- Audited, nothing to apply:
+  - Ajay's Man Industries, Manorama, Tech Mahindra, Zaggle and Birla Cable sales (no alias) are of Motilal 539150 balances no statement records.
+  - AMC-folio accounts' statements already postdate their report rows.
+- Still open, in a follow-up: Green Lantern 510854/510861. Their own tape runs to 22–23 Sep (sold out of Gujarat Ambuja, Graphite India, GMM Pfaudler, Ratnamani, Bajaj Auto; bought IEX, HEG AM, Elgi). It is refused because no depository or capital-gain witness exists. A correct roll also needs the cash line, the bought names and HEG's 7 Sep demerger. Baring's 3 Aug ₹50 L call is also open: no units.
+- Tests: `mopwmTransactions.test.mjs` covers the gates, transfer days, partial sales and capital exits, on constructed rows and the real report. `shareRolls`, `unpricedUnits`, `recoveredCosts` and `corporateActions` assert the rolls. The `concentration` and `searchIndex` twin-key checks build a constructed pair when the live book has none (the last pair is sold).
+
+### Stage 10mf — Private Market weights are of the filter shown
+
+- *"When we are seeing only the companies filter or the funds filter then the weightage of investments should be measured for that particular filter only."* Weight at value and Weight at cost divided every row by the whole private book, so under Companies the two company bands read 5.7% + 77.2% at cost (8.2% + 72.5% at value) beside a fund band that was not drawn.
+- `weightBase(book, sections)` in `src/lib/privateBook.ts` totals value and cost over the bands the selector draws (same basis as `privateValue` / `privateCost`: valued holdings, each once, a costless one named). Companies now reads 6.9% + 93.1% at cost, Funds 100%, Both unchanged. The headings name the filter's own total.
+- `privateBook.test.ts` [F] and check:pages `PM_WEIGHT_SHOWN_CHECK` (on `private-market-default`, `-show-funds`, `-folios`): the drawn bands' weights add to 100% at value and at cost under every filter.
+
+### Stage 10mg — The LLPs' Nzuri shares are Real Estate
+
+- *"Glowterra LLP and Glowsphere LLP: show their Nzuri Pune Knowledge Park holdings under Real Estate — as line items on the Real Estate tab and as real-estate exposure on the Category / Asset class views, counted once in the total."*
+- `REAL_ESTATE_KEYS` in `src/lib/analytics.ts` is the one list (the two Nzuri keys). `holdingBucket` files them under `REAL_ESTATE_BUCKET` after cash and before the at-cost section, and `FAMILY_SAID_CLASS` gives them the family's new class, Real Estate (`FAMILY_CLASS_ORDER`: Equity, Debt, Alternate, Real Estate, Cash). The basket stays Entrepreneurial Growth. The same four positions move: Category's at-cost section drops ₹63.50 Cr and Real Estate shows ₹63.50 Cr. Both axes still add to the same NAV. The section is still at cost, so it shows no gain and `costCoversSet` refuses its return. Real Estate is not a Category move target. The Monitor band links to `/real-estate`.
+- Real Estate lists the four lines (`data-book-holding`) under the property rows. They come from the scoped `portfolio`, not the property store, and cannot be edited there. Value and cost add into the tiles and the footer once each ("N holdings via entities"). Appreciation, tax, rent and the property fields render `—` with their reasons, and every total that leaves the holdings out says so in its hover. A property filter hides them; search matches them.
+- Tests: `familyTaxonomy.test.ts` (Real Estate on both axes, nothing else filed there), `familyPlacements` and `portfolioExcel` list five classes. check:pages re-derives the bucket off `REAL_ESTATE_KEYS` in its five copies of `holdingBucket`, adds Real Estate to the asset-class sections, and gives Morning CIO's sweep a tenth allocation slot (`BUCKET_SLOTS`).
+
+### Stage 10mh — Green Lantern: the account's own tape rolls the whole mandate
+
+*"Yes, do Green Lantern"* — the family, 6 Nov 2026, on Stage 10me's open item.
+
+- **Root cause.** Green Lantern 510854/510861 hold 27 Jul statements, but their own transaction statements run to 22–23 Sep. Stage 10dw's per-holding roll needs a depository balance or capital-gain lots to witness a tape, and a PMS has neither. So about 70 trades per account were on no page. A per-holding roll would also have been wrong for a mandate: a sale moves value into the cash line, and a purchase adds a name the statement never held.
+- **The witness is the manager's own 22 Sep fact sheet.** Its Portfolio Holdings table prints every line's market value, including cash, the Axis Liquid fund and the dividend receivable, and the lines add to the printed portfolio value (₹5,87,49,582 / ₹11,60,19,848). The reader always parsed the figures (`readSectors` → `rows`) and dropped them. It now keeps them apart from the holdings as `factSheetValues` (never a holding, as `readSectors` has always held). A NUMBERED line named like a subtotal ("31 Cash") is now kept there; only an unnumbered one is a subtotal.
+- **`rollAccountTape`** (`scripts/lib/tapeRoll.mjs`) rolls the whole account or none of it. Gates:
+  - the fact sheet postdates the statement, the tape reaches it, and its lines add to its value;
+  - no line goes below nil;
+  - no split or bonus falls in the roll (the saved NSE capture); a registered demerger allots its child on the record date (HEG Graphite, 1:1 on HEG AM, 7 Sep, `shared/demergers.mjs`);
+  - on the fact sheet's date the roll holds exactly the names it lists, and it lists nothing else but cash and receivables;
+  - every printed value over the rolled units is within ×2 of the tape's own last price (a demerger's parent and child together).
+- **Marks and cash.** Each line is marked at value ÷ units (`rolledForward.price`, dated, read by `rolledPosition` and check-pages). Cash is the fact sheet's cash, settled for any later trade; a cash line it no longer prints is nil.
+- **Cost.** A name sold after the 27 Jul capital-gain statement carries no cost or realised figure (null). A name only bought adds its buys. A name the statement never held is FIFO on its own trades. HEG's parent and child carry none: no apportionment is on record.
+- **Bought names** (IEX, HEG AM, HEG Graphite, Elgi, the receivable) are `BOOK_TAPE_ROWS`: live rows through the corporate-action layer, so quotes price them. The statement basis keeps the 27 Jul snapshot.
+- **A whole mandate's uncosted lines no longer withhold its return.** Its return is its capital bridge, (value + withdrawn − paid in) ÷ paid in, and no line cost enters it. `fifoTotals` exposes `wholeUncostedValue` and leaves it out of cost coverage, and so do the Monitor section total and Morning CIO's category row. check-pages' realised model now carries the uncosted value into the realised half, as the app does (B8).
+- **The period window of a roll with a later dated mark opens on that mark's date** (`applyCorporateActionQuotes`), never the statement's.
+- Only three archived documents change: the two Green Lantern 22 Sep fact sheets and V.E.C 128005's 30 Sep one. `keepUsableFactSheetValues` (extract) keeps the figures only on an account's newest fact sheet that postdates its holdings. `statements:verify`: verified.
+- Tests: `tapeRoll.test.mjs` (every gate on constructed rows, a demerger, and the committed book's bought rows).
+
+### Stage 10mi — Real Estate: no empty-state row above entity holdings
+
+- The family asked to remove the "No properties added" section: with no property entered, the table drew that row (with its Add property link) above the four Nzuri holdings held through Glowsphere LLP.
+- The empty-state row now appears only when the table has nothing at all to show — no entered property and no entity holding. The header's Add property button is unchanged.
+- `scripts/dev/check-real-estate.mjs` and `check-real-estate-bulk.mjs` wait for the entity holding rows and assert no empty-state row, instead of waiting for that text.
+
+### Stage 10mj — HPR's hover names the dividends it holds
+
+*"verify and tell me if HPR is absolute return or something else?"*
+
+- HPR is the measure keyed `absolute`: FIFO (unrealised + realised + recorded dividends) ÷ (cost held + cost sold), cumulative, not annualised. All 382 costed positions in the book tie to that formula; the 174 with `dividendReceived` include it.
+- The picker hint (`RETURN_MEASURES`) and the Excel export note still said individual-share returns exclude dividends — true before Stage 10fb, wrong since. Both now name the dividends; Morning CIO's header already did.
+
+### Stage 10mk — Morning CIO: smaller tiles, no All alerts tab, Returns breakdown in its (i)
+
+*"Without changing any content on the tiles make them smaller … Also remove this all alerts … In returns if i have to view breakdown you can simply give an (i) view which can make it completely and simply visible as a popup instead of taking so much space."*
+
+- **Tiles.** `Kpi`'s `compact` (Morning CIO's strip only): tighter padding, the return figure 24px (was 30), smaller second and caption lines, 12px gaps. Same lines, figures and controls. A tile's remove × shows on hover or focus, on a solid chip, because the tighter caption runs into its corner. A touch screen always shows it. In the header it narrowed the headings: `check-pages` caught "Return this financial year" wrapping with room to spare. The strip is about a fifth shorter at 1280px, and the panel under it starts 4px higher.
+- **All alerts.** The tab, its badge and `AllAlerts` are gone, with what only they read (`usePriceAlerts`, `ResearchSummaryLine`, `useResearchSummary`, `KindPill`, `alertBoxesHref`). `?tab=alerts` lands on Daily Movers. A price alert is still set on its company's page, and its box says when it is reached; that card's "All alerts →" link and the search entry are gone. check-pages drops the four `cio-alerts*` walks and asserts five tabs and no badge (on `cio`, `cio-returns`, `cio-ytd-card` and `cio-tiles-saved` the sweep finds nothing main does not); check-family-inputs clears a level in its box instead of on the tab.
+- **Investment performance** is one row: what it covers and the return. Its (i) opens the breakdown: start to end beside the gain's parts, the dates, By account (names wrap so the figures show) and How it is built. The card keeps every `data-bridge-*` figure; `check-selected-attribution` opens the popup to assert the steps, parts, rows and working.
+- CI's attribution step was already red on main (the MTD return check, 0.1010 vs 0.1012), and `check-assumed-holdings`' bridge identity fails on main too. Neither is touched here.
+
+### Stage 10ml — The HPR column is headed "HPR - Absolute"
+
+*"rename the column heading as HPR - Absolute so that it is clear that it is an absolute return only. Do this universally on the dashboard."*
+
+- `ReturnMeasureDef` gains `heading`; every return column heading reads it (Portfolio Monitor holdings and transactions, Private Market). Morning CIO's allocation column is "Return (HPR - Absolute)".
+- Cells, the picker and the Excel Measure column keep the short `HPR` tag, so every `res.tag !== def.tag` comparison is unchanged.
+- `check-pages`: the two header-label invariants read the new heading.
+
+### Stage 10mm — Main's CI green again: the bridge counts a purchase record's money; the check reads the tape rows
+
+*"Yes, fix it"* — the family, 10 Nov 2026, on main's CI, red since 5 Nov.
+
+- `capitalBridge`: an assumed row from a purchase record (`recordedYearWindow`) now takes its purchases as money added and its sales and income as money taken out. Since SVAN's tapes dated its holdings (Stage 10lx), its start + added − taken out + gain missed its end by ₹28.5 L (`check-assumed-holdings`). A row with a sale on its record stays unsplit, saying why.
+- `scripts/dev/page-book.ts` passes `BOOK_TAPE_ROWS` through the corporate-action layer as `PortfolioContext` does (Stage 10mh). Without them `check-selected-attribution` left out Green Lantern's ten tape-only lines (₹65.2 L) and read MTD at 0.10117% against the page's 0.10100%, stopping CI's browser step before the bridge check.
+- `ytdAvailable.test.ts`: the bridge ties for a sale, a since-first and a purchase-only window; it fails on the old bridge.
+- `check-source-trace`, which CI had not reached since 5 Nov: the trust's Kotak units are rolled by MOPWM's later trades (Stage 10me), so the cell is a sources button saying so, citing the 31 Jul row without its printed count. ICICI and Invesco keep the Total Holding highlight.
+- `check-etf-unit-continuity`, likewise unreached: DSP Silver and Ankita's DSP Gold are sold (Stages 10ma, 10mb), so it reads Aarti's 1,19,50,000 Gold units in one account, Silver as a closed position, and neither search lists Silver.
+
+### Stage 10mn — Morning CIO's tiles, compressed: Gain / Loss's coverage moves into its (i)
+
+*"Remove this from this tile and i think you cna further figure out as the worlds best family office dashboard ui maker how to compress them more … so they dont take so much of space"* (10 Nov 2026).
+
+- **Gain / Loss.** The coverage bar and its two lines ("Covers 100% of investments …", "63% since investment · 17% from first value · 20% held at value") leave the face. They open the tile's (i) as `data-card-gain-summary`: the share covered, the bar and a keyed row for each part with its % and value. The bar's "held at value" share is `bg-slate-500` (warm grey in light mode) because light mode painted `bg-ink-600` the same gold as since-investment. The coverage handles (`data-card-coverage`, `data-card-since` and the rest) are on the figure now.
+- **Compact tiles** (`Kpi`'s `compact`, Morning CIO only) drop the decorative icon, which repeated the heading and took the width a heading needs on a six-column strip. The 24px (i) target hangs into the padding, so the header row is as tall as one heading line. A tile with no caption and no delta renders no empty caption row.
+- **The picker heading takes its column's full width**: `-ml-1` had shifted the button 4px left and left those 4px empty on the right. With the icon gone, `check-pages`' dense strip caught "Return over available history" wrapping within 3px of its "room to spare" line.
+- **FYTD / YTD headings** read "FYTD return" / "YTD return" on the face, the Returns tab's own pill names for the period each one opens (`TileMetric.short`). The picker's menu, the tile's accessible name and the picker's hover keep "Return this financial / calendar year". The return cards' count line is 11px and their date line 10px, matching the strip's other second lines.
+- Measured on this book at 1440px with value, gain, annualised, YTD and FYTD: the strip goes from 150px to 114px. The tallest tile here is the short-history card, whose heading "Return over available history" is required by CLAUDE.md. On a book whose history is a year or more, that card reads "Annualised return" on one line.
+- `check:pages` (`cio`, `cio-ytd-card`, `cio-returns`, `cio-tiles-saved`, `cio-tiles-dense`, `cio-return-metrics`, `stock`, `stock-fund`, `mandate`, `private-company`): every failure left is on main's build too (DL-11 invested line, the gain card's covered count, three Returns-tab checks, `stock`'s table fit, `monitor`'s sector rows).
+- Checks: `headlineMatches` asserts the gain card's face carries no caption; the destination probes accept "FYTD return"; `check-selected-attribution` asserts the coverage is in the (i), not on the card.
+
+### Stage 10mo — Morning CIO's tiles stay on one row at any desktop width; ADD TILE is the row's end column
+
+*"I tihnk they still need to be smaller when they rearrange , look how small my bottom returns table look think as the best ui designer in the world"* (10 Nov 2026, from a 1278px window).
+
+- **One row by the strip's own width.** `.grid.kpi-grid` dropped to three columns below 1280px, so five tiles plus ADD TILE took two rows and the Returns panel lost a row's height on a page that does not scroll. The grid is now `repeat(auto-fit, minmax(max(9.5rem, 100% / --kpi-cols), 1fr))` from 640px up. Tiles share one row while each is at least 9.5rem wide, up to `--kpi-cols` (the tile count, at most six), and wrap only below that.
+- **ADD TILE is the row's narrow end column** (`AddTile`'s `column`, Morning CIO only): 4.5rem wide, as tall as the tiles, dashed, "ADD" over "TILE" in bold. It sits outside the tiles' grid, so six tiles are still one row. Its menu opens from the column's right edge, 16rem wide. On a phone it is a short bar under the tiles. Private Market's card is unchanged (the size of a tile, Stage 10cl). Pressing it scales to 0.97 (`motion-safe`).
+- Measured at 1278×680 on this book (value, gain, annualised, YTD, FYTD): strip 207px → 114px, tiles 340px → 185px wide each, and the Returns panel starts 93px higher.
+- Checks: `tilePickerChecks` takes `addColumn`. On Morning CIO, ADD TILE is an empty dashed column as tall as the tiles and narrower than one, reading ADD TILE in bold. It shares the tiles' row with six tiles too, and `cio-tiles-dense` asserts that.
+
+### Stage 10mp — A review line dated only by months says so: "Range only", not "No dated capital"
+
+*"we have the dates of the investment, but still we are showing in XIRR and in the benchmark return that we don't have any dated capital"* — the family, on National Stock Exchange (Invested on "Dec 2022 → Aug 2023").
+
+- **Root cause.** A review holder line (Stage 10dh) is a "whole account" to `datedCapital.behind`, and with no capital group it fell to the custodian-account reason, "publishes no dated record … capital known only as a total". The XIRR cell read that as "No buy/sell dates" and the index line as "No dated capital". The same row's Invested on showed the review's month span.
+- **What is actually missing.** The review prints the months (Dec 2022 – Aug 2023) and one cost (₹12.085 Cr for 2,00,000 shares). It does not say what was paid on each day, so there is still no rate. Placing the cost inside the span would be an estimate.
+- **Now** (`spanReason` in `datedCapital.ts`): such a line says the review dates it only as a span (or a month), with one cost, and names the holders. XIRR reads "Date range only" (or "Month only"; `returnColumns.ts`), and the index line reads "Range only" (or "Month only"; `holdingBenchmark.ts`). A line whose account has a capital group keeps that group's reason.
+- **Would date it.** The investment register dates part of it: Ankita's 15,000 pre-bonus shares (8 Dec 2022 and 26 Jan 2023 payments, ₹4.28 Cr) and 5,000 of Ajay's (18 Aug 2023; the amount printed does not match its own 5,000 × ₹3,100). Ajay's other 20,000 have no dated purchase. Not applied: it would replace the review's cost split, and that is the family's decision.
+- Checks: `datedCapital.test.ts` (NSE's two lines: undated, reason names the span, XIRR refuses), `holdingBenchmark.test.ts` (labels).
+
+### Stage 10mq — The client's "records still needed" PDF, regenerated from the book
+
+*"we need to create an updated PDF for the current missing gaps … in the same format"* — the family, 11 Nov 2026, of the 27 October list.
+
+- `npm run client:request` (`scripts/client-request/`) prints `docs/client/Glow-Ventures-records-still-needed-<date>.pdf` in the 27 October layout. Sections 2 (PMS stocks with no purchase date) and 3 (private investments carried at cost) are derived with the dashboard's own `investedOnOf` and `holdingBucket`. Section 1 is written by hand; every item is checked against the book, and an item the book no longer bears out stops the build. Section 4 lists the 27 October items since answered, each one checked.
+- 11 Nov result: 43 named records (was 35), 73 PMS stocks in 6 accounts (was 163 in 9), 75 private records / 60 investments (was 76 / 61).
+- Closed since 27 Oct: Ankita's HDFC Balanced Advantage Regular (sold 23 Sep, MOPWM report); Yash Highvoltage and EMA Partners sales (ICICI order book); SVAN 8710067/8710090 and Molecule dated; SOTEFIN now on the ICICI statement.
+- New from the 31 Oct ICICI and HDFC Securities statements: Indian Bank, IndusInd, Karur Vysya and RBL on 49794950 with no purchase or transfer; City Union's 25,117 shares beyond the 2 July buy; Sotefin's allotment; Vantage Oak (and Ankita's 1,225,000 units); Man Industries, Deepak Fertilisers and Kingfa dates; Sterlite Technologies and its demerged shares. Also LKP's other 31 March balances (dates for the later sales), Hope's Mirae folio, both Marathon Trends holding statements and the second LKP removal notice. Liquid BeES rows name the 21 Oct note's units.
+- Not asked of the client (our follow-ups): Federal Bank (whole balance bought 2 July per the order book), and carrying the Yash, EMA, Insolation and Smartworks recovered costs through the order book's sales (Stage 10kn).
+
+### Stage 10mr — Returns attribution: Benchmark return replaces Market return
+
+*"the market return column and the return XIRR column are showing the same returns … replace the market column with benchmark return similar to what we have in portfolio monitor"* — the family, 11 Nov 2026.
+
+- On a one-holding row, Market return (the holding's own move, `selectionMarket`) equalled the Return column. The attribution table now draws **Benchmark return** (`lineBenchmark.ts`, `LineBenchmarkCell.tsx`). Every unit behind the row's return goes into ITS OWN index, chosen by the Monitor's `rowBenchmark`: the manager's printed benchmark for a whole PMS account, AMFI size class for a share, fund category, Nifty 500 for a private holding. The money goes in through `pmeWindowRows` / `pmeInceptionRows` / dated since-investment money, and the Return column's own measure and debt rule are then struck. A mixed row is a **Blend**, weighted by each unit's money.
+- Cash, debt, arbitrage, hybrid and metal units have no index in the feed. They are named in the info card and left out of BOTH sides: `book` is the row's figure over the same units, and ◦ marks a partial blend. A row of them alone reads "No index". Equity savings funds are now hybrid in `holdingBenchmark.ts` (Monitor too).
+- Each record closes the index on its own last value date, as the return does: Sanshi Class E reads N500 −4.78%, the index's 30 Jun → 30 Oct move.
+- The Sector axis keeps its Market return and details; `check-market-returns.mjs` now opens them there. `check-selected-attribution.mjs` asserts the Total row's `data-seg-cell="bench"`. Suite: `lineBenchmark.test.ts`.
+
+### Stage 10ms — Statement-costed holdings dated off the review's purchases (Man Industries, Deepak, Kingfa)
+
+*"If we already have the average cost of an holding, then why we are not showing the invested date? … in this man industries, we have the average cost, but we don't have the dates. Is it correct? Or we are missing out on the dates from the files."* — the family, 11 Nov 2026.
+
+- An average cost is one figure a broker prints; it carries no dates. HDFC Securities 3110320's portfolio prints Man Industries at ₹327.64, and its trade report starts 1 Apr 2026, after every purchase. The dates were in the files all the same: the 30 June review's "Transactions since inception", HDFC Bank block, buys 60,000 on 10 Jan 2025 and 4,57,317 on 25 Jul 2025 (the register prints the second). Cost recovery read those rows only for holdings with no cost.
+- `scripts/lib/reviewPurchaseDates.mjs` dates a statement-costed holding off those rows, for the Invested on column only (`Position.reviewPurchases`, source `review-lots`). The statement's cost stands. Five gates: the review block ties to its own Closing (FIFO); the account's trade window opens by the day after it and agrees where they overlap; the window's trades carry the lots to exactly the units held (5,17,317 − 37,317 sold 23 Sep = 4,80,000); where the window stops before the holding's date, every unit must be long-term on both the dates and the broker's LONG TERM QTY (now read by `hdfcSecurities.mjs` as `longTermQuantity`), since a unit bought in the gap would be short-term; and the lots' cost must be within 0.5% of the statement's.
+- Dated: Man Industries (2 lots, 10 Jan – 25 Jul 2025), Deepak Fertilisers (30 Jul 2024), Kingfa (22 Nov 2024). Manorama (bought Jan 2026) stays undated with the reason: all its units are short-term, so the 31 Oct → 2 Nov gap cannot be closed.
+- Identity is an alias table (`REVIEW_PRODUCT_BY_KEY`, `REVIEW_CUSTODY_BY_ACCOUNT`), never an amount or a date.
+- The client request (Stage 10mq) no longer asks HDFC Securities for these three holdings' dates: 41 named records (was 43).
+- Checks: `reviewPurchaseDates.test.mjs` (each gate broken once).
+
+### Stage 10mt — PMS trade dates: a trade printed on both the investor report and the transaction statement is kept
+
+*"According to the client, we have received transaction statements for all the PMSs from the initial date of investment … we are not able to show the dates anywhere, transaction dates for all the holdings."* — the family, 11 Nov 2026.
+
+- Checked per account. From-inception transaction statements are in the drop for ASK ×2, Green Lantern ×2, Marathon ×2, Molecule, SVAN ×2 and V.E.C 128004, and they date every share held except Vedanta Aluminium Metal (Green Lantern; demerged units with no cited entitlement in `shared/demergers.mjs`). Carnelian 3517383 (inception 6 Jan 2025), Goldstandard 100022/100023 (26 Dec 2025) and V.E.C 128005 (30 Jul 2025) have transaction statements from 1 Apr 2026 only. Nothing else in `source/`, the zips or `statement-publications` dates their earlier lots, so they stay undated with the reason and remain on the client request.
+- Root cause of a real loss: `datedRowsAcross` dedupes trades across ALL of an account's documents, kept documents first. Green Lantern's 30 Jun investor report prints the same trades as its transaction statements. Where both print a row identically (a whole-rupee rate), the investor report's copy won. The tape then kept transaction-statement rows only, so the trade vanished. Green Lantern 510861 lost Ingersoll Rand's 17 Apr 2026 buy (170 at ₹4,100), Ratnamani's 29 Apr buy (157 at ₹2,650) and Anup Engineering's 15 Jun buy (41 at ₹1,950), and its three holdings showed "368 units on no dated trade".
+- `build-book` now reads the tape (`saleRows`: the holding trades and the day's sales settled against capital-gain lots) from the winning report type alone, deduped among itself, which is the runtime ledger's `datedRows` rule. Book: 1,817 → 1,820 trades, Green Lantern 510861 28 → 31 of 34 lines dated; no value, cost, realised gain or summary moves. Client request: 73 → 70 PMS stocks.
+- Check: `holdingTrades.test.mjs` restates the tape off the archive for every account issuing both report types and fails on main's book with exactly those three holdings.
+
+### Stage 10mu — Home: the portfolio at a glance
+
+- Home sits above Morning CIO in Daily and is the populated dashboard's front door. The existing Home buttons and global search reach it; an empty book still opens ingestion. The root redirect retains the member query so it cannot race the context's scope restoration.
+- The reference layout becomes an asset-class donut on the left, with AUM and Geography on the right. AUM and every class open their holdings. The total counts each duplicate group once, shares Morning CIO's family asset-class rules, and follows the member and currency selectors.
+- On phones the navigation becomes an icon rail with an expandable menu, leaving room for the cards; AUM uses compact currency notation there. Desktop navigation keeps its saved width.
+- Residual-only classes stay in AUM but offer no empty current-holdings link; classes with current holdings retain their arc and legend links.
+- Geography names the unclassified value. The book has no verified country exposure, so no countries, weights or historical AUM change are inferred from the screenshot, listing venue, currency or fund names.
+- Validation covers canonical AUM, dedupe, allocation totals, missing classifications, scoped totals, search, navigation, currency and light/dark desktop/mobile layouts.
+- The full CI run exposed a pre-existing 200-batch cap in its table-scroll probe after the workbook grew beyond 10,000 rows. The probe now bounds attempts by the actual row count while retaining strict progress and complete-row assertions.
+
+### Stage 10mv — The investment register dates money no statement does: Sotefin, V.E.C 128005, Goldstandard ×2, Ankita's NSE
+
+*"whatever data we have available, we need to use that, right?"* · *"Yes, apply all four"* — the family, 11 Nov 2026, after an audit of the 180 holdings with no dated money (99 valued, ₹211 Cr).
+
+- **The "held out by decision" was a build rule from the August 2026 delivery, not the family's.** The register has fed missing costs since 21 Oct (Stage 10fn). It now also dates money, through `scripts/lib/registerRecords.mjs`: one committed entry per row, found by sheet and serial number. A changed row stops the build.
+- **Sotefin Bharat** (Ajay, ICICI 49794950; no cost before): `AJAY SIR - AARTI` rows 41–42 give 11,364 at ₹1,100 (12 Jul 2024) and 46,875 at ₹160 (3 Nov 2025). The RHP's 10:1 bonus of 25 Jun 2025 (1,13,640 to Ajay) makes 1,71,879, every unit held. Cost ₹2,00,00,400 (`recoverHoldingCosts`), with cost, HPR and XIRR.
+- **V.E.C 128005, Goldstandard 100023/100022**: each mandate's opening payment (₹7.5 Cr on 30 Jul 2025; ₹17.5 Cr and ₹7.5 Cr on 26 Dec 2025) is on the manager's printed inception date. It is listed only where the manager's 1 Apr 2026 opening capital balance is that payment less at most 0.1% (`inceptionMoves`).
+  - The shortfall (₹21,531, ₹18,025, ₹7,050; the manager's own rows of that kind are TDS) is an outflow on 31 Mar 2026 marked `assumedDate`.
+  - Goldstandard's own TDS rows, held back while nothing had been paid in (rule 4 of `datedCapitalElsewhere`), now merge.
+  - Money-weighted: V.E.C 128005 18.77% (128004 is 18.42%). Goldstandard is under a year, so it shows absolute.
+- **NSE, Ankita**: `PVT INV` rows 74–75 (₹64,12,500 on 9 Dec 2022, "15000 EQUITY SHARES OF NSE"; ₹3,63,51,213 on 27 Jan 2023) tie to their subtotal. MOPWM's report carries the 15,000 into her demat and adds the 60,000 bonus of 2 Nov 2024, making her 75,000.
+  - They are her `BOOK_REVIEW_FLOWS` rows (`register`, `reviewRow: null`). Her cost is ₹4,27,63,713 and Ajay's the review's ₹12.085 Cr less it, ₹7,80,86,287 (was a split by shares).
+  - Her line: XIRR 45.49%. The two-owner row stays undated for Ajay's part: the register dates 5,000 of his 25,000 pre-bonus shares, at an amount that does not match its rate.
+- `CapitalMove.fromRegister` / `assumedDate` and `ReviewFlow.register` carry the source into the transaction rows (`consolidatedSheet.ts` notes).
+- Checks: `registerRecords.test.mjs` (test:ingest) reads the real rows and breaks each one: renamed row, other holder, units × rate, bonus ratio, missing MOPWM bonus, subtotal, and each reconciliation refusal.
+
+### Stage 10mw — Home: date-scoped overview and a configurable widget library
+
+- Home gains a single date range with MTD/YTD/FYTD/1Y presets and the existing global member/currency scope. Current AUM still reconciles to the consolidated book; past end dates use only earlier NAV marks plus dated capital. Whole-account history stays mixed rather than using today's allocation weights. Partial historical levels are labelled recorded AUM.
+- Every block is a widget. The searchable, category-filtered library opens a live preview popup with Add to Home/Cancel. Eighteen widget types cover AUM, summary metrics, portfolio versus Indian benchmark, asset class, geography, currency, allocation history, recorded/projected cash flows, asset details, concentration, large movements, monthly returns, vintage, volatility and sectors. Layout editing supports drag or keyboard reorder, size, remove, restore defaults and browser-local persistence. Unsupported firm widgets expose “Not relevant for firm” on hover/focus.
+- Returns reuse Morning CIO's selected records and dated-money index comparison. Monthly returns are independent available-record cohorts; held/partial records are named. Daily volatility requires at least 20 observed returns with boundary coverage and refuses sparse histories. No geography, underlying currency, household liabilities, fund vintages or future payment schedules are invented. Polycab remains ring-fenced.
+- Every Home table uses the standard view-only Excel exporter, with source-precision numeric cells and all collapsed asset detail rows. Updated the NSE source-trace fixture to select exact owner/security identity after the register-based cost update; no financial source or calculation changes. Test bundles stay in this checkout’s ignored cache even when dependencies are reused.
+- Home alone reflows the global toolbar into two mobile rows, keeping entity selection, search, currency and theme controls within the viewport. Widget confirmation actions stay visible; long return-source coverage opens in an accessible dialog.
+- Added focused arithmetic/coverage tests and expanded the local browser check to exercise benchmark switching, custom historical dates, each widget's popup/add lifecycle, layout order/size/persistence/removal, entity scope and both themes at desktop/mobile widths. Validation results are recorded on the PR.
+
+### Stage 10mx — Audit: holdings whose dates are in the files but not on the page
+
+*"audit this for all the holdings that we are not missing out on showing dates, similar to this man industries example … not accounting for those in our calculations, even though we already have them in the files"* — the family, 12 Nov 2026.
+
+- Every current holding was checked for dates in the drop that its Invested on, XIRR or YTD did not use. 91 non-cash holdings were undated; now 82. Of those 82: 68 are PMS stocks bought before their manager's tapes begin (1 Apr 2026), whose reports print no purchase date. Eight are ICICI demat shares and two are HDFC Securities' Sterlite pair, and four are Hope India liquid folios with gaps in their history. One (ICICI's Federal Bank, nil on 31 March, 90,361 bought 2 Jul on the order book) could be dated from the depository statements on either side, and is left for a rule of its own.
+- Bandhan 8652064 (₹41.3 Cr): the 14 Oct statement dates every unit from a nil opening on 2 Apr 2026. Two defects hid it. `datedRowsAcross` kept the 26 Oct copy of each switch-out, which cannot see its in-leg and so has no `settlementDate`; the copy that carries one now passes it on. `capitalMovesFrom` merged two schemes bought on 2 Jul into one move, so self-contained rows naming different schemes now stay apart (Invesco and Kotak folios too). Overnight and Arbitrage were switched into Large & Mid Cap in ten slices, which the whole-class carry (Buoyant) cannot tie. A switch between schemes is a redemption and a purchase, and the fund costs it so, so such a class is dated by its own purchases and switches in, with each switch out taking the oldest first (`switchedTranche`). That ties to the statement's cost: ₹43,09,13,833.70 against the ₹…833.72 printed, within half a paisa a lot, which is now `tranches.test`'s tolerance. Large & Mid Cap: 23 payments, 2 Apr – 21 Sep. Arbitrage: 2 Jul.
+- LKP 98245's six 31 March balances (Belrise, Capri Global, Electronics Mart, Jyothy Labs, Varun Beverages, Pricol). The capital gain statement to 31 Jul lists the lots still open and the lots sold since. Open lots bought by 31 March, plus lots bought by then and sold after it, are exactly the units held, and their cost is the holding's own to the rupee. They date the holding (`heldSince`, the lots XIRR reads). The ST/LT split stays the live register's (`ltDate.ts`), because these units have since been sold.
+- VAML at Green Lantern 510854/510861: the Vedanta demerger (1 for 1, ex-date 30 Apr 2026) joins `shared/demergers.mjs`, so their from-inception tapes date the 4,340 and 8,569 shares through the parent's own buys (Stage 10ly's replay).
+- Vedanta at HDFC Securities 3110320 joins Stage 10ms's alias: bought 1,77,000 on 18 Jul 2024, sold 67,000 in July 2026, 1,10,000 held.
+- Ten review private lines dated only by month (none of them Stage 10mv's) now carry the family register's own payments (`scripts/lib/registerPurchaseDates.mjs`, `Position.registerPayments`, source `register`), e.g. Waterwala Labs' eight, Everest Fleet ×3, URB ×2. Gates: a committed alias (never a token match), the holder's own rows, an exact total against the review's cost, and every payment inside the review's months. The register never replaces a day the review prints. All ten are at cost, so no rate is struck; XIRR now names "held at cost", not a span.
+- Four ties disagree with the review on when the money went in, and are left for the family: Zepto (₹15 Cr paid 13 Nov 2024; review Feb 2025, which the XIRR uses), Transition VC (paid 20 Dec 2024; review Aug–Oct 2025), Inflexor and Hyprkytchen (payments after the review's span end).
+- XIRR: six holdings dated by original buys plus a bonus (ZF Commercial ×2, Sharda Motor ×2, Time Technoplast ×2) now solve on their trades. A bonus adds units and no money (`holdingFlowsOf`).
+- Client request: the LKP and Bandhan items move to resolved, and so does Sotefin, which Stage 10mv dated and costed but left on the list (36 records).
+- Checks: `registerPurchaseDates.test.mjs` (each gate broken once). `portfolioExcel.test` re-derives the bonus case off the saved capture, and `tranches.test` reads every statement of an account for its printed NAVs.
+
+### Stage 10my — Client records request re-checked on 12 November
+
+- `npm run client:request` re-run after Stages 10ms–10mx: `docs/client/Glow-Ventures-records-still-needed-2026-11-12.pdf`. It has 36 named records (43 on 11 Nov), 68 PMS stocks in 4 accounts (73 in 6), and 75 private records (unchanged).
+- Section 4 now also names the answers those stages applied: Man Industries, Deepak and Kingfa dates (10ms), and Green Lantern's stocks (10mt/10mx). The SOTEFIN note no longer points to a section 1 row that was removed. The column reads "Item on an earlier list".
+
+### Stage 10mz — Financial graph, calculation safeguards and scoped source verification
+
+- Stable instrument identities, effective-dated ownership, metric evidence and a balanced decimal settlement-control journal are published with each immutable book. Independent bank matches require an evidenced account mapping, legal holder, exact reference, date and paise amount. Missing bank links, ownership fractions and valuations remain unavailable.
+- XIRR validates dates and isolates all candidate roots before publishing one stable rate. NAV projections retain actual day-weighted capital and identify undated approximations. The normal capital editor stages related balances together. Capital corrections validate the whole batch, including restores, against the current published source and retain their history; incompatible corrections invalidate dated returns.
+- Historical material discrepancies now require exact source-bound, dated reviews. Unresolved marks retain their disputed status and have no verified usable value. Gross income is not silently posted as received cash, and corporate-action notices are not booked twice.
+- The existing dashboard layout is retained. Details and limitations: `docs/FINANCIAL-INTEGRITY.md`.
+
+### Stage 10na — Franklin Credit AIF belongs in Stable Growth
+
+- The family's 12 Nov request to research and classify the remaining Franklin holding supersedes Stage 10js's instruction to leave its basket unclassified. The [fund-authored investor deck](https://www.scribd.com/document/1038011103/Franklin-India-Credit-AIF-Scheme-I-Investor-Deck-Regular) describes financial-services private credit and senior securities; [Finnable's issuer document, p. 93](https://assets.stablebonds.in/bonds-assets/Finnable_KID_18thfeb.pdf#page=93) also names the fund among its NCD holders.
+- Classify it as Debt / Stable Growth, matching the review's treatment of the Neo Infra income AIF. Stable Growth is our placement under the current request, not a label claimed from the fund documents or June workbook. Keep provenance `family`, no workbook row, and the Category II AIF wrapper; no source figures change.
+- The existing taxonomy suite checks Franklin's two axes, category and provenance, and now refuses any unclassified fund or company. Only two residual bank balances remain outside a basket in the raw book.
+
+### Stage 10nb — Portfolio Monitor keeps Security labels visible
+
+- Keep the existing vertically frozen heading row and pin its Security cell plus the holdings' Security names to the left while scrolling sideways. Opaque inherited row surfaces preserve stripes, expanded-row colours and hover highlighting; spanning section/detail cells scroll as before. Totals paint above the pinned body cells.
+- Limit the pinned name column to 10rem on phone widths so adjacent figures remain reachable. The horizontal pin applies on screen only; sorting, column order and the export data are unchanged.
+- Validate actual vertical and horizontal scrolling at desktop, tablet and phone widths, both themes, opaque row surfaces and sorting from the pinned heading. Build and delivery evidence are recorded on the PR.
+- Source-preview regression setup opens the quantity source list before recording the arranged background scroll. Otherwise its automated Qty click first scrolls a control out from beneath the frozen Security column, changing the test's starting state before any document opens. The check still requires a nonzero horizontal offset and exact scroll/DOM/filter/expansion restoration.
+- Give the Total label its own Security cell, with a separate blank span for any remaining leading columns, and freeze that one cell. Pinning the old merged label would cover adjacent totals; leaving it scrolling would put figures below the fixed Security heading. The shared browser header check now measures the heading, name and Total against the real scrollport and requires equal column widths.
+- Integration validation also checks Stage 10ne's two approved register-date choices against their raw workbook rows, holders and amounts. Every other review flow keeps the review-date requirement; all amounts, kinds, units and rates still tie to the review. No financial source values are changed here.
+
+### Stage 10nc — Investment performance names how many accounts it covers, of how many
+
+- The client asked what "53 accounts covered" meant when they hold over 100 accounts. The card counted the accounts in the measured total and said nothing about the rest.
+- The face now reads "N of M accounts covered" (`accountCoverage` in `CapitalBridge.tsx`): M is every account holding an investment today plus any measured account that now holds nothing. The new (i) button says what one account is (a demat, a fund folio, a PMS or AIF account, or one owner's MOPWM review block), gives the book's account count, and lists each account left out with its value, holding count and the record it needs, plus the accounts partly included. Handles: `data-bridge-accounts-covered`, `-of`, `data-bridge-account-outside`, `data-bridge-account-partly`.
+- No figure changes. `check-selected-attribution.mjs` passes.
+
+### Stage 10nh — Client records request: valuations at the start of the year
+
+- The client said the YTD and FYTD return cards (~15% each) looked too high. A probe of `availableCardReturns` on the book with real price histories confirmed the formula is right: it is Modified Dietz, and capital is never counted as gain. XIRR on the same dated flows gave FYTD 14.8% for the period against MD 14.5%, and Nifty 500 was +14.8% from 30 Mar. YTD is the overstated one (Nifty 500 −1.3%). About ₹812 Cr of the book has no 31 Dec 2025 value, so each holding starts at its 31 Mar statement. The user chose to explain this rather than change the method.
+- The records request (`scripts/client-request/build.mjs`) never asked for those opening valuations. A new section 4 lists 14 requests for a value on or near 31 Dec 2025 and/or 31 Mar 2026, plus the money moved since: Sanshi ×5, Buoyant ×2, Founders ×2, Carnelian Amritkaal, Active Momentum (only the purchase-day statement), HDFC Securities, SVAN ×2, five Motilal demats, Kotak 7111389/5372722, Bandhan 8691267, ICICI 49794950, the 31-Mar-only PMS accounts and nine MF folios. "Received since 27 October" becomes section 5.
+- Each row is checked against `BOOK_ACCOUNT_NAV_HISTORY` and the verified return record's opening, which `facts.ts` now passes (`navDates`, `returnOpen`). When a valuation for that date arrives, the build stops. Left out: listings during the year (ESDS, NSE, Sotefin), which have no market price before listing, and Bandhan 8652064, whose statement already dates every purchase from nil on 2 Apr.
+
+### Stage 10ne — Where the review and the register date one payment differently, the register's day
+
+*"Use register dates"* — the family, 12 Nov 2026, choosing between the two records for Zepto and Transition Venture Capital (Stage 10mx left both on the review's date).
+
+- The review's Transactions tab and the register print the same payment on different days. Zepto: ₹15,00,15,960 for 4,716 shares at ₹31,810, on 24 Feb 2025 in the review and 13 Nov 2024 in the register (`AJAY SIR - AARTI` row 65). Ankita's ₹25 lakh into Transition VC: 1 Aug 2025 against 20 Dec 2024 (`FUND HOUSE` row 91).
+- `REGISTER_REDATES` / `registerRedate` in `scripts/lib/registerRecords.mjs` moves that one review row's date to the register's day. The amount, units and cost stay the review's, and the build stops if the row, holder, amount or units stop matching. Invested on reads the same day.
+- XIRR, on the same valuations: Zepto 165.4% → 80.3% a year, Ankita's Transition 60.5% → 25.8%.
+- Inflexor and Hyprkytchen (register payments after the review's span, both at cost) are unchanged; they were not part of the question.
+- Transition's security row (Ankita's line with the two trust folios) now spans more than a year, so it is XIRR (66.1% pooled). `portfolioExcel.test` dropped rows of mixed engagement, so it now holds them to the same whole-accounts rule, re-solved.
+- Checks: `registerRecords.test.mjs` (both redates, and a refusal for each mismatch).
+
+### Stage 10nf — Portfolio Monitor: one row per category, totals on the band
+
+- The family, 12 Nov: the category band was blank across the table and its totals sat on a second "· total" row under it — "you can show the totals in the first one itself."
+- The band is now the totals row: its first cell keeps the heading (name, counts, subtotal, notes, chevron) and the other cells are the category's totals, drawn through `<Tr view>` so each stays under its column when columns are dragged. The row carries both `data-section` and `data-category-total`. A category with no totals still draws a full-width band. Nothing about what any cell computes changed.
+- `check:pages`: `sectionOf` finds the band's totals as the first table row after its count line (innerText breaks after the heading cell), and the tree-state walk counts the band's own totals. On the seven Monitor routes this branch shows the same three findings as a control build of main.
+
+### Stage 10ng — Two session labels removed; Sector breakdown's controls on its title row
+
+- The family, 12 Nov, highlighting both: the index strip's "NSE · close <date>" label and Daily Movers' "Direct equity is +1.33 pts against the Nifty 500 · session <date>" line are gone. The strip's `aside` takes the freed width; each index cell still names its session on its hover; the movers card's NSE indices heading still names the session. `check:pages` now holds the gap line ABSENT instead of checking its 11.00 points.
+- Sector Composition's Sector breakdown: Edit Columns and Export Excel move onto the card's title row (`manualEditor`, `controlsHost`, the Stage 10gy pattern), instead of two rows of their own above the header — the table starts two rows higher.
+
+### Stage 10ni — SVAN's 31 Dec and 31 Mar values worked out from its own records
+
+- The family asked (12 Nov 2026) why the records request asks for valuations, when we could price the holdings ourselves. For listed shares and funds we can, but only once we know the share counts on the day, and a later statement can't be wound back without every trade in between. Only SVAN 8710067/8710090 have trades, a bank book with a running balance and a capital register, all from inception. Green Lantern ×2 and V.E.C 128004 have trades from inception but cash ledgers only from 1 Apr 2026.
+- `scripts/lib/tradeOpenings.mjs` replays every trade through the saved NSE splits and bonuses and the cited demergers (`actionReplay`), using the bank book's cash and each day's close (`scripts/ingest/reference/opening-closes.json`, from `npm run build-opening-closes`; split-unadjusted, NSE else BSE). It keeps an account only if the same calculation reproduces at least two later manager holdings statements, unit for unit, within 0.5%. SVAN matches 31 May, 30 Jun and 31 Jul within 0.02%. It refuses ledgers that open on a carried-in balance. Buybacks, rights issues and a demerger's parent count pass; the statement check catches any that moved units. `RENAMED` covers Cosmo Films → Cosmo First and HEG → HEG Advanced Materials. Shankara Buildpro, demerged but unlisted on 31 Dec 2025, joins on its 9 Jan close (the listing-day rule).
+- `BOOK_TRADE_OPENINGS` (canonical key). `withTradeOpening` (`availableCardReturns.ts`) opens a refused account on those values with its register's money, and the card's info button says so. FYTD on the probe moves 14.51% → 15.26% and YTD 16.47% → 16.12%. The records request drops SVAN, asks Green Lantern/V.E.C 128004 for the Jan–Mar cash ledger only, and asks the others for share or unit counts rather than values.
+- Renumbered this file's earlier "Client records request" section from 10nd to 10nh: #395 had also taken 10nd.
+
+### Stage 10nj — Every table freezes its first column
+
+- The family asked (12 Nov 2026) for Portfolio Monitor's frozen first column on every table — Private Market, Real Estate and the rest. `src/index.css` now pins the first heading, body and footer cell of every `#root` table to the left of its own scroll container (screen only). A cell spanning several columns (section band, expanded detail, merged footer label) still scrolls whole; a table opts out with `data-freeze-off="<reason>"`.
+- The frozen cell is opaque whatever its row paints: a `::before` card surface under a `::after` copy of the cell's own colour, sorted-column fill and child-row guide, so translucent row tints (`bg-ink-900/50`, a selected source row) composite exactly as the rest of the row. Rows themselves stay clear, so an odd row still shows what it sits on. Phones cap the frozen cell at 10rem.
+- `TrFoot`'s merged label ("Total") is pinned inside its own span (`data-foot-label`), so it stays beside the frozen column until its span scrolls past. Holdings keeps its own one-column Total (Stage 10nb).
+- `scripts/dev/table-headers.mjs` checks every horizontally scrolling table: the first heading and body cell stay at the scrollport's edge with an opaque surface, both themes. Proven by disabling the pin on Real Estate and Private Market (both fail).
+
+### Stage 10nk — Home: compact allocation cards and coordinated hovers
+
+- Allocation pairs its donut with a compact value/weight legend. Pointer hover and keyboard focus highlight the same slice and show details inside the donut; no floating label covers the chart. Cards respond to their saved width, and narrower screens stack them earlier.
+- Geographic exposure uses a compact coverage state for the India-focused book. Underlying country weights remain unverified rather than being inferred from account location or fund registration.
+- Personal widget removals stay removed. A one-time layout migration balances an adjacent AUM/cash pair after the three summary metrics have been removed, preserving all other choices, order and dimensions. All 18 widgets remain available, with an explicit Wide size option; later saved widths are respected.
+- Checks cover saved-layout migration, chart/legend keyboard and pointer interaction, card geometry, responsive themes, existing widget lifecycle and source-precision exports. Results are recorded on the PR.
+- CI exposed a long frozen name painting over a neighbouring return-info button on phones. Frozen body-cell content now stays inside its cell; the INR return test explicitly checks the button's hit target before opening its calculation. The table's full text and Excel values are retained.
+- Tree-table name columns use the intended 10rem phone width across heading, body and footer; full names remain in their hover. The pointer regression scrolls the button into the data area beside the pinned column before checking the hit target.
+- The market-history request-budget check waits for both active and sold-holding TWR histories before taking its initial count; date changes must still make zero extra requests.
+- The invested-this-year table also caps its frozen phone name column at 10rem (the previous 240px minimum left almost no data area). Its mobile sorting check reveals the actual sort button beside that column and verifies its pointer target before clicking.
+- The latest-account browser check distinguishes the available-history card's measured close (which can include newer same-unit NAV windows) from each manager record's own closing date. It checks both dates in the included records and keeps the Performance/Family source-record assertions.
+- The CI browser step collects every check in one run; an error trap retains a failing job status if any check fails, and the existing EXIT trap still tears down its preview server.
+- Home contains its hidden widget-status announcement in its own positioning context. The announcement previously used the document as its containing block and added a second scrollbar with a large blank area below the page. Browser checks require zero outer scroll range and a reachable footer before and after widget changes, in both themes and phone/desktop sizes.
+
+### Stage 10nt — Portfolio Monitor: every return shows its index, no gap words
+
+*"if there is no buy date then how is HPR calculated this is confusing remove all fluff and just add index return"* — the family, 12 Nov 2026.
+
+- Where a row's purchases are not each dated, its index line is the index's move over the holding period instead of "— No buy dates / Dates incomplete / Range only": from its first investment (Invested on), else the inception of the account that holds it, else a lot register's date, to the row's value date (`holdingPeriodStart` in `investedOn.ts`, `indexOverPeriod` in `holdingBenchmark.ts`). Rows whose lines are valued on different days strike each line on its own start, cost and value date (`periodLegsOf`). The hover names the window and its basis; `data-bench-period` marks it.
+- Section and footer totals pool those same legs; rows no equity index measures (cash, debt, hybrid) are left out of the total's index and named in its hover.
+- A dash that remains carries its reason as the hover only (`data-bench-reason`); `benchGapLabel` is gone. The `monitor` check now asks for that hover instead of a face label.
+
+### Stage 10nv — Portfolio Monitor: every YTD from 31 December
+
+*"for all the holdings the returns need to be simply YTD return from the same YTD"* — the family, 12 Nov 2026. Asked what a row with no 31 December value shows, they chose a dash over carrying units back to 1 January.
+
+- `ytdBook.of` (the Monitor's YTD column) accepts a window only if it opens on or before 31 December, or at nil on a holding first bought this year. The "from 31 Mar" / "from 6 Oct" chips are gone. Any other row is a dash naming its first dated value and the 31 Dec 2025 record it needs. An account window that opens later falls back to its holdings, so a purchase record can still open them on 1 January.
+- A row bought this year carries `bought` (`data-ytd-bought`), and its hover says nothing was held on 1 January.
+- `account`, `holding` and `ytdSelection` are unchanged, so Morning CIO's YTD card and the Returns tab's YTD still measure from the first dated value (see the 12 Nov explain-only decision).
+- `monitor-ytd` now checks that no cell carries a later start. Its whole-account re-solver reads `BOOK_TRADE_OPENINGS` and `BOOK_ACCOUNT_NAV_HISTORY`, so SVAN Velocity's 31 Dec opening (Stage 10ni) re-solves off the book.
+
+### Stage 10nw — Ledger Insights' transactions filter by date, side and account
+
+- The client (#377) asked for the dated transaction ledger to be sliceable — "show me purchases from June", one account, one side — and exported from there. The Transactions tab now carries a filter bar (From / To dates, Side, Account) above its tiles, reusing `FormBits`' `TextField`/`SelectField`. Member scope stays the page-wide selector; these narrow WITHIN the chosen members, and the existing `ExportableTable` carries whatever the filter shows to Excel.
+- Every figure on the tab is struck over the filtered set, so the summary ties to the rows on screen: the Transactions count, Bought and Sold tiles and the table all read `filtered`, and the Bought/Sold window follows the chosen dates. Sold with no sell in view renders `—` ("no sells in this view"), never ₹0.
+- The statements' own Realised total is a whole-record primitive over every lot — not narrowable by a per-trade filter — so under any active filter it renders `—` ("not sliced by these filters") rather than a figure that would not tie, and the lots-by-sale cross-check and the Sales & exits roll-up (both whole-window) are hidden until the filter is cleared. An active filter that matches nothing renders an `AbsentSection`, not a grid of zeros. The From/To date pickers are bounded to the tape's own window and kept in order (`TextField` gained `min`/`max`).
+- Numbered 10nw after rebasing onto a fast-moving main: the branch first used 10nk, then 10nu, both taken meanwhile by Home's allocation cards and the YTD work.
+- `build`, `test:family` and `check:pages ONLY=ledger` green (2 combos clean; the tab's existing measured-zero leads and the tape-window not-checked invariant are unchanged). No book or generated file changed.
+
+### Stage 10nx — Sector Composition drills into sub-industries
+
+- The client (#406) asked that a large sector open into its sub-industries, not just its companies: Financials → Banks / Finance / Insurance / Capital Markets / Fintech. An opened sector that spans more than one of screener.in's Broad Industries now groups its company rows under a non-collapsing sub-industry band carrying the group's issuer count and total; a single-sub-industry sector stays the flat list exactly as before.
+- `CompanyExposure` gains `subIndustry` (`src/lib/lookthrough.ts`): screener's Broad Industry, set only on the `vendor` tier (it is `hit.screenerBroadIndustry`), `null` where a filing or the statement placed the sector or screener names none. It is a projection of the one classification — no second resolver — and rides `equityOnly`'s spread into `SectorEntry`, so the page reads it on each row with no change to `sectorRollup.ts`.
+- The band is modelled on `CompareGroup` — a `tree-section-row` inside the existing `[data-sector-companies]` table, carrying `data-sub-industry` / `data-sub-industry-total`. Every `[data-sector-company]` row is still rendered, in the reader's sort order, so the per-row Direct/PMS/derived/total split, the summing footer and the `sectorSplit` check-pages probe are untouched; the band has no `data-sector-company`, and its `data-table-depth="1"` ancestor keeps it out of the zebra check. Only the Consolidated (companies) view groups; Direct Equity's holdings view is unchanged.
+- `build`, `test:family`, `check:pages ONLY=sectors` (2 combos clean) and `scripts/dev/check-sector-return-details.mjs` all green. No book or generated file changed.
+
+### Stage 10nu — Returns hold every private investment at its latest valuation
+
+*"all others i think you can assume to be held at value right as new data comes we can show updated but dont show this incomplete"* — the family, 12 Nov 2026, on Investment performance reading "53 of 73 accounts covered".
+
+- The 20 accounts left out were private: MOPWM review blocks, the Glowterra/Glowsphere demats' unlisted shares, Franklin Credit AIF, India SME, Neo Infra and the like. `heldAtLastValue` (`periodRules.ts`) refused any private holding, so `periodSelection` dropped them (Stage 10la's rule 7, "private kept on its own line").
+- Rule 7 is replaced: a private holding no record measures is held at its latest valuation to the period's end, 0% and in the base, exactly as rule 8 holds a one-statement fund. Its reason is `PRIVATE_HELD`. A new valuation then counts the change. The Returns tab, Morning CIO's FYTD / YTD / available-history cards, the NAV card's line and the CIO report all read this one selection, so they move together; the figures fall as the base widens.
+- Investment performance's (i) lists "Held at latest valuation" accounts with their value and valuation date (`data-bridge-account-held`). Morning CIO's card captions count private holdings (`privateCoveredHoldings` / `privateHoldings`), and the Private row says "in this return" instead of "reported apart". The NAV card's hover reads "Covers N% of investments … ₹X of it private"; its `check:pages` probe follows.
+- Unchanged: Sector attribution's price-only market figure still reports private apart (no published price; its wording no longer says "as on the return cards"); the adjusted TWR columns still need a valuation series for a held unit; Since investment already held everything at value.
+
+### Stage 10ny — Keep number editing available for an unchanged financial book
+
+- A new app deployment can change the reader identifier before scheduled statement publication catches up. Number editing now accepts that older reader only when the canonical SHA-256 fingerprint of its complete received book equals the deployment's verified book. A changed valuation, cash-flow history, source pointer or other book fact still blocks an incompatible reader.
+- Build and edge validation share canonical JSON serialization. The server computes the fingerprint itself; a supplied hash cannot authorize a different book. Matching-reader statement updates retain their existing behavior.
+- Isolated API regressions cover identical books across readers, a real local correction, changed facts outside the editable columns, invalid reader metadata and absent fingerprint evidence. No manual production data publication is required.
+
+### Stage 10oa — Preserve established figures while keeping financial audits advisory
+
+- The family explicitly requires the existing dashboard's figures, coverage, curated assumptions and working flows to remain intact. Financial audits are additive observations and cannot introduce review-expiry publication holds, discard saved corrections or blanket-disable existing returns.
+- Capital relationships remain visible as audit warnings while single-cell edits and optional atomic groups both work. The input API follows the supported current published schema and retains per-record source/version protection; a deployment hash cannot lock an otherwise valid source record.
+- Independent arithmetic is compared beside the canonical result. Audit failures are contained, and existing source-scoped decisions survive reminder expiry without claiming a new review. The original new/worsening-source conflict protections remain in place.
+- Regression checks cover retained figures, capital corrections, dated-return coverage, current-source editing, expired reviews and audit failure isolation. Before/after comparison of the complete established book is retained with the local validation evidence.
+
+### Stage 10oc — The Monitor's return cells: the holding's figure leads, its index under it
+
+- *"make the main return bold and the bottom benchmark also better ui so can easily read the cell"* — the holding's return is a size up (13px) and semibold; the index line under it is quieter.
+- `BenchLine` (`src/components/HoldingBenchmark.tsx`): the index's short name is a small-caps label (`.bench-name` in `index.css`), its return a lighter medium-weight figure beside it, with a small gap above. Same data attributes, hover and absence handling as Stage 10nt; the best-guess asterisk stays.
+- The first-column freeze this PR first carried landed separately as Stage 10nj (#399), so it is dropped here.

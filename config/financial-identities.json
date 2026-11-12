@@ -1,0 +1,2786 @@
+{
+  "schemaVersion": 1,
+  "instruments": [
+    {
+      "id": "instrument-002ce4f0b0366313a33c047a",
+      "keys": [
+        "stay-vista-private-limited-anandkumar-radhakrishna-ladsariya"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-00340050adbfe2034f621776",
+      "keys": [
+        "caliber-mining-and-logistics"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-004dfca5592784cb2518691e",
+      "keys": [
+        "jaiprakash-power-ventures"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-01f39f0d7daf75d6244ddc18",
+      "keys": [
+        "varroc-engineering"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-02918d583ba32f3bc6d5a2f5",
+      "keys": [
+        "federal-bank"
+      ],
+      "isins": [
+        "INE171A01029"
+      ]
+    },
+    {
+      "id": "instrument-02fcd217a7298aa08d741d1a",
+      "keys": [
+        "infinium-pharma"
+      ],
+      "isins": [
+        "INE0MRE01011"
+      ]
+    },
+    {
+      "id": "instrument-0406a2509076d12be22e59bf",
+      "keys": [
+        "3p-india-equity-fund-1-class-b3"
+      ],
+      "isins": [
+        "INF0R4I22066"
+      ]
+    },
+    {
+      "id": "instrument-042692d2e5882ae3d29c4e4a",
+      "keys": [
+        "stay-vista-private-limited-artha-energy-projects"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-0525cbe07ceebe653afc0016",
+      "keys": [
+        "bhagyanagar-india-limited-eq-new-rv"
+      ],
+      "isins": [
+        "INE458B01036"
+      ]
+    },
+    {
+      "id": "instrument-057770443d0040e74bd04b5d",
+      "keys": [
+        "zydus-lifesciences"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-0593d7f0950dc43cfda53cd0",
+      "keys": [
+        "zenith-leisure-holidays"
+      ],
+      "isins": [
+        "INE0ETS01014"
+      ]
+    },
+    {
+      "id": "instrument-08b654000645a6d0043d9961",
+      "keys": [
+        "ema-partners-india"
+      ],
+      "isins": [
+        "INE0ZOL01023"
+      ]
+    },
+    {
+      "id": "instrument-0a90359fa89db2e5c353d03c",
+      "keys": [
+        "radiant-innovative-manufacturing"
+      ],
+      "isins": [
+        "INE007Z01022"
+      ]
+    },
+    {
+      "id": "instrument-0bb73944de2daa7779512177",
+      "keys": [
+        "ksb"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-0c0b9a6d67c090e314d528e0",
+      "keys": [
+        "runable-investment"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-0c63d3e7749ea7e449bc08fe",
+      "keys": [
+        "rbl-bnk"
+      ],
+      "isins": [
+        "INE976G01028"
+      ]
+    },
+    {
+      "id": "instrument-0e80f0c9301fe10ff5c10f63",
+      "keys": [
+        "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth"
+      ],
+      "isins": [
+        "INF194K01Y60"
+      ]
+    },
+    {
+      "id": "instrument-0f037602817fb022de42b46a",
+      "keys": [
+        "3p-india-equity-fund-1-class-b1"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-0f4ae27f4197f1041c54e293",
+      "keys": [
+        "man-industries-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-10092ac7f6e27025d64b880b",
+      "keys": [
+        "nip-etnf1d-rtliqbees"
+      ],
+      "isins": [
+        "INF732E01037"
+      ]
+    },
+    {
+      "id": "instrument-119fda62449f75c946174e49",
+      "keys": [
+        "icici-nft-nt-50-dp-g"
+      ],
+      "isins": [
+        "INF109K01Y80"
+      ]
+    },
+    {
+      "id": "instrument-124b1c8abeb79a680b48bb2b",
+      "keys": [
+        "gateway-distriparks"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-1263540df3247017566182a9",
+      "keys": [
+        "indian-metals-and-ferro-alloys"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-1288ee6d8758c4cba30d5724",
+      "keys": [
+        "borosil-renewables"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-134ddc4d797c30c3da61dbc6",
+      "keys": [
+        "v-mart-retail"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-143e6f85ade77ff5b409a06b",
+      "keys": [
+        "motilal-oswal-financial-services"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-1585dea837aaad6f44e39188",
+      "keys": [
+        "lv-angel-fund-lets-venture-hoopr-vaibhav-karnavat"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-1628c6510a482f9378fe0cd7",
+      "keys": [
+        "sagility"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-18b055b4243061c4f7cb4c77",
+      "keys": [
+        "aarti-drugs"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-19571e149db837324078ba73",
+      "keys": [
+        "vedanta"
+      ],
+      "isins": [
+        "INE205A01025"
+      ]
+    },
+    {
+      "id": "instrument-19788f221ab1b53cfa02642c",
+      "keys": [
+        "krishca-strapping-solutions"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-1a018272b7de40d405e77ed3",
+      "keys": [
+        "shankara-buildpro"
+      ],
+      "isins": [
+        "INE24OJ01029"
+      ]
+    },
+    {
+      "id": "instrument-1b2c4a000253617700a5a30a",
+      "keys": [
+        "can-fin-homes"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-1b8277585a226ae3b789451b",
+      "keys": [
+        "sansera-engineering"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-1bc8f94a436a9c0871e27599",
+      "keys": [
+        "franklin-india-credit-aif-scheme-i-unit-class-db2"
+      ],
+      "isins": [
+        "INF1CLO22066"
+      ]
+    },
+    {
+      "id": "instrument-1ca471a178d7215ad3e88fd6",
+      "keys": [
+        "tenneco-clean-air-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-1d280dd029117a04fc6b073f",
+      "keys": [
+        "manali-petrochemical"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-1d5cd6a65197e9a545dd938f",
+      "keys": [
+        "motilal-oswal-hedged-equity-multi-factor-strategy-class-b2"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-1e103b9455f8f0330aff2efe",
+      "keys": [
+        "icici-prudential-arbitrage-fund-direct-plan-growth"
+      ],
+      "isins": [
+        "INF109K016O4"
+      ]
+    },
+    {
+      "id": "instrument-1f137d8201dc008aa93082f2",
+      "keys": [
+        "hdfc-baf-d-grow"
+      ],
+      "isins": [
+        "INF179K01WA6"
+      ]
+    },
+    {
+      "id": "instrument-1f32416d0cf30cf545e1e19e",
+      "keys": [
+        "ceat"
+      ],
+      "isins": [
+        "INE482A01020"
+      ]
+    },
+    {
+      "id": "instrument-201a96529638b983feb3c920",
+      "keys": [
+        "ajay-jain-drink-prime"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-20f89ebb420a3d2e150a2788",
+      "keys": [
+        "buoyant-opportunities-strategy-class-a4"
+      ],
+      "isins": [
+        "INF0RRI22040"
+      ]
+    },
+    {
+      "id": "instrument-223b5ff6fdd622908d9f0040",
+      "keys": [
+        "we-voise"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-242b62b0919a1f29a5c5e06b",
+      "keys": [
+        "paras-defence-and-space-technologies"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-242d8bf0990a6d25c4806c40",
+      "keys": [
+        "zepto"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-2495741e2a6cc4c57529a00a",
+      "keys": [
+        "karur-vysya-bank"
+      ],
+      "isins": [
+        "INE036D01028"
+      ]
+    },
+    {
+      "id": "instrument-25837814cbd6f9ee923109db",
+      "keys": [
+        "varun-beverages"
+      ],
+      "isins": [
+        "INE200M01039"
+      ]
+    },
+    {
+      "id": "instrument-25aa28d281768b311a1d74b2",
+      "keys": [
+        "kajaria-ceramics"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-267e3e24ffeef4538ed1ad03",
+      "keys": [
+        "amrutanjan-health-care"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-282266cb5bd0b3e66e4306a6",
+      "keys": [
+        "sharda-cropchem"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-2920129a2a12711f716787b2",
+      "keys": [
+        "time-technoplast"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-294ad1f515b7c9583f64c125",
+      "keys": [
+        "kotak-liquid-fund-direct-plan-daily-idcw"
+      ],
+      "isins": [
+        "INF174K01NH1"
+      ]
+    },
+    {
+      "id": "instrument-294c074a88691cb23eb472a7",
+      "keys": [
+        "jayaswal-neco-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-2cab86ff33f1a69efd4124b7",
+      "keys": [
+        "clean-max-enviro-energy-solutions"
+      ],
+      "isins": [
+        "INE647U01026"
+      ]
+    },
+    {
+      "id": "instrument-2cfcbaa64aae0c6258f522ad",
+      "keys": [
+        "sky-capital-rising-titans-fund-i"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-2d156b07f1d9e94c8f527bd3",
+      "keys": [
+        "ema-preferred-shares"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-2d518137896c644a1fa8e2fd",
+      "keys": [
+        "national-stock-exchange-of-india"
+      ],
+      "isins": [
+        "INE721I01024"
+      ]
+    },
+    {
+      "id": "instrument-2e4416113c4b5dbea52da2d8",
+      "keys": [
+        "carnelian-bharat-amritkaal-fund"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-2ee2f17f788b4f62b82ed280",
+      "keys": [
+        "spray-engineering-devices"
+      ],
+      "isins": [
+        "INE528I01015"
+      ]
+    },
+    {
+      "id": "instrument-2f59cb0c1a59d92aed721e8e",
+      "keys": [
+        "indian-bank"
+      ],
+      "isins": [
+        "INE562A01011"
+      ]
+    },
+    {
+      "id": "instrument-308336b3b9a8b6651a1c7a2b",
+      "keys": [
+        "waaree-energies"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-318b1bf25d6862d9bdc1b8cc",
+      "keys": [
+        "eimco-elecon-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-3231fcb111272e1a6b66f11b",
+      "keys": [
+        "tocf-i-class-a2"
+      ],
+      "isins": [
+        "INF0RSB22019"
+      ]
+    },
+    {
+      "id": "instrument-348dc0f145e27c0963f49dcb",
+      "keys": [
+        "gmm-pfaudler"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-37a64ca6889e805f8f17e3bb",
+      "keys": [
+        "vedanta-aluminium-metal"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-3836a610d6504dfdf3a6a425",
+      "keys": [
+        "intellect-design-arena"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-38eea2ad0f8b8fb2ef6c0565",
+      "keys": [
+        "banco-products-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-39991657537828a2395dc7b4",
+      "keys": [
+        "nicco"
+      ],
+      "isins": [
+        "INE241C01026"
+      ]
+    },
+    {
+      "id": "instrument-3a3c1effa89263795cc688c1",
+      "keys": [
+        "perplexity-investment"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-3a3c40f2637645f448732e1c",
+      "keys": [
+        "jammu-kashmir-bank"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-3a85d9357641fbb41e404a0e",
+      "keys": [
+        "eureka-forbes"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-3ab8e3156add18ac5cc45149",
+      "keys": [
+        "hdfc-small-cap-fund-direct-growth-plan"
+      ],
+      "isins": [
+        "INF179KA1RW5"
+      ]
+    },
+    {
+      "id": "instrument-3afb4bcd71c1fffb1b831dd7",
+      "keys": [
+        "ather-energy"
+      ],
+      "isins": [
+        "INE0LEZ01016"
+      ]
+    },
+    {
+      "id": "instrument-3b363f6374832a819c1ca92b",
+      "keys": [
+        "crompton-greaves-consumer-electrical"
+      ],
+      "isins": [
+        "INE299U01018"
+      ]
+    },
+    {
+      "id": "instrument-3dae1c05fc47d94d46c9640e",
+      "keys": [
+        "telawne-power"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-3dce2f8e5a7b12dbae5f2965",
+      "keys": [
+        "kotak-arbfd-dp-grow"
+      ],
+      "isins": [
+        "INF174K01LC6"
+      ]
+    },
+    {
+      "id": "instrument-3e77b0cd93b5d125f1f8f252",
+      "keys": [
+        "big-bang-boom-solutions-private-limited-0-001-pref-12sp44"
+      ],
+      "isins": [
+        "INE1BRB03089"
+      ]
+    },
+    {
+      "id": "instrument-3f7605fc4870724195f11978",
+      "keys": [
+        "icici-pru-baf-dp-grw"
+      ],
+      "isins": [
+        "INF109K012B0"
+      ]
+    },
+    {
+      "id": "instrument-4279f0b13396f4beda803fb0",
+      "keys": [
+        "autocracy-machinery"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-42fcd2bb60b87b69b00a094f",
+      "keys": [
+        "vip-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-43f3d89299de0e09a7cb151d",
+      "keys": [
+        "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-4462968db6c31c179a556de1",
+      "keys": [
+        "parth-electricals-and-engineering"
+      ],
+      "isins": [
+        "INE1H7V01011"
+      ]
+    },
+    {
+      "id": "instrument-44de600781c86c371f99329b",
+      "keys": [
+        "stl-networks"
+      ],
+      "isins": [
+        "INE1VXE01018"
+      ]
+    },
+    {
+      "id": "instrument-451253292684f02a8038ff8c",
+      "keys": [
+        "jamna-auto-ind"
+      ],
+      "isins": [
+        "INE039C01032"
+      ]
+    },
+    {
+      "id": "instrument-457bd0ac2d5587ba1179a1c4",
+      "keys": [
+        "ratnamani-metals-and-tubes"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-462e89f4f8ad71ff0c957f2c",
+      "keys": [
+        "alivus-life-sciences"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-477e16126c50e171a51042d4",
+      "keys": [
+        "mrs-bectors-food-specialities"
+      ],
+      "isins": [
+        "INE495P01020"
+      ]
+    },
+    {
+      "id": "instrument-47b85fc32ec714225fc44e3d",
+      "keys": [
+        "sks-fasteners"
+      ],
+      "isins": [
+        "INE593N01019"
+      ]
+    },
+    {
+      "id": "instrument-47dec943a171099ea47cc076",
+      "keys": [
+        "sky-enable-tech"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-4964b13c6d04704a0a2113d4",
+      "keys": [
+        "hdfc-baf-r-grow",
+        "hdfc-balanced-advantage-fund-regular-plan-growth"
+      ],
+      "isins": [
+        "INF179K01830"
+      ]
+    },
+    {
+      "id": "instrument-49c0728d2bcdf5df0152b855",
+      "keys": [
+        "viyash-scientific"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-4aca57170b78a1d0b3f3d8b4",
+      "keys": [
+        "jindal-stainless"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-4b1d2226753567c1291c0f32",
+      "keys": [
+        "grand-continent-hotels"
+      ],
+      "isins": [
+        "INE12E301017"
+      ]
+    },
+    {
+      "id": "instrument-4b41277ce89c9c1efd57161e",
+      "keys": [
+        "insolation-energy"
+      ],
+      "isins": [
+        "INE0LGX01024"
+      ]
+    },
+    {
+      "id": "instrument-4b8ca5460ff264bdda81a13b",
+      "keys": [
+        "hdfc-overnight-fund-direct-plan-growth-option"
+      ],
+      "isins": [
+        "INF179KB1HT1"
+      ]
+    },
+    {
+      "id": "instrument-4bf675f8ff87cec9e0ce1b28",
+      "keys": [
+        "wevois-labs"
+      ],
+      "isins": [
+        "INE0Z6Z01013"
+      ]
+    },
+    {
+      "id": "instrument-4c63a561e3065f40ad9f9ae9",
+      "keys": [
+        "gland-pharma"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-4de892c2cdb86a145d47cd79",
+      "keys": [
+        "power-grid-corporation-of-india"
+      ],
+      "isins": [
+        "INE752E01010"
+      ]
+    },
+    {
+      "id": "instrument-4f291c85265a36a5ba0c7318",
+      "keys": [
+        "aditya-birla-capital"
+      ],
+      "isins": [
+        "INE674K01013"
+      ]
+    },
+    {
+      "id": "instrument-50bb09d68be33d2082f50f79",
+      "keys": [
+        "icici-liqf-d-growth"
+      ],
+      "isins": [
+        "INF109K01Q49"
+      ]
+    },
+    {
+      "id": "instrument-5117d628f8533092fa31d848",
+      "keys": [
+        "tech-mahindra"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-5160aeac8aff7c85b4f5be5e",
+      "keys": [
+        "elecon-engineering"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-531e93699d2f93ffb36b98e8",
+      "keys": [
+        "procyon-enterprise-llp-abhishek-murarka"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-53a89f03900ceb5dc3c5f987",
+      "keys": [
+        "shree-digvijay-cement"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-556de58ecb605c4ae7a22927",
+      "keys": [
+        "kotak-large-and-mid-cap-fund-regular-growth"
+      ],
+      "isins": [
+        "INF174K01187"
+      ]
+    },
+    {
+      "id": "instrument-556e46dd296ee43dc6e4e634",
+      "keys": [
+        "ifb-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-55746680fdfc3ffad555d3e7",
+      "keys": [
+        "3p-india-equity-fund-1-class-b2"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-569e6f01a3eb7d313a2d0a27",
+      "keys": [
+        "praj-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-56d541749d564830ad66f7aa",
+      "keys": [
+        "woc-maaf-d-grow"
+      ],
+      "isins": [
+        "INF03VN01761"
+      ]
+    },
+    {
+      "id": "instrument-578973d04b889f3d8bbbf344",
+      "keys": [
+        "head-infotech"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-57a91d46cb577e5dcd604577",
+      "keys": [
+        "havells-india"
+      ],
+      "isins": [
+        "INE176B01034"
+      ]
+    },
+    {
+      "id": "instrument-57acf7015a86ceab5dd02f87",
+      "keys": [
+        "india-sme-investments-fund-ii-class-a2"
+      ],
+      "isins": [
+        "INF0XAZ22055"
+      ]
+    },
+    {
+      "id": "instrument-57c6938faddcfa41ce4a44cf",
+      "keys": [
+        "hdfc-liquid-fund-direct-plan-growth-option"
+      ],
+      "isins": [
+        "INF179KB1HP9"
+      ]
+    },
+    {
+      "id": "instrument-57e43679313941994d6dedc8",
+      "keys": [
+        "pvc-ii-class-a1"
+      ],
+      "isins": [
+        "INF0UXX22017"
+      ]
+    },
+    {
+      "id": "instrument-5952ccc9adb3958c64690f4c",
+      "keys": [
+        "transition-venture-capital-fund-i-class-a1"
+      ],
+      "isins": [
+        "INF0VIS22016"
+      ]
+    },
+    {
+      "id": "instrument-5b1c8f8a0d544a050f6840ed",
+      "keys": [
+        "punjab-national-bank"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-5b22f7d937b39303f0c2dee4",
+      "keys": [
+        "bandhan-elss-tax-saver-fund-regular-plan-growth"
+      ],
+      "isins": [
+        "INF194K01292"
+      ]
+    },
+    {
+      "id": "instrument-5bd9b2f12079a0ae1596daa6",
+      "keys": [
+        "nitin-spinners"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-5beac3856339e1eb3046a9e6",
+      "keys": [
+        "hanok-reuben-medhari-drink-prime"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-5c160669a07a34bf47b8d2dc",
+      "keys": [
+        "telawne-power-equipments"
+      ],
+      "isins": [
+        "INE1E8Y01016"
+      ]
+    },
+    {
+      "id": "instrument-5c205e05489efad1192ea557",
+      "keys": [
+        "sterlite-electric"
+      ],
+      "isins": [
+        "INE110V01015"
+      ]
+    },
+    {
+      "id": "instrument-5c346fe351d670c977c9aa41",
+      "keys": [
+        "wpil"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-5d43e5238a1500ba256e5a91",
+      "keys": [
+        "aksum-trademart-pvt-ltd-ankit-jain"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-5d5321eab1e41bac204a5299",
+      "keys": [
+        "inves-arbf-d-grow",
+        "invesco-india-arbitrage-fund-direct-plan-growth-af-d1"
+      ],
+      "isins": [
+        "INF205K01KR8"
+      ]
+    },
+    {
+      "id": "instrument-5e32c1565d1485fd8b952ff0",
+      "keys": [
+        "life-insurance-corp-of-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-5ea10df5e72a44626cab1f03",
+      "keys": [
+        "waterwala-labs-private-limited-drink-prime"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-6080c2a4b5c0fa278172f91b",
+      "keys": [
+        "graphite-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-611e37524c2e3948aa2751b5",
+      "keys": [
+        "biocon"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-62a7bf06eb154275d8a1a424",
+      "keys": [
+        "hindustan-aeronautics"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-634db5265cb4784eb3157c6c",
+      "keys": [
+        "sterlite-grid-5"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-638f080b8dd071c4db5421dc",
+      "keys": [
+        "landcraft-retail-pvt-ltd-food-square"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-64199de71acf45a3ee71200d",
+      "keys": [
+        "edugorilla-community"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-6475dc20e69156c6d7ffe31d",
+      "keys": [
+        "al-trust-collabmates-pvt-ltd-angellist-likeminds"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-650919b5c2fd7778c3edad0f",
+      "keys": [
+        "innoviti-payment-solutions-private-ltd-pranav-koranne"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-65cfe8a610fc3f1fe89324d3",
+      "keys": [
+        "sanshi-fund-i-open-ended-aif-cat-iii-class-a2"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-665fc827df996326bce86ee0",
+      "keys": [
+        "ghcl-textiles"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-66eea929699a375ccb1417d7",
+      "keys": [
+        "aurobindo-pharma"
+      ],
+      "isins": [
+        "INE406A01037"
+      ]
+    },
+    {
+      "id": "instrument-6884431ea677db818f393e41",
+      "keys": [
+        "inves-con-r-growth"
+      ],
+      "isins": [
+        "INF205K01189"
+      ]
+    },
+    {
+      "id": "instrument-68d1a4131102583499c7c0af",
+      "keys": [
+        "kotak-arbitrage-fund-growth-regular-plan"
+      ],
+      "isins": [
+        "INF174K01302"
+      ]
+    },
+    {
+      "id": "instrument-69f9468a81ba132de5d3e25c",
+      "keys": [
+        "al-trust-karban-envirotech-ruv-nilesh-angelist"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-6d222626ba8062e54ac57fa6",
+      "keys": [
+        "kotak-mid-cap-fund-direct-growth"
+      ],
+      "isins": [
+        "INF174K01LT0"
+      ]
+    },
+    {
+      "id": "instrument-6e048eb26405cd094c9dfb03",
+      "keys": [
+        "motilal-oswal-midcap-fund-direct-plan-growth"
+      ],
+      "isins": [
+        "INF247L01445"
+      ]
+    },
+    {
+      "id": "instrument-6e608bba891d3bcce16172f6",
+      "keys": [
+        "the-anup-engineering"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-6f89d66d1739bd256c6227d3",
+      "keys": [
+        "suprajit-engineering"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-7001c69bb51f86074985aacf",
+      "keys": [
+        "power-finance"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-70ab4c9dccc26e7c78b4d903",
+      "keys": [
+        "vishnu-chemicals"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-72d6c2d5888ab377ad2fce43",
+      "keys": [
+        "kotak-flexi-cap-fund-regular-growth"
+      ],
+      "isins": [
+        "INF174K01336"
+      ]
+    },
+    {
+      "id": "instrument-75a86f3efdcf26697c94bb6b",
+      "keys": [
+        "motilal-oswal-liquid-fund-direct-plan-growth"
+      ],
+      "isins": [
+        "INF247L01734"
+      ]
+    },
+    {
+      "id": "instrument-75b9e856c6e6d980a8a9dd97",
+      "keys": [
+        "electronics-mart-india"
+      ],
+      "isins": [
+        "INE02YR01019"
+      ]
+    },
+    {
+      "id": "instrument-771a0b01114d9affd6b7696f",
+      "keys": [
+        "sterlite-grid"
+      ],
+      "isins": [
+        "INE03QT01027"
+      ]
+    },
+    {
+      "id": "instrument-778f0800a7d6b134a82a6fd7",
+      "keys": [
+        "cosmo-first"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-779eea232e3010090667e51b",
+      "keys": [
+        "stay-vista-private-limited-0-001-series-2-pref-02nv36"
+      ],
+      "isins": [
+        "INE0GD403024"
+      ]
+    },
+    {
+      "id": "instrument-77b8e70c163af0d24fc7792c",
+      "keys": [
+        "esds-software-solution-limited-eq-new-fv-rs-1"
+      ],
+      "isins": [
+        "INE0DRI01029"
+      ]
+    },
+    {
+      "id": "instrument-77bbb17428c478c4a57497c1",
+      "keys": [
+        "al-trust-tamasha-fc-restricted-transferability"
+      ],
+      "isins": [
+        "INF0RLL22PC7"
+      ]
+    },
+    {
+      "id": "instrument-781daca6c3f34f7142f03d5a",
+      "keys": [
+        "nuvama-wealth-management"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-79b5140511da3169adf0228b",
+      "keys": [
+        "bajaj-auto"
+      ],
+      "isins": [
+        "INE917I01010"
+      ]
+    },
+    {
+      "id": "instrument-7ae14eddede7be66226fac0b",
+      "keys": [
+        "mother-india-forming"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-7b0b1ddce41965324f181965",
+      "keys": [
+        "swapeco-solutions-private-limited-scrap-uncle-mukul-chabra"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-7b247c028163ba894dc19b8b",
+      "keys": [
+        "lupin"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-7c3f0de5e6c1ec7fd168cbfd",
+      "keys": [
+        "icici-nift50ind-dp-g"
+      ],
+      "isins": [
+        "INF109K012M7"
+      ]
+    },
+    {
+      "id": "instrument-7cd93c181fb73863b6675499",
+      "keys": [
+        "greaves-cotton"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-7d136aae1cd5f9c46ce3a356",
+      "keys": [
+        "kei-industries"
+      ],
+      "isins": [
+        "INE878B01027"
+      ]
+    },
+    {
+      "id": "instrument-7e45400d58e1ffb394e942ba",
+      "keys": [
+        "laxmi-organic-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-7e7004052d155e50f689b863",
+      "keys": [
+        "a-k-enterprises"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-80dee090f63e10aa0a654120",
+      "keys": [
+        "inflexor-technologies"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-81d552eb92be19f1b77a4ee2",
+      "keys": [
+        "motilal-oswal-active-momentum-fund-direct-plan-growth-option"
+      ],
+      "isins": [
+        "INF247L01EP5"
+      ]
+    },
+    {
+      "id": "instrument-82155ab436f7194989539e77",
+      "keys": [
+        "ester-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-83338506984c62a8b4eb5451",
+      "keys": [
+        "nopo-nanotechnologies-india-pvt-ltd-gadhadar-reddy"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-8345f440edb0fa30345c843a",
+      "keys": [
+        "assetgro-fintech-private-limited-1-series-b-pref-25nv44"
+      ],
+      "isins": [
+        "INE1BZY03142"
+      ]
+    },
+    {
+      "id": "instrument-83a0197425d55dbc266ac16a",
+      "keys": [
+        "vindhya-telelinks"
+      ],
+      "isins": [
+        "INE707A01012"
+      ]
+    },
+    {
+      "id": "instrument-864637dcb4243df8d86b5849",
+      "keys": [
+        "procyon-star"
+      ],
+      "isins": [
+        "INE29A501017"
+      ]
+    },
+    {
+      "id": "instrument-8671b1cf98d26b1acb71dd74",
+      "keys": [
+        "creative-newtech"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-8875262a4bb59757901b7440",
+      "keys": [
+        "motilal-oswal-hedged-equity-multi-factor-strategy-class-f1"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-88fd67a6fd36bd9f916a33b5",
+      "keys": [
+        "fractal-analytics"
+      ],
+      "isins": [
+        "INE212S01015"
+      ]
+    },
+    {
+      "id": "instrument-8a03c685623c9c7158911db6",
+      "keys": [
+        "icici-ioppf-d-grw"
+      ],
+      "isins": [
+        "INF109KC1RH9"
+      ]
+    },
+    {
+      "id": "instrument-8a84a300c4f284a2bc72efd9",
+      "keys": [
+        "zaggle-prepaid"
+      ],
+      "isins": [
+        "INE07K301024"
+      ]
+    },
+    {
+      "id": "instrument-8b73130ce0d26f9d7465fc11",
+      "keys": [
+        "motilal-oswal-wealth-delphi-equity-fund"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-8b97c00b2a0f20385174e78d",
+      "keys": [
+        "mastek"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-8de28ba3cf553b4f7a0dc7e6",
+      "keys": [
+        "cash"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-8e0cc4dda80340770d080f96",
+      "keys": [
+        "since-99-apparel-pvt-limited-punit-sehgal-dexter-capital"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-8f67268bd9bf054216e5d29d",
+      "keys": [
+        "exide-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-8fdec92c1ef57ea77fbd5e0c",
+      "keys": [
+        "aditya-birla-sun-life-liquid-fund-daily-idcw-direct-plan"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-903c0f983ba7722fded236b8",
+      "keys": [
+        "zf-commercial-vehicle-control-systems-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-92488177db3425ca9af917d3",
+      "keys": [
+        "kotak-liquid-fund-regular-plan-daily-idcw"
+      ],
+      "isins": [
+        "INF174K01NL3"
+      ]
+    },
+    {
+      "id": "instrument-927880eba12c8511eea42b75",
+      "keys": [
+        "indian-energy-exchange"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-931e03fe1fcda081d7837fb8",
+      "keys": [
+        "belrise-industries"
+      ],
+      "isins": [
+        "INE894V01022"
+      ]
+    },
+    {
+      "id": "instrument-9387cf1e34ac402438f5c0cf",
+      "keys": [
+        "carnelian-bharat-amritkaal-fund-class-a2"
+      ],
+      "isins": [
+        "INF0ROG22363"
+      ]
+    },
+    {
+      "id": "instrument-9412e78cb125080ba43f355f",
+      "keys": [
+        "punjab-chem-and-crop-prot-l"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-9415a063e6d81a3f5208adf6",
+      "keys": [
+        "onix-renewable"
+      ],
+      "isins": [
+        "INE0TG701015"
+      ]
+    },
+    {
+      "id": "instrument-942c9cb97d20f547d13e5be9",
+      "keys": [
+        "triveni-turbine"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-94380298040e6987c0f6310a",
+      "keys": [
+        "kotak-flexi-cap-fund-direct-growth"
+      ],
+      "isins": [
+        "INF174K01LS2"
+      ]
+    },
+    {
+      "id": "instrument-9487eabe82102a3266eb72d2",
+      "keys": [
+        "kotak-mid-cap-fund-regular-growth"
+      ],
+      "isins": [
+        "INF174K01DS9"
+      ]
+    },
+    {
+      "id": "instrument-9502614e718ec5e87d431dd5",
+      "keys": [
+        "zippmat-private-ltd-abhijeet-kudva"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-952d3fbfcfc481f04c2bb061",
+      "keys": [
+        "smartworks-coworking-spaces"
+      ],
+      "isins": [
+        "INE0NAZ01010"
+      ]
+    },
+    {
+      "id": "instrument-98565a6d51b0c4dad5d24cb2",
+      "keys": [
+        "indraprastha-medical"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-9879c0ebf2c721785a273a73",
+      "keys": [
+        "icici-bank"
+      ],
+      "isins": [
+        "INE090A01021"
+      ]
+    },
+    {
+      "id": "instrument-9909017c41ba62810ba70699",
+      "keys": [
+        "caplin-point-laboratories"
+      ],
+      "isins": [
+        "INE475E01026"
+      ]
+    },
+    {
+      "id": "instrument-9aed58c45f1c71861359b86b",
+      "keys": [
+        "engineers-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-9ce06cbc94449eac3219af11",
+      "keys": [
+        "balance-with-banks"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-9dab0c2815874bd225e21ae9",
+      "keys": [
+        "sky-vision-cure"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-9dc1827ed34713f2fd7ef3a2",
+      "keys": [
+        "onesource-special"
+      ],
+      "isins": [
+        "INE013P01021"
+      ]
+    },
+    {
+      "id": "instrument-9e1ec0406ab8602fd61ddfc3",
+      "keys": [
+        "axis-bank"
+      ],
+      "isins": [
+        "INE238A01034"
+      ]
+    },
+    {
+      "id": "instrument-9ed7bd606e851049516bfe69",
+      "keys": [
+        "manorama-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-9f16f104afe712b8a03ff189",
+      "keys": [
+        "higher-orbit-agritech-private-limited-0-001-series-seed-pref-28my43"
+      ],
+      "isins": [
+        "INE2KRU03039"
+      ]
+    },
+    {
+      "id": "instrument-9faa4f84f3d9998f83cd8a99",
+      "keys": [
+        "chemfab-alkalis"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-9fbdd005570cc57a44deb54b",
+      "keys": [
+        "kalpataru-projects-international"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-a0939e6a0f5304b1b648896a",
+      "keys": [
+        "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited"
+      ],
+      "isins": [
+        "IN8666D01021"
+      ]
+    },
+    {
+      "id": "instrument-a0b474b58d9bf2e7dad30a7b",
+      "keys": [
+        "wockhardt"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-a289eb1e184fa414d006fb00",
+      "keys": [
+        "syrma-sgs-technology"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-a35afed6c8bb6ac0223e74a2",
+      "keys": [
+        "eclerx-services"
+      ],
+      "isins": [
+        "INE738I01010"
+      ]
+    },
+    {
+      "id": "instrument-a3efd0740cf8c92209530482",
+      "keys": [
+        "oberoi-realty"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-a45d105165e1934e0e772f5c",
+      "keys": [
+        "oilmax-energy"
+      ],
+      "isins": [
+        "INE069601016"
+      ]
+    },
+    {
+      "id": "instrument-a5155a92a2f93458dd0bb81e",
+      "keys": [
+        "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth"
+      ],
+      "isins": [
+        "INF769K01CM1"
+      ]
+    },
+    {
+      "id": "instrument-a53739e4e372b92713f0d31e",
+      "keys": [
+        "cash-rec-payable"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-a619693696855f0e94500fd3",
+      "keys": [
+        "third-eye-distillery-holdings-pvt-ltd-skyventures-lv-angel-fund-aakash-sachdev"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-a7c253481752c3a04cbcdf7a",
+      "keys": [
+        "navneet-education"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-a8bd35d06a03074dbe12db2e",
+      "keys": [
+        "transigo-fleet"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-a8c08c17202f6da2f081a54c",
+      "keys": [
+        "head-digital-works"
+      ],
+      "isins": [
+        "INE07LN01014"
+      ]
+    },
+    {
+      "id": "instrument-a9550558046d69a2895acefe",
+      "keys": [
+        "swapeco-solutions"
+      ],
+      "isins": [
+        "INE2DT103015"
+      ]
+    },
+    {
+      "id": "instrument-a9810b9228659e6a0902b013",
+      "keys": [
+        "nzuri-pune-knowledge-park"
+      ],
+      "isins": [
+        "INE0TBU01016"
+      ]
+    },
+    {
+      "id": "instrument-a9c3a295297374b96dc7dfc6",
+      "keys": [
+        "blue-jet-healthcare"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-a9e0b311eafeeacb0edb1c78",
+      "keys": [
+        "transrail-lighting"
+      ],
+      "isins": [
+        "INE454P01035"
+      ]
+    },
+    {
+      "id": "instrument-a9ff99a0ed619d8a4f97e8f0",
+      "keys": [
+        "infobay-ai-limited-0-01-pref-18ag44"
+      ],
+      "isins": [
+        "IN90SE903019"
+      ]
+    },
+    {
+      "id": "instrument-aa4db57c3acd6d398d698460",
+      "keys": [
+        "fusion-finance"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-aa8d8cf6de1f7f27449ff630",
+      "keys": [
+        "innoviti-technologies"
+      ],
+      "isins": [
+        "INE0NV501016"
+      ]
+    },
+    {
+      "id": "instrument-ab5c74c0adf60c066e462bc0",
+      "keys": [
+        "heg-graphite"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-ac7ff0548ae22f7961b0ec82",
+      "keys": [
+        "ghcl"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-ad08ac2f2296b6214763289f",
+      "keys": [
+        "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-ad0b0367b26e28c553362074",
+      "keys": [
+        "kirloskar-ferrous-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-ae12971074dd4c873701b5f9",
+      "keys": [
+        "k-m-global-credit"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-ae24e598caeecccf1317419a",
+      "keys": [
+        "arvind-fashions"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-af3957df599b51ef7471f2bd",
+      "keys": [
+        "sharda-motor-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-afdbb213d109b39a7f935824",
+      "keys": [
+        "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth"
+      ],
+      "isins": [
+        "INF194K01I60"
+      ]
+    },
+    {
+      "id": "instrument-b0bdc340f4d8f5ad7166c711",
+      "keys": [
+        "helios-fcf-d-grow",
+        "helios-flexi-cap-fund-direct-growth"
+      ],
+      "isins": [
+        "INF0R8701046"
+      ]
+    },
+    {
+      "id": "instrument-b19a7437fe1cba7a69769704",
+      "keys": [
+        "neuland-laboratories"
+      ],
+      "isins": [
+        "INE794A01010"
+      ]
+    },
+    {
+      "id": "instrument-b550305e53c252b6127032ec",
+      "keys": [
+        "eih"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-b5d4ed9ea2dd48082e355bd8",
+      "keys": [
+        "jyothy-labs"
+      ],
+      "isins": [
+        "INE668F01031"
+      ]
+    },
+    {
+      "id": "instrument-b64b6869ac56beae53fc893b",
+      "keys": [
+        "deep-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-b67460593e729b046da11807",
+      "keys": [
+        "tax-deducted-at-source"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-b6c1c7e3bbf964b82d1547ba",
+      "keys": [
+        "v2-retail"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-b6ecaa9de81b06c848c1aeac",
+      "keys": [
+        "pvr-inox"
+      ],
+      "isins": [
+        "INE191H01014"
+      ]
+    },
+    {
+      "id": "instrument-b78098c2347cf4032ad5b8d8",
+      "keys": [
+        "balanced-advantage-fund-growth"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-b836ccb93b904feedcd7728a",
+      "keys": [
+        "great-eastern-shipping"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-b86e0c699bde0066a725417a",
+      "keys": [
+        "itf-class-a"
+      ],
+      "isins": [
+        "INF0RW922016"
+      ]
+    },
+    {
+      "id": "instrument-b8e39c4a4d6e5e2b72d32fa3",
+      "keys": [
+        "urb-ventures"
+      ],
+      "isins": [
+        "INE0Q8701015"
+      ]
+    },
+    {
+      "id": "instrument-bc63ffa9bde8ff28693b857a",
+      "keys": [
+        "kalyan-jewellers-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-be7180eaf01d24b071ece5d9",
+      "keys": [
+        "kotak-mtcf-d-grow"
+      ],
+      "isins": [
+        "INF174KA1HV3"
+      ]
+    },
+    {
+      "id": "instrument-be84ea925d095d818ec38d95",
+      "keys": [
+        "universal-cables"
+      ],
+      "isins": [
+        "INE279A01012"
+      ]
+    },
+    {
+      "id": "instrument-bf00533d4d50f1ad081544db",
+      "keys": [
+        "dsp-gold-etf"
+      ],
+      "isins": [
+        "INF740KA1SW3"
+      ]
+    },
+    {
+      "id": "instrument-bf455dd984c3884963728f1a",
+      "keys": [
+        "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability"
+      ],
+      "isins": [
+        "INF0VGG22429"
+      ]
+    },
+    {
+      "id": "instrument-bff309e9084049d594751166",
+      "keys": [
+        "axis-liquid-fund-direct-plan-growth-option"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-c1e82bb10560deee7aa66dae",
+      "keys": [
+        "vaibhav-global"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-c22dab628a48d617b463ca90",
+      "keys": [
+        "sasken-communication-technologies"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-c25d0a0ae4c4144345984768",
+      "keys": [
+        "edelweiss-financial-services"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-c3015cd6f783579608744cbc",
+      "keys": [
+        "puravankara"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-c6a57399881707f63a370be1",
+      "keys": [
+        "mirae-lcf-d-grow"
+      ],
+      "isins": [
+        "INF769K01AX2"
+      ]
+    },
+    {
+      "id": "instrument-c8625987a8e65eebd1dcafe2",
+      "keys": [
+        "star-health-and-allied-insurance"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-c8dc499f6250c2c5a590012b",
+      "keys": [
+        "birla-cable"
+      ],
+      "isins": [
+        "INE800A01015"
+      ]
+    },
+    {
+      "id": "instrument-c9ddbdf442d9034b3673c002",
+      "keys": [
+        "shakti-pumps-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-ca0559841c2a98922c399626",
+      "keys": [
+        "paramount-communications-limited-neweqrs"
+      ],
+      "isins": [
+        "INE074B01023"
+      ]
+    },
+    {
+      "id": "instrument-caacb5ded1730735b9c8b0a2",
+      "keys": [
+        "dcw"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-cabda276a8d131c78c5e3732",
+      "keys": [
+        "credit-access-grameen"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-cad303e208e554881cb9e8f2",
+      "keys": [
+        "tejas-networks"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-cc65500109cd4379e1655373",
+      "keys": [
+        "isgec-heavy-engineering"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-ccfa6da4c868cca929c75b55",
+      "keys": [
+        "fh-edutech"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-cddd07054d2af03b0c4f8865",
+      "keys": [
+        "baring-private-equity-india-fund-6-class-a1"
+      ],
+      "isins": [
+        "INF15Q422013"
+      ]
+    },
+    {
+      "id": "instrument-cedf8593a93e523613a180b3",
+      "keys": [
+        "hdfc-arbitrage-fund-direct-plan-growth-option"
+      ],
+      "isins": [
+        "INF179KA1KT6"
+      ]
+    },
+    {
+      "id": "instrument-cf1e72e9823403a307f8e46d",
+      "keys": [
+        "vof-i-class-a2"
+      ],
+      "isins": [
+        "INF2O4Z22020"
+      ]
+    },
+    {
+      "id": "instrument-cf1ee6f9989011777e0d461b",
+      "keys": [
+        "apollo-pipes"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-d15d9e216d91f30b68c0472c",
+      "keys": [
+        "kingfa-science-and-technology-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-d1b482471b302bfa0386df8c",
+      "keys": [
+        "variance-pt-ventures-llp-romil-kapadia"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-d203b5aa96fe1061f95df107",
+      "keys": [
+        "buoyant-opportunities-strategy-category-iii-class-a4"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-d29f08abe6d369e2a6c11e5e",
+      "keys": [
+        "incred-holdings"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-d3c05f7c10e43689e26a89ff",
+      "keys": [
+        "neo-infra-income-opportunities-fund-i-class-a5"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-d3fb8198bb310621b44542c2",
+      "keys": [
+        "kaynes-technology"
+      ],
+      "isins": [
+        "INE918Z01012"
+      ]
+    },
+    {
+      "id": "instrument-d438a0d0644a9909012cad51",
+      "keys": [
+        "sanshi-fund-i-class-e",
+        "sanshi-trust-fd-i-cl-e-restricted-transferability"
+      ],
+      "isins": [
+        "INF1ISW22079"
+      ]
+    },
+    {
+      "id": "instrument-d44e5eeadc3b82fe6dd74ded",
+      "keys": [
+        "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth"
+      ],
+      "isins": [
+        "INF109KC1P81"
+      ]
+    },
+    {
+      "id": "instrument-d5b90a38d5c676fec7376987",
+      "keys": [
+        "pricol"
+      ],
+      "isins": [
+        "INE726V01018"
+      ]
+    },
+    {
+      "id": "instrument-d5f84498776633eca9347d27",
+      "keys": [
+        "absl-liqf-d-growth"
+      ],
+      "isins": [
+        "INF209K01VA3"
+      ]
+    },
+    {
+      "id": "instrument-d637b89cbbc85c1bf8d917b7",
+      "keys": [
+        "polyplex"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-d6b6d46a1ba01ab82fb1b77c",
+      "keys": [
+        "sbfc-finance"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-d79a3c5f35a3ac5686d3df8c",
+      "keys": [
+        "motilal-oswal-arbitrage-fund-direct-plan-growth"
+      ],
+      "isins": [
+        "INF247L01ED1"
+      ]
+    },
+    {
+      "id": "instrument-d80247f5b588cb2290bf5bbe",
+      "keys": [
+        "kaveri-seed"
+      ],
+      "isins": [
+        "INE455I01029"
+      ]
+    },
+    {
+      "id": "instrument-d86657793ac67c167549146d",
+      "keys": [
+        "yash-highvoltage"
+      ],
+      "isins": [
+        "INE00GK01023"
+      ]
+    },
+    {
+      "id": "instrument-d8d79b12e467ab41b44a7771",
+      "keys": [
+        "everest-fleet"
+      ],
+      "isins": [
+        "INE0LTR01029"
+      ]
+    },
+    {
+      "id": "instrument-d8e199f6d63ec2432d961b15",
+      "keys": [
+        "home-pecked-e-marketplace-services"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-d8ecf1633c80fd866f8a7dd4",
+      "keys": [
+        "vineet-sethia-drink-prime"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-d9104a4e788abeaf9a9ec736",
+      "keys": [
+        "icici-prudential-arbitrage-fund-direct-plan-idcw-idcw-reinvestment"
+      ],
+      "isins": [
+        "INF109K015O6"
+      ]
+    },
+    {
+      "id": "instrument-d99b5e2a29061c323fca465a",
+      "keys": [
+        "ask-absolute-return-fund-class-a6-series-31-01-2025"
+      ],
+      "isins": [
+        "INF0V6R22JL5"
+      ]
+    },
+    {
+      "id": "instrument-d9ab47443cd56b1bd736aa57",
+      "keys": [
+        "stove-kraft"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-dab692837c152159ec98e30d",
+      "keys": [
+        "state-bank-of-india"
+      ],
+      "isins": [
+        "INE062A01020"
+      ]
+    },
+    {
+      "id": "instrument-db00486706f2d5d072211720",
+      "keys": [
+        "matrix-gas-and-renewables"
+      ],
+      "isins": [
+        "INE0PO201010"
+      ]
+    },
+    {
+      "id": "instrument-dbc88db4939af25068064074",
+      "keys": [
+        "birlasoft"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-dbf7bd1e887386413c89665f",
+      "keys": [
+        "kovai-medical-center-and-hospital"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-dc2ed63713eab29d6281ff2b",
+      "keys": [
+        "invesco-india-arbitrage-fund-regular-plan-growth-af-gp"
+      ],
+      "isins": [
+        "INF205K01122"
+      ]
+    },
+    {
+      "id": "instrument-dca5667a91109ade14e346a1",
+      "keys": [
+        "al-trust-forbidden-foods-restricted-transferability"
+      ],
+      "isins": [
+        "INF0RLL22CH4"
+      ]
+    },
+    {
+      "id": "instrument-dcad5f74cdaf51219b9fe52e",
+      "keys": [
+        "dilip-buildcon"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-dcd10dddcb33bd283277f461",
+      "keys": [
+        "pg-electro"
+      ],
+      "isins": [
+        "INE457L01029"
+      ]
+    },
+    {
+      "id": "instrument-dce17aa09412cb02d5c551f0",
+      "keys": [
+        "indo-count-industries"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-dd3295400f5134cf2d2aacba",
+      "keys": [
+        "motilal-oswal-founders-fund-series-ii-class-g1"
+      ],
+      "isins": [
+        "INF0RRH22DW6"
+      ]
+    },
+    {
+      "id": "instrument-dd4ac54a290fe3181a52b080",
+      "keys": [
+        "nzuri-pune-knowledge-park-private-limited-pref-24sp46"
+      ],
+      "isins": [
+        "INE0TBU03020"
+      ]
+    },
+    {
+      "id": "instrument-dd8b97f3cff34f7f00902ef5",
+      "keys": [
+        "capri-global-capital"
+      ],
+      "isins": [
+        "INE180C01042"
+      ]
+    },
+    {
+      "id": "instrument-dda1a4e81baa1c6e2e744a96",
+      "keys": [
+        "icici-nft-nx-50-r-gr"
+      ],
+      "isins": [
+        "INF109K01IF1"
+      ]
+    },
+    {
+      "id": "instrument-dfe3a42536a5ae99d416cae3",
+      "keys": [
+        "bharat-parenteral"
+      ],
+      "isins": [
+        "INE365Y01019"
+      ]
+    },
+    {
+      "id": "instrument-dff273079c48e5c4968135e9",
+      "keys": [
+        "mps"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e016c9ee2c5020d9ae0943a8",
+      "keys": [
+        "transport-corp-of-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e351c03d7748740cdb58e57e",
+      "keys": [
+        "rural-electrification"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e3a14871ccc4b7601db95c73",
+      "keys": [
+        "deepak-fertilisers-and-petrochemicals"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e4da8658bf6ef5e64c08da64",
+      "keys": [
+        "finolex-cables-limited-new"
+      ],
+      "isins": [
+        "INE235A01022"
+      ]
+    },
+    {
+      "id": "instrument-e5737afec27edb0147a31b60",
+      "keys": [
+        "hyprkytchen-foodtech-private-limited-mr-bansi"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e59dedb35d4224c7b79991a6",
+      "keys": [
+        "mahindra-and-mahindra"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e5a95935702507049d5f5928",
+      "keys": [
+        "cyient"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e6a395b8886a3faa1c882ac3",
+      "keys": [
+        "pokarna"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e6b0c4ab8c14b3bb9fdfa76e",
+      "keys": [
+        "hdfc-asset-management"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e6dda9d7a9a4296647348968",
+      "keys": [
+        "bndh-l-and-mcf-dp-gr"
+      ],
+      "isins": [
+        "INF194K01V89"
+      ]
+    },
+    {
+      "id": "instrument-e71f7750a69ea33b3f0a883f",
+      "keys": [
+        "ingersollrand-india"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e7cd424c6a79595e1bff4115",
+      "keys": [
+        "bharat-heavy-electricals"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e80a7ac53e0ab1865af50040",
+      "keys": [
+        "absl-bal-adv-growth"
+      ],
+      "isins": [
+        "INF084M01AB8"
+      ]
+    },
+    {
+      "id": "instrument-e8253144dad6fbf19e0d5645",
+      "keys": [
+        "hdfc-arbitrage-fund-direct-plan-monthly-idcw-payout-option"
+      ],
+      "isins": [
+        "INF179KA1KS8"
+      ]
+    },
+    {
+      "id": "instrument-e86d6ec3e1bea926faa741e2",
+      "keys": [
+        "poojaa-precision-engineering"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e879595b956d2627681aaf43",
+      "keys": [
+        "sonata-software"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-e8d56ee05064749b23461d80",
+      "keys": [
+        "sg-mart"
+      ],
+      "isins": [
+        "INE385F01024"
+      ]
+    },
+    {
+      "id": "instrument-e9602104d64d3cd48d10eff8",
+      "keys": [
+        "fh-enable-llp-aakash-sachdev"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-ea89217a7b36255a20e22881",
+      "keys": [
+        "gujarat-ambuja-exports"
+      ],
+      "isins": [
+        "INE036B01030"
+      ]
+    },
+    {
+      "id": "instrument-eb9ca1619f20c6fb6282522c",
+      "keys": [
+        "jaro-institute-of-technology-management-and-research"
+      ],
+      "isins": [
+        "INE00YJ01010"
+      ]
+    },
+    {
+      "id": "instrument-edafaad571cef931f8a3ac84",
+      "keys": [
+        "bls-international-services"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-ee95aa926b31b8420324a20e",
+      "keys": [
+        "thermax"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-eeed1881bcf94f6f1621ffa6",
+      "keys": [
+        "rurash-financials-private-ltd-reliance-retail"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-ef7fc6beec568363d0dbf529",
+      "keys": [
+        "reliance-power"
+      ],
+      "isins": [
+        "INE614G01033"
+      ]
+    },
+    {
+      "id": "instrument-efac43e2a14bb796fc973d9c",
+      "keys": [
+        "panacea-biotec"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-f115760dc52ce2cc899dd2f7",
+      "keys": [
+        "tata-technologies"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-f12a079636450be6edfe4e84",
+      "keys": [
+        "surana-telecom-and-power-limited-eq-new-fv"
+      ],
+      "isins": [
+        "INE130B01031"
+      ]
+    },
+    {
+      "id": "instrument-f12c7b90179dafbc5bae0cdf",
+      "keys": [
+        "zensar-technologies"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-f27d5c236f62c3b70f493387",
+      "keys": [
+        "kotak-large-and-mid-cap-fund-direct-growth"
+      ],
+      "isins": [
+        "INF174K01LF9"
+      ]
+    },
+    {
+      "id": "instrument-f3e133e193de7f0289698862",
+      "keys": [
+        "absl-liquid-fund-direct-growth"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-f3ff9819207ff39d90477133",
+      "keys": [
+        "indusind-bank"
+      ],
+      "isins": [
+        "INE095A01012"
+      ]
+    },
+    {
+      "id": "instrument-f44f2495cabaca24d3372235",
+      "keys": [
+        "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest"
+      ],
+      "isins": [
+        "INF179KB1HV7"
+      ]
+    },
+    {
+      "id": "instrument-f6b3b9400637d3e879343b28",
+      "keys": [
+        "city-union"
+      ],
+      "isins": [
+        "INE491A01021"
+      ]
+    },
+    {
+      "id": "instrument-f7954dfcfde683dfcf7485ec",
+      "keys": [
+        "kotak-overnight-fund-direct-growth"
+      ],
+      "isins": [
+        "INF174KA1BF9"
+      ]
+    },
+    {
+      "id": "instrument-f862765b924d2635898e865f",
+      "keys": [
+        "bandhan-amc-ltd-bandhan-mf-bandhan-overnight-fund-direct-growth"
+      ],
+      "isins": [
+        "INF194KB1447"
+      ]
+    },
+    {
+      "id": "instrument-f8c75afb1d6a9fde5d0f193d",
+      "keys": [
+        "dsp-silver-etf"
+      ],
+      "isins": [
+        "INF740KA1RE3"
+      ]
+    },
+    {
+      "id": "instrument-f955af3a97ae8c7d745c1914",
+      "keys": [
+        "integris-medtech"
+      ],
+      "isins": [
+        "INE05GT01023"
+      ]
+    },
+    {
+      "id": "instrument-fa82c0985abf6f6c7f7e6833",
+      "keys": [
+        "blue-ashva-india-pool-account"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-fb66f289a26a2f4c2795e9cd",
+      "keys": [
+        "glenmark-pharmaceuticals"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-fbaae5641a86a4c82bcc66a1",
+      "keys": [
+        "rays-power-experts"
+      ],
+      "isins": [
+        "INE0WSH01011"
+      ]
+    },
+    {
+      "id": "instrument-fcf6cf4f02b40de335f81813",
+      "keys": [
+        "electromech-infraprojects"
+      ],
+      "isins": [
+        "INE1B3701036"
+      ]
+    },
+    {
+      "id": "instrument-fd60502a2fe5fe25c3c6fbc8",
+      "keys": [
+        "sterlite-technologies"
+      ],
+      "isins": [
+        "INE089C01029"
+      ]
+    },
+    {
+      "id": "instrument-fd9a3ba14cb9fb615722c3f9",
+      "keys": [
+        "shoppers-stop"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-fe54f91fca9d518da3756aef",
+      "keys": [
+        "mishra-dhatu-nigam"
+      ],
+      "isins": []
+    },
+    {
+      "id": "instrument-ff41ec00332dd60aa2859b83",
+      "keys": [
+        "sotefin-bharat"
+      ],
+      "isins": [
+        "INE12Z301012"
+      ]
+    }
+  ]
+}

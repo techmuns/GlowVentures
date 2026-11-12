@@ -12,6 +12,8 @@ import { fileURLToPath } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 const SUITES = [
+  { name: "financialIntegrity", file: "financialIntegrity.test.mjs", required: true },
+  { name: "advisoryAudit", file: "advisoryAudit.test.mjs", required: true },
   { name: "bandhan", file: "bandhanFolio.test.mjs", required: true },
   { name: "capitalOrigins", file: "capitalOrigins.test.mjs", required: true },
   // The demat each account's statements name (Stage 10ic, scripts/lib/dematAccounts.mjs).
@@ -36,6 +38,10 @@ const SUITES = [
   // The calculation audit's book-side rules and the figures they moved (Stage 10fz).
   { name: "calcAudit", file: "calcAudit.test.mjs", required: true },
   { name: "holdingTrades", file: "holdingTrades.test.mjs", required: true },
+  // A PMS account's opening values rebuilt from its own ledgers (Stage 10ni).
+  { name: "tradeOpenings", file: "tradeOpenings.test.mjs", required: true },
+  { name: "reviewPurchaseDates", file: "reviewPurchaseDates.test.mjs", required: true },
+  { name: "registerPurchaseDates", file: "registerPurchaseDates.test.mjs", required: true },
   { name: "capitalCalls", file: "capitalCalls.test.mjs", required: true },
   { name: "payouts", file: "payouts.test.mjs", required: true },
   { name: "hdfcOwner", file: "hdfcNsdlOwner.test.mjs", required: true },
@@ -46,7 +52,9 @@ const SUITES = [
   { name: "fundTxnDetails", file: "fundTxnDetails.test.mjs", required: true },
   { name: "mfPurchase", file: "mfPurchase.test.mjs", required: true },
   { name: "costRecovery", file: "holdingCostRecovery.test.mjs", required: true },
+  { name: "registerRecords", file: "registerRecords.test.mjs", required: true },
   { name: "mopwmTransactions", file: "mopwmTransactions.test.mjs", required: true },
+  { name: "tapeRoll", file: "tapeRoll.test.mjs", required: true },
   { name: "franklinAif", file: "franklinAif.test.mjs", required: true },
   { name: "iciciFolio", file: "iciciFolio.test.mjs", required: true },
   { name: "schemeLedger", file: "schemeLedger.test.mjs", required: true },

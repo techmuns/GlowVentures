@@ -129,6 +129,15 @@ export const OVERRIDES = {
   // rename (Stage 10dl), which is where the symbol would otherwise have been
   // lost for a holding that had one the day before.
   "heg": "HEGAM",                              // renamed HEG Advanced Materials
+  // NOT "heg-graphite": SVAN's 30 Sep appraisal splits the same 8,220 HEG Ltd
+  // shares into HEG Advanced Materials (cost 117.96) and HEG Graphite (309.42),
+  // the two summing to HEG Ltd's 427.37. HEG Graphite is the DEMERGED company,
+  // on no NSE master yet — mapping it to HEGAM would quote the parent's price.
+  // The exact-name tier picks it up once NSE lists it (Stage 10kp).
+  // Spelling: HDFC Securities prints "Fertilisers", NSE lists "Fertilizers"
+  // (DEEPAKFERT, ISIN INE501A01019, listed 17-JAN-2003); the statement prints no
+  // ISIN, so neither automatic tier bridges one letter (Stage 10kp).
+  "deepak-fertilisers-and-petrochemicals": "DEEPAKFERT",
   // Listings NSE symbolises as a contraction of the printed name.
   "life-insurance-corp-of-india": "LICI",
   "indian-energy-exchange": "IEX",

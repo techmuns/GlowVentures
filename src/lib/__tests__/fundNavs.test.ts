@@ -497,7 +497,11 @@ ok("an event the capture cannot state the units of — a rights issue — leaves
   const covered = (p: Position) => !CAPTURE.symbols || CAPTURE.symbols.includes(p.symbol ?? "") || CAPTURE.isins.includes((p.isin ?? "").toUpperCase());
   ok("...every candidate outside the committed capture is a share bought after its statement",
     shareCandidates().filter((p) => !!p.symbol && !covered(p)).every((p) => p.depositoryUnits?.kind === "adviser-trades"));
-  const quoted = shareCandidates().filter((p) => !!p.symbol && covered(p));
+  // A share the adviser report's trades roll past the 25 Sep quote (TEGA,
+  // bought through 8 Oct) is not priced by that quote, by design; once the
+  // capture names its symbol (refreshed 5 Nov, Stage 10ly) it is covered too.
+  const rolledPast = (p: Position) => ((p.depositoryUnits as { rolled?: { through?: string } } | undefined)?.rolled?.through ?? "") > "2026-09-25";
+  const quoted = shareCandidates().filter((p) => !!p.symbol && covered(p) && !rolledPast(p));
   const soldLater = quoted.filter((p) => (p.realizedLotsAfter ?? 0) > 0);
   ok("...and every candidate with no later sale passes the committed capture on a quote two days after it, so the gate is not what leaves this book's shares unvalued",
     quoted.every((p) => priced.has(id(p)) === !soldLater.includes(p)),

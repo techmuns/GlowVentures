@@ -1,5 +1,6 @@
 import type { BookFolio } from "./privateBook";
 import { capitalInputId, privateCapitalId } from "./tableInputs";
+import { decimalMinor, moneyFromMinor } from '../../shared/financialArithmetic.mjs';
 
 /**
  * ── A FOLIO'S CAPITAL, TYPED IN ITS OWN CELLS ─────────────────────────────
@@ -42,6 +43,8 @@ export function parseRupees(text: string): number | null {
   const m = /^(\d+(?:\.\d+)?|\.\d+)\s*([a-z]+)?$/i.exec(t);
   if (!m) return NaN;
   const scale = m[2] ? UNIT[m[2].toLowerCase()] : 1;
-  return scale ? Math.round(Number(m[1]) * scale * 100) / 100 : NaN;
+  if (!scale) return NaN;
+  try { return moneyFromMinor(decimalMinor(m[1].startsWith('.') ? `0${m[1]}` : m[1], 2 + Math.log10(scale))); }
+  catch { return NaN; }
 }
 export const rupeeText = (n: number | null) => (n == null ? "" : n.toLocaleString("en-IN", { maximumFractionDigits: 2 }));

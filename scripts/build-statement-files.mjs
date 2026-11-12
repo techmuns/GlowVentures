@@ -214,7 +214,7 @@ let removed = 0;
 for (const f of fs.readdirSync(OUT)) {
   if (!written.has(f)) { fs.rmSync(path.join(OUT, f), { force: true }); removed++; }
 }
-fs.writeFileSync(path.join(OUT, INDEX), JSON.stringify({ files, missing }) + "\n");
+fs.writeFileSync(path.join(OUT, INDEX), JSON.stringify({ manifestHash: createHash("sha256").update(JSON.stringify(manifest)).digest("hex"), files, missing }) + "\n");
 if (mirror) fs.rmSync(mirror, { recursive: true, force: true });
 
 const gaps = Object.keys(missing);

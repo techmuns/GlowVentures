@@ -1,7 +1,7 @@
 import { useTableExportFilter, useTableExportExpansion } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
-import { Fragment, useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, useCallback, type ReactNode, type MouseEvent as ReactMouseEvent } from "react";
 import { useNavigationState } from '@/lib/useNavigationState';
 import { statementNoteForSet } from "@/lib/statementNotes";
 import { Link, useNavigationType, useSearchParams } from "react-router-dom";
@@ -24,10 +24,10 @@ import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare,
   holdingRoute, ROUTE_LABEL,
   mandateLabel, MANDATE_BUCKET,
-  measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate, clubbedPurchase,
-  type ReturnMeasure, type ReturnInput, type RowCapital, type MeasuredReturn,
+  measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate, clubbedPurchase, singlePurchaseGap,
+  type ReturnMeasure, type ReturnInput, type RowCapital, type MeasuredReturn, type CapitalLeg,
   costCoversSet, strikesGain, isValuedAtCost, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
-  AT_COST_MARK, REVIEW_NO_MARK, AT_COST_BUCKET,
+  AT_COST_MARK, REVIEW_NO_MARK, AT_COST_BUCKET, REAL_ESTATE_BUCKET,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent, assetClassLabel,
 } from "@/lib/analytics";
 import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@/lib/fundNavs";
@@ -61,7 +61,10 @@ import {
   SECURITY_AXIS, SECURITY_SECTION,
   groupKeyFor, groupSourceFor, groupOrdFor, groupLabelFor,
   ALL_LABEL, GROUP_COLUMN_HEAD, GROUP_NOUN, bucketFor, heldUnderMandate,
+  statedGroupKeyFor, moveTargetsFor, productKeysFor,
 } from "@/lib/groupAxis";
+import { movePlacement, useFamilyPlacements } from "@/lib/familyPlacements";
+import { MoveRowMenu, MoveRowToast, type MoveRowRequest } from "@/components/MoveRowMenu";
 // WHICH SECTION A DATED RECORD LANDS IN — the same three axes, joined to a
 // trade's own fields. See its header for why the security axis is unreachable
 // from there by type rather than by an omitted button.
@@ -76,8 +79,9 @@ import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta, r
 import { datedButUnvalued } from "@/lib/holdingFlows";
 import { useDatedCapital } from "@/lib/useDatedCapital";
 import { BenchLine, useBenchmarkLevels } from "@/components/HoldingBenchmark";
-import { indexCompound, indexMove, indexOnSameMoney, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
-import { BENCHMARKS } from "@/lib/benchmarks";
+import { closeLegsOn, indexCompound, indexMove, indexOnSameMoney, indexOverPeriod, onePaymentLeg, pooledLegs, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
+import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
+import type { IndexLevel } from "@/lib/periodReturns";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
 // this comment — which is why it is being restated rather than left standing.
 //
@@ -95,7 +99,7 @@ import { notHeldNote } from "@/components/QuantityMovement";
 import { movementsFor } from "@/lib/shareMovements";
 import { allRecordedLines, recordedLabel, recordedLineFor, carriedBy } from "@/lib/recordedHoldings";
 import type { Position } from "@/lib/types";
-import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, type InvestedOn } from "@/lib/investedOn";
+import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, fmtInvestedDate, holdingPeriodStart, type InvestedOn } from "@/lib/investedOn";
 import { InvestedOnCell } from "@/components/InvestedOnCell";
 import { holdingPeriodOf, type HoldingPeriod } from "@/lib/holdingFlows";
 import { AbsentCell, NotApplicableCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
@@ -879,10 +883,14 @@ export function PortfolioMonitor() {
   const activeAxis: MonitorAxis = view === "holdings" ? groupAxis : txnAxis;
   const entities = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => ownerOf(accIdx, p)))).sort()], [positions, accIdx]);
   // Validate saved sections against the current book and the active axis.
+  // On Holdings the tabs come from the rows the table draws (`currentHoldings`),
+  // so a section only closed positions sit in offers no tab onto an empty table
+  // (Stage 10lb). Transactions keeps every position: a redeemed fund's trades are its rows.
   const buckets = useMemo(
-    () => ["All", ...Array.from(new Set(positions.map((p) => groupKeyFor(activeAxis, accIdx, p))))
+    () => ["All", ...Array.from(new Set((view === "holdings" ? currentHoldings(positions) : positions)
+      .map((p) => groupKeyFor(activeAxis, accIdx, p))))
       .sort((a, b) => groupOrdFor(activeAxis)(a) - groupOrdFor(activeAxis)(b))],
-    [positions, accIdx, activeAxis]);
+    [positions, accIdx, activeAxis, view]);
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
   /**
@@ -913,6 +921,55 @@ export function PortfolioMonitor() {
   const [bucketFilter, setBucket] = useNavigationState<string>('section', 'All', buckets);
   /** The holdings table's Export / Edit / Upload controls, drawn at the right of the section tabs. */
   const [tableTools, setTableTools] = useState<HTMLSpanElement | null>(null);
+  /**
+   * RIGHT-CLICK A ROW TO MOVE IT TO ANOTHER TAB (Stage 10lm).
+   *
+   *   "Allow the ability for any security or row to move any sub tab by doing
+   *    right click."
+   *
+   * On the three axes that have tabs. The security axis files nothing, so a
+   * right-click there stays the browser's own. The move is saved for everyone
+   * (`familyPlacements.ts`) and read by `groupKeyFor`, so the row lands in the
+   * same tab on Morning CIO, the drill-down and the Excel sheets too.
+   */
+  const placements = useFamilyPlacements();
+  const [moveMenu, setMoveMenu] = useState<(MoveRowRequest & { axis: GroupAxis; products: string[] }) | null>(null);
+  const [moveToast, setMoveToast] = useState<{ text: string; undo: () => void } | null>(null);
+  const closeMoveMenu = useCallback(() => setMoveMenu(null), []);
+  const closeMoveToast = useCallback(() => setMoveToast(null), []);
+  const openMoveMenu = (e: ReactMouseEvent<HTMLTableRowElement>, r: Row) => {
+    if (view !== "holdings" || groupAxis === SECURITY_AXIS) return;
+    const ps = rowPositionsOf(r);
+    if (!ps.length) return;
+    e.preventDefault();
+    const axis: GroupAxis = groupAxis;
+    const label = groupLabelFor(axis);
+    const stated = statedGroupKeyFor(axis, accIdx, ps[0]);
+    // From the keyboard (the menu key, Shift+F10) there is no pointer: the menu
+    // opens under the focused control instead, and without an animation.
+    const keyboard = (e.nativeEvent as { pointerType?: string }).pointerType === "" || (e.clientX === 0 && e.clientY === 0);
+    const at = keyboard ? (e.target as HTMLElement).getBoundingClientRect() : null;
+    const focused = document.activeElement;
+    setMoveMenu({
+      axis, products: productKeysFor(accIdx, ps),
+      x: at ? at.left : e.clientX, y: at ? at.bottom : e.clientY, keyboard,
+      name: r.security, current: r.bucket, stated,
+      targets: [...new Set([...moveTargetsFor(axis, stated), r.bucket])].map((k) => ({ key: k, label: label(k) })),
+      returnFocus: focused instanceof HTMLElement && e.currentTarget.contains(focused) ? focused : null,
+    });
+  };
+  const moveRow = (section: string) => {
+    if (!moveMenu || section === moveMenu.current) return;
+    const { axis, products, stated, current, name } = moveMenu;
+    // Back to where the review, the rules or the book put it is no placement at all.
+    const store = (to: string) => { void movePlacement(axis, products, to === stated ? null : to); };
+    store(section);
+    const label = groupLabelFor(axis);
+    setMoveToast({
+      text: section === stated ? `${name} is back in ${label(section)}` : `${name} moved to ${label(section)}`,
+      undo: () => store(current),
+    });
+  };
   const bucket = useTableExportFilter(bucketFilter, "All");
   /**
    * SWITCHING AXIS CLEARS THE SECTION FILTER, and that is a correctness fix
@@ -1135,19 +1192,107 @@ export function PortfolioMonitor() {
     if (!hb) { hb = rowBenchmark(rowPositionsOf(r), r.mandate ? r.mandate.accounts.map((a) => a.accountId) : null); ROW_BENCH.set(r, hb); }
     return hb;
   }, []);
-  const benchFigure = (hb: HoldingBenchmark, res: Extract<MeasuredReturn, { shown: true }>, input: ReturnInput, asOf: string): IndexFigure | null => {
+  /** The dated money a row's index is bought with: its record's legs, or its one purchase never sold (Stage 10lc). */
+  const ownLegs = (input: ReturnInput, asOf: string): CapitalLeg[] | null => {
+    const cap = input.capital, end = input.valuedAt === undefined ? asOf : input.valuedAt;
+    if (cap?.dated && cap.legs?.length) return closeLegsOn(cap.legs, end);
+    if (input.heldSince && end && singlePurchaseGap(input) === null && input.costBasis != null && input.costBasis > 0 && input.marketValue != null) {
+      return [onePaymentLeg(input.heldSince, input.costBasis, end, input.marketValue)];
+    }
+    return null;
+  };
+  /**
+   * A ROW WHOSE PURCHASES ARE NOT EACH DATED (Stage 10nt): each costed line's
+   * cost buys the index on its holding period's start (`holdingPeriodStart`)
+   * and closes on the line's own value date — null where a line has neither.
+   */
+  const periodLegsOf = (ps: readonly Position[] | undefined): CapitalLeg[] | null => {
+    const costed = (ps ?? []).filter((p) => p.costBasis != null && p.costBasis > 0 && p.marketValue != null);
+    if (!costed.length) return null;
+    const legs: CapitalLeg[] = [];
+    for (const p of costed) {
+      const start = holdingPeriodStart([p]), to = valueDate(p);
+      if (!start || !to || start.date > to) return null;
+      legs.push(onePaymentLeg(start.date, p.costBasis!, to, p.marketValue!));
+    }
+    return legs;
+  };
+  const benchFigure = (hb: HoldingBenchmark, res: Extract<MeasuredReturn, { shown: true }>, input: ReturnInput, asOf: string,
+    ps?: readonly Position[], legs?: readonly CapitalLeg[]): IndexFigure | null => {
     if (!hb.bench) return null;
-    const lv = benchLevels(hb.bench.key);
-    if ("reason" in lv) return { shown: false, reason: lv.reason };
-    const yf = input.ytdFrom, cap = input.capital;
-    if (res.from && yf?.shown) return indexMove(yf.from, yf.to, lv.level);
+    const yf = input.ytdFrom, cap = input.capital, heldSince = input.heldSince;
     const annual = res.tag === "XIRR" || res.tag === "CAGR";
     const end = input.valuedAt === undefined ? asOf : input.valuedAt;
+    // WHICH MONEY BUYS THE INDEX is settled before any close arrives (Stage 10lc),
+    // so a gap in the record shows at once and a fetch never moves the line.
     // The rate is solved on the record's own closes; the HPR on the row's value date.
-    if (cap?.dated && cap.legs?.length) return indexOnSameMoney(cap.legs, lv.level, annual, annual ? null : end);
-    if (res.tag === "CAGR" && input.heldSince && end) return indexCompound(input.heldSince, end, lv.level);
-    return { shown: false, reason: cap && !cap.dated ? cap.reason.replace(/\.$/, "")
-      : "the dates and amounts of this holding's purchases are not all on record, so the index cannot be bought with the same money on the same days" };
+    // ONE PURCHASE, NEVER SOLD: the CAGR gate's own proof dates every rupee of its
+    // cost on that day, so its HPR and a YTD opened this year buy the index there too.
+    const one = ownLegs(input, asOf);
+    const strike: ((level: IndexLevel) => IndexFigure) | null =
+      res.from && yf?.shown ? (l) => indexMove(yf.from, yf.to, l)
+      : legs?.length ? (l) => indexOnSameMoney(legs, l, annual, annual ? null : end)
+      : cap?.dated && cap.legs?.length ? (l) => indexOnSameMoney(cap.legs!, l, annual, annual ? null : end)
+      : res.tag === "CAGR" && heldSince && end ? (l) => indexCompound(heldSince, end, l)
+      : one ? (l) => indexOnSameMoney(one, l, annual, null)
+      : null;
+    // PURCHASES NOT EACH DATED (Stage 10nt): the index over the holding period —
+    // from its first investment, else its account's inception — to its value date.
+    // Lines valued on different dates: each line's cost buys the index on its own start, closed on its own value date.
+    const start = strike ? null : ps?.length && end ? holdingPeriodStart(ps) : null;
+    const perLine = strike || start || annual ? null : periodLegsOf(ps);
+    if ((start && end) || perLine) {
+      const lv = benchLevels(hb.bench.key);
+      if ("reason" in lv) return { shown: false, reason: lv.reason, feed: true };
+      if (start && end) return indexOverPeriod(start.date, end, lv.level, annual, start.basis);
+      const fig = indexOnSameMoney(perLine!, lv.level, false, null);
+      return fig.shown ? { ...fig, period: true, how: `${fig.how} Its purchases are not each dated, so each line's cost buys the index on its holding period's start (its first investment, else its account's inception), closed on that line's own value date.` } : fig;
+    }
+    if (!strike) return { shown: false, reason: cap && !cap.dated ? cap.reason.replace(/\.$/, "") : undatedMoneyWhy(ps) };
+    const lv = benchLevels(hb.bench.key);
+    return "reason" in lv ? { shown: false, reason: lv.reason, feed: true } : strike(lv.level);
+  };
+  /**
+   * A SECTION'S OR THE TABLE'S TOTAL AGAINST ITS INDEX (Stage 10lc): the index
+   * the rows share — the broad Nifty 500 where they differ — bought with every
+   * row's own dated money, each closed on its own value date (`pooledLegs`).
+   * Struck over the rows that show an HPR, the set the total's return is.
+   */
+  const pooledBench = (rs: readonly Row[], asOf: string): { hb: HoldingBenchmark; fig: IndexFigure | null } | null => {
+    const shown = rs.filter((r) => measuredReturn(r, "absolute", asOf).shown);
+    if (!shown.length) return null;
+    // Rows no equity index measures (cash, debt, hybrid — Stage 10nt) stay out
+    // of the index pool and are named in its hover.
+    const priced = shown.filter((r) => benchOf(r).bench);
+    if (!priced.length) return { hb: benchOf(shown[0]), fig: null };
+    const left = shown.length - priced.length;
+    const leftOut = left ? ` ${left} of the ${shown.length} rows with a return here have no equity index (cash, debt or hybrid) and are left out of it: ${shown.filter((r) => !benchOf(r).bench).map((r) => r.security).slice(0, 6).join(", ")}${left > 6 ? " …" : ""}.` : "";
+    const hbs = priced.map(benchOf);
+    const keys = new Set(hbs.map((h) => h.bench!.key));
+    const hb: HoldingBenchmark = keys.size === 1
+      ? { bench: hbs[0].bench!, source: "rule", why: `Every row here is compared with the ${hbs[0].bench!.name}.${leftOut}` }
+      : { bench: benchmarkByKey("nifty-500"), source: "rule", why: `The rows here are compared with different indices, so their total is compared with the broad Nifty 500.${leftOut}` };
+    // Duplicates are counted once in the total; their legs would count twice.
+    if (priced.some((r) => rowPositionsOf(r).some((p) => p.dedupeGroup))) {
+      return { hb, fig: { shown: false, reason: "a holding two members both report is behind these rows and is counted once in the total, so its dated money cannot be pooled without counting it twice" } };
+    }
+    // A row whose purchases are not each dated buys the index with its cost on
+    // its holding period's start (Stage 10nt), as its own line does.
+    let byPeriod = 0;
+    const pool = pooledLegs(priced.map((r) => {
+      const own = ownLegs(r, asOf);
+      if (own?.length) return own;
+      const legs = periodLegsOf(rowPositionsOf(r));
+      if (legs) byPeriod++;
+      return legs;
+    }));
+    if ("undated" in pool) {
+      return { hb, fig: { shown: false, reason: `the index is bought with every row's own money, and ${pool.undated} of the ${pool.of} rows with a return here have no start date or cost on record` } };
+    }
+    const lv = benchLevels(hb.bench.key);
+    if ("reason" in lv) return { hb, fig: { shown: false, reason: lv.reason, feed: true } };
+    const fig = indexOnSameMoney(pool.legs, lv.level, false, null);
+    return { hb, fig: fig.shown && byPeriod ? { ...fig, period: true, how: `${fig.how} ${byPeriod} of the ${priced.length} rows are not dated payment by payment: each buys the index with its cost on its holding period's start (its first investment, else its account's inception).` } : fig };
   };
   const holdAccessors = useMemo(
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
@@ -2450,6 +2595,8 @@ export function PortfolioMonitor() {
         const ruleSeen = new Set<string>();
         let ruleMV = 0;
         let cashRuleMV = 0;
+        // Rows the family moved here on the page (Stage 10lm), named on the heading.
+        const movedNames = rs.filter((r) => r.groupSource === "moved").map((r) => r.security);
         for (const r of rs) {
           if (r.groupSource !== "rule" && r.groupSource !== "cash-rule") continue;
           if (r.dedupeGroup) { if (ruleSeen.has(r.dedupeGroup)) continue; ruleSeen.add(r.dedupeGroup); }
@@ -2457,7 +2604,7 @@ export function PortfolioMonitor() {
           else cashRuleMV += r.marketValue;
         }
         return {
-          key, rows: rs, subtotal, collapsed, holdings, names, lines, ruleMV, cashRuleMV,
+          key, rows: rs, subtotal, collapsed, holdings, names, lines, ruleMV, cashRuleMV, movedNames,
           day, dayBase, dayLeft, liveRows: live.length,
           dayPct: live.length && dayBase - day !== 0 ? (day / (dayBase - day)) * 100 : null,
           totals,
@@ -2905,16 +3052,29 @@ export function PortfolioMonitor() {
    * a line and on the row above it, and the tag rule is the one the row cells
    * use: tagged wherever the figure is not the measure the column promises.
    */
-  const childReturn = (input: ReturnInput, measure: ReturnMeasure, ps?: readonly Position[]) => {
-    const res = measuredReturn(withYtd(input, ps, measure), measure, portfolio.asOf);
+  /**
+   * …AND ITS OWN INDEX UNDER IT (Stage 10lc). An opened row's lines showed a
+   * return with nothing beneath it: each now carries the index its own lines
+   * are compared with (a mandate account by its manager's report), bought with
+   * its own dated money — `legs` where the caller holds a line's money itself,
+   * as a contribution does.
+   */
+  const childReturn = (input: ReturnInput, measure: ReturnMeasure, ps?: readonly Position[],
+    bench?: { hb?: HoldingBenchmark; legs?: CapitalLeg[] }) => {
+    const inp = withYtd(input, ps, measure);
+    const res = measuredReturn(inp, measure, portfolio.asOf);
     const off = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
+    const hb = bench?.hb ?? (ps?.length ? rowBenchmark(ps, null) : null);
     return (
-      <span data-child-return-tag={off ? res.tag : undefined}>
-        {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
-        {res.shown && res.assumed && <AssumedMark note={res.note} />}
-        {res.shown
-          ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
-          : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />}
+      <span data-child-return-tag={off ? res.tag : undefined} className={res.shown && hb ? "whitespace-normal" : undefined}>
+        <span className="whitespace-nowrap">
+          {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
+          {res.shown && res.assumed && <AssumedMark note={res.note} />}
+          {res.shown
+            ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
+            : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />}
+        </span>
+        {res.shown && hb && <BenchLine hb={hb} fig={benchFigure(hb, res, inp, portfolio.asOf, ps, bench?.legs)} holdingPct={res.pct} />}
       </span>
     );
   };
@@ -2930,7 +3090,7 @@ export function PortfolioMonitor() {
   const sectorCell = (value: string, key: string, ps: readonly Position[], held: boolean) => {
     if (value !== UNCLASSIFIED_SECTOR) return <span data-sector={value}>{value}</span>;
     const sym = ps.map((x) => symbolFor(x)).find(Boolean) ?? symbolForKey(key);
-    const why = `Unclassified — ${held ? "no statement in this book prints a sector for this company, " : ""}no fund's portfolio filing that names it prints an industry, and ${sym ? `screener.in publishes none for NSE: ${sym}` : "it resolves no NSE symbol, so screener.in cannot be asked"}. It is left unplaced rather than given a sector we would have to guess.`;
+    const why = `Unclassified — ${sym ? `screener.in publishes no sector for ${sym}` : "no NSE or BSE listing joins to it, so screener.in cannot be asked"}, no fund's portfolio filing that names it prints an industry${held ? ", and no statement in this book prints one" : ""}. It is left unplaced rather than given a sector we would have to guess.`;
     return <span data-sector={value} title={why}>{value}</span>;
   };
   /** Why a fund's Sector cell is a dash, true of the kind of fund it is. */
@@ -2977,6 +3137,26 @@ export function PortfolioMonitor() {
       return "this account's lot register does not account for every unit held today, so no purchase date can be read off it";
     }
     return "the statements report this holding's cost but not the date it was bought — no lot register or dated allotment for it is in this book";
+  };
+  /**
+   * WHY A ROW'S MONEY CANNOT BUY ITS INDEX (Stage 10lc): the cause true of its
+   * own lines — units no dated trade reaches, a review that dates only a span,
+   * a manager whose statements begin after the purchase — rather than one
+   * sentence under every row.
+   */
+  const undatedMoneyWhy = (ps: readonly Position[] | undefined): string => {
+    const lead = "the index is bought with this holding's own dated payments, and ";
+    if (!ps?.length) return `${lead}the dates and amounts of its purchases are not all on record`;
+    const why = (p: Position): string => {
+      const t = p.tradeRecord;
+      if (t && (t.unaccounted ?? 0) > 0 && t.reason) return t.reason;
+      const d = investedOnOf([p]);
+      if (d && d.payments === null) return `its record dates the purchases only as a span, ${fmtInvestedDate(d.first)} to ${fmtInvestedDate(d.last)}, not each payment and what it paid`;
+      return investedOnWhy([p]);
+    };
+    const undated = ps.filter((p) => !datedCap?.behind([p], holdingsUniverse)?.dated);
+    const cause = why(undated[0] ?? ps[0]);
+    return lead + (undated.length && undated.length < ps.length ? `${undated.length} of the ${ps.length} lines behind this row are not dated in full — ${cause}` : cause);
   };
   /**
    * WHAT A HOLDING'S REALISED FIGURE COVERS (DL-10): each account's capital gain
@@ -3099,7 +3279,7 @@ export function PortfolioMonitor() {
    * construction rather than by a footer printed beside them.
    */
   const trancheRows = (parentKey: string, folioKey: string, cls: string | null, assetClass: string,
-    t: TrancheTable, depth: 1 | 2, ancestorLast: boolean) => {
+    t: TrancheTable, depth: 1 | 2, ancestorLast: boolean, hb: HoldingBenchmark) => {
     const rows: ReactNode[] = [];
     /*
      * NO SENTENCE ABOVE A SWITCHED CONTRIBUTION. It used to explain, once per
@@ -3157,7 +3337,9 @@ export function PortfolioMonitor() {
         // ONE PAYMENT BY CONSTRUCTION (Stage 10fz): a contribution is a single
         // dated purchase with nothing sold out of it, which is what the CAGR gate
         // asks a row to prove — so it says so rather than reading "not counted".
-        ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, valuedAt: x.valuedAt, assetClass, costNA: false, purchaseDates: 1, costOfUnitsSold: null }, measure),
+        // Its index on the same one payment: what bought units, on its day (Stage 10lc).
+        ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, valuedAt: x.valuedAt, assetClass, costNA: false, purchaseDates: 1, costOfUnitsSold: null }, measure,
+          undefined, { hb, legs: [onePaymentLeg(x.date, x.invested, x.valuedAt, x.value)] }),
       }, {
         "data-tranche-row": parentKey, "data-tranche-folio": folioKey, "data-tranche-class": cls ?? "",
         // THE HOLDING-PERIOD RETURN, whatever the cell shows: "cheaper entry,
@@ -3485,7 +3667,9 @@ export function PortfolioMonitor() {
                 title={`Everything account ${l.accountNo} has booked since it opened — every sale its manager made, and its income less its fees.`}>
                 {fmtFromBase(l.realised, { compact: true, sign: true })}
               </span>,
-          ret: (measure) => childReturn({ fifo: l.fifo, returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure, l.positions),
+          // A mandate account against the index its manager's report prints (Stage 10lc).
+          ret: (measure) => childReturn({ fifo: l.fifo, returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure, l.positions,
+            { hb: rowBenchmark(l.positions, [l.accountId]) }),
           sector: <AbsentCell reason="a mandate spans many sectors and is not one holding; each share under this line carries its own" />,
           entity: <span className="text-[12px]">{l.owner}</span>,
         }, {
@@ -3514,7 +3698,7 @@ export function PortfolioMonitor() {
     // BY ENTITY: the row IS one statement, so its contributions hang from it.
     if (!r.venues) {
       if (info?.direct) {
-        out.push(...trancheRows(r.key, r.key, splitFundClass(r.security)?.cls ?? null, r.assetClass, info.direct, 1, false));
+        out.push(...trancheRows(r.key, r.key, splitFundClass(r.security)?.cls ?? null, r.assetClass, info.direct, 1, false, benchOf(r)));
       }
       out.push(...tradeRows(r.key, r.trancheSet, 1, {}));
       return out;
@@ -3648,7 +3832,7 @@ export function PortfolioMonitor() {
         "data-venue-account": v.accountId, "data-venue-key": v.securityKey, "data-venue-mv": v.marketValue,
         ...(t ? { "data-folio-tranches": t.rows.length } : {}),
       }));
-      if (t) out.push(...trancheRows(r.key, fk, v.cls, v.assetClass, t, 2, lastLine));
+      if (t) out.push(...trancheRows(r.key, fk, v.cls, v.assetClass, t, 2, lastLine, rowBenchmark(v.positions, null)));
       if (expanded.has(`${r.key}>${fk}`)) out.push(...tradeRows(`${r.key}>${fk}`, v.positions, 2, { ancestorLast: lastLine }));
     });
     /**
@@ -4028,6 +4212,9 @@ export function PortfolioMonitor() {
               tablist, never in it — a tablist holds tabs only. On the security
               axis this row is not drawn and the caption comes back. */}
           {view === "holdings" && <span ref={setTableTools} className="ml-auto inline-flex pb-1" data-table-tools />}
+          {moveMenu && <MoveRowMenu request={moveMenu} status={placements.status === "local" ? placements.reason : null}
+            onMove={moveRow} onClose={closeMoveMenu} />}
+          {moveToast && <MoveRowToast text={moveToast.text} onUndo={moveToast.undo} onDone={closeMoveToast} />}
         </div>
       )}
 
@@ -4149,7 +4336,7 @@ export function PortfolioMonitor() {
                       <SortHeader key={measure} col={`ret:${measure}`} view={holdView} pad="px-2 py-1.5"
                         title={auto ? undefined : def.hint}
                         note={meta?.note} noteTitle={meta?.title}>
-                        {auto ? "Return" : def.tag}
+                        {auto ? "Return" : def.heading}
                       </SortHeader>
                     );
                   })}
@@ -4174,7 +4361,7 @@ export function PortfolioMonitor() {
                   if (secOpen && !visibleRows.length) return null;
                   return (
                   <Fragment key={grp.key}>
-                    {showBucketSections && (
+                    {showBucketSections && (() => {
                       /*
                         `data-section` IS THE CONTRACT, NOT THE HEADING TEXT.
                         `check:pages` finds where one section ends by finding
@@ -4187,13 +4374,23 @@ export function PortfolioMonitor() {
                         is structural now, exactly as `data-mandate` and
                         `data-row` already are: a claim about structure must not
                         depend on prose a redesign is free to reword.
+
+                        ONE ROW, NOT TWO (Stage 10nf): the band carries its
+                        category's totals in its own cells. "The first one is
+                        blank, and then in the second one we are showing totals —
+                        you can show the totals in the first one itself." So the
+                        band row is also the `data-category-total` row, drawn
+                        through `<Tr view>` so each total stays under its column.
                       */
-                      <tr className={`${TREE_ROW_DENSE.section} cursor-pointer`} data-section={grp.key} data-axis={groupAxis}
-                        data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-names={grp.names} data-lines={grp.lines} data-rule-mv={grp.ruleMV}
-                        data-cash-rule-mv={grp.cashRuleMV}
-                        data-section-open={secOpen ? "open" : "closed"}
-                        {...rowToggle(() => toggleSection(secKey))}>
-                        <TreeSectionCell density="dense" colSpan={COL_COUNT}
+                      const bandAttrs = {
+                        "data-section": grp.key, "data-axis": groupAxis,
+                        "data-subtotal": grp.subtotal, "data-holdings": grp.holdings, "data-names": grp.names, "data-lines": grp.lines, "data-rule-mv": grp.ruleMV,
+                        "data-cash-rule-mv": grp.cashRuleMV, "data-moved-rows": grp.movedNames.length,
+                        "data-section-open": secOpen ? "open" : "closed",
+                        ...rowToggle(() => toggleSection(secKey)),
+                      };
+                      const bandCell = (colSpan?: number) => (
+                        <TreeSectionCell density="dense" colSpan={colSpan}
                           title={groupLabelFor(groupAxis)(grp.key)}
                           marker={groupAxis === "category" && grp.key === AT_COST_BUCKET
                             // THE SAME INVESTMENTS ARE PRIVATE MARKET'S "held at
@@ -4204,6 +4401,13 @@ export function PortfolioMonitor() {
                                 title="These investments are also on the Private Market page, under Private Companies (Held at cost), with their capital and returns"
                                 className="text-[11px] font-medium normal-case tracking-normal text-champagne-400 hover:underline">
                                 Also on Private Market →</Link>
+                            // …and the LLPs' Nzuri shares are line items on Real
+                            // Estate (Stage 10mg), on either axis that names it.
+                            : grp.key === REAL_ESTATE_BUCKET && groupAxis !== "basket"
+                            ? <Link to="/real-estate" data-real-estate-link
+                                title="These holdings are also line items on the Real Estate page, counted once in its total"
+                                className="text-[11px] font-medium normal-case tracking-normal text-champagne-400 hover:underline">
+                                Also on Real Estate →</Link>
                             : undefined}
                           open={secOpen} onToggle={() => toggleSection(secKey)}
                           toggleData={{ "data-section-toggle": grp.key }}
@@ -4211,7 +4415,7 @@ export function PortfolioMonitor() {
                              band counts its liquid and arbitrage funds AND credits the
                              value the cash instruction placed there, and the two run
                              past a cell's one long name (Stage 10jb). */
-                          sub={<div data-prose-ok={grp.cashRuleMV > 0 ? "the Cash band's counts and the value the family's cash instruction placed in it, both asked for on the heading" : undefined}>
+                          sub={<div className="font-normal" data-prose-ok={grp.cashRuleMV > 0 ? "the Cash band's counts and the value the family's cash instruction placed in it, both asked for on the heading" : undefined}>
                             {/* The count is of HOLDINGS, not of rows: ten mandate
                                 rows stand for 281 of them, and a heading reading
                                 "10 holdings" over ₹138.7 Cr would retire 271
@@ -4322,24 +4526,31 @@ export function PortfolioMonitor() {
                                 · {fmtFromBase(grp.cashRuleMV, { compact: true })} by the family&rsquo;s cash instruction
                               </span></>
                             )}
+                            {/* AND ROWS THE FAMILY MOVED HERE ON THE PAGE (Stage 10lm):
+                                their own word, newer than the review, said apart. */}
+                            {grp.movedNames.length > 0 && (
+                              <>{" "}<span title={`Moved to this tab on the dashboard: ${grp.movedNames.join(", ")}. Right-click a row to move it again or back.`}>
+                                · {grp.movedNames.length} moved here
+                              </span></>
+                            )}
                           </div>} />
-                      </tr>
-                    )}
-                    {/*
+                      );
+                    /*
                       ── EVERY METRIC, TOTALLED FOR THE CATEGORY IT HEADS ───────
                       "Show aggregate totals for every metric for each category."
-                      The heading names the category and its size; this row is the
-                      rest of the table's columns, added up over the same set.
+                      The heading cell names the category and its size; the rest
+                      of the band's cells are the table's columns, added up over
+                      the same set.
 
-                      IT SITS UNDER THE BAND, AT THE TOP OF ITS SECTION, which is
-                      where the Private Market page's standard puts a section's
+                      THEY SIT ON THE BAND ITSELF, AT THE TOP OF ITS SECTION, which
+                      is where the Private Market page's standard puts a section's
                       totals: a reader sees what a category adds up to before its
-                      rows, and a CLOSED section still shows its figures — the band
-                      and this row are what remain when its holdings are folded
-                      away. Nothing about what the row carries moved.
+                      rows, and a CLOSED section still shows its figures. Until
+                      Stage 10nf they were a second row under a band that spanned
+                      the table blank; nothing about what the cells carry moved.
 
-                      IT IS A ROW OF CELLS, NOT A WIDENED HEADING, and that is the
-                      whole design: a total belongs UNDER THE COLUMN IT TOTALS.
+                      THE BAND IS A ROW OF CELLS, NOT A WIDENED HEADING, and that is
+                      the whole design: a total belongs UNDER THE COLUMN IT TOTALS.
                       This book has already paid twice for a figure printed under
                       a heading that describes something else — the allocation
                       footer on a different basis from its own column, and the
@@ -4352,14 +4563,15 @@ export function PortfolioMonitor() {
                       one company plus units of a fund is not a quantity, and the
                       reader who scans across an empty cell learns nothing about
                       whether a figure was withheld or never existed.
-                    */}
-                    {showBucketSections && (() => {
+                    */
                       const tot = grp.totals;
                       // Struck over the positions, so it cannot disagree with the
-                      // rows drawn above it — but a category with no partition
-                      // entry has nothing to total and says so rather than
-                      // printing zeros for a row it cannot see.
-                      if (!tot) return null;
+                      // rows drawn below it — but a category with no partition
+                      // entry has nothing to total, and its band spans the table
+                      // rather than printing zeros for a row it cannot see.
+                      if (!tot) return (
+                        <tr className={`${TREE_ROW_DENSE.section} cursor-pointer`} {...bandAttrs}>{bandCell(COL_COUNT)}</tr>
+                      );
                       const weight = weightBase > 0 ? (tot.mv / weightBase) * 100 : null;
                       const uncostedMV = tot.mv - tot.costedMV;
                       /**
@@ -4383,7 +4595,8 @@ export function PortfolioMonitor() {
                       // left out of the section's FIFO and named (Stage 10jc).
                       const leftOutMV = sum(tot.leftOut.map((x) => x.marketValue));
                       const leftOutNames = [...new Set(tot.leftOut.map((x) => labelByKey.get(x.securityKey) ?? x.security))].join(" and ");
-                      const covered = costCoversSet(tot.mv, uncostedMV + tot.atCostMV + leftOutMV);
+                      // A whole mandate's uncosted line is no bar: its capital bridge needs no line cost (Stage 10mh).
+                      const covered = costCoversSet(tot.mv, uncostedMV - tot.fifo.wholeUncostedValue + tot.atCostMV + leftOutMV);
                       // Every costed line here is held at cost (the review's own
                       // section, or a family-axis row made only of such lines).
                       const allAtCost = tot.atCostCount > 0 && tot.atCostCount === tot.costedCount;
@@ -4432,11 +4645,12 @@ export function PortfolioMonitor() {
                         : "";
                       return (
                         /* A `<Tr>` RATHER THAN A `<TrFoot>`, because this row
-                           carries a cell under EVERY column — its label spans
+                           carries a cell under EVERY column — its heading spans
                            one, not the footer's three — so it permutes like an
                            ordinary row and stays cell-for-cell under the
                            headings above it. */
-                        <Tr view={holdView} reviewScope={activeAxis === "basket" ? { basket: grp.key } : activeAxis === "assetClass" ? { category: grp.key } : undefined} className={`${TREE_ROW_DENSE.total} font-semibold`}
+                        <Tr view={holdView} reviewScope={activeAxis === "basket" ? { basket: grp.key } : activeAxis === "assetClass" ? { category: grp.key } : undefined} className={`${TREE_ROW_DENSE.section} cursor-pointer font-semibold`}
+                          {...bandAttrs}
                           data-category-total={grp.key}
                           // ── WHAT A LINE HELD AT COST TAKES OUT OF THE COVERAGE
                           //    (Stage 10dh) ─────────────────────────────────────
@@ -4454,9 +4668,7 @@ export function PortfolioMonitor() {
                           // A holding whose sale cash is unverified refuses the
                           // pooled return whatever the coverage (Stage 10hb).
                           data-cat-hpr-unverified={tot.fifo.hprUnavailableReason || tot.leftOut.length ? "" : undefined}>
-                          <td className="py-1.5 pl-[2.1rem] pr-2 text-slate-200">
-                            {label} <span className="font-normal text-slate-500">· total</span>
-                          </td>
+                          {bandCell()}
                           {/* NOT A BLANK CELL AND NOT A SUM. Adding 1,80,185
                               shares of one company to 3,416,657 units of a fund
                               produces a number with no unit, and it would sit in
@@ -4504,8 +4716,8 @@ export function PortfolioMonitor() {
                               : `${grp.dayPct >= 0 ? "+" : ""}${grp.dayPct.toFixed(2)}%`}
                           </td>
                           {/* `grp.subtotal` IS `tot.mv` — the heading prints the
-                              same field, so the two figures a reader sees three
-                              lines apart are one computation and cannot differ. */}
+                              same field, so the two figures a reader sees on one
+                              row are one computation and cannot differ. */}
                           <td className="px-2 py-1.5 text-right mono text-slate-100 whitespace-nowrap">
                             {fmtFromBase(grp.subtotal, { compact: true })}
                           </td>
@@ -4574,13 +4786,16 @@ export function PortfolioMonitor() {
                             const why = !onCost
                               ? `${label} is a category, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return on cost shows under HPR — tick Holding Period Return to see it.`
                               : retWhy;
+                            // The section's own index under its return (Stage 10lc).
+                            const sb = onCost && ret !== null ? pooledBench(grp.rows, portfolio.asOf) : null;
                             return (
-                              <td key={measure} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${!onCost || ret === null ? "text-slate-500" : changeColor(ret)}`}>
+                              <td key={measure} className={`px-2 py-1.5 text-right mono ${sb ? "" : "whitespace-nowrap"} ${!onCost || ret === null ? "text-slate-500" : changeColor(ret)}`}>
                                 {!onCost || ret === null
                                   ? <AbsentCell reason={why} />
-                                  : <span title={`${fifoBasisNote(tot.fifo, (n) => fmtFromBase(n, { compact: true }))}. Cumulative, not annualised — a category has no single purchase date to strike a CAGR or XIRR over.`}>
+                                  : <span className="whitespace-nowrap" title={`${fifoBasisNote(tot.fifo, (n) => fmtFromBase(n, { compact: true }))}. Cumulative, not annualised — a category has no single purchase date to strike a CAGR or XIRR over.`}>
                                       {fmtPct(ret, { sign: true })}
                                     </span>}
+                                {sb && ret !== null && <BenchLine hb={sb.hb} fig={sb.fig} holdingPct={ret} />}
                               </td>
                             );
                           })}
@@ -4738,6 +4953,8 @@ export function PortfolioMonitor() {
                         data-tree-parent={expandable ? (isOpen ? "open" : "closed") : undefined}
                         {...(contributions > 0 ? { "data-tranche-rows": String(contributions) } : {})}
                         data-bucket={r.bucket}
+                        onContextMenu={(e) => openMoveMenu(e, r)}
+                        {...(r.groupSource === "moved" ? { "data-moved-from": statedGroupKeyFor(groupAxis as GroupAxis, accIdx, rowPositionsOf(r)[0]) } : {})}
                         {...(r.measuredNA ? { "data-derived-only": "" } : {})}
                         {...(r.securityKey ? { "data-security-key": r.securityKey } : {})}
                         {...(r.venues ? { "data-venues": String(r.venues.length) } : {})}
@@ -4780,7 +4997,7 @@ export function PortfolioMonitor() {
                         <TreeNameCell depth={0} density="dense" className="min-w-[16rem]"
                           open={isOpen} onToggle={expandable ? () => toggleRow(r.key) : undefined}
                           toggleLabel={toggleLabelFor(r, isOpen)}
-                          title={m ? (
+                          title={<>{m ? (
                             <>
                               {/* THE NAME OPENS THE STRATEGY'S ONE PAGE. Several
                                   accounts run one strategy — Aristos for Ajay and for
@@ -4837,6 +5054,13 @@ export function PortfolioMonitor() {
                               */}
                             </>
                           )}
+                          {/* A ROW THE FAMILY MOVED SAYS SO, and the hover says
+                              from where (Stage 10lm) — the tab heading counts it. */}
+                          {r.groupSource === "moved" && (
+                            <>{" "}<span className="ml-1 align-middle" data-moved-pill
+                              title={`Moved here from ${groupLabelFor(groupAxis)(statedGroupKeyFor(groupAxis as GroupAxis, accIdx, rowPositionsOf(r)[0]))} on this dashboard. Right-click the row to move it again or back.`}>
+                              <Pill>moved</Pill></span></>
+                          )}</>}
                           /* THE ONE THING THAT IS NOT A DETAIL STAYS, and only
                              when it is true: under a filter a mandate row's
                              figures cover PART of the mandate, and a reader who
@@ -5147,10 +5371,11 @@ export function PortfolioMonitor() {
                               data-return-na={!res.shown && res.na ? "" : undefined}
                               data-return-valued-at={r.valuedAt ?? undefined}
                               data-return-note={res.shown ? res.note : undefined}
-                              /* A YTD FROM THE FIRST DATE WE HAVE (Stage 10jl): its window, and the
-                                 whole accounts pooled — the sweep re-solves those off the book. */
+                              /* THE ROW'S YEAR TO DATE (Stage 10jl, 10nv): its window, the day a row
+                                 bought this year was first at work, and the whole accounts pooled —
+                                 the sweep re-solves those off the book. */
                               {...(res.shown && res.from && yf?.shown ? {
-                                "data-ytd-from": yf.from, "data-ytd-to": yf.to,
+                                "data-ytd-from": yf.from, "data-ytd-to": yf.to, "data-ytd-bought": yf.bought,
                                 "data-ytd-accounts": yf.accounts.join(" "), "data-ytd-assumed": yf.assumed ? "true" : "false",
                               } : {})}
                               /* WHICH ACCOUNTS THE ROW IS, where it is whole accounts
@@ -5168,14 +5393,14 @@ export function PortfolioMonitor() {
                               /* A shown figure keeps itself on one line and lets the index line under it wrap below. */
                               className={`px-2 py-1.5 text-right mono ${res.shown ? "" : "whitespace-nowrap"}`}
                               title={r.live && !r.costNA ? mixedBasisNote : undefined}>
-                              {/* THE HOLDING'S FIGURE LEADS (Stage 10lb): a size up and semibold, the index line under it quieter. */}
+                              {/* THE HOLDING'S FIGURE LEADS (Stage 10oc): a size up and semibold, the index line under it quieter. */}
                               <span className={`whitespace-nowrap ${res.shown ? "text-[13px] leading-tight" : ""}`}>
                                 {offMeasure && <span className="ret-tag mr-0.5">{res.tag}</span>}
                                 {res.shown && res.assumed && <AssumedMark note={res.note} />}
                                 {value}
                               </span>
                               {/* THE ROW'S OWN INDEX, ON THE SAME MONEY AND MEASURE (Stage 10kd). */}
-                              {res.shown && <BenchLine hb={benchOf(r)} fig={benchFigure(benchOf(r), res, input, portfolio.asOf)} holdingPct={res.pct} />}
+                              {res.shown && <BenchLine hb={benchOf(r)} fig={benchFigure(benchOf(r), res, input, portfolio.asOf, rowPositionsOf(r))} holdingPct={res.pct} />}
                             </td>
                           );
                         })}
@@ -5261,11 +5486,11 @@ export function PortfolioMonitor() {
                   "₹0 ₹0 ₹0 0.0%", and a total of nothing is not a measured zero
                   (§2) — the line above already says why the table is empty. */}
               {rows.length > 0 && (
-              <tfoot className="sticky bottom-0 bg-ink-800">
+              <tfoot className="sticky bottom-0 z-10 bg-ink-800">
                 {/* `data-footer-total` is the handle the sweep adds the category
                     totals up against. Read by COLUMN rather than by cell: this
-                    row's label spans three of them and a category's spans one,
-                    so cell-for-cell the two rows are different measurements. */}
+                    row keeps its frozen label in Security and leaves the other
+                    leading columns blank, so DOM cell counts can differ. */}
                 {/*
                     THE FLOOR IS NAMED IN THE FOOTER'S OWN `title`, AND NOT AS A
                     PARAGRAPH UNDER THE TABLE.
@@ -5279,7 +5504,7 @@ export function PortfolioMonitor() {
                     the figure. Same treatment as the Weight cell's own `title`
                     one column over, which explains its denominator the same way.
                   */}
-                <TrFoot view={holdView} sourcePositions={rows.flatMap(r => r.trancheSet)} sourceColumns={['qty', 'mv']} className="px-2 py-1.5 text-slate-200"
+                <TrFoot view={holdView} labelInFirstColumn sourcePositions={rows.flatMap(r => r.trancheSet)} sourceColumns={['qty', 'mv']} className="px-2 py-1.5 text-slate-200"
                   data-footer-total=""
                   // The same two handles the category rows carry, for the same
                   // reason (Stage 10dh): the footer's own return is refused where
@@ -5538,13 +5763,15 @@ export function PortfolioMonitor() {
                         things. */
                     ...Object.fromEntries(returnMeasures.map((measure) => {
                       const onCost = measure === "auto" || measure === "absolute";
+                      // The table's own index under its total (Stage 10lc).
+                      const fb = onCost && totalRet !== null ? pooledBench(rows, portfolio.asOf) : null;
                       return [`ret:${measure}`, (
                         /* ONLY THE FIGURE ON THE FACE. Which holdings the book
                             return is struck over — the set line — rides the td
                             hover (beside the live-recalc note when the feed is
                             on) and the `data-footer-return-set-text` attribute,
                             so the check reads it without a visible sentence. */
-                        <td key={`ret:${measure}`} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${onCost ? changeColor(totalRet) : "text-slate-500"}`}
+                        <td key={`ret:${measure}`} className={`px-2 py-1.5 text-right mono ${fb ? "" : "whitespace-nowrap"} ${onCost ? changeColor(totalRet) : "text-slate-500"}`}
                           title={onCost && totalRet !== null
                             // THE BASIS, EXITS INCLUDED (Stage 10fz): `fifoBasisNote` names
                             // what the exited holdings and mandates put in the figure.
@@ -5561,8 +5788,9 @@ export function PortfolioMonitor() {
                                 : footStruckLines === 0 && footCover.atCost.lines > 0
                                 ? `every holding in this table that reports a cost is ${AT_COST_RETURN}`
                                 : "no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row")} />
-                            : feedLive ? fmtPct(totalRet, { sign: true })
+                            : feedLive ? <span className="whitespace-nowrap">{fmtPct(totalRet, { sign: true })}</span>
                             : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}${totFifoCosted.income !== null ? ` + ${money(totFifoCosted.income, true)} dividends` : ""}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${exitedNote(totFifoCosted, money) ? ` · ${exitedNote(totFifoCosted, money)}` : ""}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}${totFifo.atCost ? ` · ${atCostNote(totFifo, money)}` : ""}${leftOutNote ? ` · ${leftOutNote}` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
+                          {fb && totalRet !== null && <BenchLine hb={fb.hb} fig={fb.fig} holdingPct={totalRet} />}
                         </td>
                       )];
                     })),
@@ -6951,7 +7179,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                     <SortHeader key={measure} col={`ret:${measure}`} view={dv} pad="px-3 py-2.5"
                       title={TXN_MEASURE_HINT[measure]}
                       note={meta?.note} noteTitle={meta?.title}>
-                      {measure === "auto" ? "Return" : def.tag}
+                      {measure === "auto" ? "Return" : def.heading}
                     </SortHeader>
                   );
                 })}

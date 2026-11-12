@@ -10,7 +10,7 @@ import { symbolFor, symbolForKey } from "@/lib/quotes";
 import { useWatchlist } from "@/lib/usePriceAlerts";
 import type { Position } from "@/lib/types";
 import {
-  fingerprint, researchLevelsFrom, statusFor, syncSummary, type Derived, type SyncStatus, type SyncSummary,
+  fingerprint, researchLevelsFrom, statusFor, type Derived, type SyncStatus,
 } from "@/lib/researchLevels";
 import {
   researchBusy, researchSnapshot, subscribeResearch, syncResearchLevels, type ResearchState,
@@ -51,13 +51,6 @@ export function useResearchStatus(securityKey: string): SyncStatus {
   const d = useResearchDerived();
   const s = useResearchState();
   return useMemo(() => statusFor(securityKey, d, s, s.attempt), [securityKey, d, s]);
-}
-
-/** Every saved entry's standing, counted. */
-export function useResearchSummary(): SyncSummary {
-  const d = useResearchDerived();
-  const s = useResearchState();
-  return useMemo(() => syncSummary(d, s, s.attempt), [d, s]);
 }
 
 /**

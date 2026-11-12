@@ -33,13 +33,19 @@ assert.ok(!fs.existsSync(remote), 'Preserve prior evidence; use another scratch 
 execFileSync('git', ['init', '--bare', remote], { stdio: 'ignore' });
 const control = path.join(output, 'control.json'); writeControl(control, { dispatches: 0 });
 const read = file => JSON.parse(fs.readFileSync(file));
-const manifest = read('public/audit/manifest.json'), all = manifest.map(d => read(`public/audit/${d.docKey}/document.json`));
-const key = 'bandhan-mutual-fund-8652064-2026-10-26-holdings', source = all.find(d => d.docKey === key); assert.ok(source);
+const key = 'bandhan-mutual-fund-8652064-2026-10-26-holdings';
+// The drop must bring a genuinely new account, so the rehearsal's archive leaves out
+// the folio's other statements (its 14 Oct statement arrived in Stage 10kl). Every
+// comparison below is struck on this same set.
+const archived = read('public/audit/manifest.json'), folio = archived.find(d => d.docKey === key); assert.ok(folio);
+const sibling = d => d.docKey !== key && d.provider === folio.provider && d.accountNo === folio.accountNo;
+const manifest = archived.filter(d => !sibling(d)), all = manifest.map(d => read(`public/audit/${d.docKey}/document.json`));
+const source = all.find(d => d.docKey === key); assert.ok(source);
 const bytes = fs.readFileSync(source.sourcePath), baseline = all.filter(d => d.docKey !== key), refs = prepareBookReferences();
 const values = docs => canonicalBookValues(buildCanonicalBook(docs.filter(d => d.status !== 'failed'), docs.length, refs));
 const fullBook = values(all), initialBook = values(baseline), instantiate = await prepareRuntimeModel();
 const readModels = read('src/data/readModels.json'), fileIndex = read('public/statement-files/index.json');
-delete fileIndex.files[key];
+delete fileIndex.files[key]; for (const d of archived.filter(sibling)) delete fileIndex.files[d.docKey];
 const initial = { schemaVersion: 1, readerRevision: readModels.readerRevision, revision: digest(initialBook).slice(0, 20),
   baseCommit: 'a'.repeat(40), archiveRevision: archiveRevision(baseline), book: initialBook, documents: baseline,
   manifest: manifest.filter(d => d.docKey !== key), records: {}, originals: fileIndex.files, missingOriginals: fileIndex.missing,
@@ -103,18 +109,29 @@ try {
   await context.addCookies([{ name: PREVIEW_COOKIE, value: keyCookieValue(await previewKeyBytes(process.env.GLOW_DASHBOARD_PASSWORD)), domain: '127.0.0.1', path: '/api/statement-previews/', httpOnly: true }]);
   await context.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
   const page = await context.newPage(); page.on('pageerror', e => errors.push(e.stack));
+  let documentLoads = 0;
+  page.on('request', request => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) documentLoads++; });
   const position = fullBook.BOOK_POSITIONS.find(p => p.statementRecord?.document === key); assert.ok(position);
   await page.goto(baseURL + '/stock/' + position.securityKey); await page.locator('main h1').waitFor();
   assert.equal(await page.locator(`tr[data-account-row="${position.accountId}"]`).count(), 0, 'This statement is genuinely absent before the drop');
   await page.goto(baseURL + '/statements'); await page.locator('[data-upload-state="ready"]').waitFor(); await page.bringToFront();
   await page.getByPlaceholder('Filter by provider or file type…').fill('Bandhan');
+  const beforePublicationLoads = documentLoads;
   const start = performance.now();
   await page.locator('[data-upload-drop]').evaluate((element, base64) => {
     const data = new DataTransfer(); data.items.add(new File([Uint8Array.from(atob(base64), c => c.charCodeAt(0))], 'new-protected-statement.pdf', { type: 'application/pdf' }));
     element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data }));
   }, bytes.toString('base64'));
+  const update = page.getByRole('button', { name: 'Load latest dashboard', exact: true });
+  await update.waitFor({ timeout: 30_000 });
+  await page.locator('tr[data-upload-status="update-ready"]').waitFor();
+  assert.equal(await page.locator('tr[data-upload-status="update-ready"] [role="progressbar"]').count(), 0, 'A completed upload is no longer animated as pending');
+  assert.equal(documentLoads, beforePublicationLoads, 'A completed statement never reloads the open dashboard');
+  assert.equal(await page.getByPlaceholder('Filter by provider or file type…').inputValue(), 'Bandhan');
+  await update.click();
   await page.locator('tr[data-upload-status="in-library"]').waitFor({ timeout: 30_000 });
-  assert.equal(await page.getByPlaceholder('Filter by provider or file type…').inputValue(), 'Bandhan', 'Search state survives the automatic publication refresh');
+  assert.equal(documentLoads, beforePublicationLoads + 1, 'The reader explicitly loads the complete new statement version once');
+  assert.equal(await page.getByPlaceholder('Filter by provider or file type…').inputValue(), 'Bandhan', 'Publication discovery keeps the current search in place');
   const readyMs = performance.now() - start; publishedAt = processor.status().revision;
   fs.writeFileSync(path.join(output, 'upload-timing.json'), JSON.stringify({ readyMs, queue: 'simulated immediate start', publishedAt }));
   await page.screenshot({ path: path.join(output, 'ready.png'), fullPage: true });

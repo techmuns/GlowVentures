@@ -8,18 +8,12 @@ import { Card } from "@/components/Card";
 import { AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { wholeFamilyOnly } from "@/lib/memberScope";
-import { WHOLE_BOOK_NAV, WHOLE_BOOK_STARTS, BOOK_NAV_UNITS } from "@/lib/bookNavBook";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS } from "@/data/glowData";
-import { shareCandidates } from "@/lib/depositoryShares";
 import { useMarketHistories } from "@/lib/useMarketReturns";
 import { assumedHoldingBook } from "@/lib/assumedHoldingBook";
-import { assumedBookNav, dematHoldings, ASSUMED_KEY, type DematHolding } from "@/lib/assumedBookNav";
 import { holdingAssumptionText } from "@/lib/assumedHoldingReturns";
-import { bookNavStats, type BookNavUnitCoverage } from "@/lib/bookNav";
-import { accountIndex } from "@/lib/accounts";
-import { ownerDisplayName } from "@/lib/owners";
-import { navIndexSeries } from "@/lib/navSeries";
-import { changeSince, lineReturn } from "@/lib/benchCompare";
+import { availableCardReturns, statementReturnInputs } from "@/lib/availableCardReturns";
+import { allDebt, currentHoldings } from "@/lib/analytics";
+import { periodLine } from "@/lib/periodLine";
 import { fetchPriceHistory, toPoints } from "@/lib/prices";
 import type { Point } from "@/lib/series";
 import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason, type BenchmarkKey } from "@/lib/benchmarks";
@@ -68,6 +62,11 @@ import { chartTooltipStyle, chartTooltipLabelStyle } from "@/lib/chartTheme";
 //    on the plot are the line ends.
 //  · The "In the return: …" fold under the chart is gone, at the family's ask of
 //    2 Nov 2026 (Stage 10jz). What the line covers stays on the book pill's hover.
+//  · *"how can our book be 6.1% when all the above things are showing 12%"* —
+//    the family, 4 Nov 2026 (Stage 10le). The time-weighted index above is
+//    retired from this card: the book's line is the return card's own selection,
+//    ended on each day (`periodLine`), and each benchmark the same dated money in
+//    the index. Its periods are the cards'; its last point is the card.
 
 /** The benchmarks drawn until the reader changes them. */
 const DEFAULT_SHOWN: readonly BenchmarkKey[] = ["nifty-500"];
@@ -77,8 +76,6 @@ const GRID_COLOR = "var(--chart-grid, #2b2668)";
 const AXIS_COLOR = "var(--chart-axis, #6b6880)";
 
 const DAY = 86400000;
-/** A valuation older than this at the line's end is named as carried, not measured. */
-const STALE_DAYS = 90;
 const ts = (d: string) => Date.parse(`${d}T00:00:00Z`);
 const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
 
@@ -123,40 +120,54 @@ type BenchLoad =
   | { state: "mismatch"; reportedName: string | null };
 
 const pctText = (v: number | null | undefined) => fmtPct(v, { sign: true, decimals: 1 });
-/** The reason most demat holdings give for not being valued at published closes — the one that names what to fix. */
-const topReason = (holdings: readonly DematHolding[]): string | null => {
-  const count = new Map<string, number>();
-  for (const h of holdings) if (h.reason && !h.pending) count.set(h.reason, (count.get(h.reason) ?? 0) + 1);
-  return [...count.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-};
 /** `holdingAssumptionText`, for the several owners one line carries. */
 const assumptionText = (owners: readonly string[]) => owners.length <= 1
   ? holdingAssumptionText(owners[0])
   : `No sale appears in the records we have. We assume ${owners.slice(0, -1).join(", ")} and ${owners.at(-1)} still hold these shares.`;
-const sumOf = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+
+/**
+ * The periods the line can cover — the return cards' own three (Stage 10la).
+ * Over the available history the line is cumulative and the card a rate a year;
+ * a few small holdings reach back to 2023 and most of the money joins in 2026,
+ * so its early points rest on little money, and the hover says so.
+ */
+const PERIOD_PICKS = [
+  { key: "fytd", label: "This financial year", card: "Return this financial year" },
+  { key: "ytd", label: "This calendar year", card: "Return this calendar year" },
+  { key: "history", label: "Available history", card: "Return over available history" },
+] as const;
+type PeriodPick = (typeof PERIOD_PICKS)[number]["key"];
+/** An index's close on or before a day, from its own points. */
+const levelOf = (points: readonly Point[]) => (d: string): number | null => {
+  let lo = 0, hi = points.length - 1, at = -1;
+  while (lo <= hi) { const mid = (lo + hi) >> 1; if (points[mid].t <= d) { at = mid; lo = mid + 1; } else hi = mid - 1; }
+  return at < 0 ? null : points[at].v;
+};
+const lastCloseOn = (points: readonly Point[], d: string) => [...points].reverse().find((p) => p.t <= d)?.t ?? null;
 
 export function NavVsIndex() {
-  const { portfolio, statementPortfolio, fmtFromBase, scope, corporateActions, corporateActionsStatus } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, fmtFromBase, scope, corporateActions } = usePortfolio();
   /**
-   * ── THE DEMATS' LISTED SHARES AT EACH DAY'S PUBLISHED CLOSE (Stage 10iz) ──
-   * *"mark listed demat holdings at historical prices in the book line."* Their
-   * public histories come through the loader the Returns tab shares, and the
-   * family's assumed-continued-ownership rule decides each holding
-   * (`assumedBookNav`). The line switches to that series only once every demat
-   * history has answered and the split and dividend records are in: a line that
-   * moved as each price landed would move under the reader.
+   * ── THE CARD'S OWN LINE (Stage 10la) ──────────────────────────────────────
+   * *"how can our book be 6.1% when all the above things are showing 12% …
+   * everything should match"* — the family, 4 Nov 2026. The book line is the
+   * return card's own selection for the period picked (`availableCardReturns`,
+   * the same rows, histories and records Morning CIO's cards read), measured on
+   * each day as if the period ended there (`periodLine`): its last point is the
+   * card. Each benchmark is that same dated money put into the index.
    */
-  const dematRows = useMemo(() => dematHoldings(BOOK_ACCOUNTS, BOOK_POSITIONS, shareCandidates()), []);
-  const dematFeed = useMarketHistories(dematRows);
-  const assumed = useMemo(() => corporateActionsStatus === "loading" ? null : assumedBookNav({
-    units: BOOK_NAV_UNITS, series: WHOLE_BOOK_NAV, accounts: BOOK_ACCOUNTS, holdings: dematRows,
-    book: assumedHoldingBook({ actions: corporateActions, instruments: dematFeed.instruments, histories: dematFeed.histories }),
-  }), [dematRows, corporateActions, corporateActionsStatus, dematFeed.instruments, dematFeed.histories]);
-  const useAssumed = !!assumed && assumed.pending === 0 && assumed.assumedCount > 0;
-  const series = useAssumed && assumed ? assumed.series : WHOLE_BOOK_NAV;
-  const seriesStarts = useAssumed && assumed ? assumed.starts : WHOLE_BOOK_STARTS;
-  /** The comparison's first day — one of the dates the book can be compared from; the first by default. */
+  const today = useMemo(() => new Date(), []);
+  const holdingsNow = useMemo(() => currentHoldings(consolidated), [consolidated]);
+  const feed = useMarketHistories(holdingsNow);
+  const assumptionBook = useMemo(() => assumedHoldingBook({ actions: corporateActions, instruments: feed.instruments, histories: feed.histories }),
+    [corporateActions, feed.instruments, feed.histories]);
+  const cards = useMemo(() => {
+    const stmt = statementPortfolio ?? portfolio;
+    return stmt ? availableCardReturns(stmt, consolidated, statementReturnInputs(stmt), today, assumptionBook) : null;
+  }, [statementPortfolio, portfolio, consolidated, today, assumptionBook]);
+  /** The period the line covers — one of the return cards'; the financial year by default. */
   const [startPick, setStart] = useNavigationValue<string | null>("nav-start", null, nullableStringNavigation);
+  const period: PeriodPick = PERIOD_PICKS.some((x) => x.key === startPick) ? startPick as PeriodPick : "fytd";
   /** The benchmarks on the chart: `DEFAULT_SHOWN` until a chip changes them; an empty list is the book alone. */
   const [shownList, setShown] = useNavigationValue<string[] | null>("nav-shown", null, nullableStringsNavigation);
   const shownKeys = useMemo(() => new Set<string>(shownList ?? DEFAULT_SHOWN), [shownList]);
@@ -172,7 +183,6 @@ export function NavVsIndex() {
   }, [pickerOpen]);
   const [loads, setLoads] = useState<Record<BenchmarkKey, BenchLoad>>(
     () => Object.fromEntries(BENCHMARKS.map((b) => [b.key, { state: "loading" }])) as Record<BenchmarkKey, BenchLoad>);
-
   useEffect(() => {
     let alive = true;
     // EVERY BENCHMARK THROUGH `/api/prices`, each checked by the name the
@@ -193,38 +203,29 @@ export function NavVsIndex() {
   }, []);
 
   const model = useMemo(() => {
-    if (!portfolio) return null;
-    // A MEMBER SCOPE EMPTIES `navHistory`; the card says whole family only below.
-    const book = navIndexSeries(portfolio.navHistory.length ? series.points : []);
-    const cov = series.coverage;
-    const stats = bookNavStats(cov);
-    const dates = book.map((p) => p.date);
-    const bookFrom = dates[0] ?? null;
-    const bookTo = dates[dates.length - 1] ?? null;
-    if (!bookFrom || !bookTo || book.length < 2) return { book, cov, stats, dates, bookFrom, bookTo, ready: false as const, stale: [] as BookNavUnitCoverage[] };
-
-    // A STORED START THE BOOK NO LONGER OFFERS OPENS ON ITS FIRST DAY.
-    const starts = seriesStarts.filter((d) => d >= bookFrom && d < bookTo);
-    const from = startPick && starts.includes(startPick) ? startPick : starts[0] ?? bookFrom;
-    const to = bookTo;
-
-    const bookLine = changeSince(book.map((p) => ({ t: p.date, v: p.index })), from, to);
-    const bookRet = bookLine.length > 1 ? lineReturn(bookLine) : null;
-    // A dot only where a STATEMENT valued something — the series also has a
-    // point on every date capital moved, and on every close a demat is valued
-    // at, and a dot on each would read as statements.
+    const card = cards?.[period];
+    if (!portfolio || !card) return null;
+    const windows = card.total.units.flatMap((u) => (u.window ? [u.window] : []));
+    const to = card.selection.end ?? null;
+    const from = card.selection.start ?? windows.map((w) => w.openDate).sort()[0] ?? null;
+    if (!from || !to || !windows.length || card.total.returnPct == null || from >= to) return { card, ready: false as const };
+    const debt = allDebt(card.total.units.flatMap((u) => u.positions));
+    const type = card.selection.type;
+    const bookLine = periodLine(windows, type, from, to, { debt }).filter((p) => p.pct != null).map((p) => ({ t: p.date, v: p.pct as number }));
+    const bookRet = card.total.measured?.working?.periodPct ?? bookLine.at(-1)?.v ?? null;
+    // A dot only where a STATEMENT valued something, as before.
     const valuedOn = new Set(portfolio.navHistory.filter((p) => (p.accountsOnDate ?? 0) > 0).map((p) => p.date));
-
     const benches = BENCHMARKS.map((b) => {
       const load = loads[b.key];
-      const line = load.state === "ok" ? changeSince(load.points, from, to) : [];
-      return { b, load, line, ret: line.length > 1 ? lineReturn(line) : null, lastClose: line.at(-1)?.t ?? null };
+      if (load.state !== "ok") return { b, load, line: [] as { t: string; v: number }[], ret: null as number | null, lastClose: null as string | null };
+      const level = levelOf(load.points);
+      // The same dated money put into the index: its line only where it is drawn, its figure for every one.
+      const line = shownKeys.has(b.key)
+        ? periodLine(windows, type, from, to, { debt, level }).filter((p) => p.pct != null).map((p) => ({ t: p.date, v: p.pct as number }))
+        : [];
+      const ret = line.length ? line.at(-1)!.v : periodLine(windows, type, to, to, { debt, level }).at(-1)?.pct ?? null;
+      return { b, load, line, ret, lastClose: lastCloseOn(load.points, to) };
     });
-
-    // ONE ROW PER DATE ANY LINE HAS, each line's own value where it has one
-    // (the line is drawn through its own points) and its latest value on or
-    // before the date for the tooltip, so a hover on a weekend still reads
-    // every line.
     const drawn = [
       { key: "book", line: bookLine },
       ...benches.filter((x) => shownKeys.has(x.b.key)).map((x) => ({ key: x.b.key as string, line: x.line })),
@@ -243,49 +244,13 @@ export function NavVsIndex() {
       }
       return row;
     });
-    // HOW FRESH THE BOOK'S LINE IS: every investment is held at its latest
-    // valuation until the next, so value last valued long before the line's end
-    // is carried, not measured, over that stretch.
-    // THE ROW EACH LINE ENDS ON, for the dot of its colour there.
     const ends: Record<string, number> = Object.fromEntries(drawn.map((d) =>
       [d.key, rows.reduce((last, r, i) => (r[d.key] != null ? i : last), -1)]));
-    const staleCut = iso(ts(to) - STALE_DAYS * DAY);
-    const stale = stats.inReturn
-      .filter((u) => u.lastValued != null && u.lastValued < staleCut && (u.endValue ?? 0) > 0)
-      .sort((a, b) => (b.endValue ?? 0) - (a.endValue ?? 0));
     const spanDays = (ts(to) - ts(from)) / DAY;
     const { ticks, fmt: tickFmt } = axisTicks(allDates, spanDays);
-    return { book, cov, stats, dates, bookFrom, bookTo, ready: true as const, from, to, bookLine, bookRet, benches, rows, ends, ticks, tickFmt, stale, starts };
-  }, [portfolio, loads, startPick, shownKeys, series, seriesStarts]);
-
+    return { card, ready: true as const, from, to, bookLine, bookRet, benches, rows, ends, ticks, tickFmt };
+  }, [portfolio, cards, period, loads, shownKeys]);
   if (!model || !portfolio) return null;
-  const { stats, cov } = model;
-  // NAMED FROM THE REGISTRY, NOT FROM THE ID (§2).
-  const accts = accountIndex(portfolio.accounts);
-  const nameOf = (id: string) => {
-    const a = accts.get(id);
-    if (!a) return id;
-    const owner = a.ownerId ? ownerDisplayName(a.ownerId) : a.owner;
-    return `${a.provider}${owner ? ` · ${owner}` : ""}`;
-  };
-  /**
-   * AN INVESTMENT IS AN ACCOUNT, OR ONE LINE OF THE REVIEW'S HOLDER BUCKETS —
-   * named by its line there, because "Consolidated review · Ajay" is six
-   * separate companies (Stage 10dh).
-   */
-  const stmtBook = statementPortfolio ?? portfolio;
-  const lineName = new Map(stmtBook.positions.map((p) => [`${p.accountId}|${p.securityKey}`, p.security]));
-  const unitName = (u: { accountId: string; securityKey: string | null; key: string }) => {
-    const a = accts.get(u.accountId);
-    const line = u.securityKey ? lineName.get(`${u.accountId}|${u.securityKey}`) ?? u.securityKey : null;
-    if (a?.reviewHolder && line) return `${line} · ${a.ownerId ? ownerDisplayName(a.ownerId) : a.owner}`;
-    // Two folios of one fund under one member read alike without their number,
-    // and a demat's shares at published closes read apart from its other holdings.
-    return `${nameOf(u.accountId)}${a?.accountNo ? ` · ${a.accountNo}` : ""}${u.key.endsWith(ASSUMED_KEY) ? " · listed shares at published closes" : ""}`;
-  };
-  const stale = model.stale;
-  const staleValue = sumOf(stale.map((u) => u.endValue ?? 0));
-
   // THE SERIES IS THE WHOLE FAMILY'S, AND A MEMBER SCOPE SAYS SO (Stage 10di).
   if (scope.selected) {
     return (
@@ -298,86 +263,43 @@ export function NavVsIndex() {
     );
   }
   if (!model.ready) {
+    const label = PERIOD_PICKS.find((x) => x.key === period)!.card;
     return (
       <Card className="flex flex-col" title="Our book vs benchmarks">
         <AbsentSection
-          what="Nothing in this book is valued on two dates"
-          needs={`A NAV series needs the book valued at two or more dates. ${stats.holding.length} investment(s) hold value and none of them carries a second dated valuation or a dated payment inside the window, so there is nothing to chain. The next monthly reissue of any statement already in the archive starts one.`} />
+          what={`No return to draw for ${label.toLowerCase()}`}
+          needs={`${label} has no measured record yet, so there is no line to draw. Its card names what each investment still needs.`} />
       </Card>
     );
   }
 
-  const { from, to, bookRet, benches, rows, ends, ticks, tickFmt, starts } = model;
+  const { from, to, bookRet, benches, rows, ends, ticks, tickFmt, card } = model;
   const c = (n: number | null | undefined) => fmtFromBase(n, { compact: true });
-  const lastNav = model.book[model.book.length - 1].nav;
-  const statementBook = stmtBook.totalValue;
-  const liveDiffers = Math.abs(portfolio.totalValue - statementBook) > 1;
-
+  const pick = PERIOD_PICKS.find((x) => x.key === period)!;
+  const annual = card.total.measured?.basis === "annual";
+  const cov = card.coverage;
+  const allValue = cov.publicValue + cov.privateTotalValue;
+  const share = (v: number) => (allValue > 0 ? Math.min(100, Math.round((v / allValue) * 100)) : 0);
+  const assumedOwners = [...new Set(card.total.units.flatMap((u) => (u.assumption ? [u.assumption.owner] : [])))];
   /**
-   * ── WHAT THE BOOK'S LINE COVERS, ON ITS CHIP ─────────────────────────────
-   * Available data, as on Morning CIO's return cards: what is in it, what joined
-   * late, what is left out and why, and how old the oldest valuations it carries
-   * are — each counted off the series' own units, never typed.
+   * ── WHAT THE BOOK'S LINE IS, ON ITS CHIP ──────────────────────────────────
+   * The card's own words: what each investment counts from, what is measured
+   * and what is held at its last value, private investments among it (Stage
+   * 10nu) — counted off the card's own units, never typed.
    */
-  const joinedDates = [...new Set(stats.joinedLater.map((u) => u.returnFrom as string))].sort();
-  // Over the window's own points, so the hover neither widens nor narrows the line it describes.
-  const inWindow = series.points.filter((p) => p.date > from && p.date <= to);
-  const unprovenMove = sumOf(inWindow.map((p) => p.unreportedFlowValue ?? 0));
-  const moneyIn = sumOf(inWindow.map((p) => Math.max(p.levelFlowIn ?? 0, 0)));
-  const moneyOut = sumOf(inWindow.map((p) => Math.min(p.levelFlowIn ?? 0, 0)));
-  /**
-   * THE ASSUMPTION, NAMED BY OWNER (the family's rule, 22 Oct 2026): what was
-   * valued at published closes, from when, whose shares they are, and what
-   * stays at its statement value — or, before the series switches, why not yet.
-   */
-  const dematStatus = dematRows.length === 0 ? "" : useAssumed && assumed
-    ? (() => {
-      const kept = assumed.holdings.filter((h) => h.status === "statement");
-      const out = assumed.holdings.filter((h) => h.status === "left-out");
-      const others = [
-        kept.length ? `${kept.length} stay at their statement values (${c(sumOf(kept.map((h) => h.value)))})` : "",
-        out.length ? `${out.length} no statement values ${out.length === 1 ? "is" : "are"} in neither line` : "",
-      ].filter(Boolean).join(" and ");
-      return `Listed demat shares: ${assumed.assumedCount} holdings, ${c(assumed.assumedValue)} on ${fmtDate(to)}, are valued at each day's published close from their statement dates, with splits applied and gross dividends counted on their ex-dates. ${assumptionText(assumed.owners)}${others ? ` Of the other demat holdings, ${others}.` : ""}`;
-    })()
-    : `Listed demat shares are at their statement values: ${
-      corporateActionsStatus === "loading" ? "the split and dividend records are still loading."
-        : assumed && assumed.pending > 0 ? `${assumed.pending} published price histories are still loading.`
-          : `no holding could be valued at published closes. ${topReason(assumed?.holdings ?? []) ?? "No published price history could be checked for them."}`}`;
-  // A HISTORY THAT FAILED IS NAMED ON THE LINE IT LEAVES AT ITS STATEMENT VALUE; opening the page again asks again.
-  const failedHistories = assumed?.holdings.filter((h) => h.retry).length ?? 0;
-  const dematSentence = [dematStatus, failedHistories > 0
-    ? `${failedHistories} demat price histories could not load; their shares stay at their statement values until a reload fetches them.` : ""].filter(Boolean).join(" ");
   const bookHover = [
-    "Our book: the change in value net of money added or taken out (time-weighted), from the statements — a deposit is never counted as a gain.",
-    moneyIn > 0 || moneyOut < 0
-      ? `Over the period ${c(moneyIn)} went in and ${c(-moneyOut)} came out; neither is counted as gain or loss.`
-      : "",
-    `Available data: ${stats.inReturn.length} of the ${stats.holding.length} investments holding value, ${c(stats.inReturnValue)} of the ${c(lastNav)} NAV on ${fmtDate(cov.to ?? to)}${liveDiffers ? ` (today's prices value the holdings at ${c(portfolio.totalValue)})` : ""}.`,
-    stats.atCost.length
-      ? `Left out: ${stats.atCost.length} private lines held at cost, ${c(stats.atCostValue)} — cost is not a valuation.`
-      : "",
-    stats.joinedLater.length
-      ? `${stats.joinedLater.length} joined on their first valuation (${joinedDates.map(fmtDate).join(", ")}) and count only from then.`
-      : "",
-    "Each investment is held at its latest valuation until the next, and a holding two accounts both report is counted once.",
-    staleValue > 0
-      ? `${c(staleValue)} of it was last valued more than three months before ${fmtDate(to)} (${stale.slice(0, 3).map((u) => `${unitName(u)}, ${u.lastValued ? fmtDate(u.lastValued) : "—"}`).join("; ")}${stale.length > 3 ? `; ${stale.length - 3} more` : ""}).`
-      : "",
-    unprovenMove > 0
-      ? `Not proven to be performance: ${c(unprovenMove)} of the move, where no record settles the capital between two valuations (${stats.unproven.map(unitName).join(", ")}).`
-      : "",
-    dematSentence,
-    bookRet != null ? `${fmtDate(from)} → ${fmtDate(to)}: ${pctText(bookRet)}, not annualised.` : "",
+    `Our book: ${pick.card.toLowerCase()}, the card's own figure on every day — had the period ended that day. Each investment counts from its first value on record in the period, that value treated as money arriving that day; money in and out counts on its date and is never a gain.`,
+    `Covers ${share(cov.measuredValue + cov.heldValue + cov.privateCoveredValue)}% of investments: ${c(cov.measuredValue + cov.privateCoveredValue - cov.privateHeldValue)} measured, ${c(cov.heldValue + cov.privateHeldValue)} held at its last value (0% until its next value), ${c(cov.privateHeldValue)} of it private${cov.waitingValue > 5e5 ? `, ${c(cov.waitingValue)} waiting for prices` : ""}.`,
+    "Each investment is held at its latest valuation until the next: a statement, a published close or a printed NAV. Nothing is interpolated between them.",
+    assumedOwners.length ? assumptionText(assumedOwners) : "",
+    annual ? `Over the available history the line is the return so far, money-weighted: where only a little money was invested, as before ${fmtDate(card.starts.find((s) => s.date && s.close > 0.5 * cov.measuredValue)?.date ?? to)}, a small move reads large.` : "",
+    bookRet != null ? `${fmtDate(from)} → ${fmtDate(to)}: ${pctText(bookRet)}${annual ? `, ${pctText(card.total.returnPct)} a year` : ", not annualised"} — the card's figure.` : "",
   ].filter(Boolean).join("\n\n");
-
   const basisHover = [
-    `Every line is its change since ${fmtDate(from)}, to ${fmtDate(to)} — the book's latest valuation — so every figure covers the same dates. Not annualised.`,
-    `A comparison starts only on a day the book was valued: a later start would carry gains from before it into the period${starts.length > 1 ? "" : `, and today ${fmtDate(from)} is the one such day`}.`,
-    `${stats.inReturn.length} of the ${stats.holding.length} investments holding value in the return; ${model.dates.length} dated points, ${model.bookFrom} → ${model.bookTo}.`,
-    "Benchmarks are price indices (dividends are not in them), from the live price service, each checked by the name the service reports. Pick any of them from the Benchmarks list.",
+    `Every line is its return from ${fmtDate(from)} to each day, to ${fmtDate(to)}, on the same dated money, so every figure covers the same dates and the last point of the book's line is the card.`,
+    "Each benchmark: every rupee behind the book's figure put into the index on the day it moved, and the same formula struck. A price index: dividends are not in it.",
+    "Benchmarks come from the live price service, each checked by the name the service reports. Pick any of them from the Benchmarks list.",
   ].join("\n\n");
-
   const toggle = (key: string) => setShown((cur) => {
     const set = new Set<string>(cur ?? DEFAULT_SHOWN);
     if (set.has(key)) set.delete(key); else set.add(key);
@@ -414,9 +336,10 @@ export function NavVsIndex() {
         </span>
       }
       right={
-        <div className="flex flex-wrap items-center justify-end gap-2" data-testid="nav-range" data-nav-starts={starts.join(" ")}>
+        <div className="flex flex-wrap items-center justify-end gap-2" data-testid="nav-range" data-nav-starts={PERIOD_PICKS.map((x) => x.key).join(" ")}>
           <span className="text-[11px] text-slate-500 tabular" data-testid="nav-window">
-            {fmtDate(from)} → {fmtDate(to)}
+            {/* The card's own dates: the first value it opens on and the last it measures. */}
+            {fmtDate(card.from ?? from)} → {fmtDate(card.to ?? to)}
           </span>
         </div>
       }>
@@ -464,13 +387,13 @@ export function NavVsIndex() {
           </div>
           <span className={`${pillBase} cursor-help border-ink-600 text-slate-300`}
             data-nav-line="book" data-nav-ret={bookRet ?? ""} data-testid="nav-book-chip" title={bookHover}
-            data-nav-basis={useAssumed ? "assumed" : "statement"}
-            data-nav-assumed-count={useAssumed && assumed ? assumed.assumedCount : 0}
-            data-nav-assumed-value={useAssumed && assumed ? assumed.assumedValue : 0}>
+            data-nav-period={period} data-nav-card-return={card.total.returnPct ?? ""} data-nav-card-gain={card.total.gain ?? ""}
+            data-nav-assumed-count={card.total.units.filter((u) => u.assumption).length}>
             <LineDot color={BOOK_COLOR} />
             <span className="font-medium">Our book</span>
             <span className={`tabular font-semibold ${changeColor(bookRet)}`}>{pctText(bookRet)}</span>
-            <span className="text-slate-500">available data{useAssumed && " · assumed holdings"}</span>
+            {annual && <span className="tabular text-slate-400">{pctText(card.total.returnPct)} a year</span>}
+            <span className="text-slate-500">{pick.label.toLowerCase()}</span>
           </span>
           {benches.filter((x) => shownKeys.has(x.b.key)).map(({ b, load, ret, lastClose }) => (
             <span key={b.key} data-nav-selected={b.key} title={benchHover(b, load, ret, lastClose)}
@@ -534,19 +457,17 @@ export function NavVsIndex() {
           </ResponsiveContainer>
         </div>
 
-        {starts.length > 1 && (
-          <div role="tablist" aria-label="Compare from" className="mt-3 flex flex-wrap items-center gap-1 border-t border-ink-700 pt-3">
-            {[...starts].reverse().map((d) => (
-              <button key={d} type="button" role="tab" aria-selected={from === d} data-start={d}
-                onClick={() => setStart(d)} title={`${fmtDate(d)} → ${fmtDate(to)}`}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  from === d ? "bg-ink-700/60 text-slate-100" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
-                }`}>
-                Since {fmtDate(d)}
-              </button>
-            ))}
-          </div>
-        )}
+        <div role="tablist" aria-label="Period" className="mt-3 flex flex-wrap items-center gap-1 border-t border-ink-700 pt-3" data-nav-periods>
+          {PERIOD_PICKS.map((x) => (
+            <button key={x.key} type="button" role="tab" aria-selected={period === x.key} data-start={x.key}
+              onClick={() => setStart(x.key)} title={`The line of the "${x.card}" card`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                period === x.key ? "bg-ink-700/60 text-slate-100" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
+              }`}>
+              {x.label}
+            </button>
+          ))}
+        </div>
       </div>
 
     </Card>

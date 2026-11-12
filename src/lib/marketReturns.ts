@@ -3,11 +3,17 @@ import type { ReturnType } from './periodReturns';
 import { allDebt, mayAnnualise } from './analytics';
 export type MarketHistory = { ok: true; version?: number; symbol: string; isin: string | null; name: string; source: string; basis: 'adjusted-close' | 'nav'; first: string; last: string; t: string[]; v: number[];
   /** Split-adjusted closes (NAV for funds), distinct from the total-return index v. */
-  c?: (number | null)[]; splits?: { date: string; factor: number }[] };
+  c?: (number | null)[]; splits?: { date: string; factor: number }[];
+  /** A fund's AMFI scheme category, as its NAV source publishes it; null for a share. */
+  category?: string | null };
 export type MarketResult = MarketHistory | { ok: false; reason: string };
 export type MarketInstrument = { key: string; query: string };
-export type MarketUnit = { position: Position; periodPct: number; from: string; to: string; history: MarketHistory };
-export type MarketGap = { position: Position; reason: string; code?: 'value' | 'unmatched' | 'source' | 'dates' | 'start' | 'end' | 'shared'; first?: string; last?: string; dates?: string[] };
+export type MarketUnit = { position: Position; periodPct: number; from: string; to: string; history?: MarketHistory;
+  /** Where the return comes from, when it is not a price history: the record the period selection reads (Stage 10lg). */
+  source?: string;
+  /** Held at its last value: a 0% that sets none of the dates measured (Stage 10lh). */
+  held?: true };
+export type MarketGap = { position: Position; reason: string; code?: 'value' | 'unmatched' | 'source' | 'dates' | 'start' | 'end' | 'shared' | 'mixed'; first?: string; last?: string; dates?: string[] };
 export const marketHoldingKey = (p: Pick<Position, 'accountId' | 'securityKey'>) => `${p.accountId}|${p.securityKey}`;
 const day = (s: string) => Date.parse(`${s}T00:00:00Z`);
 /** Never substitute a price after the selected date or a stale previous month. */

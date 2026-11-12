@@ -1,5 +1,5 @@
 import { ExportableTable } from "@/components/ExportableTable";
-import { useEffect, useMemo } from "react";
+import { type ReactNode, useEffect, useMemo } from "react";
 import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote, CalendarDays } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -29,8 +29,6 @@ import {
   BASKET_ORDER, FAMILY_CLASS_ORDER, UNCLASSIFIED, UNCLASSIFIED_WHY,
 } from "@/lib/familyTaxonomy";
 import { useViewParam } from "@/components/ViewToggle";
-import { AllAlerts } from "@/components/AllAlerts";
-import { usePriceAlerts } from "@/lib/usePriceAlerts";
 import { drilldownHref, AXIS_SCOPE, TOP_NAMES, bookReturnOnCost, costedSetLabel, SIDE_NOTE } from "@/lib/drilldown";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 
@@ -42,7 +40,7 @@ import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum, fmtDate } from "
 import { type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { fifoTotals, investedWithCapital, type FifoTotals } from "@/lib/fifo";
 import { type PrivateSheet, stockHref } from "@/lib/auditFormulas";
-import { countedOnceNote, commitmentTotals } from "@/lib/privateMarket";
+import { countedOnceNote, commitmentTotals, privateScope, fundRollup } from "@/lib/privateMarket";
 import { privateBookFolios, figuresOf, distributionLeftOutNote } from "@/lib/privateBook";
 import { concentrationNames } from "@/lib/concentration";
 import { BOOK_CORPORATE_ACTIONS } from "@/data/glowData";
@@ -56,10 +54,13 @@ import { SectorComposition } from "@/pages/SectorComposition";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { INVESTOR_DEFAULT_TILES } from "@/lib/investorSummary";
 
-import { availableCardReturns, statementReturnInputs, type AvailableCardReturn } from "@/lib/availableCardReturns";
+import { availableCardReturns, statementReturnInputs, type AvailableCardReturn, type GainCardReturn } from "@/lib/availableCardReturns";
 import { useMarketHistories } from "@/lib/useMarketReturns";
 import { assumedHoldingBook } from "@/lib/assumedHoldingBook";
 import { HoldingAssumptionInfo } from "@/components/HoldingAssumptionInfo";
+import { CioReportExport } from '@/components/CioReportExport';
+import { cioReportSnapshot } from '@/lib/cioReport';
+import { cioReportReturns } from '@/lib/cioReportReturns';
 
 // Morning CIO — the whole book in one screen: invested / current / return per
 // bucket, plus capital deployment, concentration and book performance. Every
@@ -207,20 +208,17 @@ const CIO_TABS = [
    * and Direct Equity only, scoped to whichever family members the TopBar
    * selector holds — so "show these members' sector allocation" needs no wiring
    * here beyond mounting the panel. It sits SECOND so the family's three
-   * arranged panels and All alerts keep their order after it.
+   * arranged panels keep their order after it.
    */
   { key: "sectors", label: "Sector Composition", title: "What the book is exposed to by sector — every issuer their statements report and their funds disclose (Consolidated), or the shares the family bought themselves (Direct Equity), for the members currently selected" },
   { key: "allocation", label: "Allocation & Risk", title: "How the book is split, what is still to be called, and where it is concentrated" },
   { key: "nav", label: "Our Book vs Benchmark", title: "The book's own dated valuation series against every benchmark, net of capital in and out" },
   /**
-   * ...AND A FOURTH, THE FAMILY'S OWN PRICE ALERTS (Stage 10cq). *"in morning
-   * CIO can you make an ALL alerts tab where … whenever the alerts which have
-   * been set are triggered they show simply."* It goes LAST so the three the
-   * family arranged keep their places and the default stays the movers panel;
-   * what makes it findable from any of them is the count badge on the tab
-   * itself, which says how many have fired without the tab being open.
+   * NO ALL ALERTS TAB (Stage 10mk). *"Also remove this all alerts"* — the
+   * family, 10 Nov 2026. It was the last tab (Stage 10cq) and is gone with its
+   * panel; `?tab=alerts` lands on the default panel. A price alert is still set
+   * and shown on its company's page, in the Price alerts boxes.
    */
-  { key: "alerts", label: "All alerts", title: "Every price alert you have set, and which have been reached" },
 ] as const;
 // Fresh visits show the investor's value, gain, yearly rate and FYTD return.
 // Keep the storage key: an explicitly customised layout remains the reader's.
@@ -233,32 +231,9 @@ const sectionColor = (axis: GroupAxis, key: string, i: number) => {
   return map[key] ?? CHART_COLORS[i % CHART_COLORS.length];
 };
 
-export function MorningCIO() {
-  const { consolidated, portfolio, statementPortfolio, enteredPortfolio, fmtFromBase, convertFromBase, displayCurrency, corporateActions, scope: memberScope } = usePortfolio();
-  /**
-   * WHICH AXIS THE ALLOCATION CARD IS GROUPED ON. In the URL (`?alloc=`) like
-   * every other view in this app, and for the reason the Portfolio Monitor's
-   * own axis is: the family asked for three ways to read one book, and "send me
-   * the basket view" has to be a link rather than an instruction. The default
-   * stays param-free and stays CATEGORY, which is the table they already read.
-   */
-  const [allocAxis, setAllocAxis] = useViewParam(GROUP_VIEWS, {}, "alloc");
-  // WHICH PANEL IS ON SCREEN. See `CIO_TABS` above for what the three are and
-  // why the choice lives in the URL.
-  /**
-   * `?tab=attribution` WAS A TAB OF ITS OWN for one release (Stage 10ez); the
-   * family put the attribution inside Returns (Stage 10fd), so a link to it
-   * lands there rather than on the movers panel.
-   */
-  const [tab, setTab] = useViewParam(CIO_TABS, { attribution: "returns" }, "tab");
-  // THE ALERTS, CHECKED ON EVERY PANEL — not only the alerts panel — because
-  // the tab's badge is how a reader on any of the other panels learns something
-  // has fired. A HOOK, so it sits up here with the others, above the early return.
-  const alerts = usePriceAlerts();
-  // A HOOK, so it is declared here rather than beside the rows it arranges:
-  // this component returns early on an unloaded book, and a hook after that is
-  // a different bug from the one being fixed.
-  const allocView = useTableView("cio-allocation", ALLOC_COLS, { reviewKind: "category" });
+function useCioModel() {
+  const context = usePortfolio();
+  const { consolidated, portfolio, statementPortfolio, enteredPortfolio, convertFromBase, corporateActions } = context;
   // One "today" for every XIRR on the page, so every figure closes on the same
   // date against the same valuation.
   const today = useMemo(() => new Date(), []);
@@ -380,6 +355,16 @@ export function MorningCIO() {
     const commitments = cap.onPage;
     const counted = cap.counting.counted;
     const distFig = figuresOf(pbook.folios, true);
+    /**
+     * THE PRIVATE LINE ON THE RETURN CARDS (Stage 10la) is Private Market's own
+     * headline, struck by the same three calls that page makes
+     * (`privateScope` → `fundRollup`): its value, and its unrealised gain since
+     * investment over the valued holdings. Private investments sit outside the
+     * period returns — one value on one date, or held at cost, gives no change.
+     */
+    const privScope = privateScope(pbook.current, (enteredPortfolio ?? statementPortfolio ?? portfolio).accounts);
+    const privFunds = fundRollup(privScope.dedupedRows, pbook.accIdx, privScope.rows);
+    const privateLine = { value: privFunds.reduce((t, f) => t + f.mv, 0), pnl: sumOrNull(privFunds.map((f) => f.pnl)) };
     const enteredCapital = pbook.folios.filter(f => !f.capital && f.counted && f.position?.enteredCapital);
     const fundDeploy = fundTotals([...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]);
     /**
@@ -592,10 +577,11 @@ export function MorningCIO() {
        * test are two chances for one screen to show a return the other refuses
        * for the category a reader is comparing them on.
        */
-      const costCoversRow = costCoversSet(mv, withoutCostMV);
       // FIFO over the row's own holdings — realised on units sold stays in the
       // return, and a whole mandate is struck on its capital (`fifoTotals`).
       const fifo = fifoTotals(rows, { accounts: portfolio.accounts, universe: p });
+      // A whole mandate's uncosted line is no bar: its capital bridge needs no line cost (Stage 10mh).
+      const costCoversRow = costCoversSet(mv, withoutCostMV - fifo.wholeUncostedValue);
       return {
         count: rows.length, cost, mv, pnl,
         vacuous: cf.vacuous,
@@ -750,6 +736,8 @@ export function MorningCIO() {
        * what was.
        */
       derivedMV: number;
+      /** …and the value the family moved into it on the Portfolio Monitor (Stage 10lm). */
+      movedMV: number;
       /**
        * TRUE where the family's review places this row nowhere — the
        * unclassified section, and any fund-of-funds row on a family axis. The
@@ -780,7 +768,7 @@ export function MorningCIO() {
       // is no such thing as a drawdown with no call behind it.
       withoutCost: 0, withoutCostMV: 0,
       // The family's review classifies products and names none of these.
-      ruleMV: 0, cashRuleMV: 0, derivedMV: 0, unplaced: false,
+      ruleMV: 0, cashRuleMV: 0, derivedMV: 0, movedMV: 0, unplaced: false,
     });
     // A bucket of POSITIONS — no dated capital-movement flows at bucket level,
     // so no money-weighted rate; its total return on cost is what the row shows.
@@ -799,10 +787,11 @@ export function MorningCIO() {
       const ruleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "rule").map((x) => x.marketValue));
       const cashRuleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "cash-rule").map((x) => x.marketValue));
       const derivedMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "derived").map((x) => x.marketValue));
+      const movedMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "moved").map((x) => x.marketValue));
       return {
         key, color: sectionColor(axis, key, i), count: g.count, invested: g.invested, current: g.mv,
         investedFifo: g.fifo, vacuous: g.vacuous,
-        fromPositions: true, ruleMV, cashRuleMV, derivedMV, unplaced: key === UNCLASSIFIED,
+        fromPositions: true, ruleMV, cashRuleMV, derivedMV, movedMV, unplaced: key === UNCLASSIFIED,
         retPct: g.ret, distributed: 0, xirr: null, xirrBasis: "ledger", xirrNote: null, sheet: null,
         withoutCost: g.withoutCost, withoutCostMV: g.withoutCostMV, costedMV: g.costedMV,
       };
@@ -836,7 +825,7 @@ export function MorningCIO() {
      * honest the day one does.
      */
     const fundModelBuckets: Bucket[] = [
-      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", investedFifo: null, withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, cashRuleMV: 0, derivedMV: 0, unplaced: false },
+      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", investedFifo: null, withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, cashRuleMV: 0, derivedMV: 0, movedMV: 0, unplaced: false },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
       fundBucket("Unlisted Companies", "#10b981", pm.unlistedCompanies.length, unlF, unlX, "pre-ipo"),
@@ -936,7 +925,7 @@ export function MorningCIO() {
       capitalCounting: cap.counting,
       // The private book's folios, for the Distributions tile to name what it
       // counts once as the page it opens names it (B-10).
-      privateFolios: pbook.folios,
+      privateFolios: pbook.folios, privateLine,
       distReported: distFig.distributedOf,
       distAccounts: distFig.distributionAccounts,
       // No capital account and no letter reports one, and no fund-of-funds row
@@ -953,6 +942,44 @@ export function MorningCIO() {
       navSeries, navFirst,
     };
   }, [portfolio, statementPortfolio, enteredPortfolio, convertFromBase, today, assumptionBook]);
+
+  const reportSnapshot = (period: Parameters<typeof cioReportSnapshot>[0]['period']) => {
+    if (!portfolio || !model) throw new Error('The portfolio is still loading.');
+    return cioReportSnapshot({ portfolio, positions: model.p, summary: model, period,
+      selected: cioReportReturns({ statement: statementPortfolio ?? portfolio, current: model.p, period, assumptions: assumptionBook }),
+      scope: context.scope.label, currency: context.displayCurrency, convert: convertFromBase });
+  };
+  return { ...context, model, reportSnapshot };
+}
+
+/** Both entry points export the same scoped book, figures and return assumptions. */
+export function PortfolioReportExport() {
+  const { portfolio, model, reportSnapshot } = useCioModel();
+  return portfolio && model ? <CioReportExport snapshot={reportSnapshot} /> : null;
+}
+
+export function MorningCIO() {
+  const { portfolio, statementPortfolio, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope, model, reportSnapshot } = useCioModel();
+  /**
+   * WHICH AXIS THE ALLOCATION CARD IS GROUPED ON. In the URL (`?alloc=`) like
+   * every other view in this app, and for the reason the Portfolio Monitor's
+   * own axis is: the family asked for three ways to read one book, and "send me
+   * the basket view" has to be a link rather than an instruction. The default
+   * stays param-free and stays CATEGORY, which is the table they already read.
+   */
+  const [allocAxis, setAllocAxis] = useViewParam(GROUP_VIEWS, {}, "alloc");
+  // WHICH PANEL IS ON SCREEN. See `CIO_TABS` above for what the three are and
+  // why the choice lives in the URL.
+  /**
+   * `?tab=attribution` WAS A TAB OF ITS OWN for one release (Stage 10ez); the
+   * family put the attribution inside Returns (Stage 10fd), so a link to it
+   * lands there rather than on the movers panel.
+   */
+  const [tab, setTab] = useViewParam(CIO_TABS, { attribution: "returns", alerts: "movers" }, "tab");
+  // A HOOK, so it is declared here rather than beside the rows it arranges:
+  // this component returns early on an unloaded book, and a hook after that is
+  // a different bug from the one being fixed.
+  const allocView = useTableView("cio-allocation", ALLOC_COLS, { reviewKind: "category" });
 
   if (!portfolio || !model) return null;
   const m = model;
@@ -999,6 +1026,7 @@ export function MorningCIO() {
   const ruleMV = sections.reduce((a, b) => a + b.ruleMV, 0);
   const cashRuleMV = sections.reduce((a, b) => a + b.cashRuleMV, 0);
   const derivedMV = sections.reduce((a, b) => a + b.derivedMV, 0);
+  const movedMV = sections.reduce((a, b) => a + b.movedMV, 0);
   // Fund commitments exist or they don't. `committed === 0` across zero funds is
   // the absence of a commitment schedule, not a schedule that commits nothing.
   // A commitment schedule exists if ANY source reports one — a drawdown AIF's
@@ -1057,18 +1085,115 @@ export function MorningCIO() {
   const coverageInfo = (r: AvailableCardReturn, field: 'gain' | 'return') => <>
     <CardBenchmarkInfo card={r} accounts={returnAccounts} money={money} />
     <AvailableReturnCoverage line={r.total} selection={r.selection} accounts={returnAccounts}
-      money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} /></>;
+      money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} starts={r.starts} /></>;
   const coveredCaption = (r: AvailableCardReturn) => <span data-card-coverage
     data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
     data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
     data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
     data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}>
     {r.total.units.length ? 'Available data' : 'No usable return records'} · {r.coveredHoldings} of {r.totalHoldings} holdings<br />
-    {money(r.coveredValue)} covered · {r.coveredAccounts} accounts <HoldingAssumptionInfo units={r.total.units} /></span>;
+    {money(r.coveredValue)} covered · {r.coveredAccounts} {r.coveredAccounts === 1 ? 'account' : 'accounts'} <HoldingAssumptionInfo units={r.total.units} showLabel={tab !== 'returns'} /></span>;
+  /**
+   * THE THREE RETURN CARDS' CAPTION — ONE LINE (the family, 5 Nov 2026: "more
+   * minimal … I rather see number of records covered over total records"). The
+   * holdings the figure covers over every holding — private ones held at their
+   * latest valuation since Stage 10nu — the date it is measured to (the standing
+   * rule), and what qualifies the figure: assumed, or not annualised (a short
+   * history, Stage 10hk). By value, the split, the index and the private line are in the ⓘ.
+   */
+  const periodCaption = (r: AvailableCardReturn, measure?: string) => {
+    const c = r.coverage, covered = c.measuredPublicHoldings + c.heldPublicHoldings + c.privateCoveredHoldings, holdings = c.publicHoldings + c.privateHoldings;
+    const assumed = r.total.units.filter(u => u.assumption).length;
+    return <div data-card-coverage data-card-period data-prose-ok="the holdings the return covers and the date it is measured to, on the card at the family's request (5 Nov 2026)"
+      data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
+      data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
+      data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
+      data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}
+      data-card-public={c.publicValue} data-card-measured={c.measuredValue} data-card-held={c.heldValue} data-card-waiting={c.waitingValue}
+      data-card-public-covered={c.measuredPublicHoldings + c.heldPublicHoldings} data-card-public-holdings={c.publicHoldings}
+      data-card-private-covered={c.privateCoveredHoldings} data-card-private-holdings={c.privateHoldings}
+      data-card-measured-holdings={c.measuredHoldings} data-card-measured-accounts={c.measuredAccounts} data-card-held-count={c.heldUnits.length}
+      className="whitespace-normal leading-snug">
+      <span className="block text-[11px] text-slate-300"><span className="tabular font-semibold text-slate-100">{fmtNum(covered)}</span> of <span className="tabular">{fmtNum(holdings)}</span> holdings</span>
+      <span className="block text-[10px] text-slate-500">{r.to ? `to ${fmtDate(r.to)}` : 'No verified dates'}{measure && ` · ${measure}`}
+        {/* The owner-specific explanation is behind the card's one info button. */}
+        {assumed > 0 && <span data-holding-assumption data-assumed-count={assumed}>{tab !== 'returns' && ' · assumed'}</span>}</span>
+    </div>;
+  };
+  /**
+   * WHAT LEFT THE CARD'S FACE, AT THE TOP OF ITS ⓘ (5 Nov 2026): the period, the
+   * gain, the index on the same money, coverage by count and by value, and the
+   * private investments, held at their latest valuation (Stage 10nu). The full working follows it.
+   */
+  const periodSummary = (r: AvailableCardReturn, period: string, periodTitle?: string) => {
+    const c = r.coverage, all = c.publicValue + c.privateTotalValue, pl = m.privateLine;
+    const coveredValue = c.measuredValue + c.heldValue + c.privateCoveredValue;
+    const share = (v: number) => (all > 0 ? Math.min(100, Math.round((v / all) * 100)) : 0);
+    const row = (term: string, desc: ReactNode, attrs: Record<string, string> = {}) => <div className="contents" {...attrs}>
+      <dt className="text-slate-400">{term}</dt><dd className="text-right tabular text-slate-100">{desc}</dd></div>;
+    return <dl data-card-summary className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-lg bg-ink-900 p-3">
+      {row('Period', <span title={periodTitle}>{period} · {measuredDates(r)}</span>)}
+      {r.total.gain != null && row('Gain', <span className={changeColor(r.total.gain)}>{money(r.total.gain, true)}</span>)}
+      {row('Benchmark', benchLine(r))}
+      {row('Holdings', <>{fmtNum(c.measuredPublicHoldings + c.heldPublicHoldings + c.privateCoveredHoldings)} of {fmtNum(c.publicHoldings + c.privateHoldings)}
+        <span className="block text-xs text-slate-400">{fmtNum(c.measuredPublicHoldings)} measured · {fmtNum(c.heldPublicHoldings)} public and {fmtNum(c.privateCoveredHoldings)} private held at last value</span></>)}
+      {row('Value', <>{money(coveredValue)} of {money(all)} · {share(coveredValue)}%
+        <span className="block text-xs text-slate-400">{share(c.measuredValue)}% measured · {share(c.heldValue + c.privateCoveredValue)}% held{c.waitingValue > 5e5 && <> · {money(c.waitingValue)} waiting for prices</>}</span></>)}
+      {row('Private', <span data-card-private-line title="A private investment has no published price. Each is in this return at its latest valuation from the company or fund, 0% until a new valuation arrives; the gain since investment is Private Market's.">
+        {money(c.privateCoveredValue)} in this return
+        <span className="block text-xs text-slate-400">{c.privateHeldValue === c.privateCoveredValue ? 'Held at latest valuation' : `${money(c.privateHeldValue)} held at latest valuation`}{pl.pnl != null && <> · {money(pl.pnl, true)} since investment</>}</span></span>,
+        { 'data-card-private': String(c.privateCoveredValue), 'data-card-private-gain': String(pl.pnl ?? '') })}
+    </dl>;
+  };
+  /**
+   * THE GAIN CARD'S FIGURE CARRIES ITS COVERAGE HANDLES (Stage 10mn). The
+   * caption that held them left the face (the family, 10 Nov 2026: "Remove this
+   * from this tile … so they dont take so much of space"); the counts and
+   * values a check strikes the card on ride on the figure they describe.
+   */
+  const gainFigure = (r: GainCardReturn, gain: number) => {
+    const c = r.gainCoverage;
+    return <span data-card-coverage data-card-since className={changeColor(gain)}
+      data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
+      data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
+      data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
+      data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}
+      data-card-all={c.totalValue} data-card-by-cost={c.sinceInvestmentValue} data-card-from-first={c.sinceFirstValue} data-card-held={c.heldValue}
+      data-card-from-first-count={c.sinceFirstCount} data-card-held-count={c.heldCount}>{money(gain, true)}</span>;
+  };
+  /**
+   * ...AND ITS COVERAGE IS THE TOP OF ITS ⓘ (Stage 10mn), as the return cards'
+   * is: every investment by value (Stage 10la; the family, 4 Nov 2026: "make
+   * coverage 100%") — from its purchase cost, from its first value on record,
+   * or held at its value — each share said apart, keyed to the bar.
+   */
+  const gainSummary = (r: GainCardReturn) => {
+    const c = r.gainCoverage, all = c.totalValue, covered = c.sinceInvestmentValue + c.sinceFirstValue + c.heldValue;
+    const share = (v: number) => (all > 0 ? Math.min(100, Math.round((v / all) * 100)) : 0), width = (v: number) => `${all > 0 ? Math.min(100, (v / all) * 100) : 0}%`;
+    const parts = [
+      { key: 'cost', term: 'Since investment', v: c.sinceInvestmentValue, tone: 'bg-champagne-500' },
+      { key: 'first', term: 'From first value', v: c.sinceFirstValue, tone: 'bg-champagne-500 opacity-50' },
+      // A neutral, not `bg-ink-600`: light mode paints that the same gold as the first share.
+      { key: 'held', term: 'Held at value', v: c.heldValue, tone: 'bg-slate-500' },
+    ];
+    return <div data-card-gain-summary className="rounded-lg bg-ink-900 p-3">
+      <p className="flex flex-wrap items-baseline justify-between gap-x-3 text-slate-100">
+        <span>Covers <span className="tabular font-semibold">{share(covered)}%</span> of investments</span>
+        <span className="tabular text-slate-400">{money(covered)} of {money(all)}</span></p>
+      <span className="mt-2 flex h-1.5 w-full overflow-hidden rounded-full bg-ink-700" aria-hidden>
+        {parts.map((p) => <span key={p.key} className={`h-full ${p.tone}`} style={{ width: width(p.v) }} />)}
+      </span>
+      <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+        {parts.map((p) => <div key={p.key} className="contents" data-card-gain-part={p.key}>
+          <dt className="flex items-center gap-2 text-slate-400"><span className={`h-2 w-2 shrink-0 rounded-full ${p.tone}`} aria-hidden />{p.term}</dt>
+          <dd className="text-right tabular text-slate-100">{share(p.v)}% · {money(p.v)}</dd></div>)}
+      </dl>
+    </div>;
+  };
   const history = m.available.history;
   const historyAnnual = history.total.measured?.basis === 'annual';
   const historyLabel = historyAnnual ? 'Annualised return' : 'Return over available history';
-  const historyValue = <>{pct1(history.total.returnPct)}{historyAnnual && history.total.returnPct != null && <span className="text-sm"> p.a.</span>}</>;
+  const historyValue = <>{pct1(history.total.returnPct)}{historyAnnual && history.total.returnPct != null && <span className="ml-1 text-[15px] font-semibold text-slate-400">p.a.</span>}</>;
   const measuredDates = (r: AvailableCardReturn) => r.from && r.to ? `${fmtDate(r.from)} → ${fmtDate(r.to)}` : 'No verified dates';
   const returnsHref = (period: string) => `/cio?tab=returns&rp=${period}&rtype=${period === 'inception' ? 'absolute' : 'xirr'}`;
   const since = m.available.gain;
@@ -1117,30 +1242,40 @@ export function MorningCIO() {
     {
       id: "gain", label: "Gain / loss", icon: <TrendingUp className="h-4 w-4" />,
       href: returnsHref('inception'),
-      hrefTitle: 'Recorded gain since investment for the available data. Open Return attribution for the same verified holdings. The info button lists the holdings left out and the records they need.',
-      value: since.total.gain == null ? <AbsentValue /> : <span className={changeColor(since.total.gain)}>{money(since.total.gain, true)}</span>,
+      hrefTitle: 'Gain since investment over every investment: from its purchase cost where a record dates it, otherwise from its first value on record, and anything neither measures held at its value with no gain. The info button names each one.',
+      value: since.total.gain == null ? <AbsentValue /> : gainFigure(since, since.total.gain),
       second: since.total.returnPct == null ? undefined : <>Return on capital {pct1(since.total.returnPct)}{benchLine(since)}</>,
-      calculation: coverageInfo(since, 'gain'),
-      sub: since.total.gain == null ? absentWhy('No verified purchase cost and value') : coveredCaption(since),
+      calculation: since.total.gain == null ? coverageInfo(since, 'gain') : <>{gainSummary(since)}{coverageInfo(since, 'gain')}</>,
+      sub: since.total.gain == null ? absentWhy('No verified purchase cost and value') : undefined,
     },
     {
       id: "annualised", label: historyLabel, icon: <TrendingUp className="h-4 w-4" />,
       href: returnsHref('fytd'),
-      hrefTitle: `Return over available verified records, ${history.from ?? 'unknown'} to ${history.to ?? 'unknown'}. Each account uses its own recorded dates. The info button lists every included account and missing record. Open Returns to choose a common period.`,
-      value: historyValue,
-      calculation: coverageInfo(history, 'return'),
-      second: <span className="whitespace-normal">{measuredDates(history)} · {historyAnnual ? 'yearly rate' : 'not annualised'}{benchLine(history)}</span>,
-      sub: coveredCaption(history),
+      hrefTitle: `Return over available verified records, ${history.from ?? 'unknown'} to ${history.to ?? 'unknown'}${historyAnnual ? ', a yearly rate' : ', not annualised'}. Each account uses its own recorded dates. The info button lists every included account and missing record. Open Returns to choose a common period.`,
+      value: historyValue, large: true,
+      calculation: <>{periodSummary(history, historyAnnual ? 'Yearly rate' : 'Not annualised')}{coverageInfo(history, 'return')}</>,
+      sub: periodCaption(history, historyAnnual ? undefined : 'not annualised'),
     },
     ...(['fytd', 'ytd'] as const).map((period): TileMetric => {
       const r = m.available[period];
+      /**
+       * YTD FROM THE FIRST DATE WE HAVE (Stage 10kq). No statement values most
+       * holdings on 1 January, so the year opens on each part's first dated
+       * value — and the card says so rather than print a full year's dates.
+       */
+      const partYear = period === 'ytd' && !r.fullPeriod && r.total.units.length > 0;
+      const startsTitle = `Measured from, by value now: ${r.starts.map((s) => `${s.date ? fmtDate(s.date) : 'bought this year, from nil'} ${money(s.close)}`).join(' · ')}. Not annualised.`;
       return {
         id: period, label: period === 'fytd' ? 'Return this financial year' : 'Return this calendar year',
+        // On the tile, the Returns tab's own pill name — the period the tile opens (Stage 10mn).
+        short: period === 'fytd' ? 'FYTD return' : 'YTD return',
         icon: <CalendarDays className="h-4 w-4" />, href: returnsHref(period),
-        hrefTitle: `Return for available data from ${r.selection.start} through ${r.to ?? 'the latest verified statement'}. The info button explains coverage and missing records. Open the same period in Return attribution.`,
-        value: pct1(r.total.returnPct), calculation: coverageInfo(r, 'return'),
-        second: <span className="whitespace-normal">{period.toUpperCase()} · {measuredDates(r)}{r.total.gain != null && <> · {money(r.total.gain, true)}</>}{benchLine(r)}</span>,
-        sub: coveredCaption(r),
+        hrefTitle: partYear
+          ? `Year to date for available data through ${r.to ?? 'the latest verified statement'}. No statement values most holdings on 1 January, so each account and holding is measured from its first dated value this year, as the Portfolio Monitor's YTD is. The info button lists each one's dates and the records still missing. Open the same period in Return attribution.`
+          : `Return for available data from ${r.selection.start} through ${r.to ?? 'the latest verified statement'}. The info button explains coverage and missing records. Open the same period in Return attribution.`,
+        value: pct1(r.total.returnPct), large: true,
+        calculation: <>{periodSummary(r, partYear ? 'YTD from first dated value' : period.toUpperCase(), partYear ? startsTitle : undefined)}{coverageInfo(r, 'return')}</>,
+        sub: periodCaption(r),
       };
     }),
     {
@@ -1397,6 +1532,8 @@ export function MorningCIO() {
              page offers must not be struck on three labels a redesign is free
              to reword. Same contract `data-movers-scope` and `data-alloc-axis`
              already carry on this page. */
+          <div className="flex flex-wrap items-center gap-2">
+          <CioReportExport snapshot={reportSnapshot} />
           <div role="tablist" aria-label="Which part of the briefing to show" data-cio-tabs
             className="inline-flex items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
             {CIO_TABS.map((v) => (
@@ -1409,17 +1546,9 @@ export function MorningCIO() {
                     : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
                 }`}>
                 {v.label}
-                {/* HOW MANY ALERTS HAVE FIRED, on the tab itself — shown only
-                    when some have, so a quiet day adds nothing to the header. */}
-                {v.key === "alerts" && alerts.counts.reached > 0 && (
-                  <span data-cio-alert-badge={alerts.counts.reached}
-                    title={`${alerts.counts.reached} of your price alerts ${alerts.counts.reached === 1 ? "has" : "have"} been reached`}
-                    className="ml-1.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full border border-loss/40 bg-loss/15 px-1 text-[10px] font-semibold leading-4 text-loss">
-                    {alerts.counts.reached}
-                  </span>
-                )}
               </button>
             ))}
+          </div>
           </div>
         } />
 
@@ -1454,7 +1583,7 @@ export function MorningCIO() {
           `min-h-0` is what makes `flex-1` shrink rather than grow the column
           past the window — without it the panel is as tall as its content and
           the page scrolls again, which is the whole of what was asked. */}
-      <div className={`mt-5 min-h-0 overflow-y-auto ${tab === "returns" ? "flex-none lg:flex-1" : "flex-1"}`} data-cio-panel={tab} data-navigation-scroll="morningcio-1">
+      <div className={`mt-4 min-h-0 overflow-y-auto ${tab === "returns" || tab === "movers" ? "flex-none lg:flex-1" : "flex-1"}`} data-cio-panel={tab} data-navigation-scroll="morningcio-1">
 
         {/* DAILY MOVERS — the first thing the family asked for, and the first
             card under the strip for that reason. It is the only figure on this
@@ -1619,7 +1748,7 @@ export function MorningCIO() {
                       <SortHeader col="invested" view={allocView} pad="px-2 py-2">Invested</SortHeader>
                       <SortHeader col="current" view={allocView} pad="px-2 py-2">Current</SortHeader>
                       <SortHeader col="return" view={allocView} pad="px-2 py-2" className="whitespace-nowrap"
-                        title={`The holding-period return to date on the capital each ${GROUP_NOUN[allocAxis].one} deployed, FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the cost of the units held plus the cost of the units sold — and a whole PMS mandate on its capital since inception. Cumulative, not annualised. It includes the dividends and distributions the holdings paid, gross of TDS, over the window each holding's income record covers — which need not run from purchase — and a whole mandate's are inside its capital.`}>Return (HPR)</SortHeader>
+                        title={`The holding-period return to date on the capital each ${GROUP_NOUN[allocAxis].one} deployed, FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the cost of the units held plus the cost of the units sold — and a whole PMS mandate on its capital since inception. Cumulative, not annualised. It includes the dividends and distributions the holdings paid, gross of TDS, over the window each holding's income record covers — which need not run from purchase — and a whole mandate's are inside its capital.`}>Return (HPR - Absolute)</SortHeader>
                       <SortHeader col="weight" view={allocView} pad="px-2 py-2">Weight</SortHeader>
                     </Tr>
                   </thead>
@@ -1780,16 +1909,17 @@ export function MorningCIO() {
                         value their direct-stock rule placed are the figures; how
                         the review states it is the hover. */}
                     <p data-testid="alloc-taxonomy-source"
-                      data-derived-mv={derivedMV}
+                      data-derived-mv={derivedMV} data-moved-mv={movedMV}
                       title={`Grouped by the family's own ${GROUP_NOUN[allocAxis].one}, as their consolidated review states it, product by product. No statement in the archive carries ${GROUP_NOUN[allocAxis].one === "basket" ? "a basket" : "one"}.${derivedMV > 0
                         ? ` ${money(derivedMV)} of the ${money(m.totalValue)} above is filed by what the instrument is, where the review does not name the product: a company share is equity exposure under any taxonomy, and cash is cash.`
-                        : " Nothing here is inferred from what the instrument is."}${ruleMV > 0 ? ` ${money(ruleMV)} of the ${money(m.totalValue)} above is placed by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.` : ""}`}>
+                        : " Nothing here is inferred from what the instrument is."}${ruleMV > 0 ? ` ${money(ruleMV)} of the ${money(m.totalValue)} above is placed by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.` : ""}${movedMV > 0 ? ` ${money(movedMV)} of it the family moved to another ${GROUP_NOUN[allocAxis].one} on the Portfolio Monitor, which overrides the review for those holdings.` : ""}`}>
                       The family&rsquo;s own {GROUP_NOUN[allocAxis].many}
                       {ruleMV > 0 && <> · {money(ruleMV)} by their direct-stock rule</>}
                       {/* WHAT WAS INFERRED, NAMED (CK-C2): the hover said nothing
                           was, over ₹11.2 Cr filed by instrument type. A figure,
                           so on the face beside the rule's. */}
                       {derivedMV > 0 && <> · {money(derivedMV)} by what the instrument is</>}
+                      {movedMV > 0 && <> · {money(movedMV)} moved on the Portfolio Monitor</>}
                     </p>
                     {/* THE OTHER RULE, NAMED AS ITSELF. Their review files its
                         arbitrage funds as Debt; the family have said arbitrage is
@@ -1966,14 +2096,6 @@ export function MorningCIO() {
             `check:pages` asserts the card STAYS gone AND that the figures it
             carried are still reachable — a removal is verified by asserting it
             happened, never by deleting the test alongside the feature. */}
-        {/* ALL ALERTS — the family's own price levels, checked against the
-            live price (a fund's against its published NAV). See `AllAlerts`. */}
-        {tab === "alerts" && (
-          <div data-cio-section="alerts">
-            <AllAlerts />
-          </div>
-        )}
-
         {tab === "nav" && (
           <div data-cio-section="nav">
 

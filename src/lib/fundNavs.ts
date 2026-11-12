@@ -388,7 +388,9 @@ export function depositoryCashHoldings(
  *      break, never a price move;
  *   6. the row's own account carries no position of that ISIN already;
  *   7. no account of the SAME OWNER carries the same ISIN at the same units — one
- *      holding caught on two statements reads exactly like that.
+ *      holding caught on two statements reads exactly like that;
+ *   8. the adviser's report has not sold these units to nil since the statement,
+ *      on a sale the family confirmed (Stage 10ma, `soldSinceStatement`).
  *
  * THE RATE IS A WITNESS AND NOTHING MORE. It is never the price the holding is
  * valued at — that is AMFI's NAV — and it is carried on the row
@@ -417,6 +419,7 @@ export function unpricedStatementUnits(
   accounts: readonly Account[] = BOOK_ACCOUNTS,
   positions: readonly Position[] = BOOK_POSITIONS,
   advised: readonly AdvisedBalance[] = BOOK_ADVISED_BALANCES,
+  rolls: readonly ShareRoll[] = BOOK_SHARE_ROLLS,
 ): Position[] {
   if (!VALUE_UNPRICED_STATEMENT_UNITS) return [];
   const acc = new Map(accounts.map((a) => [a.accountId, a]));
@@ -464,10 +467,24 @@ export function unpricedStatementUnits(
     const owner = ownerOf(u.accountId);
     if (positions.some((p) => isinOf(p) === isin && p.quantity !== null && Math.abs(p.quantity - qty) < 0.0005
       && ownerOf(p.accountId) === owner)) continue;                                               // gate 7
+    if (soldSinceStatement(u.accountId, u, rolls)) continue;                                    // gate 8
     const book = positions.find((p) => p.securityKey === u.securityKey);
+    // Stage 10me: the adviser report's later fund trades carry these units — the
+    // roll's count (already past any split it carries) and its FIFO cost.
+    const roll = rolledSinceStatement(u.accountId, u, rolls);
+    const rolledUnits = roll ? (roll.shareEvents?.length ? roll.quantity : roll.quantity * factor) : null;
     // A unit split since the statement re-bases its count; the note's is struck on today's unit already.
-    const note = factor === 1 ? advisedFor(advised, u.accountId, isin, qty) : null;
-    const units = note?.quantity ?? qty * factor;
+    const note = factor === 1 && !roll ? advisedFor(advised, u.accountId, isin, qty) : null;
+    const units = rolledUnits ?? note?.quantity ?? qty * factor;
+    const rolledCost = roll ? {
+      costBasis: roll.costBasis, costUnavailable: false, avgCost: roll.costBasis / units,
+      unrealizedPnL: units * nav.nav - roll.costBasis,
+      returnPct: fifoReturnPct(units * nav.nav, roll.costBasis, roll.realizedPnL, roll.costOfUnitsSold, null),
+      realizedPnL: roll.realizedPnL, costOfUnitsSold: roll.costOfUnitsSold,
+      rolledForward: { through: roll.through, quantity: units, costBasis: roll.costBasis, realizedPnL: roll.realizedPnL,
+        costOfUnitsSold: roll.costOfUnitsSold, trades: roll.trades, source: "adviser-report" as const,
+        ...(roll.heldPurchases ? { heldPurchases: roll.heldPurchases } : {}) },
+    } : null;
     out.push({
       securityKey: u.securityKey,
       statementRecord: u.statementRecord,
@@ -475,7 +492,7 @@ export function unpricedStatementUnits(
       // reads the book's quantity rows as well as its positions.
       security: securityLabel(u.securityKey, u.security),
       isin: basis?.isin ?? u.isin,
-      ...(basis ? { fundUnitAdjustment: { isin, quantity: qty, asOf: u.asOf, through: nav.date, factor } } : {}),
+      ...(basis && !roll ? { fundUnitAdjustment: { isin, quantity: qty, asOf: u.asOf, through: nav.date, factor } } : {}),
       // A liquid ETF the quote feed prices intraday is priced that way here too,
       // as its siblings on the other demats are; a scheme resolves no symbol.
       symbol: book?.symbol ?? symbolForKey(u.securityKey),
@@ -503,8 +520,10 @@ export function unpricedStatementUnits(
       positionIrrPct: null,
       navPriced: true,
       navDate: nav.date,
+      ...(rolledCost ?? {}),
       depositoryUnits: {
-        ...(basis && basis.factor !== 1 ? { unitSplit: { statementQuantity: qty, factor,
+        ...(roll ? { rolled: { statementQuantity: qty, through: roll.through, trades: roll.trades, reportAsOf: roll.report.asOf } } : {}),
+        ...(basis && basis.factor !== 1 && !roll ? { unitSplit: { statementQuantity: qty, factor,
           exDate: basis.actions[0].exDate, publishedIsin: basis.isin,
           source: basis.actions.map(a => a.source ?? a.sources.join(', ')).join('; ') } } : {}),
         ...advisedUnits(note, qty),
@@ -516,7 +535,8 @@ export function unpricedStatementUnits(
       },
     });
   }
-  return out.map(p => applyRecoveredCost(p, BOOK_RECOVERED_COSTS)).sort((a, b) => b.marketValue - a.marketValue);
+  // A rolled row's cost is the roll's own FIFO; lots recovered for the statement's count are another holding's.
+  return out.map(p => p.rolledForward ? p : applyRecoveredCost(p, BOOK_RECOVERED_COSTS)).sort((a, b) => b.marketValue - a.marketValue);
 }
 
 /**
@@ -633,7 +653,8 @@ export type DepositoryBalance = {
 };
 
 /**
- * A STATEMENT BALANCE THE ADVISER'S REPORT SOLD TO NIL (Stage 10iw): the roll
+ * A STATEMENT BALANCE THE ADVISER'S REPORT SOLD TO NIL (Stage 10iw; a fund
+ * redemption the family confirmed, Stage 10ma): the roll
  * of exactly these units on this account that leaves none. Such a balance is
  * not held on the live basis, so it is neither valued nor "not valued".
  */
@@ -646,6 +667,22 @@ export function soldSinceStatement(
   if (!isin || typeof holding.quantity !== "number") return null;
   return rolls.find((r) => r.accountId === accountId && r.isin.toUpperCase() === isin && r.quantity === 0
     && Math.abs(r.statementQuantity - (holding.quantity as number)) < 0.0005) ?? null;
+}
+
+/**
+ * A STATEMENT FUND BALANCE THE ADVISER'S REPORT CARRIES TO OTHER UNITS (Stage
+ * 10me): the report's later fund trades left some of it — Bharat's ABSL Liquid,
+ * 2,64,720.521 on 31 Jul, 1,855.521 after its 11 Aug redemption.
+ */
+export function rolledSinceStatement(
+  accountId: string,
+  holding: { isin?: string | null; quantity: number | null },
+  rolls: readonly ShareRoll[] = BOOK_SHARE_ROLLS,
+): ShareRoll | null {
+  const isin = holding.isin?.trim().toUpperCase();
+  if (!isin || typeof holding.quantity !== "number") return null;
+  return rolls.find((r) => r.accountId === accountId && r.isin.toUpperCase() === isin && r.quantity > 0
+    && r.report.sheet === "Mutual Funds" && Math.abs(r.statementQuantity - (holding.quantity as number)) < 0.0005) ?? null;
 }
 
 export function depositoryBalancesOf(
@@ -752,14 +789,15 @@ export function partialValuationNotes(
     return `its ${n(funds.length, "fund")}${cash.length ? ` (${cash.length === funds.length ? (cash.length === 1 ? "a liquid or arbitrage fund" : "all liquid and arbitrage funds") : `${cash.length} of them liquid and arbitrage funds`} the family counts as cash)` : ""} ${funds.length === 1 ? "is" : "are"} valued at ${units} (${asOf}) × AMFI's published NAV (${navDate})`;
   };
   // Stage 10iw: units the adviser report's later exchange trades carry, and
-  // statement balances those trades sold to nil.
+  // statement balances those trades — or a fund redemption the family
+  // confirmed (Stage 10ma) — sold to nil.
   const report = (rs: readonly { report: { asOf: string } }[]) => [...new Set(rs.map((r) => r.report.asOf))].sort().join(", ");
   const rolledClause = (rows: readonly Position[]) => {
     const asOf = [...new Set(rows.map((r) => r.depositoryUnits!.rolled!.reportAsOf))].sort().join(", ");
     return `${n(rows.length, "listed share")} ${rows.length === 1 ? "is" : "are"} valued at the units the later exchange trades on MOPWM's transaction report of ${asOf} carry ${rows.length === 1 ? "it" : "them"} to × the live quote, and only while the quote feed prices ${rows.length === 1 ? "it" : "them"}`;
   };
   const soldClause = (rolls: readonly ShareRoll[], noun: string) =>
-    `${n(rolls.length, noun)} on that statement ${rolls.length === 1 ? "was" : "were"} sold to nil after it, on exchange trades MOPWM's transaction report of ${report(rolls)} records, and ${rolls.length === 1 ? "is" : "are"} not held`;
+    `${n(rolls.length, noun)} on that statement ${rolls.length === 1 ? "was" : "were"} sold to nil after it, on ${rolls.every((r) => r.report.sheet === "Direct Equity") ? "exchange trades" : "sales"} MOPWM's transaction report of ${report(rolls)} records, and ${rolls.length === 1 ? "is" : "are"} not held`;
   for (const [accountId, rows] of byTape) {
     const balances = depositoryBalancesOf(accountId, rows, positions, movements);
     const funds = rows.filter((r) => r.navPriced);

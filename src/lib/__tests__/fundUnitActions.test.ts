@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { FUND_UNIT_ACTIONS, fundUnitBasis, acquisitionIdentity, fundPricingIsin, fundIdentityDisagrees, heldEtfCoverageGaps } from '../../../shared/fundUnitActions.mjs';
 import { recoveredCostFor } from '../../../shared/recoveredCosts.mjs';
-import { BOOK_ACCOUNTS, BOOK_UNVALUED_HOLDINGS, BOOK_POSITIONS, BOOK_RECOVERED_COSTS } from '../../data/glowData';
+import { BOOK_ACCOUNTS, BOOK_ADVISED_BALANCES, BOOK_UNVALUED_HOLDINGS, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_SHARE_ROLLS } from '../../data/glowData';
 import { BOOK_FUND_NAVS } from '../../data/fundNavs';
 import { unpricedStatementUnits, applyFundNavs, partialValuationNotes } from '../fundNavs';
 import { recordedLines, recordedFor, recordedInvestmentDateOf } from '../recordedHoldings';
@@ -34,13 +34,21 @@ assert.equal(fundUnitBasis(oldGold, '2026-07-31', '2026-10-23', chain).factor, 2
 assert.equal(fundPricingIsin(newGold, '2026-10-23', chain), 'INF000000001', 'an intermediate successor still resolves through its later conversion');
 
 const live = unpricedStatementUnits();
+// Ankita's Silver and Gold are read without the adviser report's rolls: the
+// family confirmed both sales (Stages 10ma, 10mb), so the book's own layer no
+// longer holds them.
+const unrolled = unpricedStatementUnits(BOOK_UNVALUED_HOLDINGS, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ADVISED_BALANCES, []);
+assert.ok(!live.some(p => p.accountId.endsWith('12838316') && p.isin === 'INF740KA1ZQ0'), 'DSP Silver ETF, redeemed on 13 Oct 2026, is not held');
+assert.ok(!live.some(p => p.accountId.endsWith('12838316') && p.isin === newGold), 'DSP Gold ETF, redeemed on 23 Sep 2026, is not held');
+assert.ok(['INF740KA1RE3', oldGold].every(i => BOOK_SHARE_ROLLS.some(r => r.accountId.endsWith('12838316') && r.isin === i && r.quantity === 0)));
 const cases = [
   ['12838316', oldGold, newGold, 2050000, 30193698.9, '2026-01-22', '2026-01-22'],
   ['12838335', oldGold, newGold, 11950000, 203682805.64, '2026-01-29', '2026-01-30'],
   ['12838316', 'INF740KA1RE3', 'INF740KA1ZQ0', 1230000, 17222067.17, '2025-09-30', '2025-09-30'],
 ] as const;
 for (const [suffix, oldIsin, newIsin, quantity, cost, first, last] of cases) {
-  const p = live.find(p => p.accountId.endsWith(suffix) && p.isin === newIsin)!;
+  const layer = suffix === '12838316' ? unrolled : live;
+  const p = layer.find(p => p.accountId.endsWith(suffix) && p.isin === newIsin)!;
   assert.ok(p, `${suffix}/${oldIsin}: the documented converted holding reaches the live portfolio`);
   assert.equal(p.quantity, quantity);
   const nav = BOOK_FUND_NAVS.find(n => n.isin === oldIsin)!;
@@ -57,26 +65,27 @@ for (const [suffix, oldIsin, newIsin, quantity, cost, first, last] of cases) {
   const trace = holdingSourceTrace([p], 'quantity');
   assert.equal(trace.sources[0].value, quantity / 10, 'the original statement link searches for its printed quantity');
   assert.equal(trace.sources[0].isin, oldIsin); assert.ok(trace.notes.some(n=>n.includes('multiply')));
-  assert.equal(recordedFor(p.securityKey, live).length, 0, 'the old identity is not counted again as unvalued');
+  assert.equal(recordedFor(p.securityKey, layer).length, 0, 'the old identity is not counted again as unvalued');
 }
 
 // This would have caught the original omission even though NAV publication
 // and every source statement individually passed their existing checks.
 for (const u of BOOK_UNVALUED_HOLDINGS.filter(u => u.assetClass === 'ETF' && !u.sameUnitsReportedBy))
-  assert.ok(live.some(p => p.accountId === u.accountId && p.securityKey === u.securityKey), `${u.security}: held ETFs must have an explicit valuation path`);
+  assert.ok(unrolled.some(p => p.accountId === u.accountId && p.securityKey === u.securityKey), `${u.security}: held ETFs must have an explicit valuation path`);
 
 // Price availability cannot erase acquisition evidence. Exercise the held
 // inventory without any live position, as during a source outage.
-const recorded = recordedLines().filter(l => l.homeKey === 'dsp-gold-etf');
+assert.deepEqual(recordedLines().filter(l => l.homeKey === 'dsp-gold-etf').map(l => l.accountId.slice(-8)), ['12838335'], 'only Aarti still holds DSP Gold');
+const recorded = recordedLines(BOOK_UNVALUED_HOLDINGS, BOOK_POSITIONS, []).filter(l => l.homeKey === 'dsp-gold-etf');
 assert.equal(recorded.length, 2); near(recorded.reduce((n,l)=>n+l.costBasis!,0),233876504.54);
 assert.equal(recordedInvestmentDateOf(recorded)?.first,'2026-01-22');
 assert.equal(recordedInvestmentDateOf(recorded)?.last,'2026-01-30');
 assert.equal(recordedInvestmentDateOf(recorded)?.payments,3);
 assert.ok(recorded.every(l=>l.recoveredCost?.evidence.length));
-const notes = partialValuationNotes(live);
+const notes = partialValuationNotes(unrolled);
 assert.ok(notes.get(recorded[0].accountId)?.includes('205000 × 10 = 2050000 units'), 'audit notes describe the converted count, not raw units times the new NAV');
 for (const owner of ['Ankita Jaisinghani', 'Aarti Jaisinghani']) {
-  const lines = unvaluedStatementLinesOf(owner, BOOK_ACCOUNTS, [...BOOK_POSITIONS,...live], BOOK_UNVALUED_HOLDINGS);
+  const lines = unvaluedStatementLinesOf(owner, BOOK_ACCOUNTS, [...BOOK_POSITIONS,...unrolled], BOOK_UNVALUED_HOLDINGS);
   assert.ok(lines.flatMap(a=>a.lines).filter(l=>l.row.securityKey==='dsp-gold-etf').every(l=>l.valuedLive), 'account audit agrees with the live converted identity');
 }
 console.log('ETF continuity: dates, conversion terms, exact source lots, current NAV, source links and outage inventory passed');

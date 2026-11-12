@@ -251,7 +251,18 @@ export type RecoveredHoldingCost = {
  */
 export type PolycabHolding = Omit<Position, "marketValue"> & { marketValue: number | null };
 
+/** Optional audit annotations; established amounts and coverage remain authoritative. */
+export type PositionIntegrity = {
+  positionId: string;
+  quantityAsOf: string;
+  formulaVersion: string;
+  metrics: Record<string, { status: string; basis: string; effectiveDate: string; exceptions: string[] }>;
+};
+
 export type Position = {
+  integrity?: PositionIntegrity;
+  /** Audit context only; never a blanket gate on established return coverage. */
+  returnInputsAuditReason?: string;
   /** Explicit family corrections; original statement records remain separate. */
   enteredNumbers?: string[];
   enteredCapital?: Record<string, number | null>;
@@ -356,10 +367,19 @@ export type Position = {
     realizedPnL: number | null;
     costOfUnitsSold: number | null;
     trades: number;
-    source?: "review" | "adviser-report";
+    source?: "review" | "adviser-report" | "account-tape";
     hprUnavailableReason?: string;
     /** Splits the roll's own record already carries in `quantity` (Stage 10kk); the corporate-action gate does not apply them again. */
     shareEvents?: ShareEvent[];
+    /** The purchase lots still held after the roll, first-in first-out (Stage 10me): what Invested on dates. */
+    heldPurchases?: { first: string; last: string; lots: number };
+    /**
+     * A LATER DATED MARK (Stage 10mh): the account's own fact sheet's printed
+     * value for the line over the rolled units on its date — the price the
+     * rolled units are valued at until a live quote arrives. Absent: the
+     * statement's own mark.
+     */
+    price?: { value: number; asOf: string; source: string };
   };
   /**
    * (unrealised + realised) ÷ (cost of units held + cost of units sold), in
@@ -444,6 +464,14 @@ export type Position = {
    * `from === to`. Null on a review line whose cell is blank or not a date.
    */
   investedDates?: { from: string; to: string; text: string } | null;
+  /**
+   * THE FAMILY'S OWN DATED PAYMENTS BEHIND A LINE THE REVIEW DATES BY MONTH
+   * (Stage 10mx) — the investment register's serial group for this holder, which
+   * adds to the review's cost to the rupee and falls inside `investedDates`'s
+   * months. A date source for Invested on only; built by
+   * `scripts/lib/registerPurchaseDates.mjs`.
+   */
+  registerPayments?: { payments: { date: string; amount: number }[]; evidence: { path: string; sheet: string; rows: number[] } };
   /**
    * PER-UNIT figures, and NULLABLE — not every provider prints them.
    *
@@ -530,6 +558,39 @@ export type Position = {
     unaccounted: number | null;
     held: { first: string; last: string; lots: number } | null;
     reason: string | null;
+  };
+  /**
+   * THE SAME TRADES CARRIED THROUGH THE SPLITS, BONUSES AND DEMERGERS THAT MADE
+   * THE UNITS NO BUY PRINTED (Stage 10ly) — set only where `tradeRecord` holds
+   * some units on no dated trade and the replay through those actions ends on
+   * exactly the units held. `held` is the surviving purchase lots, each dated
+   * when its money went in (a demerged unit: when the parent was bought);
+   * `actions` the actions it went through, each with its source. A source for
+   * the Invested on column ONLY: the money a demerged unit stands for was paid
+   * for its parent, so no reader replays this as the holding's dated money.
+   * Built by `scripts/lib/shareActions.mjs`.
+   */
+  actionRecord?: {
+    units: number;
+    to: string;
+    held: { first: string; last: string; lots: number };
+    actions: { kind: "split" | "bonus" | "demerger"; date: string; factor?: number; ratio?: number; of?: string; label: string; source: string }[];
+  };
+  /**
+   * THE REVIEW'S DATED PURCHASES OF A HOLDING WHOSE COST ITS STATEMENT PRINTS
+   * (Stage 10ms) — the review's block for this owner, product and custodian,
+   * to its own Closing, carried through the account's own later trades to
+   * exactly the units held, with the broker's long-term quantity and cost
+   * agreeing. `reason` alone where an aliased holding fails a step. A source
+   * for the Invested on column ONLY: the statement's cost and value stand.
+   * Built by `scripts/lib/reviewPurchaseDates.mjs`.
+   */
+  reviewPurchases?: {
+    reason?: string;
+    first?: string; last?: string; lots?: number; units?: number;
+    closing?: { date: string; units: number }; through?: string; sales?: number;
+    longTermUnits?: number; lotCost?: number;
+    evidence?: { path: string; sheet: string; rows: number[] }; reviewAsOf?: string;
   };
   /**
    * ISO date the STATEMENT says its price or value is struck at — which need
@@ -684,6 +745,10 @@ export type NavPoint = {
   accountsOnDate?: number;
   accountsCarried?: number;
   flowIn?: number;
+  /** Sum of dated capital multiplied by its fraction of days invested. Null means dates do not settle the printed net. */
+  flowWeighted?: number | null;
+  flowTimingKnown?: boolean;
+  returnMethod?: "modified-dietz" | "end-dated-approximation" | "unproven";
   unreportedFlowValue?: number;
   /**
    * ── THE LINK, AND WHY THE SERIES CAN START BEFORE THE PANEL IS COMPLETE ────
@@ -699,7 +764,10 @@ export type NavPoint = {
    * — only across each LINK. So each point carries the interval ending at it,
    * struck over the accounts valued at BOTH of its ends:
    *
-   *   r = (linkClose − flowIn) / linkOpen − 1
+   *   r = (linkClose − linkOpen − flowIn) / (linkOpen + flowWeighted)
+   *
+   * The legacy end-dated approximation uses zero weight only where the
+   * dated record is unavailable, with `returnMethod` identifying that basis.
    *
    * An account joining at this date is in neither end of the link that ends
    * here, so its arrival contributes 0.00% rather than a step. Where the panel
@@ -1071,6 +1139,19 @@ export type CapitalMove = {
    */
   fromReview?: true;
   /**
+   * Set where this movement is a row of the family's INVESTMENT REGISTER
+   * (Stage 10mv, `scripts/lib/registerRecords.mjs`) — the payment that opened a
+   * mandate, or a review line's purchase — rather than a statement's: the sheet
+   * and row it is read from.
+   */
+  fromRegister?: { sheet: string; row: number };
+  /**
+   * Set where no document dates this movement and the book places it: why, and
+   * on what day. Only the amount netted out of a mandate's capital before its
+   * first statement's opening balance carries one (Stage 10mv).
+   */
+  assumedDate?: string;
+  /**
    * PRESENT ONLY ON A TRANCHE, and only where the fund later moved these units
    * into another of its classes. The move is then shown in the class it sits in
    * today — `units` converted at the switch's own printed ratio, `security` the
@@ -1148,7 +1229,9 @@ export type ShareMovement = {
  * statement does not record and the report shows bought after it. Read by the
  * LIVE layer only (`depositoryShares.ts`); the statement basis keeps the
  * snapshot. A share with any non-exchange entry (a split, a transfer) is not
- * rolled.
+ * rolled. A FUND balance rolls on the report's fund trades (Stage 10me,
+ * `rollMopwmFundTrades`), with `report.sheet` "Mutual Funds", up to a transfer
+ * of custody (`transferredOn`), which moves the units and sells none.
  */
 export type ShareRoll = {
   accountId: string;
@@ -1165,6 +1248,10 @@ export type ShareRoll = {
   trades: number;
   /** A split inside the roll, read off the report's own SPLIT block (Stage 10kk). */
   shareEvents?: ShareEvent[];
+  /** The day a demat-folio "redemption" moved what the roll leaves out of the demat (Stage 10me). */
+  transferredOn?: string;
+  /** A fund roll's purchase lots still held, first-in first-out (Stage 10me). */
+  heldPurchases?: { first: string; last: string; lots: number };
   report: { path: string; asOf: string; sheet: string; rows: number[] };
 };
 
@@ -1178,6 +1265,36 @@ export type ShareEvent = { type: "split"; exDate: string; factor: number };
  * the paisa, and it replaces `recordQuantity` (the statement's count of
  * `recordAsOf`) on the LIVE basis only.
  */
+/**
+ * WHAT THE RETURN CARDS MAY START FROM (Stage 10la, `scripts/lib/periodEvidence.mjs`).
+ * Read by the period engine to choose a start date; none of it is a holding,
+ * a value or part of any total.
+ */
+/** The units an older statement of the same account held of a holding the book still carries. A balance, never a value. */
+export type EarlierBalance = { accountId: string; securityKey: string; isin: string | null; asOf: string; quantity: number; docKey: string };
+/** The NAV per unit a statement prints for fund units with no public price, joined through a reviewed, unit-tied link. */
+export type StatementUnitNavs = { isin: string; navs: { date: string; nav: number; docKey: string }[] };
+/** Consecutive valued statements holding exactly the same units: no money moved between them. */
+export type UnitWindow = { valuations: { date: string; value: number; docKey: string }[]; evidence: string };
+
+/**
+ * A PMS ACCOUNT'S OPENING VALUES REBUILT FROM ITS OWN LEDGERS (Stage 10ni,
+ * `scripts/lib/tradeOpenings.mjs`): units from every trade since inception at
+ * each day's exchange close, plus the bank book's balance — kept only where the
+ * same rebuild reproduces the manager's printed totals (`checks`). A demerged
+ * share not yet listed on an opening day joins on its first close (`entries`,
+ * also in `flows` as money arriving). `flows` are the capital register's, the
+ * investor's view: into the account negative.
+ */
+export type TradeOpening = {
+  openings: { date: string; value: number; equity: number; cash: number; names: number;
+    entries: { date: string; securityKey: string; units: number; close: number; value: number }[] }[];
+  flows: { date: string; amount: number; description: string }[];
+  capitalTo: string;
+  checks: { date: string; docKey: string; rebuilt: number; printed: number; diffPct: number }[];
+  sources: string[];
+};
+
 export type AdvisedBalance = {
   accountId: string;
   isin: string;
@@ -1205,6 +1322,8 @@ export type AdvisedBalance = {
  */
 export type HoldingTrade = {
   date: string;
+  reference?: string;
+  settlementDate?: string;
   side: "buy" | "sell";
   quantity: number | null;
   price: number | null;
@@ -1268,7 +1387,9 @@ export type EntityCG = {
    * the tax estimate reads the year it is about from here rather than taxing
    * every year in the window. Absent on a row with no capital gain statement.
    */
-  realisedByYear?: { fy: string | null; st: number; lt: number; lots: number }[];
+  realisedByYear?: { fy: string | null; st: number; lt: number; lots: number;
+    /** Σ of the lots sold at a gain, and of those sold at a loss (≤ 0): `gains + losses = st + lt` (Stage 10mc). */
+    gains?: number; losses?: number }[];
   /** docKey of the capital gain statement these lots came from. */
   source?: string | null;
   /** Set when there is no statement: why, in one line, for the row to show. */
@@ -1609,8 +1730,10 @@ export type ReviewFlow = {
   amount: number;
   units: number | null;
   rate: number | null;
-  /** The row on the review's Transactions since inception tab. */
-  reviewRow: number;
+  /** The row on the review's Transactions since inception tab; null for a row the investment register dates instead. */
+  reviewRow: number | null;
+  /** The investment register's sheet and row, where it dates a line the review prints only by months (Stage 10mv). */
+  register?: { sheet: string; row: number };
 };
 
 /**

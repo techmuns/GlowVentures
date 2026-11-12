@@ -1,14 +1,18 @@
 import {  } from "@/lib/useNavigationState";
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useMarketHistories } from '@/lib/useMarketReturns';
-import { marketReturns, marketReturnSummary, marketHoldingKey } from '@/lib/marketReturns';
+import { marketHoldingKey } from '@/lib/marketReturns';
+import { selectionMarket, selectionMarketOf } from '@/lib/selectionMarket';
 import { MarketReturnInfo } from './MarketReturnInfo';
 import { HoldingAssumptionInfo } from './HoldingAssumptionInfo';
-import { assumedHoldingReturns } from '@/lib/assumedHoldingReturns';
-import { assumedHoldingBook } from '@/lib/assumedHoldingBook';
 import { CapitalBridge } from './CapitalBridge';
 import { capitalBridge } from '@/lib/capitalBridge';
-import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME } from '@/data/glowData';
+import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME, BOOK_CAPITAL_GAINS, BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES, BOOK_REVIEW_FLOWS } from '@/data/glowData';
+import { BENCHMARKS } from '@/lib/benchmarks';
+import { capitalMovesWithCalls } from '@/lib/tranches';
+import { lineBenchmark, type LineBenchmark } from '@/lib/lineBenchmark';
+import { useBenchmarkLevels } from '@/components/HoldingBenchmark';
+import { LineBenchmarkCell, BENCH_HOW } from '@/components/LineBenchmarkCell';
 import { AvailableReturnCoverage } from '@/components/AvailableReturnCoverage';
 import { Card } from '@/components/Card';
 import { ExportableTable } from '@/components/ExportableTable';
@@ -26,7 +30,7 @@ import { useStockExposure } from '@/lib/useStockExposure';
 import { SEGMENT_VIEWS } from '@/lib/segmentReturns';
 import SectorAttribution from '@/components/SectorAttribution';
 import { exitedRows } from '@/lib/drilldown';
-import { PERIODS, RETURN_TYPES, type PeriodKey, type ReturnType } from '@/lib/periodReturns';
+import { PERIODS, RETURN_TYPES, type PeriodKey } from '@/lib/periodReturns';
 import { selectedSegmentReturns, returnGapText, UNSPLIT_RETURNS, type ReturnSelection, type SelectedLine } from '@/lib/selectedSegmentReturns';
 import { lineHoldingFigures, type LineHoldingFigures } from '@/lib/lineHoldingFigures';
 import { daySessionGate } from '@/lib/dailyMovers';
@@ -39,6 +43,9 @@ import { REVIEW_NOTE, reviewColumn, reviewColumnIds, withReviewAccessors, type R
 import { InvestedOnCell } from '@/components/InvestedOnCell';
 import { ReviewColumnCell } from '@/components/ReviewColumnCell';
 import type { Position } from '@/lib/types';
+import { TWR_COLUMNS } from '@/lib/adjustedTwr';
+import { useAdjustedTwrColumns } from '@/lib/useAdjustedTwrColumns';
+import { AdjustedTwrCell } from '@/components/AdjustedTwrCell';
 
 /**
  * PORTFOLIO MONITOR'S HOLDING COLUMNS, HERE TOO (Stage 10hz): Avg cost and
@@ -49,13 +56,14 @@ import type { Position } from '@/lib/types';
 const REVIEW_COLS = reviewColumnIds('holding').filter(id => id !== 'review:investmentRange');
 const REVIEW_SET = new Set(REVIEW_COLS);
 const COLS = ['seg', 'holdings', 'qty', 'avgCost', 'cmp', 'day', 'value', 'weight', 'deployed', 'investedOn', 'cost', 'gain', 'pnl', 'realised',
-  'market', 'ret', 'contrib', 'basis', 'sector', 'entity', ...REVIEW_COLS];
+  'bench', 'ret', ...TWR_COLUMNS.map(c => c.key), 'contrib', 'basis', 'sector', 'entity', ...REVIEW_COLS];
+const ALL_BENCH_KEYS = BENCHMARKS.map(b => b.key);
 const OPTIONAL = ['qty', 'cmp', 'day', 'cost', 'pnl', 'realised', 'sector', 'entity', ...REVIEW_COLS];
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 const HEAD: Record<string, string> = { category: 'Category', assetClass: 'Asset class', basket: 'Basket', sector: 'Sector / class', side: 'Side', security: 'Security' };
 
-export default function SegmentReturns({ selection: recordedSelection, period, onReturnTypeResolved }: {
-  selection: ReturnSelection; period: PeriodKey; onReturnTypeResolved?: (requested: ReturnType, displayed: ReturnType) => void;
+export default function SegmentReturns({ selection: recordedSelection, period, end }: {
+  selection: ReturnSelection; period: PeriodKey; end: string | null;
 }) {
   const { statementPortfolio, consolidated, fmtFromBase, corporateActions, quoteFeed, scope: memberScope } = usePortfolio();
   const [axis, setAxis] = useViewParam(SEGMENT_VIEWS, {}, 'seg');
@@ -73,31 +81,25 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   const current = useMemo(() => currentHoldings(positions), [positions]);
   const exited = useMemo(() => exitedRows(statementPositions), [statementPositions]);
   const marketFeed = useMarketHistories(current);
-  const selection = useMemo(() => {
-    if (!statementPortfolio || recordedSelection.inception || !recordedSelection.start || !recordedSelection.end) return recordedSelection;
-    const extra = assumedHoldingReturns(current, statementPortfolio.accounts, recordedSelection.start, recordedSelection.end,
-      assumedHoldingBook({ actions: corporateActions, instruments: marketFeed.instruments, histories: marketFeed.histories }));
-    return { ...recordedSelection, assumedUnits: extra.units, assumptionGaps: extra.gaps };
-  }, [recordedSelection, current, statementPortfolio, corporateActions, marketFeed.instruments, marketFeed.histories]);
+  // THE TAB'S ONE SELECTION (Stage 10lg, `useReturnSelection`): every period the
+  // cards' rule, built once in PortfolioReturns and read here as given.
+  const selection = recordedSelection;
   // The Sector axis is Sector Composition's own sectors (`SectorAttribution`, Stage 10gs), never this grouping.
   const sectorAxis = axis === 'sector';
-  const a = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
+  const originalAttribution = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
     () => null, calculationCurrent) : null, [current, exited, statementPortfolio, axis, selection, calculationCurrent, sectorAxis]);
+  const { model: a, of: twrOf, pending: twrPending, retry: retryTwr } = useAdjustedTwrColumns({ model: originalAttribution, current, exited, calculationCurrent, axis, end });
   // The capital bridge is the selected period's total on every axis (Stage 10gu): the table's own total
   // units, or on the Sector view — which draws no dated total of its own — the same pool grouped by category.
   const pool = useMemo(() => a ?? (statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, 'category', selection,
     () => null, calculationCurrent) : null), [a, current, exited, statementPortfolio, selection, calculationCurrent]);
-  // Resolve the picker's label without replacing the requested calculation:
-  // a mixed total may be absolute while its debt-only rows remain annualised.
-  const shownAs = pool?.total.measured?.shownAs;
-  useEffect(() => {
-    onReturnTypeResolved?.(recordedSelection.type, shownAs ?? recordedSelection.type);
-  }, [shownAs, recordedSelection.type, onReturnTypeResolved]);
   const bridge = useMemo(() => pool && statementPortfolio ? capitalBridge(pool.total.units, { accounts: statementPortfolio.accounts,
-    positions: statementPortfolio.positions, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME }) : null,
+    positions: statementPortfolio.positions, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME, capitalGains: BOOK_CAPITAL_GAINS }) : null,
   [pool, statementPortfolio]);
-  const market = useMemo(() => marketReturns(current, marketFeed.instruments, marketFeed.histories, selection.start,
-    selection.end ?? new Date().toISOString().slice(0, 10), selection.type, selection.inception), [current, marketFeed.instruments, marketFeed.histories, selection]);
+  // MARKET PERFORMANCE OVER EVERY HOLDING (Stage 10lg): each holding's own return over the
+  // period from the same selection, weighted by today's value (`selectionMarket`).
+  const market = useMemo(() => selectionMarket(current, pool?.total.units ?? [], pool?.total.missing ?? [], selection.start, selection.end,
+    { inception: selection.inception }), [current, pool, selection.start, selection.end, selection.inception]);
   // A line that is whole PMS accounts is dated, and joined to the review, as
   // the accounts — the Monitor's mandate rows — never by the manager's own
   // purchases inside them. On All Securities a line is a security.
@@ -125,18 +127,42 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     add(a.total);
     return m;
   }, [a, companySectors, inSession, idx, wholeAccountsOf]);
+  // EACH ROW AGAINST ITS OWN INDEX, ON ITS OWN MONEY (Stage 10mr, `lineBenchmark`): in place of
+  // the Market return column, which restated the Return column wherever a row is one holding.
+  const benchLevels = useBenchmarkLevels(ALL_BENCH_KEYS);
+  const benchCtx = useMemo(() => {
+    const accounts = statementPortfolio?.accounts ?? [];
+    return { isMandate: (id: string) => idx.get(id)?.engagement === 'PMS', accounts, tranches: BOOK_POSITION_TRANCHES,
+      moves: selection.inception ? capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, accounts, BOOK_REVIEW_FLOWS) : [] };
+  }, [statementPortfolio, idx, selection.inception]);
+  const benches = useMemo(() => {
+    const m = new Map<SelectedLine, LineBenchmark>();
+    if (!a) return m;
+    const add = (l: SelectedLine) => m.set(l, lineBenchmark(l, selection, benchLevels, benchCtx));
+    for (const r of a.rows) { add(r); for (const c of r.children) { add(c); c.children.forEach(add); } }
+    add(a.total);
+    return m;
+  }, [a, selection, benchLevels, benchCtx]);
+  // Since investment covers every holding; a period, the public ones — private investments have no price, so this price figure reports them apart.
+  const marketBase = useMemo(() => current.filter(p => p.marketValue > 0 && (selection.inception || p.marketSide !== 'private')), [current, selection.inception]);
+  const marketPrivate = selection.inception ? 0 : current.filter(p => p.marketValue > 0 && p.marketSide === 'private').length;
   const marketOf = (ps: readonly typeof current[number][]) => {
-    const keys = new Set(ps.map(marketHoldingKey));
-    const units = market.units.filter(u => keys.has(marketHoldingKey(u.position)));
-    const gaps = market.gaps.filter(g => keys.has(marketHoldingKey(g.position)));
-    const summary = marketReturnSummary(units, selection.type, market.from, market.to);
+    const m = selectionMarketOf(market, ps);
     const pending = ps.filter(p => { const i = marketFeed.instruments.get(p.securityKey); return p.marketValue > 0 && i && !marketFeed.histories[i.key]; }).length;
-    return { ...summary, units, gaps, pending };
+    return { ...m, pending };
   };
-  const marketInfo = (label: string, ps: readonly typeof current[number][]) => {
+  const marketInfo = (label: string, all: readonly typeof current[number][]) => {
+    // A period reports private investments apart (Stage 10lh): its details list the public holdings,
+    // as the face's denominator does, and name the rest. A row of private holdings alone still lists them.
+    // A holding with no positive value today carries no weight, and is not counted on the face either.
+    const apartOn = !selection.inception && !all.every(p => p.marketSide === 'private');
+    const apart = apartOn ? all.filter(p => p.marketSide === 'private' && p.marketValue > 0) : [];
+    const weighted = all.filter(p => p.marketValue > 0 && !(apartOn && p.marketSide === 'private'));
+    const ps = weighted.length ? weighted : all;
     const m = marketOf(ps);
     return <MarketReturnInfo label={label} value={m.pct == null ? '—' : pct(m.pct)} units={m.units} gaps={m.gaps} positions={ps} accounts={statementPortfolio?.accounts ?? []}
-      totalValue={ps.reduce((s, p) => s + p.marketValue, 0)} from={m.from} to={m.to} annual={m.annual} pending={m.pending} requestedStart={selection.start} requestedEnd={selection.end} onRetry={marketFeed.retry} inception={selection.inception} money={money} />;
+      totalValue={ps.reduce((s, p) => s + p.marketValue, 0)} from={m.from} to={m.to} annual={m.annual} pending={m.pending} requestedStart={selection.start} requestedEnd={selection.end} onRetry={marketFeed.retry} inception={selection.inception} money={money}
+      privateApart={apart.length ? { count: apart.length, value: apart.reduce((s, p) => s + p.marketValue, 0) } : undefined} />;
   };
   const type = RETURN_TYPES.find(t => t.key === selection.type)!;
   const periodLabel = PERIODS.find(p => p.key === period)!.label;
@@ -146,23 +172,18 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     {SEGMENT_VIEWS.map(v => <button key={v.key} type="button" role="tab" aria-selected={axis === v.key} title={v.title} data-seg-axis-option={v.key} onClick={() => setAxis(v.key)} className={btn(axis === v.key)}>{v.label}</button>)}
   </div>;
   const title = <>Return attribution · <span className="font-normal text-slate-400" data-seg-basis>{periodLabel} · {type.label} · {dates}</span></>;
-  const marketCard = <div className="card flex min-w-0 flex-col p-5" data-market-summary data-market-total={market.pct ?? ''}
-    data-market-period={market.periodPct ?? ''} data-market-covered={market.count} data-market-pending={market.pending} data-market-refreshing={marketFeed.refreshing}>
-    <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-semibold text-slate-100">Market performance</h3>{marketInfo('Total', current)}</div>
-    <p className="mt-1 text-xs text-slate-400">Current holdings · Portfolio weighted</p>
-    <div className="my-5">
-      <p className="text-xs text-slate-400">{market.annual ? 'Annualised price return' : 'Price return over the period'}</p>
-      <div className="mt-1" aria-live="polite">{market.pct == null ? <span className="text-sm text-slate-400">{market.pending ? 'Loading historical prices…' : 'History unavailable'}</span> : <strong className={`text-3xl font-semibold tabular ${changeColor(market.pct)}`}>{pct(market.pct)}{market.annual && <span className="ml-1 text-xs font-normal text-slate-400">p.a.</span>}</strong>}</div>
-    </div>
-    <p className="text-xs text-slate-400" data-market-coverage>{market.count} of {current.length} holdings · {money(market.value)} covered{market.pending > 0 && ` · ${market.pending} loading`}{market.pending === 0 && marketFeed.refreshing > 0 && ' · updating'}{market.from && market.to && ` · ${fmtDate(market.from)} → ${fmtDate(market.to)}`}</p>
-    <div className="mt-auto pt-5"><button type="button" className="btn-secondary text-xs" onClick={marketFeed.retry} data-market-retry>Retry missing histories</button></div>
-  </div>;
+  // NO MARKET PERFORMANCE CARD (Stage 10lz): its figure, coverage, details and retry were the
+  // Total row's own Market return cell, set beside Investment performance as a rival headline.
+  // The panel carries the total's handles; the Total row draws it.
+  const marketData = { 'data-market-total': market.pct ?? '', 'data-market-period': market.periodPct ?? '', 'data-market-covered': market.count,
+    'data-market-pending': market.pending, 'data-market-from': market.from ?? '', 'data-market-to': market.to ?? '', 'data-market-refreshing': marketFeed.refreshing,
+    'data-market-denominator': marketBase.length, 'data-market-private': marketPrivate };
   const bridgeCard = pool && <CapitalBridge bridge={bridge} total={pool.total}
     typeLabel={pool.total.measured?.shownAs === 'absolute' && selection.type !== 'absolute' ? RETURN_TYPES.find(t => t.key === 'absolute')!.label : type.label}
-    caption={`${periodLabel} · ${dates}`} money={money} />;
-  const summaryCards = <div className="mb-3 grid grid-cols-1 items-stretch gap-3 md:grid-cols-2" data-return-summary-cards>{bridgeCard}{marketCard}</div>;
+    caption={`${periodLabel} · ${dates}`} money={money} accounts={statementPortfolio?.accounts ?? []} start={selection.start} />;
+  const summaryCards = <div className="mb-3" data-return-summary-cards>{bridgeCard}</div>;
   if (sectorAxis && statementPortfolio) return <div className="shrink-0" data-segment-returns data-returns-attribution data-seg-axis={axis} data-seg-period={period} data-seg-type={selection.type}
-    data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-status={exposure.status === 'loading' ? 'loading' : 'ready'}>
+    data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-status={exposure.status === 'loading' ? 'loading' : 'ready'} {...marketData}>
     {summaryCards}
     <Card pad={false} title={title}
       subtitle="Sectors as Sector Composition draws them. Market return follows the selected dates; gain, return on cost and contribution are since investment, over the holdings that report a purchase cost."
@@ -173,15 +194,17 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   if (!a) return null;
   const reason = (l: SelectedLine) => !l.measured?.reason && l.missing[0]?.plainReason ? l.missing[0].reason
     : returnGapText(l.measured?.reason ?? l.missing[0]?.reason ?? 'We need values and dated payments for these dates.', selection.start);
-  const fig = (l: SelectedLine) => figures.get(l) ?? lineHoldingFigures(l.positions, { wholeAccounts: wholeAccountsOf(l), inSession, ownerOf: p => ownerOf(idx, p) });
+  const bench = (l: SelectedLine) => benches.get(l) ?? lineBenchmark(l, selection, benchLevels, benchCtx);
+  const fig = (l: SelectedLine) => figures.get(l) ??lineHoldingFigures(l.positions, { wholeAccounts: wholeAccountsOf(l), inSession, ownerOf: p => ownerOf(idx, p) });
   const reviewScopeOf = (l: SelectedLine): ReviewScope => {
     const whole = wholeAccountsOf(l);
     return whole && whole.every(id => idx.get(id)?.engagement === 'PMS') ? { accountIds: whole, isMandate: true } : { positions: l.positions };
   };
   const named = (xs: string[], noun: string) => xs.length === 1 ? xs[0] : xs.length ? `${xs.length} ${noun}` : null;
   const accessors = withReviewAccessors<SelectedLine>({ seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
-    weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, market: r => marketOf(r.positions).pct, ret: r => r.returnPct, contrib: r => r.contribution,
-    basis: r => r.units.some(u => u.assumption) ? 'Assumed held' : 'Statement records',
+    weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, bench: r => bench(r).pct, ret: r => r.returnPct, contrib: r => r.contribution,
+    ...Object.fromEntries(TWR_COLUMNS.map(c => [c.key, (r: SelectedLine) => twrOf(r)[c.key].pct])),
+    basis: r => r.units.some(u => u.assumption) ? 'Carried forward' : 'Statement records',
     qty: r => fig(r).quantity, avgCost: r => fig(r).avgCost, cmp: r => fig(r).price, day: r => fig(r).day.pct,
     investedOn: r => fig(r).investedOn?.first, cost: r => fig(r).costReason ? null : fig(r).cost.cost,
     pnl: r => fig(r).unrealised, realised: r => fig(r).realised,
@@ -235,7 +258,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     };
   };
   const cells = (l: SelectedLine, kind: 'parent' | 'child') => {
-    const pad = TREE_CELL[kind], m = marketOf(l.positions), h = holdingCells(l, pad), scope = reviewScopeOf(l);
+    const pad = TREE_CELL[kind], h = holdingCells(l, pad), scope = reviewScopeOf(l);
     return [
       <td key="holdings" className={`${pad} text-right mono text-slate-400`}>{l.positions.length || (l.units.length ? '—' : 0)}</td>,
       h.qty, h.avgCost, h.cmp, h.day,
@@ -244,18 +267,17 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
       <td key="deployed" className={`${pad} text-right mono text-slate-300`}>{l.invested != null ? money(l.invested) : <AbsentCell reason={reason(l)} />}</td>,
       h.investedOn, h.cost,
       <td key="gain" data-seg-cell="gain" className={`${pad} text-right mono ${changeColor(l.gain)}`}><span className="inline-flex items-center justify-end gap-1">
-        {l.gain != null ? money(l.gain, true) : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} />{info(l, 'gain')}</span></td>,
+        {l.gain != null ? money(l.gain, true) : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} showLabel={false} />{info(l, 'gain')}</span></td>,
       h.pnl, h.realised,
-      <td key="market" data-seg-cell="market" data-market-return={m.pct ?? ''} className={`${pad} text-right mono ${changeColor(m.pct)}`}><span className="inline-flex items-center justify-end gap-1">
-        {m.pct != null ? <>{pct(m.pct)}{m.annual && <span className="text-[10px]">p.a.</span>}</> : m.pending ? <span className="text-slate-400">Loading…</span> : <AbsentCell reason={m.gaps[0]?.reason ?? 'This row has no separately priced current holdings.'} />}
-        {l.positions.length > 0 && marketInfo(l.key === 'total' ? 'Total' : l.label, l.positions)}</span></td>,
+      <LineBenchmarkCell key="bench" label={l.key === 'total' ? 'Total' : l.label} b={bench(l)} pad={pad} requested={selection.type} money={money} />,
       <td key="ret" data-seg-cell="ret" data-seg-shown-as={l.measured?.shown ? (l.measured.shownAs ?? selection.type) : undefined} className={`${pad} text-right mono ${changeColor(l.returnPct)}`}><span className="inline-flex items-center justify-end gap-1"
         title={shownAbsolute(l) ? `Held under a year, so this is the absolute return, not ${type.label}: a return under a year is never annualised.`
           : l.measured?.basis === 'annual' && l.periodPct != null ? `${pct(l.periodPct)} over the period itself, not stated per year` : undefined}>
-        {l.returnPct != null ? <>{shownAbsolute(l) && <span className="ret-tag">ABS</span>}{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} />{info(l, 'return')}</span></td>,
+        {l.returnPct != null ? <>{shownAbsolute(l) && <span className="ret-tag">ABS</span>}{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} showLabel={false} />{info(l, 'return')}</span></td>,
+      ...TWR_COLUMNS.map(c => <AdjustedTwrCell key={c.key} column={c.key} result={twrOf(l)[c.key]} pad={pad} label={l.label} onRetry={retryTwr} />),
       <td key="contrib" className={`${pad} text-right mono ${changeColor(l.contribution)}`}>{l.contribution != null ? `${l.contribution >= 0 ? '+' : ''}${l.contribution.toFixed(2)} pp` : <AbsentCell reason={contributionReason} />}</td>,
       <td key="basis" className={`${pad} text-right text-[11px] text-slate-400`}>{l.units.some(u => u.assumption)
-        ? l.units.every(u => u.assumption) ? 'Assumed held' : 'Statements + assumed held' : l.units.length ? 'Statement records' : 'Missing records'}</td>,
+        ? l.units.every(u => u.assumption) ? 'Carried forward' : 'Statements + carried forward' : l.units.length ? 'Statement records' : 'Missing records'}</td>,
       h.sector, h.entity,
       ...REVIEW_COLS.map(id => <ReviewColumnCell key={id} id={id} scope={scope} />),
     ];
@@ -264,13 +286,14 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   // The review's fields are each product's own; the book's total has none.
   const totalByCol = Object.fromEntries(COLS.slice(1).map((key, i) => [key, totalCells[i]]).filter(([key]) => !REVIEW_SET.has(key as string)));
   return <div className="shrink-0" data-segment-returns data-returns-attribution data-seg-axis={axis} data-seg-period={period} data-seg-type={selection.type}
+    data-twr-pending={twrPending}
     data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-seg-covered={a.coveredHoldings}
     data-seg-total-gain={a.total.gain ?? ''} data-seg-total-deployed={a.denominator ?? a.total.invested ?? ''}
     data-seg-total-value={a.total.value} data-seg-total-ret={a.total.returnPct ?? ''} data-seg-total-period-ret={a.total.periodPct ?? ''}
-    data-seg-assumed={a.total.units.filter(u => u.assumption).length} data-status="ready">
+    data-seg-assumed={a.total.units.filter(u => u.assumption).length} data-status="ready" {...marketData}>
     {summaryCards}
     <Card pad={false} title={title}
-      subtitle="Gain and return use available statements plus labelled holding assumptions. Open the info button for shares, dates and missing records. Market return uses current portfolio weights."
+      subtitle="Gain and return use available statements plus labelled holding assumptions. Open the info button for shares, dates and missing records. Benchmark return puts the same dated money into each holding's own index."
       right={<div className="flex flex-wrap items-center justify-end gap-2 text-[12px]">
         {axisTabs}
         {openable.length > 0 && <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable, !allOpen)} />}
@@ -293,10 +316,12 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
           <SortHeader col="gain" view={view} pad="px-4 py-2">Gain / loss</SortHeader>
           <SortHeader col="pnl" view={view} pad="px-4 py-2" title="Value now less purchase cost, over the holdings that report a cost. Since purchase, not the selected period.">Unreal. P&amp;L</SortHeader>
           <SortHeader col="realised" view={view} pad="px-4 py-2" title="Booked on units already sold, first-in first-out, holding by holding from the statements' own records. Since purchase, not the selected period.">Realised P&amp;L</SortHeader>
-          <SortHeader col="market" view={view} pad="px-4 py-2" title="Historical price/NAV performance weighted by current holding values. The info button lists dates, weights, sources and exclusions.">Market return</SortHeader>
+          <SortHeader col="bench" view={view} pad="px-4 py-2" title={`INR basis. What the row's own index would have earned on the same money, on the Return column's measure. ${BENCH_HOW} A share is compared by AMFI's size class (Nifty 50, Midcap 150, Smallcap 250), a fund by its category, a managed account by the benchmark its manager reports, a private holding with the Nifty 500; a row holding different kinds is a blend of each one's index. Cash, debt, arbitrage and hybrid holdings have no index in the feed and are named in the info button. Price indices: dividends are not in them.`}>Benchmark return (INR)</SortHeader>
           <SortHeader col="ret" view={view} pad="px-4 py-2">Return · {typeHead}</SortHeader>
+          {TWR_COLUMNS.map(c => <SortHeader key={c.key} col={c.key} view={view} pad="px-4 py-2"
+            title="Time-weighted return from INR values and dated cash flows, linked at every cash-flow date. Fixed calendar period, through the selected ending date or latest common valuation. Missing valuations are explained in the info button. The INR basis is retained when the display currency changes.">{c.label}</SortHeader>)}
           <SortHeader col="contrib" view={view} pad="px-4 py-2" title="For Absolute return only: row gain divided by the total's shared money base, so these contributions add to the total return.">Contribution</SortHeader>
-          <SortHeader col="basis" view={view} pad="px-4 py-2" title="Assumed held means no later sale or transfer appears in the records we have. This basis is also included in Excel exports.">Holding basis</SortHeader>
+          <SortHeader col="basis" view={view} pad="px-4 py-2" title="Carried forward means no later sale or transfer appears in the records we have. This basis is also included in Excel exports.">Holding basis</SortHeader>
           <SortHeader col="sector" view={view} align="left" pad="px-4 py-2">Sector</SortHeader>
           <SortHeader col="entity" view={view} align="left" pad="px-4 py-2">Entities</SortHeader>
           {REVIEW_COLS.map(id => { const c = reviewColumn(id)!;
@@ -304,7 +329,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
         </Tr></thead>
         <tbody className="divide-y divide-ink-700/60">{rows.map(r => <Fragment key={r.key}>
           <Tr view={view} className={r.children.length ? TREE_ROW.parent : ''} {...(r.children.length ? rowToggle(() => exp.toggle(r.key)) : {})}
-            data-seg-row={r.key} data-seg-value={r.value} data-seg-gain={r.gain ?? ''} data-seg-contrib={r.contribution ?? ''} data-seg-open={exp.isOpen(r.key) ? '1' : '0'} data-seg-securities={fig(r).securities}>
+            data-seg-row={r.key} data-seg-exited={r.exited ? '' : undefined} data-seg-value={r.value} data-seg-gain={r.gain ?? ''} data-seg-contrib={r.contribution ?? ''} data-seg-open={exp.isOpen(r.key) ? '1' : '0'} data-seg-securities={fig(r).securities}>
             <TreeNameCell depth={0} title={r.label} open={r.children.length ? exp.isOpen(r.key) : undefined} onToggle={r.children.length ? () => exp.toggle(r.key) : undefined} toggleData={{ 'data-seg-toggle': r.key }} />
             {cells(r, 'parent')}
           </Tr>

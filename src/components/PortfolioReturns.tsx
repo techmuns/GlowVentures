@@ -18,7 +18,8 @@
  * No line on the face reads as a sentence (Stage 10cp): every explanation is a
  * hover on the figure or control it explains.
  */
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
+import { Info } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { AbsentCell } from "@/components/Absent";
@@ -45,6 +46,11 @@ import {
 } from "@/lib/periodReturns";
 
 import { statementReturnInputs } from "@/lib/availableCardReturns";
+import { useReturnSelection } from "@/lib/useReturnSelection";
+import { selectedSegmentReturns, type ReturnSelection } from "@/lib/selectedSegmentReturns";
+import { compareToIndex, datedSinceInvestment } from "@/lib/cardBenchmark";
+import { currentHoldings, dedupedPositions } from "@/lib/analytics";
+import { exitedRows } from "@/lib/drilldown";
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const pctText = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
@@ -67,16 +73,11 @@ export default function PortfolioReturns() {
 
   const period = (PERIODS.find((p) => p.key === params.get("rp"))?.key ?? "fytd") as PeriodKey;
   const rtype = (RETURN_TYPES.find((r) => r.key === params.get("rtype"))?.key ?? (period === "invested-year" ? "absolute" : "xirr")) as ReturnType;
-  const [returnTypeResolution, setReturnTypeResolution] = useState<{ requested: ReturnType; displayed: ReturnType } | null>(null);
-  const displayedRtype = period !== 'invested-year' && returnTypeResolution?.requested === rtype ? returnTypeResolution.displayed : rtype;
   const set = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
     for (const [k, v] of Object.entries(patch)) v == null ? next.delete(k) : next.set(k, v);
     setParams(next, { replace: true });
   };
-  const onReturnTypeResolved = useCallback((requested: ReturnType, displayed: ReturnType) => {
-    setReturnTypeResolution(previous => previous?.requested === requested && previous.displayed === displayed ? previous : { requested, displayed });
-  }, []);
 
   // ── Every account's valuations and dated flows ───────────────────────────
   const inputs = useMemo<AccountInput[]>(() => {
@@ -122,31 +123,42 @@ export default function PortfolioReturns() {
   const today = new Date();
   const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const investedYear = period === "invested-year";
-  const returnHelp = investedYear ? PURCHASE_TYPE_HELP[rtype] : RETURN_TYPES.find(r=>r.key===displayedRtype)!;
   const end = investedYear ? currentDate : toParam && ISO.test(toParam) ? toParam : currentDate;
   const start = period === "custom"
     ? (fromParam && ISO.test(fromParam) ? fromParam : null)
     : investedYear ? investmentYearStart(end) : period === "inception" ? null : end ? periodStart(period, end) : null;
 
   const win = useMemo(() => (start && end && start < end ? windowReturns(inputs, start, end) : null), [inputs, start, end]);
+  /**
+   * THE TAB'S ONE SELECTION (Stage 10lg, `useReturnSelection`): the cards' rule for
+   * every period, Since investment the Gain / Loss and available-history cards'.
+   * The attribution, the bridge, Market performance and the Benchmarks below all
+   * strike it — the pool here is the attribution's own total.
+   */
+  const { selection: tabSelection, current: tabCurrent } = useReturnSelection({ period, start, end, type: rtype });
+  const pool = useMemo(() => {
+    if (!tabSelection || !statementPortfolio) return null;
+    const recorded = dedupedPositions(statementPortfolio.positions);
+    return selectedSegmentReturns(tabCurrent, exitedRows(recorded), statementPortfolio.accounts, "category", tabSelection, () => null, currentHoldings(recorded)).total;
+  }, [tabSelection, tabCurrent, statementPortfolio]);
 
-  // ── The whole portfolio: one window, one set of figures — or none ────────
-  const excluded = period === "inception" ? inception.skipped : (win?.excluded ?? []).map((e) => ({ label: e.label, reason: e.reason }));
-  const coveredCount = period === "inception" ? inception.rows.length : (win?.included.length ?? 0);
-  const accountsTotal = coveredCount + excluded.length;
-  // NEVER A PARTIAL RETURN: a figure over some accounts is not the portfolio's.
-  const whole = coveredCount > 0 && excluded.length === 0;
-  const incomplete = `${coveredCount === 0 ? `None of the ${accountsTotal} accounts holding value has a` : `${excluded.length} of ${accountsTotal} accounts holding value ${excluded.length === 1 ? "has" : "have"} no`} verified ${period === "inception"
-    ? "dated capital record and valuation since the first purchase"
-    : `valuation on or before ${start ? fmtDate(start) : "the opening date"} with dated capital through a closing valuation`}, so no whole-portfolio return is struck`;
-  const measured: Measured | null = !(period === "inception" || win) ? null
-    : !whole ? { shown: false, formula: (period === "inception" ? INCEPTION_FORMULAS : FORMULAS)[rtype],
-      reason: coveredCount === 0 && excluded.length === 0 ? "no account holds anything to measure over this window" : incomplete }
-    : period === "inception" ? measureInception(inception.rows, rtype, money)
-    : measureWindow(win!.included, rtype, money);
-
-  const measuredFrom = !whole ? null : period === "inception" ? inception.rows.map((r) => r.first).sort()[0] ?? null : win?.measuredFrom ?? null;
-  const measuredTo = !whole ? null : period === "inception" ? inception.rows.map((r) => r.valueAsOf).sort().at(-1) ?? null : win?.measuredTo ?? null;
+  // ── The portfolio's figure: the selection's own total, its coverage named ──
+  const excluded = (pool?.missing ?? []).map((g) => ({ label: g.label, reason: g.reason }));
+  const coveredCount = new Set((pool?.units ?? []).map((u) => u.accountId)).size;
+  const whole = !!pool && pool.units.length > 0;
+  const measured: Measured | null = pool?.measured ?? null;
+  // Keep the reader's selection in the control. A short-period total can be
+  // absolute while debt rows still use the requested annualised measure.
+  // Resolve the explanation from this render's total so period, date and
+  // subtab changes cannot reuse an earlier result through a child effect.
+  const displayedRtype = investedYear ? rtype : measured?.shownAs ?? rtype;
+  const requestedHelp = RETURN_TYPES.find(r => r.key === rtype)!;
+  const returnHelp = investedYear ? PURCHASE_TYPE_HELP[rtype]
+    : displayedRtype !== rtype ? { short: "Under a year: showing absolute return", title: requestedHelp.title }
+    : requestedHelp;
+  const measuredUnits = (pool?.units ?? []).filter((u) => !u.held);
+  const measuredFrom = measuredUnits.flatMap((u) => (u.from ? [u.from] : [])).sort()[0] ?? null;
+  const measuredTo = measuredUnits.flatMap((u) => (u.to ? [u.to] : [])).sort().at(-1) ?? null;
   const days = measuredFrom && measuredTo ? daysBetween(measuredFrom, measuredTo) : null;
   // The measure the figure IS: an XIRR or CAGR asked of under a year shows the
   // absolute return (Stage 10hk), and the tiles name that, not the selection.
@@ -173,21 +185,13 @@ export default function PortfolioReturns() {
    * move, which is a time-weighted figure over dates part of the pool was not
    * measured on.
    */
+  const pmeCoverage = useMemo(() => pool && tabSelection?.inception && statementPortfolio
+    ? datedSinceInvestment(pool.units, capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, statementPortfolio.accounts, BOOK_REVIEW_FLOWS),
+      BOOK_POSITION_TRANCHES, statementPortfolio.accounts) : null, [pool, tabSelection, statementPortfolio]);
   const pmeOf = (h: PriceHistory): { pct: number | null; reason: string | null } => {
-    if (portfolioPct == null || !measured) return { pct: null, reason: "The portfolio's return is not measured on this window, so the index is not struck on its flows" };
-    const level = (d: string) => closeOnOrBefore(h, d)?.value ?? null;
-    let m: Measured;
-    if (period === "inception") {
-      const p = pmeInceptionRows(inception.rows, level);
-      if (!p.rows) return { pct: null, reason: p.reason };
-      m = measureInception(p.rows, rtype, money);
-    } else {
-      const p = pmeWindowRows(win?.included ?? [], level);
-      if (!p.rows) return { pct: null, reason: p.reason };
-      m = measureWindow(p.rows, rtype, money);
-    }
-    if (!m.shown || m.pct == null) return { pct: null, reason: m.reason ?? "the index's flows do not yield this measure" };
-    return { pct: m.pct, reason: null };
+    if (portfolioPct == null || !measured || !pool || !tabSelection) return { pct: null, reason: "The portfolio's return is not measured on this window, so the index is not struck on its flows" };
+    const c = compareToIndex({ total: pool, selection: tabSelection }, (d) => closeOnOrBefore(h, d)?.value ?? null, pmeCoverage);
+    return c.index == null ? { pct: null, reason: c.reason ?? "the index's flows do not yield this measure" } : { pct: c.index, reason: null };
   };
   const benchRows: BenchRow[] = BENCHMARKS.map((b) => {
     const h = hist[b.key];
@@ -213,7 +217,7 @@ export default function PortfolioReturns() {
   });
   const gapOf = (r: BenchRow) => (portfolioPct != null && r.pme != null ? portfolioPct - r.pme : null);
 
-  const btn = (on: boolean) => `rounded-md px-2.5 py-1 text-[12px] font-semibold transition ${on ? "bg-champagne-400 text-ink-900 shadow-sm" : "text-slate-400 hover:text-slate-200"}`;
+  const btn = (on: boolean, compact = false) => `rounded-md ${compact ? "px-1.5" : "px-2.5"} py-1 text-[12px] font-semibold transition ${on ? "bg-champagne-400 text-ink-900 shadow-sm" : "text-slate-400 hover:text-slate-200"}`;
   const basisTag = annualise ? "a year" : "not annualised";
   // THE BARS ARE ONE SCALE: the largest move on the table, the portfolio's
   // included, fills half a track either side of zero.
@@ -229,10 +233,10 @@ export default function PortfolioReturns() {
     <div className="flex h-auto min-h-0 flex-col gap-3 lg:h-full" data-portfolio-returns>
       {/* ── ONE TOOLBAR (Stage 10fp): the period, the window and the measure on
           one strip, so the cards below start at the top of the panel. ── */}
-      <div className="card flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2" data-returns-toolbar>
-        <div className="ret-well flex flex-wrap items-center gap-0.5" data-returns-periods>
+      <div className="card flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2" data-returns-toolbar>
+        <div className="ret-well flex max-w-full flex-wrap items-center gap-0.5" data-returns-periods>
           {PERIODS.map((p) => (
-            <button key={p.key} type="button" title={p.title} className={btn(period === p.key)} data-returns-period={p.key} aria-pressed={period === p.key}
+            <button key={p.key} type="button" title={p.title} className={btn(period === p.key, true)} data-returns-period={p.key} aria-pressed={period === p.key}
               onClick={() => set(p.key === "invested-year" ? {rp:p.key,rto:null,rtype:"absolute",rview:null} : p.key === "custom" ? { rp: "custom", rfrom: start ?? fromParam } : { rp: p.key === "fytd" ? null : p.key })}>
               {p.label}
             </button>
@@ -247,29 +251,29 @@ export default function PortfolioReturns() {
           </label>
           <span className="text-slate-500" aria-hidden>→</span>
           <label className="flex items-center gap-1.5" title={investedYear ? 'Purchases through today; each holding shows its actual latest value date' : "Market prices close on or before this day. Recorded returns retain each account’s own verified statement date."}>
-            <span className="label-xs">To</span>
+            <span className="label-xs sr-only min-[1440px]:not-sr-only">To</span>
             <input type="date" className="rounded-md border border-ink-700 bg-ink-800 px-1.5 py-0.5 text-[12px] text-slate-200" data-returns-to
               value={end ?? ""} max={currentDate} disabled={period === "inception" || investedYear}
               onChange={(e) => set({ rto: e.target.value || null })} />
           </label>
         </div>
-        <label className="ml-auto flex items-center gap-2 text-[12px] text-slate-400" data-returns-types
-          title={returnHelp.title}>
-          <span className="label-xs">Return type</span>
-          <select className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
+        {/* Reserve room for the controls; the explanation uses only the space
+            left on the row instead of pushing the whole group onto a new one. */}
+        <label className="flex min-w-0 max-w-full flex-[1_1_13rem] flex-wrap items-center gap-1.5 text-[12px] text-slate-400" data-returns-types
+          title={`${returnHelp.short}. ${returnHelp.title}`}>
+          <span className="label-xs shrink-0 whitespace-nowrap">Return<span className="sr-only min-[1440px]:not-sr-only"> type</span></span>
+          <select className="max-w-full shrink-0 rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
             data-requested-return-type={rtype} data-displayed-return-type={displayedRtype}
-            value={displayedRtype !== rtype ? 'period-absolute' : rtype} onChange={(e) => set({ rtype: e.target.value === "xirr" && !investedYear ? null : e.target.value })}>
-            {/* A display-only option keeps all three explicit choices available.
-                Choosing Absolute still changes every row; a short mixed total
-                does not erase the requested XIRR/CAGR on its debt-only rows. */}
-            {displayedRtype !== rtype && <option value="period-absolute" disabled hidden>Absolute return</option>}
+            value={rtype} aria-describedby={`${tabsId}-return-type-help`}
+            onChange={(e) => set({ rtype: e.target.value === "xirr" && !investedYear ? null : e.target.value })}>
             {RETURN_TYPES.map((r) => (
               <option key={r.key} value={r.key} title={investedYear?PURCHASE_TYPE_HELP[r.key].title:r.title} data-returns-type={r.key} data-active={rtype === r.key ? "true" : "false"}>
                 {r.label}
               </option>
             ))}
           </select>
-          <span className="max-w-[16rem] truncate text-[11.5px] text-slate-500" data-returns-type-desc={displayedRtype}>
+          <Info aria-hidden="true" size={12} className="shrink-0 min-[1440px]:hidden" />
+          <span id={`${tabsId}-return-type-help`} className="sr-only text-[11.5px] text-slate-500 min-[1440px]:not-sr-only min-[1440px]:min-w-0 min-[1440px]:flex-1 min-[1440px]:truncate" aria-live="polite" data-returns-type-desc={displayedRtype}>
             {returnHelp.short}
           </span>
         </label>
@@ -301,11 +305,11 @@ export default function PortfolioReturns() {
 
         {!investedYear && <div role="tabpanel" id={`${tabsId}-panel-attribution`} aria-labelledby={`${tabsId}-tab-attribution`}
           hidden={view !== "attribution"} tabIndex={0} className="shrink-0" data-returns-panel="attribution">
-          <SegmentReturns period={period} onReturnTypeResolved={onReturnTypeResolved} selection={{ inception: period === "inception", type: rtype, start, end,
+          <SegmentReturns period={period} end={end} selection={tabSelection ?? { inception: period === "inception", type: rtype, start, end,
             windows: win?.included ?? [], inceptionRows: inception.rows,
             outside: period === "inception" ? inputs.filter(i => i.outside).map(i => ({ accountId: i.accountId, label: i.label, owner: i.owner, reason: i.outside! })) : win?.outside ?? [],
             excluded: period === "inception" ? inception.skipped : win?.excluded ?? (inputs.filter(i => !i.outside).map(i => ({ accountId: i.accountId, label: i.label, owner: i.owner, reason: "Choose an opening date before the closing date." }))),
-          }} />
+          } as ReturnSelection} />
         </div>}
 
         {/* ── BENCHMARKS AS TILES, ONE BAR SCALE (Stage 10fp). Three columns

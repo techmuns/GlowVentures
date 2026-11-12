@@ -1,7 +1,5 @@
-import { lazy, Suspense, useRef, useSyncExternalStore } from "react";
+import { lazy, Suspense, useRef } from "react";
 import { useNavigationScroll } from '@/lib/useNavigationScroll';
-import { deploymentChanged, subscribeToDeployment } from "@/lib/deploymentVersion";
-import { publicationRefreshBlocked } from "../shared/publicationRefresh.mjs";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { BOOK_POLYCAB } from "@/data/glowData";
 import { Sidebar } from "@/components/Sidebar";
@@ -16,6 +14,7 @@ import { navEntry } from "@/lib/nav";
 import { usePortfolio, WholeFamily } from "@/context/PortfolioContext";
 import StatementSourcePreview from "@/components/StatementSourcePreview";
 const MorningCIO = lazy(() => import("@/pages/MorningCIO").then((m) => ({ default: m.MorningCIO })));
+const Home = lazy(() => import("@/pages/Home").then((m) => ({ default: m.Home })));
 const Polycab = lazy(() => import("@/pages/Polycab").then((m) => ({ default: m.Polycab })));
 const PortfolioMonitor = lazy(() => import("@/pages/PortfolioMonitor").then((m) => ({ default: m.PortfolioMonitor })));
 const PrivateMarket = lazy(() => import("@/pages/PrivateMarket").then((m) => ({ default: m.PrivateMarket })));
@@ -86,7 +85,10 @@ function EmptyScope() {
 
 function RootRedirect() {
   const { portfolio, bookIsEmpty } = usePortfolio();
-  return <Navigate to={portfolio && !bookIsEmpty ? "/cio" : "/upload"} replace />;
+  const { search, hash } = useLocation();
+  // Preserve the member scope. Dropping it races the context's URL restore
+  // when the reader uses a page's Home button with a member selected.
+  return <Navigate to={{ pathname: portfolio && !bookIsEmpty ? "/home" : "/upload", search, hash }} replace />;
 }
 
 /**
@@ -126,14 +128,6 @@ export default function App() {
   const background = sourceBackground(location);
   const mainRef = useRef<HTMLElement>(null);
   useNavigationScroll(mainRef, background ?? location);
-  const updated = useSyncExternalStore(subscribeToDeployment, deploymentChanged);
-  if (updated && !publicationRefreshBlocked()) return <div role="alert" className="flex h-full items-center justify-center bg-ink-950 p-6 text-slate-200">
-    <div className="max-w-md rounded-lg border border-ink-700 bg-ink-900 p-6">
-      <h1 className="text-lg font-semibold">A new dashboard version is ready</h1>
-      <p className="mt-2 text-sm text-slate-400">Reload to continue with the latest portfolio data. Your saved preferences will be kept.</p>
-      <button type="button" onClick={() => window.location.reload()} className="mt-4 rounded bg-champagne-500 px-4 py-2 text-sm font-semibold text-ink-950">Reload dashboard</button>
-    </div>
-  </div>;
   return (
     <div className="flex h-full bg-ink-950 text-slate-200 bg-grid">
       <Sidebar />
@@ -165,6 +159,7 @@ export default function App() {
                 RINGFENCED_SECURITY_KEYS in build-book.mjs). Reads BOOK_POLYCAB
                 directly, never the portfolio context, so it cannot leak back in. */}
             <Route path="/polycab" element={<Gate><Polycab /></Gate>} />
+            <Route path="/home" element={<Gate><Home /></Gate>} />
             <Route path="/cio" element={<Gate><MorningCIO /></Gate>} />
             <Route path="/monitor" element={<Gate><PortfolioMonitor /></Gate>} />
             {/* THE PRIVATE BOOK THIS DROP ACTUALLY CARRIES — not the

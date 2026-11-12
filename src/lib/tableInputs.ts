@@ -1,3 +1,5 @@
+import { capitalIssues } from "../../shared/capitalValidation.mjs";
+import { CAPITAL_TERMS } from "../../shared/capitalTerms.mjs";
 import type { Account, Commitment, Position } from "./types";
 
 export const MAX_TABLE_WORKBOOK_BYTES = 64_000_000;
@@ -23,6 +25,10 @@ export type InputRecord = {
   parentId?: string;
   label: string; account: string; asOf: string; source: string;
   fields: InputField[]; values: Record<string, number | null>; versions: Record<string, string>;
+  originalValues?: Record<string, number | null>;
+  /** Advisory checks never reject or discard an established family correction. */
+  auditWarnings?: string[];
+  capitalTerms?: { nonCalledPaidIn: number; reason: string; document: string; pointer: string };
 };
 export type InputChange = { id: string; field: string; value: number | null; version: string; source: string; reset?: boolean };
 export type SavedInput = InputChange & { updatedAt: string };
@@ -33,7 +39,7 @@ export const privateCapitalId = (p: Pick<Position, "accountId" | "securityKey" |
 
 function inputRecord(id: string, kind: InputRecord["kind"], label: string, account: string, asOf: string, fields: InputField[], raw: object, source: unknown): InputRecord {
   const values = Object.fromEntries(fields.map(f => [f.key, (raw as Record<string, number | null>)[f.key] ?? null]));
-  return { id, kind, label, account, asOf, fields, values, versions: {}, source: JSON.stringify([asOf, source, values]) };
+  return { id, kind, label, account, asOf, fields, values, originalValues: { ...values }, versions: {}, source: JSON.stringify([asOf, source, values]) };
 }
 export function buildInputCatalog(positions: readonly Position[], commitments: readonly Commitment[], accounts: readonly Account[]): InputRecord[] {
   const acc = new Map(accounts.map(a => [a.accountId, a]));
@@ -49,7 +55,8 @@ export function buildInputCatalog(positions: readonly Position[], commitments: r
     return p.marketSide === "private" && !caps.has(p.accountId)
       ? [holding, inputRecord(privateCapitalId(p), "private-capital", p.security, accountLabel(p.accountId), date, CAPITAL_INPUTS, {}, source)] : [holding];
   });
-  for (const c of commitments) records.push(inputRecord(capitalInputId(c.accountId), "capital", c.name, accountLabel(c.accountId), c.asOf ?? "", CAPITAL_INPUTS, c, c.accountId));
+  for (const c of commitments) records.push({ ...inputRecord(capitalInputId(c.accountId), "capital", c.name, accountLabel(c.accountId), c.asOf ?? "", CAPITAL_INPUTS, c, c.accountId),
+    capitalTerms: CAPITAL_TERMS[c.accountId] });
   // A combined account can report several member sub-accounts. Refuse ambiguous
   // identity rather than letting one edit silently change two source rows.
   const counts = new Map<string, number>();
@@ -74,7 +81,9 @@ export function applySavedInputs(catalog: InputRecord[], saved: readonly SavedIn
       const s = by.get(`${r.id}\n${f.key}`);
       if (s?.source === r.source) { values[f.key] = s.value; versions[f.key] = s.updatedAt; }
     }
-    return { ...r, values, versions };
+    const auditWarnings = (r.kind === 'capital' || r.kind === 'private-capital') && Object.keys(versions).length
+      ? capitalIssues(values, r.capitalTerms).map(issue => issue.message) : [];
+    return { ...r, values, versions, ...(auditWarnings.length ? { auditWarnings } : {}) };
   });
 }
 export function validateInputChanges(changes: unknown, catalog: InputRecord[]): string | null {
@@ -97,6 +106,8 @@ export function validateInputChanges(changes: unknown, catalog: InputRecord[]): 
     if (r.kind === "call" && (change.value === null || change.value <= 0)) return "Enter a capital call amount greater than zero.";
     if (r.kind === "call" && change.value! > 1e12) return "That capital call amount is too large. Check the zeros.";
   }
+  // Cross-field capital checks are advisory. Keep the established single-cell
+  // and workbook workflows; basic number and stale-source checks above remain.
   return null;
 }
 

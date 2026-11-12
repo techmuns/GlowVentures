@@ -58,6 +58,7 @@ import { displaySecurity, DASH } from "@/lib/format";
 import { singlePurchaseGap } from "@/lib/analytics";
 import type { Position } from "@/lib/types";
 import type { Txn, TxnData } from "@/lib/ledger";
+import savedActions from "../../../public/data/corporate-actions.json";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -187,6 +188,7 @@ const INDEX = buildDatedCapital({
 /** The current holdings as the page holds them — what "every holding of an account" is measured against. */
 const UNIVERSE: Position[] = PAGE.filter((_, i) => NAV_SET.held.includes(RAW[i]));
 /** The sheet's rows outside the mandates: each key's current non-PMS lines, one class and one engagement. */
+const MIXED_ROWS = new Map<string, Position[]>();
 const DIRECT_ROWS = (() => {
   const m = new Map<string, Position[]>();
   PAGE.forEach((p, i) => {
@@ -194,12 +196,14 @@ const DIRECT_ROWS = (() => {
     (m.get(p.securityKey) ?? m.set(p.securityKey, []).get(p.securityKey)!).push(p);
   });
   for (const [k, ps] of m) {
-    if (new Set(ps.map((p) => p.assetClass)).size !== 1 || new Set(ps.map((p) => ACC.get(p.accountId)?.engagement)).size !== 1) m.delete(k);
+    if (new Set(ps.map((p) => p.assetClass)).size !== 1 || new Set(ps.map((p) => ACC.get(p.accountId)?.engagement)).size !== 1) { MIXED_ROWS.set(k, ps); m.delete(k); }
   }
   return m;
 })();
 const capitalOf = (key: string) => {
-  const ps = DIRECT_ROWS.get(key);
+  // A row of mixed lines (Transition VC: a review line beside two AIF folios) is
+  // still whole accounts on one dated record where every account is (Stage 10ne).
+  const ps = DIRECT_ROWS.get(key) ?? MIXED_ROWS.get(key);
   return ps ? INDEX.behind(firstOfGroup(ps), UNIVERSE) : null;
 };
 /**
@@ -248,6 +252,26 @@ function solveXirr(recordKeys: readonly string[]): number | null {
  * lacks a figure.
  */
 const STMT = new Map(BOOK_POSITIONS.map((p) => [`${p.accountId}|${p.securityKey}`, p]));
+/**
+ * EVERY UNIT A BUY OR A BONUS ON ONE (Stage 10mx): the window sold nothing, every
+ * row in it is a buy, and the saved bonus issues after the last of them multiply
+ * those buys to exactly the units held — so the buys are every rupee paid.
+ * Re-expressed off the saved capture, never `investedOn.ts`.
+ */
+const bonusMadeTheRest = (p: Position): boolean => {
+  const r = p.tradeRecord;
+  if (!r || r.sells || !(p.quantity! > 0)) return false;
+  const ts = (BOOK_HOLDING_TRADES[`${p.accountId}|${p.securityKey}`] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
+  if (!ts.length || ts.some((t) => t.side !== "buy" || !(t.quantity! > 0))) return false;
+  // A PMS statement prints no ISIN; the line's NSE symbol names it instead.
+  const mine = savedActions.rows.filter((a) => (p.isin ? a.isin === p.isin : !!p.symbol && a.ticker === p.symbol));
+  if (new Set(mine.map((a) => a.isin)).size !== 1) return false;
+  const last = ts[ts.length - 1].date;
+  const bonus = mine.filter((a) => a.type === "bonus" && a.exDate > last && a.exDate <= r.to);
+  if (!bonus.length || bonus.some((a) => !(a.factor! > 1))) return false;
+  const bought = ts.reduce((n, t) => n + t.quantity!, 0);
+  return Math.abs(bought * bonus.reduce((f, a) => f * a.factor!, 1) - p.quantity!) <= 0.0005;
+};
 function holdingRate(ps: readonly Position[]): { annual: number | null; days: number; payments: number } | null | "short" {
   const flows: { t: number; amount: number }[] = [];
   let since = Infinity, to = -Infinity, payments = 0;
@@ -261,7 +285,7 @@ function holdingRate(ps: readonly Position[]): { annual: number | null; days: nu
     const lots = BOOK_HOLDING_LOTS[k];
     const rec = p.recoveredCost;
     let close: string, from: string;
-    if (r && r.unaccounted === 0) {
+    if (r && (r.unaccounted === 0 || bonusMadeTheRest(p))) {
       const ts = (BOOK_HOLDING_TRADES[k] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
       if (!ts.length) return null;
       if (ts.some((t) => t.amount === null) || inc.some((i) => !i.date)) return "short";
@@ -583,7 +607,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   // 29-11-2024 is the first such row the book carries (its Transaction Details
   // are read since the fund statements' dated tables were). Every OTHER direct
   // CAGR row must be one this rule annualised from its own lot register.
-  const datedRowNames = new Set([...DIRECT_ROWS].filter(([key]) => accountDated(key))
+  const datedRowNames = new Set([...DIRECT_ROWS, ...MIXED_ROWS].filter(([key]) => accountDated(key))
     .flatMap(([, ps]) => ps.map((p) => displaySecurity(p.security))));
   const sheetCagr = ROWS.filter((r) => (r["Measure"] === "CAGR" || r["Measure"] === "XIRR") && r["Mandate"] === DASH
     && !datedRowNames.has(r["Security"] as string)).length;
@@ -622,12 +646,12 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
 // answer to one question, one click apart.
 {
   const byName = new Map<string, string[]>();
-  for (const [key, ps] of DIRECT_ROWS) for (const n of new Set(ps.map((p) => displaySecurity(p.security)))) {
+  for (const [key, ps] of [...DIRECT_ROWS, ...MIXED_ROWS]) for (const n of new Set(ps.map((p) => displaySecurity(p.security)))) {
     (byName.get(n) ?? byName.set(n, []).get(n)!).push(key);
   }
   let subjects = 0, xirrs = 0;
   const wrong: string[] = [];
-  for (const [key, ps] of DIRECT_ROWS) {
+  for (const [key, ps] of [...DIRECT_ROWS, ...MIXED_ROWS]) {
     const cap = capitalOf(key);
     if (!cap || !cap.dated || cap.holdings) continue;
     const names = [...new Set(ps.map((p) => displaySecurity(p.security)))];
@@ -1016,12 +1040,13 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
 {
   const baskets = new Set(["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity",
                            "Not classified in the family's review"]);
-  const classes = new Set(["Equity", "Debt", "Alternate", "Cash", "Not classified in the family's review"]);
+  // Real Estate is the LLPs' Nzuri shares (Stage 10mg).
+  const classes = new Set(["Equity", "Debt", "Alternate", "Real Estate", "Cash", "Not classified in the family's review"]);
   const bCells = columnUnder(holdings, "Basket (family)", dataLast);
   const cCells = columnUnder(holdings, "Asset Class (family)", dataLast);
   ok("every Basket cell is one of the family's four, or the named remainder",
      bCells.length > 0 && bCells.every((v) => typeof v === "string" && baskets.has(v)), `${new Set(bCells.map(String)).size} distinct`);
-  ok("every Asset Class cell is one of the family's four, or the named remainder",
+  ok("every Asset Class cell is one of the family's five, or the named remainder",
      cCells.length > 0 && cCells.every((v) => typeof v === "string" && classes.has(v)), `${new Set(cCells.map(String)).size} distinct`);
   ok("the sheet distinguishes more than one basket", new Set(bCells.map(String)).size > 1);
   ok("...and more than one family asset class", new Set(cCells.map(String)).size > 1);

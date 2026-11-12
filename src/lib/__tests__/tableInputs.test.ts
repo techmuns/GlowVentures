@@ -1,8 +1,10 @@
+import readModelManifest from "../../data/readModels.json";
 import assert from "node:assert/strict";
 import ExcelJS from "exceljs";
 import { BOOK_POSITIONS, BOOK_COMMITMENTS, BOOK_ACCOUNTS } from "../../data/glowData";
 import { buildInputCatalog, applySavedInputs, privateCapitalId, type InputChange, type InputRecord, type SavedInput } from "../tableInputs";
 import { applyTableInputs } from "../applyTableInputs";
+import { holdingFlowsOf } from '../holdingFlows';
 import { createTableWorkbook } from "../exportTableExcel";
 import { readInputWorkbook } from "../tableInputExcel";
 import { privateBookFolios, figuresOf } from "../privateBook";
@@ -38,6 +40,12 @@ async function request(changes?: unknown, origin = "https://test.example", raw?:
 assert.equal((await request()).status, 200);
 assert.equal((await request([change(target, "quantity", 0)])).status, 200, "a real zero saves");
 const saved = (await request()).body.saved as SavedInput[];
+const audit = (record.get(`table-input:${target.id}:quantity`) as { audit: { previousValue: number | null; originalValue: number | null; validationVersion: string; actor: string; unit: string; currency: string | null } }).audit;
+assert.equal(audit.previousValue, null);
+assert.equal(audit.originalValue, null);
+assert.equal(audit.validationVersion, 'financial-integrity-v1');
+assert.equal(audit.actor, 'authenticated-dashboard-session');
+assert.equal(audit.unit, 'units'); assert.equal(audit.currency, null, 'unit corrections are never labelled as rupees');
 let current = applySavedInputs(source, saved);
 assert.equal(current.find(r => r.id === target.id)!.values.quantity, 0);
 assert.equal(flushes, 1);
@@ -82,6 +90,14 @@ assert.equal(JSON.stringify(book), original, "the canonical source book stays un
 const position = applied.positions.find(p => privateCapitalId(p) === cap.id)!;
 assert.equal(position.quantity, 0);
 assert.equal(position.enteredCapital?.paid, 100);
+const paidOnly = applyTableInputs(book, [edits[1]])!.positions.find(p => privateCapitalId(p) === cap.id)!;
+assert.ok(paidOnly.returnInputsAuditReason, 'capital correction context is advisory');
+const sourcedCapital = source.find(r => r.kind === 'capital' && r.values.paid != null && r.values.paid >= 1 && r.values.called != null && book.positions.some(p => r.id === `capital:${p.accountId}`))!;
+assert.ok(sourcedCapital);
+const accountCapitalEdits = [change(sourcedCapital, 'paid', sourcedCapital.values.paid! - 1), ...(sourcedCapital.values.pending == null ? [] : [change(sourcedCapital, 'pending', sourcedCapital.values.pending + 1)])]
+  .map(c => ({ ...c, updatedAt: '2026-11-11T00:00:00Z' }));
+assert.ok(applyTableInputs(book, accountCapitalEdits)!.positions.find(p => `capital:${p.accountId}` === sourcedCapital.id)!.returnInputsAuditReason);
+assert.deepEqual(position.integrity?.metrics.unrealizedPnL, book.positions.find(p => privateCapitalId(p) === cap.id)!.integrity?.metrics.unrealizedPnL, 'quantity and private-capital edits do not claim an unchanged P&L');
 const folios = privateBookFolios(applied, []).folios.filter(f => f.position === position);
 assert.equal(figuresOf(folios, true).paid, 100, "new capital numbers reach the shared private-book rollup");
 assert.equal(figuresOf(folios, true).called, null, "paid capital never fills a missing called amount");
@@ -198,3 +214,53 @@ try {
   assert.equal(getTableInputState().properties, savedSnapshot.properties, "the save result and table use one property snapshot");
 } finally { globalThis.fetch = originalFetch; if (originalWindow) globals.window = originalWindow; else delete globals.window; }
 console.log("Table input persistence, source rollups and Excel round-trip contracts passed");
+
+// New audit information must not blanket-disable the established return rules.
+assert.ok(position.returnInputsAuditReason);
+{
+  const dated = BOOK_POSITIONS.find(p => !p.live && holdingFlowsOf(p, BOOK_ACCOUNTS.find(a => a.accountId === p.accountId)?.asOf ?? null)?.dated)!;
+  assert.ok(dated, 'the baseline contains a dated return');
+  const asOf = BOOK_ACCOUNTS.find(a => a.accountId === dated.accountId)?.asOf ?? null;
+  const input = source.find(r => r.id === `holding:${dated.accountId}|${dated.securityKey}|${dated.memberId ?? ''}`)!;
+  const corrected = applyTableInputs(book, [{ ...change(input, 'dividendReceived', input.values.dividendReceived), updatedAt: '2026-11-12T00:00:00Z' }])!.positions.find(p => p.accountId === dated.accountId && p.securityKey === dated.securityKey && p.memberId === dated.memberId)!;
+  assert.deepEqual(holdingFlowsOf(corrected, asOf), holdingFlowsOf(dated, asOf), 'a retained number plus new audit metadata cannot remove existing dated-return coverage');
+}
+{
+  const basePosition = { ...BOOK_POSITIONS.find(p => p.costBasis != null && !p.valuedAtCost)!, marketValue: 120, costBasis: 100, quantity: 3, avgCost: 33.3333, currentPrice: 39.9999, unrealizedPnL: 20 };
+  const sourceMetric = { status: 'source-backed' as const, basis: 'statement', effectiveDate: '2026-11-01', exceptions: [] as string[] };
+  basePosition.integrity = { positionId: 'fixture', quantityAsOf: '2026-11-01', formulaVersion: 'fixture', metrics: { costBasis: { ...sourceMetric }, marketValue: { ...sourceMetric }, unrealizedPnL: { ...sourceMetric } } };
+  const fixtureBook = { ...book, positions: [basePosition] };
+  const input = buildInputCatalog(fixtureBook.positions, fixtureBook.commitments, fixtureBook.accounts).find(r => r.kind === 'holding')!;
+  const apply = (field: string, value: number | null) => applyTableInputs(fixtureBook, [{ ...change(input, field, value), updatedAt: '2026-11-11T00:00:00Z' }])!.positions[0];
+  assert.equal(apply('dividendReceived', 5).integrity!.metrics.unrealizedPnL.status, 'source-backed');
+  assert.equal(apply('dividendReceived', 5).avgCost, 33.3333, 'income corrections preserve the printed unit-cost precision');
+  assert.equal(apply('dividendReceived', 5).currentPrice, 39.9999, 'income corrections do not replace a source price with division');
+  assert.equal(apply('marketValue', 130).integrity!.metrics.unrealizedPnL.status, 'entered');
+  assert.equal(apply('costBasis', null).integrity!.metrics.unrealizedPnL.status, 'missing');
+  basePosition.integrity.metrics.marketValue = { ...sourceMetric, status: 'disputed', exceptions: ['source-conflict'] };
+  assert.equal(apply('costBasis', 90).integrity!.metrics.unrealizedPnL.status, 'disputed', 'a correction cannot clear the unchanged valuation dispute');
+}
+
+// Saving must use the current published statement book, not only the one
+// compiled into this deployment. No production endpoint is used by this test.
+{
+  const savedFetch = globalThis.fetch;
+  try {
+    const revised = { ...BOOK_POSITIONS[0], securityKey: 'integrity-new-publication-holding', security: 'Newly published holding' };
+    globalThis.fetch = async (input) => {
+      const url = String(input);
+      if (url.includes('/contents/current.json')) return Response.json({ schemaVersion: 1, storage: 'github-actions-v1', revision: 'a'.repeat(20), readerRevision: readModelManifest.readerRevision });
+      if (url.includes('/bootstrap.json')) return Response.json({ schemaVersion: 1, revision: 'a'.repeat(20), readerRevision: readModelManifest.readerRevision,
+        book: { BOOK_POSITIONS: [revised], BOOK_ACCOUNTS, BOOK_COMMITMENTS: [] } });
+      throw Error('Unexpected fixture request');
+    };
+    const response = await onRequest({ request: new Request('https://test.example/api/table-inputs'), env: { DASHBOARD_STORE: store, GLOW_GITHUB_TOKEN: 'fixture-only' } });
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.ok(result.catalog.some((r: InputRecord) => r.id.includes('integrity-new-publication-holding')));
+    assert.ok(!result.catalog.some((r: InputRecord) => r.kind === 'holding' && !r.id.includes('integrity-new-publication-holding')));
+    globalThis.fetch = async () => Response.json({ schemaVersion: 1, storage: 'github-actions-v1', revision: 'a'.repeat(20), readerRevision: 'b'.repeat(64) });
+    const unavailable = await onRequest({ request: new Request('https://test.example/api/table-inputs'), env: { DASHBOARD_STORE: store, GLOW_GITHUB_TOKEN: 'fixture-only' } });
+    assert.equal(unavailable.status, 502, 'A malformed publication cannot silently fall back to stale compiled inputs');
+  } finally { globalThis.fetch = savedFetch; }
+}

@@ -320,14 +320,22 @@ console.log("\n── a row carries an account's record only where it holds all 
     dc.behind(units, [...universe, written]) === null);
   // A share inside a mandate is not the mandate.
   const svan = BOOK_ACCOUNTS.find((a) => /svan/i.test(a.provider) && dc.of(a.accountId));
-  const shares = svan ? own(svan.accountId).filter((p) => p.marketValue > 0) : [];
   ok("a mandate on a dated record is rated as a whole", !!svan && !!dc.behind(own(svan.accountId), universe)?.dated);
   // …AND ONE OF ITS SHARES IS NOT THE ACCOUNT (Stage 10fw). It never takes the
   // account's record. Where its own dated trades account for every unit it
   // holds, its money is dated as a holding's — `holdings` set, struck over that
-  // line alone; where they do not, it carries no capital at all.
-  const undatedShare = shares.find((p) => !(p.tradeRecord && p.tradeRecord.unaccounted === 0) && !p.heldSince);
-  const datedShare = shares.find((p) => p.tradeRecord?.unaccounted === 0 && p.tradeRecord.held);
+  // line alone; where they do not, it carries no capital at all. Read on the
+  // first dated mandate holding one of each: SVAN's holdings are dated 4 Nov
+  // while its trade tapes end 30 Sep, so none of its shares is dated in full
+  // any more (Stage 10lw).
+  const isUndated = (p: Position) => !(p.tradeRecord && p.tradeRecord.unaccounted === 0) && !p.heldSince;
+  const isDated = (p: Position) => p.tradeRecord?.unaccounted === 0 && !!p.tradeRecord.held;
+  const mandate = BOOK_ACCOUNTS.find((a) => a.engagement === "PMS" && dc.of(a.accountId)
+    && own(a.accountId).some((p) => p.marketValue > 0 && isUndated(p))
+    && own(a.accountId).some((p) => p.marketValue > 0 && isDated(p)));
+  const shares = mandate ? own(mandate.accountId).filter((p) => p.marketValue > 0) : [];
+  const undatedShare = shares.find(isUndated);
+  const datedShare = shares.find(isDated);
   ok("…and one of its shares is not an account: no capital where nothing dates every unit of it",
     shares.length > 1 && !!undatedShare && dc.behind([undatedShare], universe) === null);
   const own1 = datedShare ? dc.behind([datedShare], universe) : null;
@@ -407,6 +415,24 @@ console.log("\n── the family's rule on a dated row ──");
   const cc = returnCoverage([row(dated()), row(one, 21), row(undefined)], "cagr", AS_OF);
   ok("the CAGR column counts the several-payment rows apart from the undated ones", cc.staggered === 1 && cc.cagr === 1,
     JSON.stringify(cc));
+}
+
+// ── A REVIEW LINE DATED ONLY BY MONTHS NAMES THAT SPAN (Stage 10mp) ─────────
+//
+// National Stock Exchange's Invested on reads "Dec 2022 – Aug 2023" off the
+// review, and its XIRR and index line said "no dated capital" — the custodian
+// account's wording. The row still carries no rate (one cost for the span is
+// not a dated payment), but its reason must name the span the row shows.
+console.log("\n── a review line dated only as a span ──");
+{
+  const nse = universe.filter((p) => p.securityKey === "national-stock-exchange-of-india" && p.accountId.startsWith("review-"));
+  const r = dc.behind(nse, universe);
+  const why = r && !r.dated ? r.reason : "";
+  ok("NSE's two review lines carry no dated capital", nse.length === 2 && !!r && !r.dated, JSON.stringify(r));
+  ok("…and the reason names the review's span, not 'known only as a total'",
+    /only as a span — Dec 2022 – Aug 2023/.test(why) && !/known only as a total/.test(why), why);
+  const nx = measuredReturn({ ...nse[0], capital: r } as ReturnInput, "xirr", "2026-11-04");
+  ok("…and the XIRR column says so, never a rate", !nx.shown && /only as a span/.test(nx.shown ? "" : nx.reason));
 }
 
 console.log(fails ? `\n${fails} FAILED` : "\nall dated-capital checks passed");

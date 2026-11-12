@@ -16,9 +16,10 @@
 // statement's own date. And the family's 28 Oct 2026 choice to apply its later
 // SHARE trades (Stage 10iw, `rollMopwmShareTrades`): a Motilal demat share
 // balance is carried past its statement by the report's NSE/BSE trades, on the
-// live basis only, where the same reconciliation holds. No fund row moves a
-// quantity: the 1 Oct 2026 "redemptions" are at least partly
-// rematerialisations and wait for the family's answer. It never changes a
+// live basis only, where the same reconciliation holds. Since 6 Nov 2026 its
+// FUND trades carry a Motilal demat fund balance the same way, up to a
+// transfer of custody (Stage 10me, `rollMopwmFundTrades`), and a PMS/AIF folio
+// it pays out in full is redeemed (`mopwmCapitalExits`). It never changes a
 // valuation or a statement's date.
 //
 // Columns are found by HEADER TEXT, never by position; a holder heading is a row
@@ -30,6 +31,7 @@ import path from "node:path";
 import { readSpreadsheet, findHeader } from "../ingest/lib/sheet.mjs";
 import { ownerIdFor } from "../../shared/owners.mjs";
 import { fifoLedger, UNIT_TIE } from "../../shared/fifo.mjs";
+import { fundUnitSplitFor } from "../../shared/fundUnitSplits.mjs";
 import { num } from "./reviewPrivateRead.mjs";
 
 export const MOPWM_TRANSACTIONS = "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx";
@@ -145,6 +147,8 @@ export const MOPWM_SECURITIES = Object.freeze({
   INF209K01VA3: "Aditya Birla SL Liquid Direct-G", INF109K012M7: "ICICI Pru Nifty 50 Index Direct-G",
   INF109K01Y80: "ICICI Pru Nifty Next 50 Index Direct-G", INF769K01AX2: "Mirae Asset Large Cap Direct-G",
   INF174K01NH1: "Kotak Liquid Direct-IDCWD Reinvestment",
+  // Stage 10ma / 10mb: the pre-split ISINs Ankita's Motilal demat statement of 31 Jul prints.
+  INF740KA1RE3: "DSP Silver ETF-G", INF740KA1SW3: "DSP Gold ETF-G",
 });
 
 /** An exchange settlement reference (`NSE/M/121/D`): a priced trade, not a book entry. */
@@ -172,6 +176,8 @@ function eventOf(r, isin) {
 
 /** The depository's own split reference (`SPLIT/22/09/2026/712101`). */
 const SPLIT = /^SPLIT\//;
+/** A fund's units restated in place: the lots out and back in of a sub-division. */
+const CORPUS = /^Corpus (In|Out)$/;
 
 /**
  * A SHARE SPLIT AS THE REPORT PRINTS IT (Stage 10kk): under one SPLIT reference
@@ -179,11 +185,13 @@ const SPLIT = /^SPLIT\//;
  * same amount and a whole multiple of its units — TAAL's 22 Sep 2026 1:5, four
  * lots. Read as one FIFO switch of the holding into itself, so each lot keeps
  * its cost and purchase date. Anything that is not exactly that is a reason.
+ * A fund's sub-division prints the same shape as Corpus Out / Corpus In rows
+ * (DSP's metal ETFs, 28 Aug 2026; Stage 10ma).
  */
 export function splitOf(rows, isin) {
   const [first] = rows;
-  const out = rows.filter((r) => r.type === "SELL"), into = rows.filter((r) => r.type === "PURCHASE");
-  const where = `${first.ref} (${first.date})`;
+  const out = rows.filter((r) => r.type === "SELL" || r.type === "Sell"), into = rows.filter((r) => r.type === "PURCHASE" || r.type === "Buy");
+  const where = `${first.ref ?? "Corpus Out / Corpus In"} (${first.date})`;
   if (rows.some((r) => r.date !== first.date)) return { reason: `${where} spans more than one date` };
   if (!out.length || out.length !== into.length || out.length + into.length !== rows.length)
     return { reason: `${where} does not take out and put back the same number of lots` };
@@ -202,18 +210,26 @@ export function splitOf(rows, isin) {
 
 /**
  * Every row of one security as FIFO events, a SPLIT block as one switch that
- * must take the whole holding the record has at that moment. Returns the
- * splits it read, or the first reason a row cannot be read.
+ * must take the whole holding the record has at that moment. A fund's Corpus
+ * block is read the same way, and only as the sub-division
+ * `shared/fundUnitSplits.mjs` records for its ISIN, on that ex-date and factor.
+ * Returns the splits it read, or the first reason a row cannot be read.
  */
 function eventsOf(rows, isin) {
   const events = [], splits = [], read = new Set();
   for (const r of rows) {
     if (read.has(r)) continue;
-    if (r.sheet === "Direct Equity" && SPLIT.test(r.ref ?? "")) {
-      const block = rows.filter((x) => x.ref === r.ref);
+    const shareSplit = r.sheet === "Direct Equity" && SPLIT.test(r.ref ?? "");
+    const fundSplit = r.sheet === "Mutual Funds" && CORPUS.test(r.subType ?? "");
+    if (shareSplit || fundSplit) {
+      const block = rows.filter((x) => shareSplit ? x.ref === r.ref
+        : x.sheet === "Mutual Funds" && x.date === r.date && CORPUS.test(x.subType ?? ""));
       for (const x of block) read.add(x);
       const s = splitOf(block, isin);
       if (s.reason) return { reason: `row ${r.row} (${r.date}): ${s.reason}` };
+      const known = fundSplit ? fundUnitSplitFor(isin) : null;
+      if (fundSplit && !(known && known.exDate === s.split.exDate && known.factor === s.split.factor))
+        return { reason: `row ${r.row} (${r.date}): a ${s.split.factor}-for-1 restatement no entry of shared/fundUnitSplits.mjs records for ${isin}` };
       const held = fifoLedger(events).unitsHeld;
       if (Math.abs(held - s.event.units) > UNIT_TIE)
         return { reason: `row ${r.row} (${r.date}) splits ${s.event.units} units where the record holds ${Math.round(held * 1000) / 1000}` };
@@ -377,4 +393,157 @@ export function rollMopwmShareTrades(report, { accounts, records }) {
     }
   }
   return { rolls, refused };
+}
+
+/** Plan and option words, and the word "fund": what a scheme's name is not told apart by. */
+const SCHEME_NOISE = new Set(["fund", "plan", "direct", "reg", "regular", "g", "growth", "option", "cumulative"]);
+/** A scheme's distinguishing words, the report's abbreviations spelt out. */
+export function schemeTokens(name) {
+  return new Set(String(name ?? "").toLowerCase().replace(/&/g, " and ").replace(/\bpru\b/g, "prudential")
+    .replace(/\bsl\b/g, "sun life").replace(/\bmulti\s+cap\b/g, "multicap").replace(/[^a-z0-9]+/g, " ")
+    .trim().split(/\s+/).filter((t) => t && !SCHEME_NOISE.has(t)));
+}
+const planOf = (name) => /\bdirect\b/i.test(name) ? "direct" : /\b(reg|regular)\b/i.test(name) ? "regular" : null;
+/** The report's name for a scheme names AMFI's scheme for an ISIN: every word of it, and no other plan. */
+export function sameScheme(reportName, amfiName) {
+  const mine = schemeTokens(reportName), theirs = schemeTokens(amfiName);
+  if (!mine.size || ![...mine].every((t) => theirs.has(t))) return false;
+  const p = planOf(reportName), q = planOf(amfiName);
+  return !(p && q && p !== q);
+}
+
+/**
+ * THE REPORT'S LATER FUND TRADES, CARRIED ONTO THE MOTILAL DEMATS (Stage 10me).
+ *
+ * *"If we have transaction data that shows buy or sale transactions then those
+ * should be considered to update the portfolio"* — the family, 6 Nov 2026.
+ * Stages 10ma/10mb applied two DSP ETF sales one confirmation at a time; this
+ * applies every fund trade the report records after a Motilal demat statement,
+ * on the share roll's terms. A statement line (`records`) is carried only where:
+ *   1. ONE group of the owner's rows (one folio, one scheme name) names AMFI's
+ *      scheme for the line's ISIN (`sameScheme`) — a demat-held scheme's
+ *      history may sit under an AMC folio, as DSP's does;
+ *   2. that group replayed from its first row holds EXACTLY the line's units on
+ *      the statement's date — the witness that the group is this balance;
+ *   3. every row is a priced purchase, redemption, switch or reinvestment that
+ *      ties (`eventOf`), or the Corpus block of a recorded sub-division;
+ *   4. no sale takes units the record does not hold.
+ *
+ * A TRANSFER IS NOT A SALE. On 1 Oct 2026 the report "redeems" every fund
+ * balance on every Motilal demat, and every one of those balances whose AMC
+ * folio statement the book holds is on it, unit for unit, after that day. So a
+ * day on which a demat-folio "redemption" reappears exactly on another
+ * statement of the same owner is a transfer day (`statements` witness it), and
+ * a demat-folio redemption of a whole balance on such a day moves custody: the
+ * roll stops before it (`transferredOn`) and keeps the units held. Where the
+ * folio statement has arrived, it counts them (`custodySuccessor`).
+ *
+ * Cost, realised and the cost of the units sold are FIFO over the whole group.
+ * Read by the LIVE layer only (`fundNavs.ts`); the statement basis keeps the
+ * snapshot. Everything refused is returned with its reason.
+ */
+export function rollMopwmFundTrades(report, { accounts, records, names, statements }) {
+  const rolls = [], refused = [];
+  const tie = (a, b) => Math.abs(a - b) <= UNIT_TIE;
+  const acc = new Map(accounts.map((a) => [a.accountId, a]));
+  const demats = new Set(accounts.filter((a) => a.provider === MOTILAL_DEMAT).map((a) => `${a.ownerId}|${a.accountNo}`));
+  const onDemat = (r) => demats.has(`${r.ownerId}|${r.folio}`);
+  const groups = new Map();
+  for (const r of report.rows) {
+    if (r.sheet !== "Mutual Funds" || !r.ownerId) continue;
+    const k = `${r.ownerId}|${r.folio}|${r.security}`;
+    groups.set(k, [...(groups.get(k) ?? []), r]);
+  }
+  for (const [k, rows] of groups) groups.set(k, rows.sort((a, b) => a.date.localeCompare(b.date) || a.row - b.row));
+  const sameUnitsElsewhere = (r) => statements.some((x) => x.ownerId === r.ownerId && String(x.accountNo) !== String(r.folio)
+    && x.asOf >= r.date && tie(x.quantity, r.qty));
+  const transferDays = new Set(report.rows.filter((r) => r.sheet === "Mutual Funds" && r.type === "Sell" && onDemat(r)
+    && sameUnitsElsewhere(r)).map((r) => r.date));
+  for (const rec of records) {
+    const account = acc.get(rec.accountId);
+    const amfi = names[rec.isin];
+    if (!account?.ownerId || !amfi) continue;
+    const named = [...groups.values()].filter((rows) => rows[0].ownerId === account.ownerId && sameScheme(rows[0].security, amfi)
+      && rows.some((r) => r.date > rec.asOf));
+    if (!named.length) continue;
+    const refuse = (reason) => refused.push({ ownerId: account.ownerId, security: amfi, accountId: rec.accountId, reason });
+    const held = (rows) => {
+      const e = eventsOf(rows.filter((r) => r.date <= rec.asOf), rec.isin);
+      return e.reason ? null : fifoLedger(e.events);
+    };
+    const matched = named.filter((rows) => { const l = held(rows); return !!l && !l.shortfalls.length && tie(l.unitsHeld, rec.quantity); }); // gates 1-2
+    if (matched.length !== 1) {
+      refuse(matched.length ? `${matched.length} of the owner's report groups hold the statement's ${rec.quantity} units`
+        : `no group of the owner's rows naming ${amfi} holds the statement's ${rec.quantity} units on ${rec.asOf}`);
+      continue;
+    }
+    const [rows] = matched;
+    // Walk the later rows; a whole-balance demat redemption on a transfer day ends the roll.
+    let units = held(rows).unitsHeld, transferredOn = null;
+    const applied = [];
+    for (const r of rows.filter((x) => x.date > rec.asOf)) {
+      if (r.type === "Sell" && onDemat(r) && transferDays.has(r.date) && tie(r.qty, units)) { transferredOn = r.date; break; }
+      applied.push(r);
+      units += (r.type === "Buy" ? 1 : r.type === "Sell" ? -1 : 0) * (r.qty ?? 0);
+    }
+    // Only a transfer, or only a sub-division (which `fundUnitSplits` already converts): the statement's units stand.
+    if (!applied.some((r) => !CORPUS.test(r.subType ?? ""))) continue;
+    const after = transferredOn ? rows.filter((r) => r.date > transferredOn) : [];
+    if (after.length) { refuse(`${after.length} row(s) after its ${transferredOn} transfer belong to the balance's new custody`); continue; }
+    const used = rows.filter((r) => r.date <= rec.asOf || applied.includes(r));
+    const e = eventsOf(used, rec.isin);
+    if (e.reason) { refuse(e.reason); continue; }                                                       // gate 3
+    const ledger = fifoLedger(e.events);
+    if (ledger.shortfalls.length) { refuse("a later sale takes units the record does not hold"); continue; } // gate 4
+    const quantity = Math.round(ledger.unitsHeld * 1e6) / 1e6;
+    const shareEvents = e.splits.filter((x) => x.exDate > rec.asOf);
+    const heldDates = ledger.lots.filter((l) => l.units > UNIT_TIE).map((l) => l.date).sort();
+    rolls.push({
+      accountId: rec.accountId, isin: rec.isin, security: rows[0].security, statementQuantity: rec.quantity, asOf: rec.asOf,
+      through: applied.at(-1).date, quantity: tie(quantity, 0) ? 0 : quantity,
+      costBasis: r2(ledger.costHeld), realizedPnL: r2(ledger.realisedGain), costOfUnitsSold: r2(ledger.costSold),
+      trades: applied.filter((r) => !CORPUS.test(r.subType ?? "")).length,
+      ...(shareEvents.length ? { shareEvents } : {}),
+      ...(transferredOn ? { transferredOn } : {}),
+      // The purchase lots still held, first-in first-out: what the Invested on column dates.
+      ...(heldDates.length ? { heldPurchases: { first: heldDates[0], last: heldDates.at(-1), lots: heldDates.length } } : {}),
+      report: { path: report.path, asOf: report.asOf, sheet: "Mutual Funds", rows: used.map((r) => r.row) },
+    });
+  }
+  return { rolls, refused, transferDays: [...transferDays].sort() };
+}
+
+/**
+ * AN AIF OR PMS FOLIO THE REPORT PAYS OUT IN FULL AFTER ITS STATEMENT (Stage 10me).
+ *
+ * The PMS_AIF_SP rows carry amounts and no units, so they can carry a holding
+ * past its statement only one way: out. A folio (the account's own number, the
+ * owner's own rows) whose withdrawals after the statement are at least the
+ * whole value that statement struck, with nothing paid in since, is redeemed:
+ * MO Delphi, ₹11.25 Cr paid out on 16 Jul 2026 against ₹11.13 Cr on 30 Jun.
+ * Anything less is a distribution, or a part the rows place on no units, and
+ * the statement's value stands — returned with the reason.
+ */
+export function mopwmCapitalExits(report, { accounts, positions }) {
+  const exits = [], refused = [];
+  for (const a of accounts) {
+    if (!a.asOf || !a.ownerId || a.provider === MOTILAL_DEMAT) continue;
+    const later = report.rows.filter((r) => r.sheet === "PMS_AIF_SP" && r.ownerId === a.ownerId
+      && String(r.folio) === String(a.accountNo) && r.date > a.asOf);
+    const own = positions.filter((p) => p.accountId === a.accountId);
+    if (!later.length || !own.length) continue;
+    const value = r2(own.reduce((t, p) => t + (p.marketValue ?? 0), 0));
+    const paidIn = r2(later.filter((r) => r.type === "CONTRIBUTION").reduce((t, r) => t + (r.amount ?? 0), 0));
+    const paidOut = r2(later.filter((r) => r.type === "WITHDRAWAL").reduce((t, r) => t + (r.amount ?? 0), 0));
+    const refuse = (reason) => refused.push({ accountId: a.accountId, security: later[0].security, reason });
+    if (paidIn) { refuse(`₹${paidIn} was paid in after its ${a.asOf} statement; the fund's next statement values it`); continue; }
+    if (!(paidOut >= value)) {
+      refuse(`₹${paidOut} paid out after its ${a.asOf} statement is less than the ₹${value} it valued the holding at — a distribution, or a part the rows place on no units`);
+      continue;
+    }
+    const cost = own.every((p) => typeof p.costBasis === "number") ? r2(own.reduce((t, p) => t + p.costBasis, 0)) : null;
+    exits.push({ accountId: a.accountId, through: later.at(-1).date, paidOut, value, cost, trades: later.length,
+      report: { path: report.path, asOf: report.asOf, sheet: "PMS_AIF_SP", rows: later.map((r) => r.row) } });
+  }
+  return { exits, refused };
 }

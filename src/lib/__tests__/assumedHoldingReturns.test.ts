@@ -61,12 +61,32 @@ const noCost = selectedSegmentReturns([position],[],[account],'security',{...sel
 assert.equal(noCost.total.gain,null,'a holding assumption never invents the original purchase cost');
 const cards = availableCardReturns({accounts:[account],positions:[position],privateMarkets:{}} as Portfolio,[position],[],new Date(2026,9,22),splitBook);
 near(cards.fytd.total.gain,1460); assert.equal(cards.fytd.total.units[0].assumption?.owner,'Test owner');
-assert.equal(cards.gain.total.gain,null);
+// Since investment it counts from its first value on record, named so — never an invented purchase cost (Stage 10la).
+assert.ok(cards.gain.total.units.length>0 && cards.gain.total.units.every(u=>u.sinceFirst||u.held)); assert.equal(cards.gain.gainCoverage.sinceInvestmentValue,0);
 const fund = {...position,assetClass:'Mutual Fund',security:'Example Growth',symbol:undefined} as Position;
 const fundBook = {...b,positions:[fund],actions:null,histories:{example:{...h,basis:'nav' as const,name:'Example Direct Growth',isin:fund.isin!}}};
 assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',fundBook).units.length,1,'growth NAVs do not depend on equity events');
 assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'Example Dividend Yield Fund - Growth'}}}).units.length,1,'a dividend-yield strategy can still have an explicit growth option');
 assert.match(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'Example IDCW'}}}).gaps[0].reason,/dated payouts/);
+// ICICI Prudential names its growth option “Cumulative”; AMFI files it so (Stage 10kp).
+assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'ICICI Prudential Equity Savings Fund - Direct Plan - Cumulative'}}}).units.length,1,'a Cumulative option is the growth option');
+assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'Example Fund - Cumulative Option'}}}).units.length,1,'a Cumulative Option suffix is the growth option');
+assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'Example Cumulative Fund - IDCW'}}}).units.length,0,'a Cumulative strategy name with a payout option still pays out');
+// DSP's Gold ETF split ten for one on 28 Aug 2026 (Stage 10hq). Its 31 Jul count is
+// on the old unit; the served NAV history is on today's, so the count is converted
+// through the documented terms before it meets that series (Stage 10kp).
+const goldAccount = {...account, asOf:'2026-07-31'} as Account;
+const gold = {...position, securityKey:'dsp-gold-etf', security:'DSP Gold ETF', symbol:undefined, assetClass:'ETF', isin:'INF740KA1SW3', quantity:1000} as Position;
+const goldH: MarketHistory = {...h, basis:'nav', name:'DSP Gold ETF', isin:'INF740KA1ZP2', category:'Exchange Traded Funds (ETFs) - Gold ETF',
+  first:'2026-07-31', last:'2026-10-21', t:['2026-07-31','2026-08-28','2026-10-21'], v:[13.7, 15.3, 14.5], c:[13.7, 15.3, 14.5], splits:[{date:'2026-08-28',factor:10}]};
+const goldBook = {...b, positions:[gold], actions:null, instruments:new Map([['dsp-gold-etf',{key:'gold',query:'fund=151737&isin=INF740KA1ZP2'}]]), histories:{gold:goldH}};
+const goldRun = (book = goldBook) => assumedHoldingReturns([gold],[goldAccount],null,'2026-10-22',book);
+const g = goldRun(); assert.equal(g.units.length,1,'a bullion ETF is the growth option by its category');
+near(g.units[0].invested,137000,'1,000 old units × 137.0 = 10,000 new units × 13.7'); near(g.units[0].close,145000); near(g.units[0].gain,8000);
+assert.equal(goldRun({...goldBook,histories:{gold:{...goldH,category:'Other Scheme - Other  ETFs'}}}).units.length,0,'any other ETF still needs a growth option');
+assert.match(goldRun({...goldBook,histories:{gold:{...goldH,splits:[]}}}).gaps[0].reason,/unit-split records do not match/,'a series that lists no split is never read across a documented one');
+assert.match(goldRun({...goldBook,histories:{gold:{...goldH,splits:[{date:'2026-08-28',factor:5}]}}}).gaps[0].reason,/unit-split records do not match/);
+assert.match(goldRun({...goldBook,positions:[{...gold,isin:'INF740KA1ZP2'}]}).gaps[0].reason,/unit-split records do not match/,'a successor ISIN cannot carry a count dated before it existed');
 for (const name of ['Example Growth Opportunities - IDCW','Example Growth Opportunities - Dividend Reinvestment','Example Growth Opportunities - Regular Plan']) {
  assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name}}}).units.length,0,'a strategy name is not proof of the growth option');
 }

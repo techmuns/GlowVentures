@@ -13,9 +13,23 @@ export type ReturnGap = { accountId: string; label: string; owner?: string; reas
 export type ReturnUnit = { key: string; accountId: string; label: string; positions: readonly Position[];
   gain: number; invested: number; close: number; from: string | null; to: string;
   assumption?: HoldingAssumption;
+  /**
+   * HELD AT ITS LAST VALUE (Stage 10la, the family's 4 Nov decision): no second
+   * value this period, so it is carried flat from its latest valuation to the
+   * period's end — a 0% that is named, never shown as measured.
+   */
+  held?: { date: string; reason: string };
+  /** A reconciled unit ledger proves the investment is fully sold from this date. */
+  closedOn?: string;
+  /** Since investment: measured from its first value on record, not a purchase cost (Stage 10la). */
+  sinceFirst?: true;
+  /** How the start was chosen, where it is not the engine's default (Stage 10la). */
+  basis?: 'unit-window' | 'statement-nav' | 'broker-trades' | 'earlier-balance' | 'listing-day';
   gainParts?: { unrealised: number | null; realised: number | null; income: number | null };
   window?: AccountWindow; inception?: InceptionRow };
 export type SelectedLine = { key: string; label: string; positions: readonly Position[]; value: number;
+  /** Added for fixed-horizon performance of investments no longer held. */
+  exited?: true;
   units: ReturnUnit[]; missing: ReturnGap[]; measured: Measured | null; gain: number | null;
   invested: number | null; returnPct: number | null;
   /** The return over the measured period itself, not annualised — beside a yearly XIRR or CAGR. */
@@ -92,9 +106,14 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
   // the statement return book. Every uncovered displayed holding needs an
   // explanation, including accounts called "outside" by that statement book.
   const covered = new Set(units.flatMap(u => u.positions.map(holdingKey)));
-  if (!selection.inception && (selection.assumedUnits || selection.assumptionGaps)) {
+  // Since investment, a holding no purchase record measures may take its own
+  // first value on record, or be held at its value (Stage 10la): added the same
+  // way, never over a holding a purchase record already measures.
+  if ((!selection.inception || absoluteInception) && (selection.assumedUnits || selection.assumptionGaps)) {
     const measuredAccounts = new Set(units.filter(u => u.key === u.accountId).map(u => u.accountId));
     for (const u of selection.assumedUnits ?? []) {
+      // Since investment, only a value said to be one: never an assumption standing in for a purchase cost.
+      if (absoluteInception && !u.sinceFirst && !u.held) continue;
       if (measuredAccounts.has(u.accountId) || u.positions.some(p => covered.has(holdingKey(p)))) continue;
       units.push(u); u.positions.forEach(p => covered.add(holdingKey(p)));
     }

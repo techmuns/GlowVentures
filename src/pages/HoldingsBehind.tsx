@@ -208,13 +208,16 @@ const HB_COLS = ["unit", "heldIn", "invested", "value", "weight", "costShare", "
 export function HoldingsBehind() {
   const { portfolio, consolidated, statementPortfolio, fmtFromBase, scope: memberScope } = usePortfolio();
   const [params] = useSearchParams();
+  const homeCash = params.get('of') === 'home-cash';
   const [qFilter, setQ] = useNavigationState<string>("holdings-search", "");
   const q = useTableExportFilter(qFilter, "");
   /** Which grouped rows are expanded to their statement lines. */
   const [openState, setOpen] = useNavigationState("holdings-expanded", () => new Set<string>());
   const open = useTableExportExpansion(openState);
   // A HOOK, so it sits above this page's early returns.
-  const view = useTableView("holdings-behind", HB_COLS, { reviewKind: "holding" });
+  const view = useTableView("holdings-behind", HB_COLS, { reviewKind: "holding",
+    memoryKey: homeCash ? 'home-cash-holdings' : undefined, investmentDates: !homeCash,
+    optional: homeCash ? ['heldIn', 'invested', 'weight', 'costShare', 'pnl', 'return'] : undefined });
 
   const scope = useMemo(() => parseDrilldown(params), [params]);
   /* CURRENT HOLDINGS ONLY, AND THE FILTER IS INSIDE `resolveDrilldown` — see the
@@ -596,14 +599,14 @@ export function HoldingsBehind() {
     ? d.facets.find((f) => f.key === d.activeFacet)
     : null;
   const crumbTrail = [
-    { label: "Morning CIO", to: "/cio" },
+    d.id === "home-cash" ? { label: "Home", to: "/home" } : { label: "Morning CIO", to: "/cio" },
     facet ? { label: d.crumb, to: drilldownHref(d.id, d.key || undefined) } : { label: d.crumb },
     ...(facet ? [{ label: facet.label }] : []),
   ];
 
 
   return (
-    <div>
+    <div data-home-cash={homeCash ? '' : undefined}>
       {/* THE CRUMB NAMES THE FIGURE, AND THE THREE BUTTONS REPLACE A ONE-WAY
           LINK. "Back to Morning CIO" was a hardcoded parent, so a reader who
           reached this page from the allocation table's own row link was
@@ -802,7 +805,7 @@ export function HoldingsBehind() {
               says how many those are, because Invested covers a narrower set
               than the value above it and a reader subtracting the two would
               otherwise land on a figure neither describes. */}
-          {!d.absent && (
+          {!d.absent && !homeCash && (
             <div className="mt-1.5 text-[12.5px] text-slate-300" data-hb-invested={invested ?? ""}
                  data-hb-invested-of={rows.length - noCost.length}>
               {invested == null ? (
@@ -935,9 +938,9 @@ export function HoldingsBehind() {
               hidden that rather than fixed it: a long enough title would bring
               it straight back. `shrink-0` is the fix and the extra width is the
               request. */}
-          <Card className="mt-5" pad={false}
-            title="The holdings behind it"
-            right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-72 shrink-0"
+          <Card className={homeCash ? "mt-5 [&>div:first-child]:flex-wrap" : "mt-5"} pad={false}
+            title={homeCash ? "Holdings" : "The holdings behind it"}
+            right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className={homeCash ? "w-full sm:w-72" : "w-72 shrink-0"}
               suggestions={[...new Set(rows.map((r) => r.security))].sort()} />}>
             {shown.length === 0 && (
               <div className="px-5 pb-5 pt-4">

@@ -18,7 +18,9 @@
  *   • the fund's dated allotments against this very folio (`BOOK_POSITION_TRANCHES`);
  *   • a lot register's acquisition date (`Position.heldSince`);
  *   • the account's own dated trades, where they account for every unit held
- *     (`Position.tradeRecord.held`, matched first-in, first-out in build-book);
+ *     (`Position.tradeRecord.held`, matched first-in, first-out in build-book),
+ *     or do once carried through the splits, bonuses and demergers between them
+ *     (`Position.actionRecord`, Stage 10ly);
  *   • reconciled surviving purchase lots in supplementary records
  *     (`Position.recoveredCost.heldPurchases`, exact account, ISIN and units);
  *   • a drawdown fund's dated calls, where the account holds that fund alone
@@ -44,7 +46,7 @@ import savedActions from "../../public/data/corporate-actions.json";
 import { symbolForKey } from "./quotes";
 import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 
-export type InvestedOnSource = "allotments" | "lots" | "trades" | "bonus-trades" | "recovered-lots" | "calls" | "review" | "account";
+export type InvestedOnSource = "allotments" | "lots" | "trades" | "action-trades" | "bonus-trades" | "recovered-lots" | "review-lots" | "calls" | "register" | "review" | "account";
 
 /**
  * The first and last date the money went in, and how many dated payments that
@@ -85,7 +87,7 @@ for (const row of savedActions.rows) {
 type LineDates = { dates: string[]; source: InvestedOnSource; payments?: number; adjustments?: string[] };
 
 /** No sales, every purchase before the bonus, and an exact independent closing-unit control. */
-function bonusPurchaseDates(p: Position): LineDates | null {
+export function bonusPurchaseDates(p: Position): LineDates | null {
   const r = p.tradeRecord;
   if (!r || r.sells || !Number.isFinite(p.quantity) || !(p.quantity! > 0)
     || r.from < savedActions.requestedFrom || r.to > savedActions.verifiedThrough) return null;
@@ -124,6 +126,13 @@ function lineDates(p: Position): LineDates | null {
   if (held) return { dates: [held.first, held.last], source: "trades" };
   const adjusted = bonusPurchaseDates(p);
   if (adjusted) return adjusted;
+  // The same trades carried through every split, bonus and demerger between
+  // them, replayed and reconciled to the units held in build-book (Stage 10ly).
+  const acted = p.actionRecord;
+  if (acted && p.quantity != null && Math.abs(p.quantity - acted.units) <= .0005 && p.tradeRecord?.to === acted.to) {
+    return { dates: [acted.held.first, acted.held.last], source: "action-trades", payments: acted.held.lots,
+      adjustments: acted.actions.map((a) => `${a.date}: ${a.of ? `${a.of}, ` : ""}${a.label}; ${a.source}`) };
+  }
   const recovered = p.recoveredCost;
   const acquisition = acquisitionIdentity(p);
   // The recovery is specific to an account, ISIN, closing date and exact unit
@@ -132,17 +141,33 @@ function lineDates(p: Position): LineDates | null {
     && acquisition.quantity != null && Math.abs(recovered.quantity - acquisition.quantity) <= .0005) {
     return { dates: [recovered.heldPurchases.first, recovered.heldPurchases.last], source: "recovered-lots" };
   }
+  // A balance the adviser report's later fund trades carried (Stage 10me): its
+  // own surviving lots, only while the row holds exactly the roll's units.
+  const rolled = p.rolledForward;
+  if (rolled?.heldPurchases && p.quantity != null && Math.abs(rolled.quantity - p.quantity) <= .0005) {
+    return { dates: [rolled.heldPurchases.first, rolled.heldPurchases.last], source: "recovered-lots" };
+  }
+  // The review's dated buys carried through the account's own later trades to
+  // exactly the units held, the broker's long-term quantity agreeing (Stage 10ms).
+  const reviewed = p.reviewPurchases;
+  if (reviewed?.first && reviewed.last && reviewed.units != null && p.quantity != null
+    && Math.abs(reviewed.units - p.quantity) <= .0005 && !p.rolledForward) {
+    return { dates: [reviewed.first, reviewed.last], source: "review-lots", payments: reviewed.lots };
+  }
   const called = CALL_DATES.get(trancheKey(p.accountId, p.securityKey));
   if (called?.length) return { dates: called, source: "calls" };
+  // The family's dated payments behind a line the review dates by month (Stage 10mx).
+  const paid = p.registerPayments?.payments;
+  if (paid?.length) return { dates: paid.map((x) => x.date), source: "register", payments: paid.length };
   if (p.investedDates) return { dates: [p.investedDates.from, p.investedDates.to], source: "review" };
   return null;
 }
 
 /** How many dated payments a line is — null where its source dates a span. */
 function linePayments(p: Position, d: LineDates): number | null {
-  if (d.source === "bonus-trades") return d.payments ?? null;
+  if (d.source === "bonus-trades" || d.source === "action-trades" || d.source === "review-lots" || d.source === "register") return d.payments ?? null;
   if (d.source === "trades") return p.tradeRecord?.held?.lots ?? null;
-  if (d.source === "recovered-lots") return p.recoveredCost?.heldPurchases?.lots ?? null;
+  if (d.source === "recovered-lots") return p.recoveredCost?.heldPurchases?.lots ?? p.rolledForward?.heldPurchases?.lots ?? null;
   if (d.source === "review") return d.dates[0] === d.dates[1] && /^\d{4}-\d{2}-\d{2}$/.test(d.dates[0]) ? 1 : null;
   return d.dates.length;
 }
@@ -191,9 +216,12 @@ const SOURCE_WORDS: Record<InvestedOnSource, string> = {
   allotments: "the fund's own dated allotments",
   lots: "the lot register's acquisition dates",
   trades: "the account's own dated trades, every unit held matched to the buy that bought it, first-in, first-out",
+  "action-trades": "the account's own dated trades carried through the splits, bonuses and demergers that made the rest of its units, every unit held matched to the purchase that paid for it, first-in, first-out",
   "bonus-trades": "the account's original purchases, carried through the saved noncash bonus into the exact current holding quantity",
   "recovered-lots": "the original purchase lots in the supplementary records, reconciled to this account, ISIN and every unit still held, first-in, first-out",
+  "review-lots": "the purchase dates in the family's 30 June 2026 review, carried through this account's own dated sales to every unit held, first-in, first-out, the broker's long-term quantity and cost agreeing",
   calls: "the fund's dated capital calls",
+  register: "the family's investment register's dated payments, which add to the review's cost to the rupee and fall inside the review's own months",
   review: "the family's review's investment dates",
   account: "the inception date and capital record the statements print",
 };
@@ -224,6 +252,7 @@ const ACCOUNTS = new Map<string, Account>(BOOK_ACCOUNTS.map((a) => [a.accountId,
  */
 export function lineUndatedReason(p: Position): string | null {
   if (investedOnOf([p])) return null;
+  if (p.reviewPurchases?.reason) return `the review dates its purchases, but ${p.reviewPurchases.reason}`;
   if (p.tradeRecord?.reason) return p.tradeRecord.reason;
   const trades = holdingTradesOf(p);
   const a = ACCOUNTS.get(p.accountId);
@@ -262,4 +291,40 @@ export function accountInvestedOn(accountIds: readonly string[]): InvestedOn | n
   if (!dates.length) return null;
   dates.sort();
   return { first: dates[0], last: dates[dates.length - 1], payments, sources: ["account"] };
+}
+
+/**
+ * ── WHERE A HOLDING'S PERIOD STARTS, FOR ITS INDEX LINE (Stage 10nt) ────────
+ *
+ *   *"if there is no buy date then how is HPR calculated this is confusing
+ *    remove all fluff and just add index return"* — the family, 12 Nov 2026.
+ *
+ * Where a row's purchases are not each dated, its index is struck over the
+ * holding period instead of on the same money: from the first date the line's
+ * own money is on record (its Invested on), or, where units predate every dated
+ * trade, the inception of the account they sit in (the manager bought them on
+ * or after it), else a lot register's start. The row starts at its oldest line;
+ * a line with none of the three leaves the row without a start. A month is
+ * read from its first day.
+ */
+export function holdingPeriodStart(ps: readonly Position[]): { date: string; basis: string } | null {
+  if (!ps.length) return null;
+  let best: { date: string; basis: string } | null = null;
+  for (const p of ps) {
+    const d = (p.tradeRecord?.unaccounted ?? 0) > 0 ? null : investedOnOf([p]);
+    const inception = ACCOUNTS.get(p.accountId)?.inceptionDate ?? null;
+    const s = d ? { date: d.first, basis: "its first investment" }
+      : inception ? { date: inception, basis: "the inception of the account that holds it; its purchases before the dated trades are not each on record" }
+      : p.heldSince ? { date: p.heldSince, basis: "the lot register's acquisition date" }
+      : null;
+    if (!s) {
+      const row = investedOnOf(ps);
+      return row && !ps.some((x) => (x.tradeRecord?.unaccounted ?? 0) > 0)
+        ? { date: /^\d{4}-\d{2}$/.test(row.first) ? `${row.first}-01` : row.first, basis: "its first investment" }
+        : null;
+    }
+    const date = /^\d{4}-\d{2}$/.test(s.date) ? `${s.date}-01` : s.date;
+    if (!best || date < best.date) best = { date, basis: s.basis };
+  }
+  return best;
 }

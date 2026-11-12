@@ -44,6 +44,7 @@ export const STATEMENT_NOTES = Object.freeze(new Set([
   "no-rate-published",               // the depository prints no rate for the line
   "advice-only",                     // the advice e-mail announces, the letter carries the figures
   "statement-basis",                 // the basis the figures are struck on
+  "financial-units-audit",           // advisory metadata; does not change the established adapter's reading
   "weights-on-aum-basis",
   "price-date-precedes-holding-date",
   "profit-and-loss-capital-is-a-balance", // the window opens on a years-old account
@@ -90,6 +91,9 @@ export const STATEMENT_NOTES = Object.freeze(new Set([
   // the ISIN is the exchange master's, or none where no master carries the symbol.
   "symbol-isin-from-instrument-master",
   "symbol-not-resolved",
+  // A broker trade report that clips a scrip name, named as the account's holding
+  // it sold on the account's own counts (providers/hdfcSecurities.mjs).
+  "scrip-name-evidenced",
   // A scanned row no text-layer statement names: ISIN and quantity checked, spelling not.
   "security-name-from-scan",
 ]));

@@ -18,7 +18,7 @@ import {
   unpricedStatementUnits, describeDepositoryUnits, depositoryUnitsGist, VALUE_UNPRICED_STATEMENT_UNITS,
 } from "../fundNavs";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
-import { BOOK_ACCOUNTS, BOOK_ADVISED_BALANCES, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, BOOK_POLYCAB } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_ADVISED_BALANCES, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, BOOK_POLYCAB, BOOK_SHARE_ROLLS } from "@/data/glowData";
 import { FUND_UNIT_ACTIONS } from "../../../shared/fundUnitActions.mjs";
 import type { Account, Position, UnvaluedStatementHolding } from "../types";
 import { unvaluedHoldingsOf, unvaluedStatementLinesOf } from "../accounts";
@@ -51,7 +51,7 @@ for (const e of BOOK_FUND_NAVS) {
 const movedRate = (x: { lastMovementRate?: number | null }) =>
   typeof x.lastMovementRate === "number" && x.lastMovementRate > 0 ? x.lastMovementRate : null;
 function expected(unvalued: readonly UnvaluedStatementHolding[], accounts: Map<string, Account>, positions: readonly Position[]) {
-  const out: { accountId: string; isin: string; quantity: number; nav: number; witness: string | null; ownRate: number | null }[] = [];
+  const out: { accountId: string; isin: string; quantity: number; nav: number; witness: string | null; ownRate: number | null; rolled: boolean }[] = [];
   const ownerOfId = (id: string) => accounts.get(id)?.ownerId ?? accounts.get(id)?.owner ?? null;
   for (const u of unvalued) {
     const isin = I(u);
@@ -84,10 +84,18 @@ function expected(unvalued: readonly UnvaluedStatementHolding[], accounts: Map<s
     if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;
     if (positions.some((p) => I(p) === isin && Math.abs((p.quantity ?? NaN) - (u.quantity as number)) < 0.0005
       && ownerOfId(p.accountId) === ownerOfId(u.accountId))) continue;
+    // Stages 10ma, 10me: units the adviser report's later fund trades took to
+    // nil are not held; units they carry elsewhere are held at the roll's count.
+    const rollOf = (nil: boolean) => BOOK_SHARE_ROLLS.find((r) => r.accountId === u.accountId && I(r) === isin
+      && (nil ? r.quantity === 0 : r.quantity > 0 && r.report.sheet === "Mutual Funds")
+      && Math.abs(r.statementQuantity - (u.quantity as number)) < 0.0005);
+    if (rollOf(true)) continue;
+    const roll = rollOf(false);
     // Stage 10ka: the family's 21 Oct note carries this exact recorded balance to its own count.
-    const advised = factor === 1 ? BOOK_ADVISED_BALANCES.find((b) => b.accountId === u.accountId && b.isin === isin
+    const advised = factor === 1 && !roll ? BOOK_ADVISED_BALANCES.find((b) => b.accountId === u.accountId && b.isin === isin
       && Math.abs(b.recordQuantity - (u.quantity as number)) < 0.0005) : undefined;
-    out.push({ accountId: u.accountId, isin: nav.pricingIsin ?? isin, quantity: advised?.quantity ?? u.quantity * factor, nav: nav.nav, witness, ownRate });
+    const units = roll ? (roll.shareEvents?.length ? roll.quantity : roll.quantity * factor) : advised?.quantity ?? u.quantity * factor;
+    out.push({ accountId: u.accountId, isin: nav.pricingIsin ?? isin, quantity: units, nav: nav.nav, witness, ownRate, rolled: !!roll });
   }
   return out;
 }
@@ -110,9 +118,10 @@ ok("each is valued at its own units × the published NAV, nothing else",
 // THE UNITS, NOT THE VALUE: the value moves with every published NAV, and
 // "units × that NAV" is already asserted above. What the audit found is the two
 // statements' own ABSL Balanced Advantage balances, which print no rate at all.
+// Ankita's 3,93,095.951 of them were redeemed on 23 Sep (Stage 10me), so Aarti's remain.
 const absl = got.filter((p) => I(p) === "INF084M01AB8" && p.depositoryUnits?.kind === "no-rate");
-ok("...and on this book that includes the ABSL Balanced Advantage units the audit found with no rate — 3,93,095.951 + 2,42,412.122 units",
-  absl.length === 2 && Math.abs(absl.reduce((s, p) => s + (p.quantity ?? 0), 0) - 635508.073) < 0.0005,
+ok("...and on this book that includes the ABSL Balanced Advantage units the audit found with no rate still held — 2,42,412.122 units",
+  absl.length === 1 && Math.abs(absl.reduce((s, p) => s + (p.quantity ?? 0), 0) - 242412.122) < 0.0005,
   `${absl.reduce((s, p) => s + (p.quantity ?? 0), 0).toFixed(3)} units over ${absl.length} account(s)`);
 // Stage 10cz: EVERY fund the three Motilal holding statements carry is now a
 // quantity in the book, so the live book values far more than the audit's two.
@@ -121,9 +130,12 @@ const motilalHolding = new Set(BOOK_ACCOUNTS.filter((a) => /motilal oswal/i.test
 ok("...and the funds of the three Motilal holding statements, whose printed rate is a last movement's price",
   got.filter((p) => motilalHolding.has(p.accountId) && p.depositoryUnits?.kind === "last-movement").length > 2,
   `${got.length} row(s), ₹${(got.reduce((s, p) => s + p.marketValue, 0) / 1e7).toFixed(4)} Cr, ${got.filter((p) => p.depositoryUnits?.kind === "last-movement").length} on their own rate`);
-ok("cost is absent unless exact owner, scheme and units reconcile to original lots",
-  got.every((p) => p.recoveredCost ? p.costBasis === p.recoveredCost.costBasis && !p.costUnavailable
+ok("cost is absent unless exact owner, scheme and units reconcile to original lots — or the report's own roll costs them",
+  got.every((p) => p.rolledForward ? p.costBasis === p.rolledForward.costBasis && !p.costUnavailable
+    : p.recoveredCost ? p.costBasis === p.recoveredCost.costBasis && !p.costUnavailable
     : p.costBasis === null && p.costUnavailable === true && p.unrealizedPnL === null && p.returnPct === null));
+ok("LOAD-BEARING: the report's later fund trades carry some balance to other units (Stage 10me)",
+  got.some((p) => !!p.rolledForward && p.depositoryUnits?.rolled?.statementQuantity !== p.quantity));
 ok("each is NAV-priced, carries the NAV's own date, and says which witness put its units on the NAV's basis",
   got.every((p) => {
     const w = want.find((x) => sig(x) === sig(p));
@@ -145,8 +157,11 @@ const dspRows = got.filter((p) => !!p.depositoryUnits?.unitSplit);
 ok("LOAD-BEARING: the book records DSP Gold and Silver ETF units on two Motilal statements, and AMFI's NAV for both is joined across the split",
   dspLines.length === 3 && ["INF740KA1SW3", "INF740KA1RE3"].every((i) => navBy.get(i)?.usableForValue && navBy.get(i)?.unitSplit?.factor === 10),
   dspLines.map((u) => `${u.accountId.slice(-6)} ${u.securityKey} ${u.quantity}`).join("; "));
-ok("every DSP line is valued, and nothing else carries a split",
-  dspRows.length === dspLines.length && dspLines.every((u) => dspRows.some((p) => p.accountId === u.accountId && (p.fundUnitAdjustment?.isin ?? I(p)) === I(u))));
+// Stages 10ma, 10mb: Ankita's DSP Silver (13 Oct) and Gold (23 Sep) were redeemed, sales the family confirmed.
+const heldDsp = dspLines.filter((u) => !BOOK_SHARE_ROLLS.some((r) => r.accountId === u.accountId && I(r) === I(u) && r.quantity === 0
+  && r.statementQuantity === u.quantity));
+ok("every DSP line still held is valued, those sold to nil are not, and nothing else carries a split",
+  heldDsp.length === 1 && dspRows.length === heldDsp.length && heldDsp.every((u) => dspRows.some((p) => p.accountId === u.accountId && (p.fundUnitAdjustment?.isin ?? I(p)) === I(u))));
 ok("each is the statement's units × 10 at the published NAV, and keeps the statement's own count",
   dspRows.every((p) => {
     const u = dspLines.find((l) => l.accountId === p.accountId && I(l) === (p.fundUnitAdjustment?.isin ?? I(p)))!;
@@ -166,8 +181,8 @@ ok("the sentence names the split, its date and both counts",
     return s.includes(d.exDate) && s.includes(d.publishedIsin)
       && s.includes(d.statementQuantity.toLocaleString("en-IN")) && s.includes((p.quantity as number).toLocaleString("en-IN"));
   }));
-if (dspLines.length) {
-  const line = dspLines[0];
+if (heldDsp.length) {
+  const line = heldDsp[0];
   ok("REFUSED: a line counted on or after the ex-date under the retired ISIN is on neither unit",
     unpricedStatementUnits([{ ...line, asOf: "2026-08-28" }], [{ ...acc.get(line.accountId)!, asOf: "2026-08-28" }], []).length === 0);
   ok("REFUSED: an own rate far from the NAV once the split is applied is still a basis break",

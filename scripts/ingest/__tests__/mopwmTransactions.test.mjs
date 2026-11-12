@@ -5,7 +5,8 @@
 import assert from "node:assert/strict";
 import { classify } from "../lib/classify.mjs";
 import {
-  MOPWM_TRANSACTIONS, MOTILAL_DEMAT, dmyToIso, splitOf, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate, rollMopwmShareTrades,
+  MOPWM_TRANSACTIONS, MOTILAL_DEMAT, dmyToIso, splitOf, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate,
+  mopwmCapitalExits, rollMopwmFundTrades, rollMopwmShareTrades, sameScheme,
 } from "../../lib/mopwmTransactions.mjs";
 import { readSpreadsheet } from "../lib/sheet.mjs";
 import fs from "node:fs";
@@ -141,7 +142,7 @@ assert.match(replayMopwmRows(mopwmRowsFor(report, { isin: "INE1CDF01017", accoun
   // rolls the family approved on 28 Oct 2026, and TAAL carried through its
   // 22 Sep split (Stage 10kk).
   const book = fs.readFileSync("src/data/glowData.ts", "utf8");
-  const committed = JSON.parse(/export const BOOK_SHARE_ROLLS: ShareRoll\[\] = (\[[\s\S]*?\n\]);/.exec(book)[1]);
+  const committed = JSON.parse(/export const BOOK_SHARE_ROLLS: ShareRoll\[\] = (\[[\s\S]*?\n\]);/.exec(book)[1]).filter((r) => r.isin.startsWith("INE"));
   assert.deepEqual(committed.map((r) => [r.accountId.slice(-16), r.isin, r.statementQuantity, r.quantity]), [
     ["1201090012539150", "INE559A01017", 15772, 0], ["1201090012539150", "INE001B01026", 0, 67500],
     ["1201090012539150", "INE589A01014", 32000, 0], ["1201090012539150", "INE524T01029", 0, 20000],
@@ -155,4 +156,76 @@ assert.match(replayMopwmRows(mopwmRowsFor(report, { isin: "INE1CDF01017", accoun
     "TAAL: 4,000 bought for ₹1,80,09,805 in September, 20,000 after its 22 Sep 5-for-1 split");
 }
 
-console.log("mopwmTransactions: prefixed workbook read in full, owners, classification, FIFO replay, identity gates and share rolls passed");
+// ── the report's later fund trades (Stage 10me) ──────────────────────────────
+{
+  const SILVER = "INF740KA1RE3", NAME = "DSP Silver ETF-G", OWNER = "ankita-jaisinghani", DEMAT = "1201090012838316";
+  const acct = (n) => ({ accountId: `d${n}`, accountNo: `${DEMAT}${n}`, provider: MOTILAL_DEMAT, ownerId: OWNER, asOf: "2026-07-31" });
+  const names = { [SILVER]: "DSP Silver ETF", INF000000002: "Bandhan Arbitrage Fund - Direct Plan - Growth" };
+  const recs = [{ accountId: "d1", isin: SILVER, quantity: 123, asOf: "2026-07-31" }];
+  const m = (row, date, type, subType, qty, amount, over = {}) =>
+    ({ sheet: "Mutual Funds", row, date, type, subType, qty, amount, price: amount / qty, folio: "466887", ownerId: OWNER, security: NAME, ...over });
+  const rows = [m(1, "2025-09-30", "Buy", "Purchase", 230, 32200), m(2, "2026-01-22", "Sell", "Redemption", 107, 29650),
+    m(3, "2026-08-28", "Buy", "Corpus In", 1230, 17220), m(4, "2026-08-28", "Sell", "Corpus Out", 123, 17220),
+    m(5, "2026-10-13", "Sell", "Redemption", 1230, 25650)];
+  const run = (rs, over = {}) => rollMopwmFundTrades({ path: "x", asOf: "2026-10-23", rows: rs },
+    { accounts: [acct(1)], records: recs, names, statements: [], ...over });
+  const out = run(rows);
+  assert.deepEqual(out.rolls.map((r) => [r.accountId, r.isin, r.statementQuantity, r.quantity, r.through, r.trades, r.costOfUnitsSold, r.realizedPnL]),
+    [["d1", SILVER, 123, 0, "2026-10-13", 1, 32200, 23100]], "230 bought, 107 sold, 123 split to 1,230 and redeemed whole; the split is not a trade");
+  assert.deepEqual(out.rolls[0].shareEvents, [{ type: "split", exDate: "2026-08-28", factor: 10 }], "the Corpus block is DSP's recorded 1:10 split");
+  const part = run([...rows.slice(0, 4), m(5, "2026-10-13", "Sell", "Redemption", 1000, 20850)]).rolls[0];
+  assert.deepEqual([part.quantity, part.costBasis], [230, 3220], "a partial sale leaves the rest, at its FIFO cost");
+  assert.equal(run(rows.slice(0, 4)).rolls.length, 0, "a sub-division alone is no roll: fundUnitSplits converts it");
+  assert.equal(run(rows, { names: { [SILVER]: "DSP Gold ETF" } }).rolls.length, 0, "gate 1: the group must name AMFI's scheme");
+  assert.match(run(rows, { records: [{ ...recs[0], quantity: 124 }] }).refused[0].reason, /holds the statement's 124 units/,
+    "gate 2: the group must hold the statement's units");
+  assert.match(run([...rows, ...rows.map((r) => ({ ...r, folio: "999", row: r.row + 10 }))]).refused[0].reason, /2 of the owner's report groups/,
+    "gates 1-2: exactly one group");
+  assert.match(run([...rows.slice(0, 2), m(3, "2026-08-28", "Buy", "Corpus In", 615, 17220), m(4, "2026-08-28", "Sell", "Corpus Out", 123, 17220), rows[4]]).refused[0].reason,
+    /5-for-1 restatement no entry of shared\/fundUnitSplits\.mjs records/, "gate 3: only the sub-division its ISIN is recorded with");
+  assert.match(run([...rows.slice(0, 4), m(5, "2026-10-13", "Sell", "Redemption", 2000, 41700)]).refused[0].reason, /takes units the record does not hold/, "gate 4");
+  // A TRANSFER IS NOT A SALE: a whole-balance demat redemption on a day another
+  // statement of the owner holds a demat redemption's exact units.
+  const BA = "Bandhan Arbitrage Direct-G", baRec = { accountId: "d1", isin: "INF000000002", quantity: 1000, asOf: "2026-07-31" };
+  const b = (row, date, type, qty) => m(row, date, type, type === "Buy" ? "Purchase" : "Redemption", qty, qty * 10, { folio: `${DEMAT}1`, security: BA });
+  const baRows = [b(1, "2026-07-01", "Buy", 1000), b(2, "2026-08-11", "Sell", 400), b(3, "2026-10-01", "Sell", 600)];
+  const elsewhere = [{ ownerId: OWNER, accountNo: "8652064", quantity: 600, asOf: "2026-10-26" }];
+  const moved = rollMopwmFundTrades({ path: "x", asOf: "2026-10-23", rows: baRows }, { accounts: [acct(1)], records: [baRec], names, statements: elsewhere });
+  assert.deepEqual(moved.transferDays, ["2026-10-01"], "a demat redemption another statement holds unit for unit is a transfer day");
+  assert.deepEqual(moved.rolls.map((r) => [r.quantity, r.through, r.transferredOn, r.trades]), [[600, "2026-08-11", "2026-10-01", 1]],
+    "the 11 Aug sale applies; the 1 Oct transfer moves the 600 left and sells none");
+  const sold = rollMopwmFundTrades({ path: "x", asOf: "2026-10-23", rows: baRows }, { accounts: [acct(1)], records: [baRec], names, statements: [] });
+  assert.deepEqual(sold.rolls.map((r) => [r.quantity, r.through]), [[0, "2026-10-01"]], "with no statement holding those units, a redemption is a sale");
+  assert.ok(sameScheme("Kotak Multi Cap Direct-G", "Kotak Multicap Fund-Direct Plan-Growth")
+    && sameScheme("Aditya Birla SL Liquid Direct-G", "Aditya Birla Sun Life Liquid Fund - Growth - Direct Plan")
+    && !sameScheme("HDFC Balanced Advantage Reg-G", "HDFC Balanced Advantage Fund - Growth Plan - Direct Plan")
+    && !sameScheme("ICICI Pru Liquid Direct-G", "ICICI Prudential Balanced Advantage Fund - Direct Plan -  Growth"), "scheme names, plans told apart");
+
+  // The real report, against the book's own statement records.
+  const book = fs.readFileSync("src/data/glowData.ts", "utf8");
+  const committed = JSON.parse(/export const BOOK_SHARE_ROLLS: ShareRoll\[\] = (\[[\s\S]*?\n\]);/.exec(book)[1]).filter((r) => r.isin.startsWith("INF"));
+  assert.deepEqual(committed.map((r) => [r.accountId.slice(-16), r.isin, r.statementQuantity, r.quantity, r.transferredOn ?? null]).sort(), [
+    ["1201090012838316", "INF084M01AB8", 393095.951, 0, null], ["1201090012838316", "INF179K01830", 37755.485, 0, null],
+    ["1201090012838316", "INF740KA1RE3", 123000, 0, null], ["1201090012838316", "INF740KA1SW3", 205000, 0, null],
+    ["1201090012838320", "INF084M01AB8", 183499.511, 7659.877, null], ["1201090012838320", "INF109K012B0", 146856.943, 33256.943, "2026-10-01"],
+    ["1201090012838320", "INF209K01VA3", 264720.521, 1855.521, "2026-10-01"], ["1201090032387399", "INF174K01LC6", 613293.929, 32693.929, "2026-10-01"],
+  ].sort(), "every Motilal demat fund line the report's later trades reconcile, none through the 1 Oct transfer");
+  assert.ok(committed.every((r) => r.report.sheet === "Mutual Funds" && r.trades > 0));
+}
+
+// ── a PMS/AIF folio paid out in full (Stage 10me) ────────────────────────────
+{
+  const a = { accountId: "aif", accountNo: "9049241536", provider: "Some AIF", ownerId: "o", asOf: "2026-06-30" };
+  const pos = [{ accountId: "aif", marketValue: 100, costBasis: 80 }];
+  const c = (row, date, type, amount) => ({ sheet: "PMS_AIF_SP", row, date, type, amount, folio: "9049241536", ownerId: "o", security: "F" });
+  const run = (rows) => mopwmCapitalExits({ path: "x", asOf: "2026-10-23", rows }, { accounts: [a], positions: pos });
+  assert.deepEqual(run([c(1, "2026-07-16", "WITHDRAWAL", 105)]).exits.map((x) => [x.accountId, x.paidOut, x.value, x.cost]), [["aif", 105, 100, 80]],
+    "paid out at least the whole value, nothing paid in: redeemed");
+  assert.match(run([c(1, "2026-07-16", "WITHDRAWAL", 40)]).refused[0].reason, /less than/, "a part paid out places on no units");
+  assert.match(run([c(1, "2026-07-16", "WITHDRAWAL", 105), c(2, "2026-08-01", "CONTRIBUTION", 50)]).refused[0].reason, /paid in/);
+  assert.equal(run([c(1, "2026-06-30", "WITHDRAWAL", 105)]).exits.length, 0, "a row on the statement's own date is inside it");
+  const real = mopwmCapitalExits(report, { accounts: [{ ...a, ownerId: "ajay-jaisinghani" }], positions: [{ accountId: "aif", marketValue: 111287535.35, costBasis: null }] });
+  assert.deepEqual(real.exits.map((x) => [x.through, x.paidOut]), [["2026-07-16", 112450217.21]], "MO Delphi: ₹11.25 Cr paid out on 16 Jul 2026");
+}
+
+console.log("mopwmTransactions: prefixed workbook read in full, owners, classification, FIFO replay, identity gates, share and fund rolls and capital exits passed");

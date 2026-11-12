@@ -1,5 +1,7 @@
 import { Sun, Moon, RefreshCw, TrendingUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { deploymentChanged, deploymentUpdateBlocked, subscribeToDeployment } from "@/lib/deploymentVersion";
+import { publicationRefreshBlocked } from "../../shared/publicationRefresh.mjs";
 import { usePortfolio, SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency } from "@/context/PortfolioContext";
 import { lastQuoteFailure } from "@/lib/quotes";
 import { outageShort } from "@/lib/upstreamStatus";
@@ -21,7 +23,7 @@ function CurrencySwitch() {
     ? "Showing INR: the USD → INR reference rate is still loading, and this browser has no earlier rate saved. USD figures appear when it arrives."
     : "Showing INR: the FX feed did not respond and this browser has no earlier rate saved, so there is no published rate to convert at. No USD figure is struck on a made-up rate.";
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" data-topbar-currency>
       <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Display currency"
         data-fx-status={fxState.status} data-ccy-requested={requestedCurrency} data-ccy-shown={displayCurrency}>
         {SUPPORTED_DISPLAY_CURRENCIES.map((c: DisplayCurrency) => {
@@ -169,6 +171,8 @@ export function TopBar() {
   const { portfolio, fmtFromBase, clearPortfolio, refreshQuotes, quotesStatus, scope } = usePortfolio();
   const [isDark, setIsDark] = useState<boolean>(readInitialTheme);
   const [refreshing, setRefreshing] = useState(false);
+  const updated = useSyncExternalStore(subscribeToDeployment, deploymentChanged);
+  const updateBlocked = useSyncExternalStore(subscribeToDeployment, deploymentUpdateBlocked);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -178,6 +182,12 @@ export function TopBar() {
 
   const refresh = () => {
     if (refreshing) return;
+    if (updated) {
+      if (publicationRefreshBlocked()) return;
+      // Only this explicit action replaces the app and all financial indexes.
+      window.location.reload();
+      return;
+    }
     setRefreshing(true);
     clearPortfolio();  // reload the ingested book from source
     refreshQuotes();   // and force a fresh pull past the 60s server cache
@@ -213,11 +223,11 @@ export function TopBar() {
           members and trusts picked — every page below follows it except
           Family & Entities, which always shows everyone. */}
       <MemberScopeSelect />
-      <div className="flex min-w-0 max-w-3xl flex-1 items-center gap-2">
+      <div className="flex min-w-0 max-w-3xl flex-1 items-center gap-2" data-topbar-search>
         <SmartSearch />
       </div>
-      <div className="ml-auto flex items-center gap-3">
-        <div className="hidden items-center gap-2 text-xs lg:flex"><QuoteStatus /></div>
+      <div className="ml-auto flex items-center gap-3" data-topbar-actions>
+        <div className="hidden items-center gap-2 text-xs lg:flex" data-topbar-quotes><QuoteStatus /></div>
         <CurrencySwitch />
         {/* A scope with no holding draws no total: ₹0 would read as a measured
             nothing, and the page below already says why it is empty. */}
@@ -227,9 +237,12 @@ export function TopBar() {
             <TrendingUp className="h-3.5 w-3.5 text-champagne-400" /> {fmtFromBase(portfolio.totalValue, { compact: true })}
           </span>
         )}
-        <div className="flex items-center gap-2 border-l border-ink-700 pl-3">
-          <button onClick={refresh} disabled={refreshing} className="btn-ghost h-9 px-2.5" title="Reload data">
+        <div className="flex items-center gap-2 border-l border-ink-700 pl-3" data-topbar-buttons>
+          <button onClick={refresh} disabled={refreshing || (updated && updateBlocked)} className="btn-ghost relative h-9 px-2.5"
+            aria-label={updated ? "Load latest dashboard" : "Reload data"} data-dashboard-update={updated || undefined}
+            title={updated ? updateBlocked ? "Finish editing or close the open dialog to load the update" : "Update available — load when ready" : "Reload data"}>
             <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            {updated && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-champagne-500" />}
           </button>
           <button onClick={() => setIsDark((v) => !v)} className="btn-ghost h-9 px-2.5" title="Toggle theme">
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

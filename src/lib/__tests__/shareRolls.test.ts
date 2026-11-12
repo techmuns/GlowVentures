@@ -29,14 +29,35 @@ const cand = (account: string, isin: string) => shareCandidates().find((p) => p.
 console.log("──── Adviser report share rolls");
 ok("the book carries rolls, so the claims below have a subject", BOOK_SHARE_ROLLS.length > 0,
   BOOK_SHARE_ROLLS.map((r) => `${r.security} ${r.statementQuantity}→${r.quantity}`).join("; "));
-ok("every roll is a Motilal demat equity ISIN, dated after its statement",
-  BOOK_SHARE_ROLLS.every((r) => r.isin.startsWith("INE") && r.through > r.asOf && r.trades > 0
+ok("every roll is a Motilal demat equity ISIN — or a fund on the report's fund trades — dated after its statement",
+  BOOK_SHARE_ROLLS.every((r) => (r.isin.startsWith("INE") || (r.isin.startsWith("INF") && r.report.sheet === "Mutual Funds")) && r.through > r.asOf && r.trades > 0
     && BOOK_ACCOUNTS.find((a) => a.accountId === r.accountId)?.provider === "Motilal Oswal Financial Services (demat)"));
 ok("every roll starts from a balance the statement records, or from none",
   BOOK_SHARE_ROLLS.every((r) => r.statementQuantity === 0
     || BOOK_UNVALUED_HOLDINGS.some((u) => u.accountId === r.accountId && u.isin === r.isin && u.quantity === r.statementQuantity)
     || Object.values(BOOK_SHARE_MOVEMENTS).some((w) => w.accountId === r.accountId && w.isin === r.isin && w.closing === r.statementQuantity)));
-ok("no fund row moves a quantity — the 1 Oct fund rows wait for the family", BOOK_SHARE_ROLLS.every((r) => !r.isin.startsWith("INF")));
+// Stage 10me: every fund line the report's later trades reconcile, to nil or
+// to what they leave — never through the 1 Oct transfer out of the demats.
+const BHARAT = "motilal-oswal-financial-services-demat-1201090012838320";
+const BJFT = "motilal-oswal-financial-services-demat-1201090032387399";
+ok("the fund rolls are the reconciled sales — the 1 Oct transfer sells nothing",
+  JSON.stringify(BOOK_SHARE_ROLLS.filter((r) => r.isin.startsWith("INF")).map((r) => [r.accountId, r.isin, r.statementQuantity, r.quantity, r.through]).sort())
+    === JSON.stringify([
+      [ANKITA, "INF084M01AB8", 393095.951, 0, "2026-09-23"], [ANKITA, "INF179K01830", 37755.485, 0, "2026-09-23"],
+      [ANKITA, "INF740KA1RE3", 123000, 0, "2026-10-13"], [ANKITA, "INF740KA1SW3", 205000, 0, "2026-09-23"],
+      [BHARAT, "INF084M01AB8", 183499.511, 7659.877, "2026-09-08"], [BHARAT, "INF109K012B0", 146856.943, 33256.943, "2026-09-09"],
+      [BHARAT, "INF209K01VA3", 264720.521, 1855.521, "2026-08-11"], [BJFT, "INF174K01LC6", 613293.929, 32693.929, "2026-09-09"],
+    ].sort()));
+ok("...and a balance the 1 Oct transfer moved keeps its units, the transfer named on the roll",
+  roll(BHARAT, "INF209K01VA3")?.transferredOn === "2026-10-01" && !roll(ANKITA, "INF0R8701046"));
+const gold = roll(ANKITA, "INF740KA1SW3");
+ok("...and DSP Gold ETF (Stage 10mb): 20,50,000 units after the split, redeemed whole on 23 Sep for ₹2,99,99,805.02",
+  gold?.costBasis === 0 && gold.costOfUnitsSold === 30193698.9 && gold.realizedPnL === -193893.88);
+const silver = roll(ANKITA, "INF740KA1RE3");
+ok("...carried through DSP's 28 Aug 1:10 split and redeemed whole: 12,30,000 units for ₹2,56,48,310.01",
+  JSON.stringify(silver?.shareEvents) === JSON.stringify([{ type: "split", exDate: "2026-08-28", factor: 10 }])
+    && silver?.costBasis === 0 && silver.costOfUnitsSold === 32203865.44 && silver.realizedPnL === 23093912.99, "₹2,96,49,468.42 + ₹2,56,48,310.01 of proceeds less ₹3,22,03,865.44 of cost");
+ok("...is found by account, ISIN and the statement's units", !!soldSinceStatement(ANKITA, { isin: "INF740KA1RE3", quantity: 123000 }));
 
 // ── sold to nil ───────────────────────────────────────────────────────────────
 for (const [account, isin, name, units] of [

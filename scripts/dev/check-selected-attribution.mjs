@@ -9,13 +9,28 @@ const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const out = '.cache/returns-period';
 await fs.mkdir(out, { recursive: true });
-const bundle = await build({ stdin: { contents: `export * from './src/data/glowData'; export * from './src/lib/periodReturns'; export { nothingToMeasure } from './src/lib/returns';`, resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', logLevel: 'error' });
+const bundle = await build({ stdin: { contents: `export * from './src/data/glowData'; export * from './src/lib/periodReturns'; export { nothingToMeasure } from './src/lib/returns'; export { ytdBook, ytdSelection } from './src/lib/ytdAvailable'; export { periodSelection, statementReturnInputs } from './src/lib/availableCardReturns'; export { currentHoldings } from './src/lib/analytics'; export { pageConsolidated, failedHistoryBook } from './scripts/dev/page-book';`, resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', alias: { '@': process.cwd() + '/src' }, logLevel: 'error' });
 const b = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
 const statement = { accounts: b.BOOK_ACCOUNTS, positions: b.BOOK_POSITIONS, accountReturnRecords: b.BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} };
 const inputs = b.accountInputs({ accounts: b.BOOK_ACCOUNTS, positions: b.BOOK_POSITIONS, returnRecords: b.BOOK_ACCOUNT_RETURN_RECORDS, navHistory: b.BOOK_ACCOUNT_NAV_HISTORY,
  cashFlows: b.BOOK_ACCOUNT_CASH_FLOWS, groups: [], coverage: b.BOOK_NAV_COVERAGE.covered, undated: b.BOOK_UNDATED_CAPITAL, fromInception: b.BOOK_CAPITAL_FROM_INCEPTION, labelOf: a => a.provider })
  .map(i => ({ ...i, outside: b.nothingToMeasure(statement, b.BOOK_ACCOUNTS.find(a => a.accountId === i.accountId)) }));
 const end = '2026-10-22'; // Toolbar defaults to today; account measures retain their own verified closes.
+/**
+ * THE FINANCIAL AND CALENDAR YEAR ARE MORNING CIO'S CARDS' OWN SELECTION (Stage 10la):
+ * each account and holding from its first value on record, the rest held at its
+ * last value — re-derived on the page's own rows with every price history refused,
+ * as `/api` is here, and the saved action capture the page reads.
+ */
+const actions = JSON.parse(await fs.readFile('public/data/corporate-actions.json', 'utf8'));
+const pageRows = b.currentHoldings(b.pageConsolidated(actions));
+const cardWindows = (period) => {
+ const sel = b.periodSelection({ inputs: b.statementReturnInputs(statement), current: pageRows, accounts: b.BOOK_ACCOUNTS, end,
+  assumptions: b.failedHistoryBook(pageRows, actions), open: period === 'ytd' ? undefined : b.periodStart(period, end) });
+ const included = [...sel.windows, ...(sel.assumedUnits ?? []).map(u => u.window)];
+ const accounts = new Set([...sel.windows.map(w => w.accountId), ...(sel.assumedUnits ?? []).map(u => u.accountId)]).size;
+ return { included, gain: included.reduce((t, w) => t + w.gain, 0), accounts };
+};
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 let page;
 try {
@@ -34,11 +49,21 @@ try {
   await card.locator('[data-card-coverage]').waitFor();
   const numeric = await card.locator('[data-card-coverage]').evaluate(el => ({ ...el.dataset }));
   assert.notEqual(numeric.cardGain, ''); assert.notEqual(numeric.cardReturn, '');
-  assert.match(await card.innerText(), /Available data/);
+  // The three return cards count the public holdings they cover (5 Nov 2026), Gain / Loss how much of every investment (Stage 10la).
+  // Gain / Loss's coverage is in its info button, not on its face (the family, 10 Nov 2026; Stage 10mn).
+  if (id === 'gain') assert.doesNotMatch(await card.innerText(), /Covers \d+% of investments/);
+  else assert.match(await card.innerText(), /[\d,]+ of [\d,]+ holdings/);
   assert.equal(await card.locator('[data-return-info]').count(), 1);
   await card.locator('[data-return-info]').click();
   const popup = page.getByRole('dialog'); await popup.waitFor();
   assert.match(await popup.innerText(), /Based on the available records/);
+  // What left a return card's face is at the top of its info: the index on the same money among it (5 Nov 2026).
+  if (id !== 'gain') { assert.equal(await popup.locator('[data-card-summary] [data-card-bench="nifty-500"]').count(), 1); assert.match(await popup.innerText(), /Private/); }
+  if (id === 'gain') {
+   const summary = popup.locator('[data-card-gain-summary]');
+   assert.match(await summary.innerText(), /Covers \d+% of investments/);
+   assert.equal(await summary.locator('[data-card-gain-part]').count(), 3);
+  }
   assert.match(await popup.innerText(), /What is missing/);
   assert.ok(await popup.locator('[data-return-gap]').count() > 0);
   assert.equal(await popup.locator('[data-attribution-method]').getAttribute('open'), null);
@@ -80,7 +105,10 @@ try {
  const results = [];
  for (const period of ['fytd', 'mtd', 'ytd', 'y1', 'y2', 'y3']) {
   await page.locator(`[data-returns-period="${period}"]`).click();
-  const start = b.periodStart(period, end), win = b.windowReturns(inputs, start, end);
+  // YTD reads the Monitor's record from the first date we have (Stage 10kq);
+  // with /api refused here no price loads, so its accounts' own windows alone.
+  // Every period is the cards' selection (Stage 10lg): each from its first value on record in the period.
+  const start = b.periodStart(period, end), win = cardWindows(period);
   for (const type of ['xirr', 'absolute', 'cagr']) {
    const measured = b.measureWindow(win.included, type, String);
    await page.locator('[data-returns-type-select]').selectOption(type);
@@ -90,7 +118,8 @@ try {
    }, { period, type, displayed: measured.shownAs ?? type });
    const picker = page.locator('[data-returns-type-select]');
    assert.equal(await picker.getAttribute('data-requested-return-type'), type, 'debt rows retain the requested calculation');
-   if (measured.shownAs === 'absolute') assert.equal(await picker.locator('option:checked').innerText(), 'Absolute return', 'picker names the displayed measure');
+   assert.equal(await picker.inputValue(), type, 'picker retains the requested measure');
+   if (measured.shownAs === 'absolute') assert.match(await page.locator('[data-returns-type-desc]').innerText(), /Under a year: showing absolute return/, 'explain why the short-period figure stays the same');
    const expectedGain = win.included.length ? win.gain : null;
    const expectedReturn = measured.shown ? measured.pct : null;
    const rawGain = await table.getAttribute('data-seg-total-gain'), rawReturn = await table.getAttribute('data-seg-total-ret');
@@ -116,6 +145,57 @@ try {
   if (x && a && underYear) assert.ok(Math.abs(Number(x.return) - Number(a.return)) < 1e-8 && (!c || Math.abs(Number(c.return) - Number(a.return)) < 1e-8), `${period}: XIRR ${x.return} and CAGR ${c?.return} are Absolute ${a.return} under a year`);
   if (x && a && !underYear) assert.ok(Math.abs(Number(x.return) - Number(a.return)) > 0.01, `${period}: XIRR ${x.return} vs Absolute ${a.return}`);
  }
+ // A direct Benchmarks link must resolve the hint on the initial selection.
+ // Keep each explicit choice visible, even when the short-period total is equal.
+ for (const theme of ['light', 'dark']) for (const width of [1440, 1278, 390]) {
+  await page.evaluate(theme => localStorage.setItem('glow:theme', theme), theme);
+  await page.setViewportSize({ width, height: 1000 });
+  await page.goto(`${base}/cio?tab=returns&rview=benchmarks&rtype=cagr&rto=${end}`);
+  const picker = page.locator('[data-returns-type-select]');
+  const hint = page.locator('[data-returns-type-desc]');
+  await page.waitForFunction(() => document.querySelector('[data-returns-type-select]')?.dataset.displayedReturnType === 'absolute');
+  assert.equal(await picker.inputValue(), 'cagr', 'a shared link retains the requested CAGR');
+  assert.deepEqual(await picker.locator('option').evaluateAll(els => els.map(el => el.value)), ['xirr', 'absolute', 'cagr'], 'no hidden replacement option');
+  for (const type of ['xirr', 'absolute', 'cagr', 'xirr']) {
+   await picker.selectOption(type);
+   await page.waitForFunction(type => document.querySelector('[data-returns-type-select]')?.dataset.requestedReturnType === type, type);
+   assert.equal(await picker.inputValue(), type, 'the selected option stays selected');
+   assert.equal(new URL(page.url()).searchParams.get('rtype') ?? 'xirr', type);
+   const text = await hint.innerText();
+   assert.match(text, type === 'absolute' ? /Total gain/ : /Under a year: showing absolute return/);
+   assert.equal(await picker.getAttribute('aria-describedby'), await hint.getAttribute('id'), 'the picker retains its accessible explanation');
+   assert.equal(await hint.getAttribute('aria-live'), 'polite', 'a changed explanation remains announced');
+   assert.ok((await page.locator('[data-returns-types]').getAttribute('title')).includes(text), 'the complete short-period explanation is available on hover');
+   assert.match(await page.locator('[data-returns-bench-portfolio]').innerText(), /Portfolio · Absolute return/);
+  }
+  // Native selectOption does not scroll an offscreen toolbar into view.
+  await picker.scrollIntoViewIfNeeded();
+  const layout = await picker.evaluate(el => {
+   const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && r.width > 0 && r.height > 0;
+  });
+  assert.ok(layout, `${theme}/${width}: the selected return type stays readable inside the viewport`);
+  if (width >= 1278) {
+   const compact = await page.locator('[data-returns-toolbar]').evaluate(el => {
+    const centers = [...el.children].map(child => { const r = child.getBoundingClientRect(); return r.y + r.height / 2; });
+    const rect = el.getBoundingClientRect();
+    return { width: rect.width, height: rect.height, centers, groupWidths: [...el.children].map(child => child.getBoundingClientRect().width) };
+   });
+   assert.ok(compact.height < 55 && Math.max(...compact.centers) - Math.min(...compact.centers) < 2,
+    `${theme}/${width}: periods, dates and return type share one compact row: ${JSON.stringify(compact)}`);
+  }
+  await page.locator('[data-returns-types]').screenshot({ path: `${out}/return-picker-${theme}-${width}.png` });
+ }
+ await page.setViewportSize({ width: 1440, height: 1000 });
+ await page.getByRole('tab', { name: 'Return attribution', exact: true }).click();
+ assert.equal(await page.locator('[data-returns-type-select]').inputValue(), 'xirr', 'switching subtabs retains the choice');
+ await page.reload();
+ await table.waitFor();
+ assert.equal(await page.locator('[data-returns-type-select]').inputValue(), 'xirr', 'reload retains the URL choice');
+ // Invalid dates clear the fallback explanation rather than reuse an old total.
+ await page.locator('[data-returns-period="custom"]').click();
+ await page.locator('[data-returns-from]').fill('2030-01-01');
+ await page.waitForFunction(() => document.querySelector('[data-returns-type-select]')?.dataset.displayedReturnType === 'xirr');
+ assert.doesNotMatch(await page.locator('[data-returns-type-desc]').innerText(), /showing absolute return/);
  // FYTD's bridge splits most accounts' gain from their own records and names the rest.
  await page.locator('[data-returns-period="fytd"]').click();
  await page.locator('[data-returns-type-select]').selectOption('xirr');
@@ -125,32 +205,36 @@ try {
  await page.waitForFunction(() => document.querySelector('[data-returns-type-select]')?.dataset.displayedReturnType === 'absolute');
  assert.equal(await page.locator('[data-returns-type-select]').getAttribute('data-requested-return-type'), 'xirr');
  assert.match(await bridge.locator('[data-bridge-return-label]').innerText(), /Absolute return/);
- assert.equal(await bridge.locator('[data-bridge-split]').getAttribute('open'), null, 'gain breakdown starts collapsed');
+ // Stage 10mk: the card is one row; its breakdown is in its (i) popup, not on the page.
+ assert.equal(await bridge.locator('[data-bridge-steps], [data-bridge-split], [data-bridge-accounts-table]').count(), 0, 'the breakdown is not on the card');
+ // Stage 10lz: Investment performance is the one summary; the market return is the Total row's.
  const boxes = await page.locator('[data-return-summary-cards] > .card').evaluateAll(els => els.map(el => {
-  const r = el.getBoundingClientRect(); return { width: r.width, height: r.height, top: r.top };
+  const r = el.getBoundingClientRect(); return { width: r.width, parent: el.parentElement.getBoundingClientRect().width };
  }));
- assert.equal(boxes.length, 2);
- assert.ok(Math.abs(boxes[0].width - boxes[1].width) < 1 && Math.abs(boxes[0].height - boxes[1].height) < 1 && boxes[0].top === boxes[1].top, 'two equal-sized summary blocks');
- assert.equal(await page.locator('[data-market-summary] details, [data-market-summary] [role="progressbar"]').count(), 0);
- assert.match(await page.locator('[data-market-coverage]').innerText(), /holdings · .* covered/);
- await bridge.locator('[data-bridge-split] summary').click();
- assert.ok(await bridge.locator('[data-bridge-part="realised"]').isVisible());
- await bridge.locator('[data-bridge-split] summary').click();
- assert.ok(Number(await bridge.getAttribute('data-bridge-split-accounts')) >= 10);
- await bridge.locator('[data-bridge-accounts-table] summary').click();
- assert.equal(await bridge.locator('tr[data-bridge-row]').count(), Number(await bridge.getAttribute('data-bridge-accounts')));
- await bridge.getByRole('button', { name: 'What is included in the capital bridge?', exact: true }).click();
+ assert.equal(boxes.length, 1, 'one summary block');
+ assert.ok(Math.abs(boxes[0].width - boxes[0].parent) < 1, 'it spans the row');
+ assert.equal(await page.locator('[data-market-summary], [data-market-coverage]').count(), 0, 'no separate market performance card');
+ // Stage 10mr: the Market return column restated the Return column; each row is set against its own index instead.
+ assert.equal(await table.locator('[data-seg-cell="market"]').count(), 0, 'no Market return column on the attribution table');
+ assert.ok(await table.locator('[data-seg-total] [data-seg-cell="bench"]').count() === 1, 'the benchmark return is on the Total row');
+ await bridge.getByRole('button', { name: 'Show the investment performance breakdown', exact: true }).click();
  const bridgeDialog = page.getByRole('dialog'); await bridgeDialog.waitFor();
+ assert.equal(await bridgeDialog.locator('[data-bridge-step]').count(), 5, 'start, money in, money out, gain, end');
+ assert.ok(await bridgeDialog.locator('[data-bridge-part="realised"]').isVisible(), 'the gain breakdown is open in the popup');
+ assert.ok(Number(await bridge.getAttribute('data-bridge-split-accounts')) >= 10);
+ await bridgeDialog.locator('[data-bridge-accounts-table] summary').click();
+ assert.equal(await bridgeDialog.locator('tr[data-bridge-row]').count(), Number(await bridge.getAttribute('data-bridge-accounts')));
+ await bridgeDialog.locator('[data-bridge-how] summary').click();
  assert.match(await bridgeDialog.innerText(), /Statement's own profit and loss/); assert.match(await bridgeDialog.innerText(), /Fund's dated unit record/);
  await page.screenshot({ path: `${out}/capital-bridge.png` });
  await page.keyboard.press('Escape');
  await page.locator('[data-returns-period="fytd"]').click();
  await page.locator('[data-returns-type-select]').selectOption('xirr');
  const total = table.locator('[data-seg-total]');
- assert.equal(await total.locator('[data-return-info]').count(), 3);
+ assert.equal(await total.locator('[data-return-info]').count(), 7, 'gain, selected return, benchmark and four INR TWR explanations');
  await total.getByRole('button', { name: 'What is included in total return?', exact: true }).click();
  const dialog = page.getByRole('dialog'); await dialog.waitFor();
- assert.match(await dialog.innerText(), /Based on the available records for 17 accounts only/);
+ assert.match(await dialog.innerText(), new RegExp(`Based on the available records for ${cardWindows('fytd').accounts} accounts only`));
  assert.match(await dialog.innerText(), /What is missing/);
  assert.ok(await dialog.locator('[data-return-gap]').count() > 0);
  assert.match(await dialog.innerText(), /We need/);

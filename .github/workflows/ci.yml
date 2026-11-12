@@ -101,6 +101,20 @@ jobs:
 
       # 3. The ingest & reconciliation test suites pass (parseNum, layout,
       #    pipeline, and the golden figures a human read off the real statements).
+      - name: Published financial graph, decimal journal and metric evidence
+        run: npm run check:financial-integrity
+
+      - name: Number edits preserve active source records and established workflows
+        run: node scripts/dev/test-table-input-snapshots.mjs
+
+      - name: Preserve financial integrity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: financial-integrity-evidence
+          path: .cache/backend-integrity/publication-check.json
+          if-no-files-found: ignore
+
       - name: Ingest tests
         run: npm run test:ingest
 
@@ -116,6 +130,26 @@ jobs:
           node scripts/dev/test-pdf-preview-runtime.mjs
           node --test scripts/dev/test-statement-previews.mjs
 
+      - name: Home widget layout and interactions
+        run: |
+          mkdir -p .cache/home-dashboard/browser
+          npm run preview -- --host 127.0.0.1 --port 4173 > .cache/home-dashboard/browser/preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-home-overview.mjs
+
+      - name: Preserve Home widget browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: home-dashboard-browser
+          path: .cache/home-dashboard/browser/
+          if-no-files-found: ignore
+
       - name: Infinite scrolling and table request budgets
         run: |
           mkdir -p .cache/table-scroll-check
@@ -126,8 +160,17 @@ jobs:
             if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
+          # Collect every browser result in this run; any failed check keeps
+          # the job red. EXIT still tears down the owned preview server.
+          browser_status=0
+          trap 'browser_status=1' ERR
+          set +e
+          node scripts/dev/test-cio-report-period.mjs
+          node scripts/dev/test-table-scroll.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-cio-report.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-statement-drop.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-inr-twr.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-market-returns.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-assumed-holdings.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-nav-assumed.mjs
@@ -147,6 +190,15 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-navigation-state.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-dashboard-navigation.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-etf-unit-continuity.mjs
+          exit "$browser_status"
+
+      - name: Preserve Morning CIO report evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cio-report-export
+          path: .cache/cio-report-check
+          if-no-files-found: ignore
 
       - name: Preserve return attribution browser evidence
         if: always()
@@ -156,6 +208,7 @@ jobs:
           path: |
             .cache/returns-period/*.png
             .cache/returns-period/browser-results.json
+            .cache/inr-twr-browser/
             .cache/market-returns/*.png
             .cache/market-returns/browser-results.json
             .cache/assumed-holdings/browser/*.png

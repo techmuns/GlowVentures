@@ -32,6 +32,7 @@ import { bookDrawdown } from "@/lib/drawdown";
 import { wholeFamilyOnly } from "@/lib/memberScope";
 import { WHOLE_BOOK_NAV } from "@/lib/bookNavBook";
 import { bookNavStats } from "@/lib/bookNav";
+import { MonthlyPerformance } from "@/components/MonthlyPerformance";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
 
 const GAIN = "#10b981", LOSS = "#ef4444";
@@ -471,6 +472,8 @@ export function ReturnAnalysis() {
         )}
       </div>
 
+      <MonthlyPerformance />
+
       <div className="mt-5 grid gap-5 lg:grid-cols-5 items-start">
         <Card className="lg:col-span-3" title="Return distribution"
           subtitle="Market value in each return band — by value, not by count">
@@ -554,7 +557,7 @@ export function ReturnAnalysis() {
               notes under the tables to go. Which classes are bucketed by class
               stays on screen, because that is what makes a row readable. */}
           <p className="mt-2 text-[11px] text-slate-500"
-            title="Contributions are each row's P&L over the book's total cost, so they add to the embedded return exactly. A GICS sector is a property of a company, so every share in a company is bucketed by one — including the shares a discretionary manager chose under a PMS mandate. A fund is a wrapper holding many companies and has no sector of its own, so it appears under its asset class instead — as does anything else that is not a share in a company, cash included; its gain still counts. A company's sector is the one Sector Composition draws: its own statement's, then a fund's filing on the ISIN, then screener.in on the NSE symbol, a lower tier only ever filling a sector the statements left empty.">
+            title="Contributions are each row's P&L over the book's total cost, so they add to the embedded return exactly. A GICS sector is a property of a company, so every share in a company is bucketed by one — including the shares a discretionary manager chose under a PMS mandate. A fund is a wrapper holding many companies and has no sector of its own, so it appears under its asset class instead — as does anything else that is not a share in a company, cash included; its gain still counts. A company's sector is the one Sector Composition draws: screener.in's wherever it has a page, and for the rest a fund's filing on the ISIN, then its own statement's.">
             {/* Stage 10cp: the line is the classes alone; that contributions
                 add to the total exactly is the first words of its hover. */}
             {m.wrapperClasses.length > 0
