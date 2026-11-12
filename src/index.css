@@ -915,6 +915,9 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
     left: 0;
     z-index: 1;
   }
+  #root table:not([data-freeze-off]) > tbody > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
+    overflow: hidden;
+  }
   #root table:not([data-freeze-off]) > tfoot > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
     z-index: 2;
   }
