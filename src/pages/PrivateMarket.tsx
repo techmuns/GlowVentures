@@ -9,6 +9,7 @@ import { UploadDocuments } from "@/components/UploadDocuments";
 import { useStatementInbox } from "@/lib/statementUploads";
 import { uploadSubjects, holdingDocumentsOf, documentMatches, subjectFolderHref } from "@/lib/holdingDocuments";
 import { Card } from "@/components/Card";
+import { FundHistory } from "@/components/FundHistory";
 import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows, type Accessor } from "@/lib/tableView";
@@ -280,6 +281,14 @@ const BOOK_VIEWS = [
     key: "transactions", label: "Transactions",
     title: "Every capital call the funds have made, newest first.",
     cardTitle: "Private market — capital calls",
+  },
+  {
+    // One fund's life over time (client #414 / #415): its dated calls and
+    // distributions, its value and NAV where the statements date them, and a
+    // money-weighted return over a window the reader chooses.
+    key: "history", label: "History",
+    title: "One fund at a time: its dated capital calls and distributions over time, its valuation history, and its money-weighted return over a chosen window.",
+    cardTitle: "Private market — fund history",
   },
 ] as const;
 
@@ -2555,13 +2564,16 @@ export function PrivateMarket() {
         right={
           <div className="flex flex-wrap items-center justify-end gap-2">
             {tabs}
-            <EditColumns view={view === "transactions" ? callView : bookView} labels={view === "transactions" ? undefined : VALUATION_LABELS} />
-            <SearchInput value={q} onChange={setQ}
+            {/* The History tab carries its own fund picker and date-range
+                controls, so the master table's column editor and search — which
+                act on the funds/brands/transactions tables — are not shown on it. */}
+            {view !== "history" && <EditColumns view={view === "transactions" ? callView : bookView} labels={view === "transactions" ? undefined : VALUATION_LABELS} />}
+            {view !== "history" && <SearchInput value={q} onChange={setQ}
               placeholder={view === "transactions" ? "Search calls…" : view === "brands" ? "Search brands, funds or entities…" : "Search companies, funds or brands…"}
               className="w-56"
               suggestions={view === "transactions"
                 ? [...new Set(m.history.map((c) => c.fund))]
-                : allGroups.map((g) => g.label)} />
+                : allGroups.map((g) => g.label)} />}
             {/* THE RETURN PICKER, where the return columns are. The Monitor's own
                 control and its own `?ret=` param, with the hints this page's
                 funds make true (`PM_RETURN_HINTS`) — the Monitor's XIRR hint
@@ -2737,6 +2749,15 @@ export function PrivateMarket() {
               </tfoot>
             </ExportableTable>
           </div>
+        )}
+
+        {/* ── THE HISTORY TAB (client #414 / #415) ──────────────────────────
+            One fund's dated calls and distributions over time, its valuation
+            history, and its money-weighted return over a chosen window — every
+            figure from a dated record the book carries, the value/NAV trajectory
+            and sub-period IRR an honest absence until the quarterly NAVs land. */}
+        {view === "history" && (
+          <FundHistory funds={m.funds} fundDated={fundDated} schemes={m.schemes} money={money} moneyFull={moneyFull} />
         )}
 
         {/* THE DROP-DOWN "How the capital totals are worked out" AND THE LINE
