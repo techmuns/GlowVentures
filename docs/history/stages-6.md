@@ -1648,6 +1648,7 @@ Codex's review of #352, verified against the code and the book:
 - The latest-account browser check distinguishes the available-history card's measured close (which can include newer same-unit NAV windows) from each manager record's own closing date. It checks both dates in the included records and keeps the Performance/Family source-record assertions.
 - The CI browser step collects every check in one run; an error trap retains a failing job status if any check fails, and the existing EXIT trap still tears down its preview server.
 - Home contains its hidden widget-status announcement in its own positioning context. The announcement previously used the document as its containing block and added a second scrollbar with a large blank area below the page. Browser checks require zero outer scroll range and a reachable footer before and after widget changes, in both themes and phone/desktop sizes.
+
 ### Stage 10nt — Portfolio Monitor: every return shows its index, no gap words
 
 *"if there is no buy date then how is HPR calculated this is confusing remove all fluff and just add index return"* — the family, 12 Nov 2026.
