@@ -22,7 +22,8 @@ The family approved the method ("approve") and it is live.
 - **The family's rules:**
   - near-cash funds whose unit changes are undated are held at their last value;
   - Vantage Oak and other small leftovers are held at last value;
-  - private investments sit on their own line;
+  - private investments sit on their own line (superseded 12 Nov 2026, Stage 10nu: held at
+    their latest valuation inside the figure, 0% until a new valuation arrives);
   - nothing is asked again that these rules settle.
 - **Live figures on 4 Nov:**
   - financial year +13.1% (+₹63.6 Cr);
@@ -70,6 +71,9 @@ day, and to label it. The rules below follow that. Each window is pooled with
 | 8 | One-statement funds: held at the last statement value (0% since) until the next statement, which then counts the whole change. **Decided 4 Nov 2026** | Motilal Active Momentum (6 Aug, the purchase), Carnelian Amritkaal (31 Jul), Delphi (30 Jun) | The info button names each fund and the date it is held at |
 
 The bar measures coverage against **public** investments only. Private is reported separately.
+**Since Stage 10nu (12 Nov 2026)** rule 7 is replaced: every private investment is held at its
+latest valuation inside the period figure, as rule 8 holds a one-statement fund, so every account
+holding value is covered.
 
 ## Result (statement values and market closes to 3 Nov 2026, no live quotes)
 

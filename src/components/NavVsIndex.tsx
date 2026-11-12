@@ -278,17 +278,18 @@ export function NavVsIndex() {
   const pick = PERIOD_PICKS.find((x) => x.key === period)!;
   const annual = card.total.measured?.basis === "annual";
   const cov = card.coverage;
-  const share = (v: number) => (cov.publicValue > 0 ? Math.min(100, Math.round((v / cov.publicValue) * 100)) : 0);
+  const allValue = cov.publicValue + cov.privateTotalValue;
+  const share = (v: number) => (allValue > 0 ? Math.min(100, Math.round((v / allValue) * 100)) : 0);
   const assumedOwners = [...new Set(card.total.units.flatMap((u) => (u.assumption ? [u.assumption.owner] : [])))];
   /**
    * ── WHAT THE BOOK'S LINE IS, ON ITS CHIP ──────────────────────────────────
    * The card's own words: what each investment counts from, what is measured
-   * and what is held at its last value, what is reported apart — counted off
-   * the card's own units, never typed.
+   * and what is held at its last value, private investments among it (Stage
+   * 10nu) — counted off the card's own units, never typed.
    */
   const bookHover = [
     `Our book: ${pick.card.toLowerCase()}, the card's own figure on every day — had the period ended that day. Each investment counts from its first value on record in the period, that value treated as money arriving that day; money in and out counts on its date and is never a gain.`,
-    `Covers ${share(cov.measuredValue + cov.heldValue)}% of public investments: ${c(cov.measuredValue)} measured, ${c(cov.heldValue)} held at its last value (0% until its next value)${cov.waitingValue > 5e5 ? `, ${c(cov.waitingValue)} waiting for prices` : ""}. Private investments, ${c(cov.privateValue)}, are reported apart.`,
+    `Covers ${share(cov.measuredValue + cov.heldValue + cov.privateCoveredValue)}% of investments: ${c(cov.measuredValue + cov.privateCoveredValue - cov.privateHeldValue)} measured, ${c(cov.heldValue + cov.privateHeldValue)} held at its last value (0% until its next value), ${c(cov.privateHeldValue)} of it private${cov.waitingValue > 5e5 ? `, ${c(cov.waitingValue)} waiting for prices` : ""}.`,
     "Each investment is held at its latest valuation until the next: a statement, a published close or a printed NAV. Nothing is interpolated between them.",
     assumedOwners.length ? assumptionText(assumedOwners) : "",
     annual ? `Over the available history the line is the return so far, money-weighted: where only a little money was invested, as before ${fmtDate(card.starts.find((s) => s.date && s.close > 0.5 * cov.measuredValue)?.date ?? to)}, a small move reads large.` : "",

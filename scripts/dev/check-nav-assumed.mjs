@@ -74,7 +74,7 @@ try {
   const hover = await chip.getAttribute('title');
   assert.match(hover, /the card's own figure on every day/);
   assert.match(hover, /No sale appears in the records we have\. We assume .+ still hold these shares\./);
-  assert.match(hover, /Covers \d+% of public investments/);
+  assert.match(hover, /Covers \d+% of investments: .+ of it private/);
   // THE FOLD UNDER THE CHART IS GONE (Stage 10jz); the hover says what the line covers.
   assert.equal(await page.locator('[data-testid="nav-excluded"]').count(), 0);
   await page.screenshot({ path: out + '/assumed.png', fullPage: false });

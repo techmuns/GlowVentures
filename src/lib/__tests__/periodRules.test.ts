@@ -75,7 +75,7 @@ const march: EarlierBalance[] = [{ accountId: 'd', securityKey: 'example-d', isi
   assert.equal(statementNavWindow(held, fa, '2026-03-31', '2026-11-03', navs), null);
 }
 
-// HELD AT ITS LAST VALUE: a named 0% from its valuation date; never for private or nil.
+// HELD AT ITS LAST VALUE: a named 0% from its valuation date; private too (Stage 10nu), never nil.
 {
   const fund = { ...held, quantity: 5, marketValue: 2e6, navDate: '2026-08-06' } as Position;
   const u = heldAtLastValue(fund, acct, '2026-03-31', '2026-11-03', 'One statement only.');
@@ -84,7 +84,8 @@ const march: EarlierBalance[] = [{ accountId: 'd', securityKey: 'example-d', isi
   near(u!.window!.openValue, 2e6); near(u!.window!.closeValue, 2e6); assert.deepEqual(u!.held, { date: '2026-08-06', reason: 'One statement only.' });
   // Valued before the period opens: held from the opening.
   assert.equal(heldAtLastValue({ ...fund, navDate: '2026-01-15' } as Position, acct, '2026-03-31', '2026-11-03', 'x')!.from, '2026-03-31');
-  assert.equal(heldAtLastValue({ ...fund, marketSide: 'private' } as Position, acct, '2026-03-31', '2026-11-03', 'x'), null);
+  const priv = heldAtLastValue({ ...fund, marketSide: 'private' } as Position, acct, '2026-03-31', '2026-11-03', 'x');
+  assert.equal(priv!.gain, 0); assert.equal(priv!.from, '2026-08-06'); near(priv!.close, 2e6);
   assert.equal(heldAtLastValue({ ...fund, marketValue: 0 } as Position, acct, '2026-03-31', '2026-11-03', 'x'), null);
   assert.equal(heldAtLastValue({ ...fund, navDate: '2026-11-03' } as Position, acct, '2026-03-31', '2026-11-03', 'x'), null);
 }
