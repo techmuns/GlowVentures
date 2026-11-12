@@ -324,7 +324,12 @@ export function TrFoot({ view, label, labelTitle, labelInFirstColumn = false, ce
   const span = Math.max(lead, 1);
   return (
     <tr {...rest}>
-      <td colSpan={labelInFirstColumn ? 1 : span} className={className} title={labelTitle}>{label}</td>
+      {/* A label spanning the lead columns scrolls with them, so its text is
+          pinned to the left of the scroll container inside its own cell —
+          beside every table's frozen first column (Stage 10ng). */}
+      <td colSpan={labelInFirstColumn ? 1 : span} className={className} title={labelTitle}>
+        {labelInFirstColumn || span === 1 ? label : <span className="sticky left-3 inline-block" data-foot-label>{label}</span>}
+      </td>
       {labelInFirstColumn && span > 1 && <td colSpan={span - 1} className={className} />}
       {/* A COLUMN WITH NO TOTAL STILL NEEDS ITS CELL, and it takes the row's
           own class: the footer carries a top rule, and an unstyled filler

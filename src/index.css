@@ -759,10 +759,11 @@ html:not(.dark) .hover\:bg-champagne-400:hover { background-image: none; backgro
  * already says something with its colour — a section band, a child row, a total,
  * a fired alert, a hovered row — keeps its own, because any class beats it.
  */
-/* A pinned Security cell inherits its row's opaque surface. Keep this default
+/* A frozen first cell (Holdings' Security, and every table's since Stage 10ng)
+   inherits its row's opaque surface. Keep this default
    below the zebra, hierarchy and hover rules in specificity, and before them
    in source order, so those states continue across the frozen column. */
-:where([data-monitor-table="holdings"] > tbody > tr) { background-color: var(--chart-tooltip-bg); }
+:where(#root table > tbody > tr) { background-color: var(--chart-tooltip-bg); }
 :where(table > tbody > tr:nth-child(even)) { background-color: var(--row-alt); }
 /*
  * THE HOVERED ROW IS OPAQUE, AND ONLY A ROW. *"When I'm hovering over a lighter
@@ -878,6 +879,66 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
   #root [data-monitor-table="holdings"] > tbody > tr > td:first-child:is(:not([colspan]), [colspan="1"]) {
     width: 10rem;
     min-width: 10rem;
+    max-width: 10rem;
+    overflow-wrap: anywhere;
+  }
+}
+/* EVERY TABLE FREEZES ITS FIRST COLUMN (Stage 10ng). *"In the portfolio
+   monitor, we have freezed the first column … we need to freeze the first
+   column for every table in the dashboard. In private Market, Real estate
+   etc."* — the family, 12 Nov 2026. The Holdings rules above, applied to every
+   table under #root: the first heading, body and footer cell stick to the left
+   of the table's own scroll container. A cell spanning several columns (a
+   section band, an expanded detail row, a footer label over the lead columns)
+   scrolls whole, as on Holdings — pinned, it would cover the figures beside it.
+   A table opts out with `data-freeze-off="<reason>"`.
+
+   THE FROZEN CELL IS OPAQUE WHATEVER ITS ROW PAINTS. Most rows are opaque
+   (zebra, hover, tree levels), but a few tint with a translucent class
+   (`bg-ink-900/50`, a selected source row's `bg-champagne-500/10`), and a
+   translucent frozen cell lets the figures scrolling under it show through.
+   So the cell is drawn in two layers under its content: the card surface
+   (`::before`), then the cell's own colour, image (the sorted-column fill) and
+   inset shadow (a child row's guide) on top (`::after`). An opaque row
+   composites to itself; a tinted one to exactly what the rest of its row shows
+   over the card. */
+@media screen {
+  #root table:not([data-freeze-off]) > thead > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: var(--table-header-bg);
+  }
+  #root table:not([data-freeze-off]) > :is(tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+  #root table:not([data-freeze-off]) > tfoot > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
+    z-index: 2;
+  }
+  :where(#root table > :is(tbody, tfoot) > tr > :is(th, td):first-child) {
+    background-color: inherit;
+  }
+  #root table:not([data-freeze-off]) > :is(tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"])::before,
+  #root table:not([data-freeze-off]) > :is(tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"])::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+  #root table:not([data-freeze-off]) > :is(tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"])::before {
+    background-color: var(--chart-tooltip-bg);
+  }
+  #root table:not([data-freeze-off]) > :is(tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"])::after {
+    background-color: inherit;
+    background-image: inherit;
+    box-shadow: inherit;
+  }
+}
+@media screen and (max-width: 640px) {
+  #root table:not([data-freeze-off]) > tbody > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
     max-width: 10rem;
     overflow-wrap: anywhere;
   }
