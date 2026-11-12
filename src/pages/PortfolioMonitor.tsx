@@ -1236,8 +1236,8 @@ export function PortfolioMonitor() {
     const hbs = shown.map(benchOf);
     const keys = new Set(hbs.map((h) => h.bench?.key ?? null));
     const hb: HoldingBenchmark = keys.size === 1
-      ? (hbs[0].bench ? { bench: hbs[0].bench, why: `Every row here is compared with the ${hbs[0].bench.name}.` } : hbs[0])
-      : { bench: benchmarkByKey("nifty-500"), why: "The rows here are compared with different indices, so their total is compared with the broad Nifty 500." };
+      ? (hbs[0].bench ? { bench: hbs[0].bench, source: "rule", why: `Every row here is compared with the ${hbs[0].bench.name}.` } : hbs[0])
+      : { bench: benchmarkByKey("nifty-500"), source: "rule", why: "The rows here are compared with different indices, so their total is compared with the broad Nifty 500." };
     if (!hb.bench) return { hb, fig: null };
     // Duplicates are counted once in the total; their legs would count twice.
     if (shown.some((r) => rowPositionsOf(r).some((p) => p.dedupeGroup))) {

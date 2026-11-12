@@ -60,16 +60,18 @@ export function BenchLine({ hb, fig, holdingPct }: { hb: HoldingBenchmark; fig: 
     return <span data-bench="none" title={hb.why} className="inline-block w-full whitespace-nowrap text-[10px] leading-tight text-slate-500">no index</span>;
   }
   const b = hb.bench;
+  const guess = hb.source === "rule";
   const gap = fig?.shown && holdingPct != null ? holdingPct - fig.pct : null;
   const title = [`${b.name}. ${hb.why}`,
+    guess ? "This benchmark is assigned by rule — a best guess, to confirm with Yamini." : "This is the benchmark the manager's own report names.",
     fig?.shown ? `${fig.how} ${PRICE_BASIS}` : fig ? `No index figure: ${fig.reason}.` : null,
     gap != null ? `The holding ${gap >= 0 ? "is ahead of" : "trails"} it by ${Math.abs(gap).toFixed(1)} percentage points.` : null,
   ].filter(Boolean).join(" ");
   return (
-    <span data-bench={b.key} data-bench-pct={fig?.shown ? fig.pct : ""} data-bench-from={fig?.shown ? fig.from : undefined}
+    <span data-bench={b.key} data-bench-source={hb.source} data-bench-pct={fig?.shown ? fig.pct : ""} data-bench-from={fig?.shown ? fig.from : undefined}
       data-bench-to={fig?.shown ? fig.to : undefined} data-bench-annual={fig?.shown && fig.annual ? "true" : undefined} data-bench-feed={fig && !fig.shown && fig.feed ? "" : undefined}
       title={title} className="inline-block w-full whitespace-nowrap text-[10px] leading-tight text-slate-500">
-      {BENCH_SHORT[b.key]}{" "}
+      {BENCH_SHORT[b.key]}{guess && <sup data-bench-guess title="Benchmark is a best guess — to confirm with Yamini" className="text-amber-400/90">*</sup>}{" "}
       {/* A gap in the record names its cause in a few words, as the return cell
           above does; the feed's own state keeps the plain dash (Stage 10lc). */}
       {fig?.shown ? <span className="mono">{fmtPct(fig.pct, { sign: true, decimals: 1 })}</span>
