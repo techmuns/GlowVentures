@@ -1656,3 +1656,9 @@ Codex's review of #352, verified against the code and the book:
 - Where a row's purchases are not each dated, its index line is the index's move over the holding period instead of "— No buy dates / Dates incomplete / Range only": from its first investment (Invested on), else the inception of the account that holds it, else a lot register's date, to the row's value date (`holdingPeriodStart` in `investedOn.ts`, `indexOverPeriod` in `holdingBenchmark.ts`). Rows whose lines are valued on different days strike each line on its own start, cost and value date (`periodLegsOf`). The hover names the window and its basis; `data-bench-period` marks it.
 - Section and footer totals pool those same legs; rows no equity index measures (cash, debt, hybrid) are left out of the total's index and named in its hover.
 - A dash that remains carries its reason as the hover only (`data-bench-reason`); `benchGapLabel` is gone. The `monitor` check now asks for that hover instead of a face label.
+
+### Stage 10ny — Keep number editing available for an unchanged financial book
+
+- A new app deployment can change the reader identifier before scheduled statement publication catches up. Number editing now accepts that older reader only when the canonical SHA-256 fingerprint of its complete received book equals the deployment's verified book. A changed valuation, cash-flow history, source pointer or other book fact still blocks an incompatible reader.
+- Build and edge validation share canonical JSON serialization. The server computes the fingerprint itself; a supplied hash cannot authorize a different book. Matching-reader statement updates retain their existing behavior.
+- Isolated API regressions cover identical books across readers, a real local correction, changed facts outside the editable columns, invalid reader metadata and absent fingerprint evidence. No manual production data publication is required.

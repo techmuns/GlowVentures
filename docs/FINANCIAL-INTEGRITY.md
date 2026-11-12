@@ -78,6 +78,12 @@ previous/original value, source fingerprint, effective date and validator versio
 in the existing Git-backed store history. There is one authenticated dashboard
 session, so no individual editor identity is invented.
 
+When a deployment changes the reader code but the entire financial book is
+unchanged, the server accepts that exact book using its canonical SHA-256
+fingerprint. It hashes the received book rather than trusting a declared hash.
+A different book under an incompatible reader remains blocked until publication
+catches up. This avoids disabling number editing after unrelated app changes.
+
 The existing number editor stages related capital fields and restores in one
 atomic save. Inline cells link to that same grouped editor when a relationship
 needs more than one amount changed. Incomplete source balances are unavailable
