@@ -1,4 +1,5 @@
-.home-dashboard { --home-accent: #378574; --home-border: #e7e4dc; --home-surface: #fffefa; --home-text: #283e38; --home-muted: #7f8983; --home-tint: #f4f6f0; max-width: 1600px; margin: 0 auto; color: var(--home-text); font-size: 13px; }
+/* Keep the hidden layout status inside the page’s scrolling content. */
+.home-dashboard { position: relative; --home-accent: #378574; --home-border: #e7e4dc; --home-surface: #fffefa; --home-text: #283e38; --home-muted: #7f8983; --home-tint: #f4f6f0; max-width: 1600px; margin: 0 auto; color: var(--home-text); font-size: 13px; }
 html.dark .home-dashboard { --home-border: #32334b; --home-surface: #201e38; --home-text: #e6ebe7; --home-muted: #a2aaa5; --home-tint: #28273f; }
 .home-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; margin: 24px 0; }
 .home-eyebrow { display: block; font-size: 9px; font-weight: 650; letter-spacing: .16em; color: var(--home-muted); }

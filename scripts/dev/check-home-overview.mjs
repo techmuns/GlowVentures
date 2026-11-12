@@ -32,6 +32,18 @@ const scopedTotal = totalOf(raw.filter(p => ids.has(p.accountId)));
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 const results = [];
 let activePage;
+async function checkHomePageEnd(page) {
+  await page.locator('main').evaluate(el => { el.scrollTop = el.scrollHeight; });
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const end = await page.evaluate(() => {
+    const main = document.querySelector('main').getBoundingClientRect(), footer = document.querySelector('.home-page-footer').getBoundingClientRect();
+    return { outerScroll: document.documentElement.scrollHeight - document.documentElement.clientHeight, windowTop: scrollY,
+      footerVisible: footer.top >= main.top && footer.bottom <= main.bottom + 1 };
+  });
+  assert.ok(end.outerScroll <= 1 && end.windowTop === 0, 'Home has no outer document scroll range or blank area below its footer');
+  assert.ok(end.footerVisible, 'the real page footer remains reachable at the end of Home’s scroll area');
+  await page.locator('main').evaluate(el => { el.scrollTop = 0; });
+}
 try {
   for (const theme of ['light', 'dark']) for (const width of [1440, 390]) {
     const context = await browser.newContext({ viewport: { width, height: 1100 } });
@@ -97,6 +109,7 @@ try {
     await page.getByRole('button', { name: 'Close return coverage', exact: true }).click();
     assert.ok(await page.locator('[data-home-overview]').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'Home has no page-level horizontal overflow');
     assert.ok(await page.evaluate(() => document.body.scrollWidth <= innerWidth + 1), 'the global toolbar does not widen the mobile page');
+    await checkHomePageEnd(page);
     await page.locator('[data-home-overview]').screenshot({ path: path.join(out, `${theme}-${width}.png`) });
     if (theme === 'light' && width === 1440) {
       const downloadPromise = page.waitForEvent('download');
@@ -168,6 +181,7 @@ try {
     await page.locator('[data-page-nav-home]').first().click();
     await page.locator('[data-home-overview]').waitFor();
     assert.ok(Math.abs(Number(await page.locator('[data-home-aum]').getAttribute('data-home-aum')) - scopedTotal) < .01, 'Home preserves member scope');
+    await checkHomePageEnd(page);
     assert.deepEqual(errors, []);
     results.push({ theme, width, total: expected, scopedTotal, classes: rows.length, widgets: layout.length });
     await context.close();
