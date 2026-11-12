@@ -38,6 +38,9 @@ test('an optional audit failure is isolated from the established financial book'
   assert.equal(report.issues[0].code, 'AUDIT_UNAVAILABLE');
   assert.equal(report.summary.unresolvedExceptions, null, 'an unavailable audit must not claim there are zero discrepancies');
   assert.deepEqual(input, before);
+  const malformedExtension = collectFinancialAudit(input, [], { registry: { instruments: [{ id: 'prior-identity', keys: ['preserved-fund'], isins: [], unsupportedExtension: () => {} }] } });
+  assert.equal(malformedExtension.auditStatus, 'unavailable');
+  assert.equal(malformedExtension.registry.instruments[0].id, 'prior-identity', 'known identity continuity is retained when optional metadata cannot be cloned');
 });
 
 test('a new units audit note cannot demote a fully read statement', () => {

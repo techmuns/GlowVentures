@@ -294,7 +294,8 @@ export function collectFinancialAudit(book, documents, options = {}) {
       ? previous : seedRegistry;
     return { schemaVersion: 1, formulaVersion: 'financial-integrity-v1', mode: 'advisory', auditStatus: 'unavailable', blockingIssues: [],
       asOf: book.BOOK_AS_OF, readerRevision: options.readerRevision ?? null, bookRevision: options.bookRevision ?? null,
-      registry: structuredClone(registry), graph: { nodes: [], edges: [] }, ownership: [], events: [], metrics: [], checks: [], reconciliationReviews: [],
+      registry: { schemaVersion: 1, instruments: registry.instruments.map(e => ({ id: e.id, keys: [...e.keys], isins: [...e.isins] })) },
+      graph: { nodes: [], edges: [] }, ownership: [], events: [], metrics: [], checks: [], reconciliationReviews: [],
       issues: [{ code: 'AUDIT_UNAVAILABLE', reason: error instanceof Error ? error.message : 'The optional audit could not be prepared.' }],
       summary: { positions: positions.length, accounts: accounts.length, missingCost: positions.filter(p => p.costBasis == null).length,
         atCost: positions.filter(p => p.valuedAtCost).length, unvaluedRows: book.BOOK_UNVALUED_HOLDINGS?.length ?? 0,
