@@ -1710,3 +1710,8 @@ Codex's review of #352, verified against the code and the book:
 - Capital relationships remain visible as audit warnings while single-cell edits and optional atomic groups both work. The input API follows the supported current published schema and retains per-record source/version protection; a deployment hash cannot lock an otherwise valid source record.
 - Independent arithmetic is compared beside the canonical result. Audit failures are contained, and existing source-scoped decisions survive reminder expiry without claiming a new review. The original new/worsening-source conflict protections remain in place.
 - Regression checks cover retained figures, capital corrections, dated-return coverage, current-source editing, expired reviews and audit failure isolation. Before/after comparison of the complete established book is retained with the local validation evidence.
+
+### Stage 10ob — Retain the original Excel export validation failure
+
+- A post-merge browser run could report a pending download's cleanup rejection instead of the original failed export click. The helper now observes the click and download together; neither rejection can become an orphaned error that masks the cause.
+- Regression fixtures exercise both failure orders. The broad table check records the original error and a screenshot before closing the browser, and CI retains those diagnostics. Existing workbook-content assertions, timeouts and source figures are unchanged.
