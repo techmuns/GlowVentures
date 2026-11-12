@@ -107,7 +107,13 @@ try {
     await page.getByRole('button', { name: 'Return calculation and coverage', exact: true }).first().click();
     await page.getByRole('dialog', { name: 'Return calculation and coverage', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Close return coverage', exact: true }).click();
-    assert.ok(await page.locator('[data-home-overview]').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'Home has no page-level horizontal overflow');
+    const pageFit = await page.locator('[data-home-overview]').evaluate(el => {
+      const edge = el.getBoundingClientRect().right;
+      return { client: el.clientWidth, scroll: el.scrollWidth, overflow: [...el.querySelectorAll('*')]
+        .filter(node => !node.closest('.home-table-scroll') && node.getBoundingClientRect().right > edge + 1)
+        .slice(0, 15).map(node => ({ tag: node.tagName, class: node.getAttribute('class'), text: node.textContent?.slice(0, 80), right: node.getBoundingClientRect().right })) };
+    });
+    assert.ok(pageFit.scroll <= pageFit.client + 1, `Home has no page-level horizontal overflow (${theme}, ${width}): ${JSON.stringify(pageFit)}`);
     assert.ok(await page.evaluate(() => document.body.scrollWidth <= innerWidth + 1), 'the global toolbar does not widen the mobile page');
     await checkHomePageEnd(page);
     await page.locator('[data-home-overview]').screenshot({ path: path.join(out, `${theme}-${width}.png`) });
