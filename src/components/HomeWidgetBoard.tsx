@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowDown, ArrowLeft, ArrowUp, Check, GripVertical, LayoutGrid, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
-import { DEFAULT_HOME_LAYOUT, HOME_LAYOUT_KEY, HOME_WIDGETS, moveHomeWidget, readHomeLayout, type HomeWidgetEntry, type HomeWidgetId, type HomeWidgetSize } from '@/lib/homeWidgets';
+import { DEFAULT_HOME_LAYOUT, HOME_LAYOUT_KEY, LEGACY_HOME_LAYOUT_KEY, HOME_WIDGETS, migrateHomeLayout, moveHomeWidget, readHomeLayout, type HomeWidgetEntry, type HomeWidgetId, type HomeWidgetSize } from '@/lib/homeWidgets';
 
 export function useHomeWidgets() {
   const [layout, update] = useState<HomeWidgetEntry[]>(() => {
-    try { return readHomeLayout(JSON.parse(localStorage.getItem(HOME_LAYOUT_KEY) ?? 'null')) ?? DEFAULT_HOME_LAYOUT; } catch { return DEFAULT_HOME_LAYOUT; }
+    try {
+      const saved = localStorage.getItem(HOME_LAYOUT_KEY);
+      return (saved != null ? readHomeLayout(JSON.parse(saved)) : migrateHomeLayout(JSON.parse(localStorage.getItem(LEGACY_HOME_LAYOUT_KEY) ?? 'null'))) ?? DEFAULT_HOME_LAYOUT;
+    } catch { return DEFAULT_HOME_LAYOUT; }
   });
   const [editing, setEditing] = useState(false), [open, setOpen] = useState(false), [announcement, setAnnouncement] = useState('');
-  const setLayout = (next: HomeWidgetEntry[]) => { update(next); try { localStorage.setItem(HOME_LAYOUT_KEY, JSON.stringify(next)); } catch { /* Keep the current session's layout if storage is unavailable. */ } };
+  useEffect(() => { try { localStorage.setItem(HOME_LAYOUT_KEY, JSON.stringify(layout)); } catch { /* Keep this session's layout when storage is unavailable. */ } }, [layout]);
+  const setLayout = (next: HomeWidgetEntry[]) => update(next);
   return { layout, setLayout, editing, setEditing, open, setOpen, announcement, setAnnouncement };
 }
 type State = ReturnType<typeof useHomeWidgets>;
@@ -36,7 +40,7 @@ export function HomeWidgetBoard({ state, widgets, irrelevant }: { state: State; 
       const definition = HOME_WIDGETS.find(w => w.id === entry.id)!;
       return <div className={`home-widget home-widget-${entry.size}`} data-home-widget={entry.id} key={entry.id} tabIndex={-1} title={irrelevant.includes(entry.id) ? 'Not relevant for firm' : undefined}
         onDragOver={e => { if (state.editing) e.preventDefault(); }} onDrop={e => { e.preventDefault(); if (drag.current) state.setLayout(moveHomeWidget(state.layout, drag.current, index)); drag.current = null; }}>
-        {state.editing && <div className="home-widget-tools"><button type="button" draggable aria-label={`Drag ${definition.name}`} title="Drag to reorder" onDragStart={e => { drag.current = entry.id; e.dataTransfer.setData('text/plain', entry.id); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => { drag.current = null; }}><GripVertical size={15} /></button><span>{definition.name}</span><button type="button" disabled={index === 0} aria-label={`Move ${definition.name} earlier`} onClick={() => state.setLayout(moveHomeWidget(state.layout, entry.id, index - 1))}><ArrowUp size={13} /></button><button type="button" disabled={index === state.layout.length - 1} aria-label={`Move ${definition.name} later`} onClick={() => state.setLayout(moveHomeWidget(state.layout, entry.id, index + 1))}><ArrowDown size={13} /></button><select aria-label={`Size of ${definition.name}`} value={entry.size} onChange={e => state.setLayout(state.layout.map(w => w.id === entry.id ? { ...w, size: e.target.value as HomeWidgetSize } : w))}><option value="quarter">Compact</option><option value="half">Half</option><option value="full">Full</option></select><button type="button" aria-label={`Remove ${definition.name}`} onClick={() => { state.setLayout(state.layout.filter(w => w.id !== entry.id)); state.setAnnouncement(`${definition.name} removed from Home`); }}><X size={13} /></button></div>}
+        {state.editing && <div className="home-widget-tools"><button type="button" draggable aria-label={`Drag ${definition.name}`} title="Drag to reorder" onDragStart={e => { drag.current = entry.id; e.dataTransfer.setData('text/plain', entry.id); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => { drag.current = null; }}><GripVertical size={15} /></button><span>{definition.name}</span><button type="button" disabled={index === 0} aria-label={`Move ${definition.name} earlier`} onClick={() => state.setLayout(moveHomeWidget(state.layout, entry.id, index - 1))}><ArrowUp size={13} /></button><button type="button" disabled={index === state.layout.length - 1} aria-label={`Move ${definition.name} later`} onClick={() => state.setLayout(moveHomeWidget(state.layout, entry.id, index + 1))}><ArrowDown size={13} /></button><select aria-label={`Size of ${definition.name}`} value={entry.size} onChange={e => state.setLayout(state.layout.map(w => w.id === entry.id ? { ...w, size: e.target.value as HomeWidgetSize } : w))}><option value="quarter">Compact</option><option value="half">Half</option><option value="wide">Wide</option><option value="full">Full</option></select><button type="button" aria-label={`Remove ${definition.name}`} onClick={() => { state.setLayout(state.layout.filter(w => w.id !== entry.id)); state.setAnnouncement(`${definition.name} removed from Home`); }}><X size={13} /></button></div>}
         {widgets[entry.id]}
       </div>;
     })}
