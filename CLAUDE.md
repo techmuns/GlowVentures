@@ -231,7 +231,7 @@ One line per area; the history files explain each in depth.
   its Portfolio Monitor holding columns are `lineHoldingFigures.ts`, Stage 10hz),
   `capitalBridge.ts` (the tab's start → money in/out → gain → end bridge, gain split
   only by a statement P&L or fund unit record; Stage 10gu), `ytdAvailable.ts` (the
-  Monitor's YTD from the first dated value this year, on those records; Stage 10jl;
+  Monitor's YTD, every row from 31 December or a dash, Stage 10jl, 10nv; the cards' YTD from the first dated value this year;
   any period's open, `periodSelection` + `periodRules.ts` for Morning CIO's three
   return cards, Stage 10la; `periodLine.ts`, the NAV chart drawn as the card, Stage 10le; `useReturnSelection.ts`, every Returns-tab
   period on that one selection, and `selectionMarket.ts`, Market performance over its units, Stage 10lg), `useMarketReturns.ts` +

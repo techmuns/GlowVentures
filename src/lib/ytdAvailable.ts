@@ -15,9 +15,21 @@
  *     forward at published closes (`assumedHolding`, the family's 22 Oct rule),
  *     and said to be assumed.
  *
- * Not annualised, and the start date rides on the cell ("from 31 Mar") so it
- * never reads as a full year to date. A cost is never an opening value and a
- * live quote never dates one; what neither record covers stays a dash naming why.
+ * Not annualised. A cost is never an opening value and a live quote never
+ * dates one; what neither record covers stays a dash naming why.
+ *
+ * ── EVERY MONITOR ROW FROM 31 DECEMBER (Stage 10nv) ────────────────────────
+ *
+ *   *"for all the holdings the returns need to be simply YTD return from the
+ *   same YTD"* — 12 Nov 2026; asked what a row with no 31 December value
+ *   shows, the answer was a dash.
+ *
+ * The Monitor's rows (`of`) no longer open on a later first value ("from 31
+ * Mar"): a row's every part opens on 31 December's own value, or at nil on a
+ * holding first bought this year (nothing was held on 1 January, so its return
+ * since purchase is its year to date). Anything else is a dash naming the
+ * first dated value it does have. `account` and `holding` are unchanged, so
+ * the pooled cards (`ytdSelection`) read what they read before.
  */
 import type { Account, Position } from './types';
 import type { Flow } from './periodReturns';
@@ -38,6 +50,8 @@ export type YtdFrom =
       fullYear: boolean;
       /** True where a holding's units are carried forward at published prices. */
       assumed: boolean;
+      /** Where the row held nothing on 1 January: the day its money was first at work this year. */
+      bought?: string;
       /** The whole accounts whose verified record is pooled here. */
       accounts: string[];
       note: string;
@@ -234,6 +248,15 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open:
     return found;
   };
 
+  /**
+   * A WINDOW THAT IS A YEAR TO DATE (Stage 10nv): it opens on 31 December's
+   * own value, or at nil on a holding first bought this year. With no opening
+   * day (`open: null`) every part opens on its own first record, as before.
+   */
+  const fromYearOpen = (w: AccountWindow) => yearOpen == null || w.openDate <= yearOpen || (w.openedInWindow && w.openValue === 0);
+  const noYearOpen = (w: AccountWindow) =>
+    `no value on ${longDay(yearOpen!)} is on record — its first dated value this year is ${longDay(w.openDate)}, and a year-to-date return opens on 31 December for every holding. A statement or unit count as of ${longDay(yearOpen!)} is needed`;
+
   const rowMemo = new WeakMap<readonly Position[], YtdFrom>();
   const of = (ps: readonly Position[]): YtdFrom => {
     const hit = rowMemo.get(ps);
@@ -249,16 +272,22 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open:
       const all = keysOf.get(accountId);
       const keys = new Set(list.map((p) => p.securityKey));
       const whole = !!all?.size && [...all].every((k) => keys.has(k));
-      const aw = whole ? accountWindow(accountId) : null;
+      const found = whole ? accountWindow(accountId) : null;
+      // An account window that opens after 31 December is not a year to date:
+      // its holdings are tried one by one (a purchase record may open them on 1 January).
+      const aw: Found | null = found && 'window' in found && !fromYearOpen(found.window) ? { reason: noYearOpen(found.window) } : found;
       if (aw && 'window' in aw) { windows.push(aw.window); pooled.push(accountId); continue; }
       for (const p of list) {
         // A line that holds nothing adds nothing to the money measured.
         if (!(p.marketValue > 0) && !((p.quantity ?? 0) > 0)) continue;
-        const hw = holdingWindow(p);
+        const hf = holdingWindow(p);
+        const hw: Found = 'window' in hf && !fromYearOpen(hf.window) ? { reason: noYearOpen(hf.window) } : hf;
         if ('window' in hw) { windows.push(hw.window); if (hw.owner) owners.add(hw.owner); if (hw.recorded) fromRecord = true; continue; }
         const lead = ps.length > 1 ? `${p.security}: ` : '';
+        // Both open after 31 December: the holding's own first value says it once.
+        const accountWhy = aw && 'reason' in aw && aw.reason && !(found && 'window' in found && 'window' in hf) ? aw.reason : '';
         refused = { shown: false, pending: hw.pending,
-          reason: `${lead}${aw && 'reason' in aw && aw.reason ? `${sentence(`the account's own return record cannot start it this year: ${aw.reason}`)} ` : ''}${sentence(hw.reason)}` };
+          reason: `${lead}${accountWhy ? `${sentence(`the account's own return record cannot start it this year: ${accountWhy}`)} ` : ''}${sentence(hw.reason)}` };
         break;
       }
       if (refused) break;
@@ -282,10 +311,13 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open:
       if (!m.shown || m.pct == null || !m.working) out = { shown: false, reason: sentence(m.reason ?? 'these values do not give a return') };
       else {
         const { from, to } = m.working;
-        const fullYear = yearOpen != null && from <= yearOpen;
+        // Every part opens on 31 December or at nil this year (`fromYearOpen`), so
+        // this is the year to date; a later `from` is the day money was first at work.
+        const fullYear = yearOpen != null;
+        const bought = fullYear && from > yearOpen! ? from : undefined;
         const assumed = owners.size > 0;
-        out = { shown: true, pct: m.pct, from, to, fullYear, assumed, accounts: pooled,
-          note: `${fullYear ? 'Year to date' : `From ${longDay(from)}, the first date this year with a dated value,`} to ${longDay(to)} — not annualised${fullYear ? '' : ', and not a full year to date: no statement here values it on 1 January'}. ${m.worked ?? ''}`.trim()
+        out = { shown: true, pct: m.pct, from, to, fullYear, assumed, accounts: pooled, ...(bought ? { bought } : {}),
+          note: `${!fullYear ? `From ${longDay(from)}, the first date with a dated value,` : bought ? `Year to date — nothing was held on 1 January; its money was first at work on ${longDay(bought)} —` : 'Year to date'} to ${longDay(to)} — not annualised. ${m.worked ?? ''}`.trim()
             + (fromRecord ? " The shares held on 1 January, and this year's purchases and sales, are from its reconciled purchase record." : '')
             + (assumed ? ` ${holdingAssumptionText([...owners].join(' and '))} Its units are valued at published closing prices from the statement's own date.` : '') };
       }

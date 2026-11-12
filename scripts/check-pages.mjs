@@ -4802,20 +4802,41 @@ const YTD_RECORD_BOOK = (() => {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const recs = bookObject(src, "BOOK_ACCOUNT_RETURN_RECORDS");
     if (!recs) return null;
+    const trades = bookObject(src, "BOOK_TRADE_OPENINGS"), navs = bookObject(src, "BOOK_ACCOUNT_NAV_HISTORY");
     const ms = (d) => Date.parse(`${d}T00:00:00Z`);
     const days = (a, b) => Math.round((ms(b) - ms(a)) / 864e5);
     const before = (d) => new Date(ms(d) - 864e5).toISOString().slice(0, 10);
     const windowOf = (id) => {
       const r = recs[id]?.record;
+      const t = trades?.[id];
+      // NO VERIFIED RECORD, ONLY THE LEDGER (`withTradeOpening` with flows unknown):
+      // its rebuilt opening, every ledger flow, closed on its last NAV mark the ledger reaches.
+      if (!r && t?.openings?.length && navs?.[id]) {
+        const first = t.openings[0];
+        const marks = [...t.openings.map((o) => ({ date: o.date, value: o.value })),
+          ...navs[id].filter((m) => m.date > first.date && m.date <= t.capitalTo).map((m) => ({ date: m.date, value: m.nav }))]
+          .sort((a, b) => a.date.localeCompare(b.date));
+        const close = marks.at(-1);
+        return { openDate: first.date, openValue: first.value, closeDate: close.date, closeValue: close.value,
+          flows: t.flows.filter((f) => f.date > first.date && f.date <= close.date) };
+      }
       if (!r) return null;
       const open = r.flows.find((f) => /^opening portfolio value/i.test(f.description ?? ""));
       if (!open || !(open.amount < 0)) return null;
       if (r.capitalRecordTo && r.capitalRecordTo < r.asOf) return null;
       const openDate = before(open.date);
-      return { openDate, openValue: -open.amount, closeDate: r.asOf, closeValue: r.value,
-        flows: r.flows.filter((f) => f !== open && f.date > openDate && f.date <= r.asOf) };
+      const own = r.flows.filter((f) => f !== open && f.date > openDate && f.date <= r.asOf);
+      // OPENED ON THE MANAGER'S OWN LEDGER (Stage 10ni, `BOOK_TRADE_OPENINGS`):
+      // its rebuilt first value, the ledger's money up to the record, the record's after.
+      if (t?.openings?.length && t.openings[0].date < openDate) {
+        return { openDate: t.openings[0].date, openValue: t.openings[0].value, closeDate: r.asOf, closeValue: r.value,
+          flows: [...t.flows.filter((f) => f.date > t.openings[0].date && f.date <= openDate), ...own] };
+      }
+      return { openDate, openValue: -open.amount, closeDate: r.asOf, closeValue: r.value, flows: own };
     };
     return {
+      /** The accounts whose verified record opens on or before `day` (Stage 10nv). */
+      opensBy(day) { return Object.keys(recs).filter((id) => { const w = windowOf(id); return w && w.openDate <= day; }); },
       solve(ids) {
         const ws = ids.map(windowOf);
         if (!ws.length || ws.some((w) => !w)) return null;
@@ -33699,30 +33720,33 @@ const INVARIANTS = {
       return shapeOk && drawn === YTD_MEASURABLE;
     }],
     /**
-     * ── …AND FROM THE FIRST DATE WE HAVE, SAID ON THE CELL (Stage 10jl) ──────
+     * ── EVERY ROW FROM 31 DECEMBER (Stage 10nv; was Stage 10jl's "from …") ───
      *
-     *   *"for YTD atleast for this year lets show from the date we have"*
+     *   *"for all the holdings the returns need to be simply YTD return from the
+     *   same YTD"* — 12 Nov 2026; a row with no 31 December value is a dash.
      *
-     * A row with no 1 January value is measured from its first dated value this
-     * year. The start rides on the cell as its tag ("from 31 Mar"), inside this
-     * year and before the window closes — so it never reads as a full year to
-     * date — and the column is not a column of dashes: the book's verified
-     * account records open on 31 March.
+     * No YTD cell carries a later start ("from 31 Mar"): each drawn window opens
+     * on or before 31 December, or — where the row held nothing on 1 January —
+     * on the day its money was first at work (`data-ytd-bought`), inside the year.
      */
-    ["a YTD from a later date names that date on the cell, inside this year", (t, ctx) => {
+    ["every YTD figure opens on 31 December, or at nil on a holding bought this year — no later start", (t, ctx) => {
       const mine = (ctx?.returnCells ?? []).filter((c) => c.measure === "ytd");
       if (!mine.length) return { notChecked: "no return cells captured on this run" };
-      const part = mine.filter((c) => c.ytdFrom);
-      const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const tagOf = (d) => `from ${Number(d.slice(8, 10))} ${MON[Number(d.slice(5, 7)) - 1]}`;
-      return part.length > 0 && part.every((c) => c.tag === tagOf(c.ytdFrom) && c.text.startsWith(c.tag)
-        && c.ytdFrom.slice(0, 4) === c.ytdTo?.slice(0, 4) && c.ytdFrom > `${c.ytdFrom.slice(0, 4)}-01-01` && c.ytdFrom < c.ytdTo
-        && /not annualised/.test(c.note ?? "") && /[+-]\d+(\.\d+)?%/.test(c.text));
+      if (mine.some((c) => /^from\s/i.test(c.tag ?? "") || /^\s*from\s+\d/i.test(c.text))) return false;
+      return mine.filter((c) => c.ytdFrom).every((c) => {
+        const yearOpen = `${Number(c.ytdTo?.slice(0, 4)) - 1}-12-31`;
+        return c.ytdFrom < c.ytdTo && /[+-]\d+(\.\d+)?%/.test(c.text) && /not annualised/.test(c.note ?? "")
+          && (c.ytdBought ? c.ytdBought === c.ytdFrom && c.ytdFrom > yearOpen : c.ytdFrom <= yearOpen);
+      });
     }],
     ["…and on a row of whole accounts it re-solves off their verified return records", (t, ctx) => {
-      const mine = (ctx?.returnCells ?? []).filter((c) => c.measure === "ytd" && c.ytdFrom && c.ytdAssumed === "false" && c.ytdAccounts.length);
-      if (!mine.length) return false;   // the book's verified records open on 31 March — a build that drew none lost them
+      const mine = (ctx?.returnCells ?? []).filter((c) => c.measure === "ytd" && c.ytdFrom && !c.ytdBought && c.ytdAssumed === "false" && c.ytdAccounts.length);
       if (!YTD_RECORD_BOOK) return false;
+      // Since Stage 10nv a whole account is drawn only where its verified record
+      // opens by 31 December; abstain only where the book holds no such record.
+      const yearOpen = `${new Date().getFullYear() - 1}-12-31`;
+      if (!mine.length) return YTD_RECORD_BOOK.opensBy(yearOpen).length
+        ? false : { notChecked: `no verified return record in the book opens on or before ${yearOpen}` };
       let solved = 0;
       for (const c of mine) {
         const r = YTD_RECORD_BOOK.solve(c.ytdAccounts);
@@ -44758,6 +44782,7 @@ for (const theme of THEMES) {
             // A YTD FROM THE FIRST DATE WE HAVE (Stage 10jl): its window and pooled accounts.
             ytdFrom: td.getAttribute("data-ytd-from"),
             ytdTo: td.getAttribute("data-ytd-to"),
+            ytdBought: td.getAttribute("data-ytd-bought"),
             ytdAccounts: (td.getAttribute("data-ytd-accounts") || "").split(" ").filter(Boolean),
             ytdAssumed: td.getAttribute("data-ytd-assumed"),
             rowKeys: (td.getAttribute("data-row-keys") || "").split(" ").filter(Boolean),
