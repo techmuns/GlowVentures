@@ -28,6 +28,8 @@ import { returnGapText, type SelectedLine } from '@/lib/selectedSegmentReturns';
 import type { Account } from '@/lib/types';
 
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
+/** A count of distinct accounts, never bridge rows (Stage 10oc). */
+const accountsWord = (n: number) => `${n} ${n === 1 ? 'account' : 'accounts'}`;
 /** Every signed realised figure behind the total, by the record that carries it (`capitalBridge`'s own rule). */
 const realisedRecords = (rows: readonly BridgeAccount[]) => rows.flatMap((r) => !r.split ? []
   : r.split.realisedBy ? r.split.realisedBy.map((x) => ({ label: `${x.label} · ${r.label}`, value: x.value })) : [{ label: r.label, value: r.split.realised }]);
@@ -127,7 +129,6 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money, acc
   </div>;
   const dated = (d: string | null) => (d ? fmtDate(d) : '—');
   const assumed = total.units.some(u => u.assumption);
-  const accountCount = new Set(total.units.map(u => u.accountId)).size;
   const steps: { key: string; label: string; value: number; sign?: boolean; sub: string; title: string }[] = b.mode === 'window' ? [
     { key: 'opening', label: 'Opening value', value: b.opening, sub: dated(b.from), title: "Statement values, plus published prices for holdings carried forward, on their measured starting dates" },
     // A computed zero says why on its face: the dated record shows no movement.
@@ -168,7 +169,7 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money, acc
     data-bridge-taken={b.takenOut} data-bridge-gain={b.gain} data-bridge-closing={b.closing} data-bridge-realised={b.realised ?? ''}
     data-bridge-unrealised={b.unrealised ?? ''} data-bridge-realised-gains={b.realisedGains ?? ''} data-bridge-realised-losses={b.realisedLosses ?? ''}
     data-bridge-unrealised-gains={b.unrealisedGains ?? ''} data-bridge-unrealised-losses={b.unrealisedLosses ?? ''} data-bridge-income={b.income ?? ''} data-bridge-charges={b.charges ?? ''} data-bridge-unsplit={b.unsplit}
-    data-bridge-accounts={b.rows.length} data-bridge-split-accounts={b.splitCount}>
+    data-bridge-accounts={b.accounts} data-bridge-rows={b.rows.length} data-bridge-split-rows={b.splitCount} data-bridge-unsplit-accounts={b.unsplitAccounts}>
     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
       <div className="min-w-0">
         <h3 className="text-sm font-semibold text-slate-100">Investment performance</h3>
@@ -187,7 +188,7 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money, acc
         <ReturnCalculationInfo label="Investment performance" value={figure} intro="Breakdown" wide
           triggerLabel="Show the investment performance breakdown">
           <div className="space-y-5" data-bridge-breakdown>
-            <p className="text-xs text-slate-400" data-bridge-dates>{typeLabel}{ret != null && (annual ? ' · annualised' : ' · period')} · {accountCount} {accountCount === 1 ? 'account' : 'accounts'} · Valuations: {b.from && `${dated(b.from)} → `}{dated(b.to)}</p>
+            <p className="text-xs text-slate-400" data-bridge-dates>{typeLabel}{ret != null && (annual ? ' · annualised' : ' · period')} · {accountsWord(b.accounts)} · Valuations: {b.from && `${dated(b.from)} → `}{dated(b.to)}</p>
             <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
               <dl data-bridge-steps>{steps.map((s) => <div key={s.key}
                 className={`flex items-baseline justify-between gap-4 py-2 text-[13px] ${s.key === 'closing' ? 'font-semibold text-slate-100' : 'border-b border-ink-700'}`}
@@ -202,8 +203,8 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money, acc
                     <dt className={p.sub ? 'text-slate-500' : 'text-slate-400'}>{p.label}</dt><dd className="shrink-0 tabular">{p.value != null ? <span className={changeColor(p.value)}>{money(p.value, true)}</span> : <AbsentCell reason={p.key === 'charges' ? noCharges : noSplit} />}</dd>
                   </div>)}
                   {b.unsplitCount > 0 && <div className="flex justify-between gap-4 py-1.5" data-bridge-part="unsplit"
-                    title={`Gain of ${b.unsplitCount} accounts whose records do not split it: ${named(b.rows.filter((r) => !r.split))}`}>
-                    <dt className="text-slate-400">Not split · {b.unsplitCount} {b.unsplitCount === 1 ? 'account' : 'accounts'}</dt><dd className={`shrink-0 tabular ${changeColor(b.unsplit)}`}>{money(b.unsplit, true)}</dd>
+                    title={`Gain of ${accountsWord(b.unsplitAccounts)} whose records do not split it over these dates${b.unsplitCount !== b.unsplitAccounts ? `, in ${b.unsplitCount} lines (a whole account, or one holding measured on its own)` : ''}: ${named(b.rows.filter((r) => !r.split))}`}>
+                    <dt className="text-slate-400">Not split · {accountsWord(b.unsplitAccounts)}</dt><dd className={`shrink-0 tabular ${changeColor(b.unsplit)}`}>{money(b.unsplit, true)}</dd>
                   </div>}
                 </dl>
               </section>
@@ -268,7 +269,7 @@ function BridgeWorking({ b, money }: { b: Bridge; money: (n: number, sign?: bool
       <p>{b.mode === 'window' ? 'Value at start + money added − money taken out + gain = value at end, for each account and in total.'
         : b.mode === 'inception' ? 'Money paid in − money taken out + gain = value now, for each account and in total.'
         : 'Invested − received back + gain = value now. Invested is the purchase cost of units held and sold; received back is what the cost and gain do not leave in the value — sale proceeds, income and withdrawals.'}</p>
-      <p>It covers the same {b.rows.length} {b.rows.length === 1 ? 'account' : 'accounts'} as the table's total, so its gain is the total's recorded gain. Holdings with no usable record for these dates are listed in the Total row's info card.</p>
+      <p>It covers the same {accountsWord(b.accounts)} as the table's total, so its gain is the total's recorded gain. Holdings with no usable record for these dates are listed in the Total row's info card.</p>
       <p>The gain is split only where a record splits it. Nothing is apportioned: an account whose records do not split its gain over these dates is shown whole, as Not split.</p>
       {b.realised != null && <div data-bridge-realised-working>
         <p className="font-semibold text-slate-100">Realised · net {money(b.realised, true)} = gains {money(b.realisedGains ?? 0)} − losses {money(Math.abs(b.realisedLosses ?? 0))}</p>
@@ -282,7 +283,7 @@ function BridgeWorking({ b, money }: { b: Bridge; money: (n: number, sign?: bool
           : <p className="mt-1 text-xs">{by(s)[0].split!.note}.</p>}
       </div>)}
       {unsplit.length > 0 && <div data-bridge-unsplit-list>
-        <p className="font-semibold text-slate-100">Not split · {money(b.unsplit, true)}</p>
+        <p className="font-semibold text-slate-100">Not split · {money(b.unsplit, true)} · {accountsWord(b.unsplitAccounts)}</p>
         <ul className="mt-1 space-y-1 text-xs">{unsplit.map((r) => <li key={r.key}><strong>{r.label}</strong> · gain {money(r.gain, true)} · {r.unsplitReason}</li>)}</ul>
       </div>}
     </div>;

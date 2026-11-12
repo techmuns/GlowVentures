@@ -1702,3 +1702,11 @@ Codex's review of #352, verified against the code and the book:
 - Capital relationships remain visible as audit warnings while single-cell edits and optional atomic groups both work. The input API follows the supported current published schema and retains per-record source/version protection; a deployment hash cannot lock an otherwise valid source record.
 - Independent arithmetic is compared beside the canonical result. Audit failures are contained, and existing source-scoped decisions survive reminder expiry without claiming a new review. The original new/worsening-source conflict protections remain in place.
 - Regression checks cover retained figures, capital corrections, dated-return coverage, current-source editing, expired reviews and audit failure isolation. Before/after comparison of the complete established book is retained with the local validation evidence.
+
+### Stage 10oc — "Not split" counts accounts, not lines
+
+*"what is not split here?"* — the family, 12 Nov 2026, on Investment performance's breakdown: "Not split · 34 accounts" beside "53 accounts" at the top.
+
+- The top line counted distinct accounts; "Not split · N accounts" and How it is built's "covers the same N accounts" counted bridge rows, and a row is a whole account or one holding measured on its own, so one account could be counted several times.
+- `capitalBridge` now carries `accounts` and `unsplitAccounts` (distinct account ids). The Not split row, its hover, How it is built's coverage line and its Not split heading use them; the hover gives the line count where it differs. Handles: `data-bridge-accounts` (now distinct accounts), `data-bridge-rows`, `data-bridge-split-rows`, `data-bridge-unsplit-accounts`.
+- No figure changes. `capitalBridge.test.ts` adds two holdings of one account: two rows, one account not split.

@@ -221,9 +221,15 @@ try {
  const bridgeDialog = page.getByRole('dialog'); await bridgeDialog.waitFor();
  assert.equal(await bridgeDialog.locator('[data-bridge-step]').count(), 5, 'start, money in, money out, gain, end');
  assert.ok(await bridgeDialog.locator('[data-bridge-part="realised"]').isVisible(), 'the gain breakdown is open in the popup');
- assert.ok(Number(await bridge.getAttribute('data-bridge-split-accounts')) >= 10);
+ assert.ok(Number(await bridge.getAttribute('data-bridge-split-rows')) >= 10);
  await bridgeDialog.locator('[data-bridge-accounts-table] summary').click();
- assert.equal(await bridgeDialog.locator('tr[data-bridge-row]').count(), Number(await bridge.getAttribute('data-bridge-accounts')));
+ assert.equal(await bridgeDialog.locator('tr[data-bridge-row]').count(), Number(await bridge.getAttribute('data-bridge-rows')));
+ // Stage 10oc: a row is an account or one holding measured on its own; every account count is of DISTINCT accounts.
+ const bridgeRows = await bridgeDialog.locator('tr[data-bridge-row]').evaluateAll((trs) => trs.map((tr) => ({ id: tr.getAttribute('data-bridge-row'), split: tr.lastElementChild?.textContent?.trim() !== 'Not split' })));
+ const unsplitIds = new Set(bridgeRows.filter((r) => !r.split).map((r) => r.id));
+ assert.equal(Number(await bridge.getAttribute('data-bridge-accounts')), new Set(bridgeRows.map((r) => r.id)).size, 'the bridge counts distinct accounts');
+ assert.equal(Number(await bridge.getAttribute('data-bridge-unsplit-accounts')), unsplitIds.size, 'Not split counts distinct accounts');
+ if (unsplitIds.size) assert.match(await bridgeDialog.locator('[data-bridge-part="unsplit"] dt').innerText(), new RegExp(`Not split · ${unsplitIds.size} accounts?$`));
  await bridgeDialog.locator('[data-bridge-how] summary').click();
  assert.match(await bridgeDialog.innerText(), /Statement's own profit and loss/); assert.match(await bridgeDialog.innerText(), /Fund's dated unit record/);
  await page.screenshot({ path: `${out}/capital-bridge.png` });
