@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { BOOK_POSITIONS } from '../../data/glowData';
-import { benchGapLabel, closeLegsOn, indexCompound, indexMove, indexOnSameMoney, onePaymentLeg, pooledLegs, positionBenchmark, printedBenchmark, rowBenchmark } from '../holdingBenchmark';
+import { closeLegsOn, indexCompound, indexMove, indexOnSameMoney, indexOverPeriod, onePaymentLeg, pooledLegs, positionBenchmark, printedBenchmark, rowBenchmark } from '../holdingBenchmark';
 import type { Position } from '../types';
 import { returnGapLabel } from '../returnColumns';
+import { holdingPeriodStart } from '../investedOn';
 
 const near = (a: number | null | undefined, b: number) => assert.ok(a != null && Math.abs(a - b) < 1e-6, `${a} != ${b}`);
 // An index at 100 until 30 Jun, 110 after, 121 from 30 Sep.
@@ -102,19 +103,19 @@ assert.ok('legs' in pooled);
 const total = indexOnSameMoney('legs' in pooled ? pooled.legs : [], level, false);
 near(total.shown ? total.pct : null, 31 / 200 * 100);
 assert.deepEqual(pooledLegs([[a], null, []]), { undated: 2, of: 3 });
-// Every gap names its cause in a few words: none falls through to the generic one.
-const label = (r: string) => benchGapLabel(r);
-assert.equal(label("the index is bought with this holding's own dated payments, and none of its 2000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"), 'No buy dates');
-assert.equal(label("the index is bought with this holding's own dated payments, and the transaction statements from 2025-01-13 to 2026-07-27 buy 86 and sell 0 units of it against 516 held, so 430 of them are on no dated trade in this drop"), 'Dates incomplete');
-assert.equal(label("the index is bought with this holding's own dated payments, and the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 64543 units of it against 120000 held, so 120000 of them are on no dated trade in this drop"), 'No buy dates');
-assert.equal(label("the index is bought with this holding's own dated payments, and 1 of the 2 lines behind this row are not dated in full — x"), 'Dates incomplete');
-assert.equal(label("the index is bought with every row's own dated payments, and 25 of the 25 rows with a return here are not dated in full — each row names its own cause"), 'No buy dates');
-assert.equal(label("2 of the 2 investments behind this row carry no dated record a money-weighted return can be solved over — x: its capital is known only as a total since inception"), 'No dated capital');
-assert.equal(label("the index is bought with this holding's own dated payments, and its record dates the purchases only as a span, Dec 2022 to Aug 2023, not each payment and what it paid"), 'Range only');
-assert.equal(label('the index has no close on or before 1 May 2024'), 'Index starts later');
-// A review line dated only by months (Stage 10mp): its span, not "No dated capital".
-assert.equal(label("2 of the 2 investments behind this row carry no dated record a money-weighted return can be solved over — x: the family's review dates this investment only as a span — Dec 2022 – Aug 2023 — with one cost for the whole of it, not the amount paid on each day, so there are no dated payments to solve a money-weighted return over"), 'Range only');
-assert.equal(label("the family's review dates this investment only as a month — Feb 2025 — with one cost for the whole of it"), 'Month only');
+// PURCHASES NOT EACH DATED (Stage 10nt): the index over the holding period, point to point.
+const per = indexOverPeriod('2025-12-26', '2026-09-30', level, false, 'the inception of the account that holds it');
+assert.ok(per.shown && per.period);
+near(per.shown ? per.pct : null, 21);
+assert.match(per.shown ? per.how : '', /holding period, 26 Dec 2025 \(the inception of the account that holds it\) to 30 Sept? 2026/);
+const perAnnual = indexOverPeriod('2025-09-30', '2026-09-30', level, true, 'x');
+near(perAnnual.shown ? perAnnual.pct : null, (cagr as { pct: number }).pct);
+assert.equal(indexOverPeriod('2024-05-01', '2026-09-30', level, false, 'x').shown, false);
+// The start: a line's first investment, else its account's inception.
+const pmsLine = (BOOK_POSITIONS as unknown as Position[]).find((p) => (p.tradeRecord?.unaccounted ?? 0) > 0 && p.accountId.startsWith('goldstandard-wealth-private-limited-100022'));
+assert.ok(pmsLine, 'a Goldstandard 100022 line with units before its dated trades');
+assert.deepEqual(holdingPeriodStart([pmsLine!])?.date, '2025-12-26');
+assert.equal(holdingPeriodStart([]), null);
 assert.equal(returnGapLabel("2 of the 2 investments behind this row carry no dated record a money-weighted return can be solved over — x: the family's review dates this investment only as a span — Dec 2022 – Aug 2023 — with one cost for the whole of it, not the amount paid on each day, so there are no dated payments to solve a money-weighted return over"), 'Date range only');
 
 console.log('holding benchmark: ok');

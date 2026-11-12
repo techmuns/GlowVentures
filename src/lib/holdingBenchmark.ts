@@ -205,7 +205,8 @@ export function rowBenchmark(ps: readonly Position[], mandateAccountIds: readonl
 
 // ── THE INDEX ON THE SAME MONEY ─────────────────────────────────────────────
 export type IndexFigure =
-  | { shown: true; pct: number; annual: boolean; from: string; to: string; how: string }
+  /** `period`: the index over the holding period, where the purchases are not each dated (Stage 10nt). */
+  | { shown: true; pct: number; annual: boolean; from: string; to: string; how: string; period?: true }
   /** `feed`: the index's closes are still loading or the price service failed — not a gap in the record (Stage 10lc). */
   | { shown: false; reason: string; feed?: true };
 
@@ -279,42 +280,26 @@ export function pooledLegs(rows: readonly (readonly CapitalLeg[] | null)[]): { l
   return undated ? { undated, of: rows.length } : { legs: rows.flatMap((l) => [...l!]) };
 }
 
-/**
- * ── THE INDEX LINE NAMES ITS GAP (Stage 10lc) ───────────────────────────────
- *
- * The return cell above it says "— No cost" (Stage 10jm); a bare "N500 —" under
- * a figure read as a blank. A gap in the RECORD names its cause in a few words,
- * the full reason its hover, most specific first. "2 of the 2" is every line,
- * not a part of them. The feed's own state (closes loading, the price service
- * down) is not one: it keeps the plain dash with its reason as the hover, so the
- * line does not change width when a fetch settles (`IndexFigure.feed`).
- */
-const BENCH_GAPS: [RegExp, string][] = [
-  [/no close on or before/i, "Index starts later"],
-  [/more money came out/i, "No like-for-like"],
-  [/do not solve/i, "No solution"],
-  [/\bbuy 0 and sell/i, "No buy dates"],
-  [/^some of\b|buy [1-9][\d,.]* and sell|does not account for every unit|on no dated trade in this drop/i, "Dates incomplete"],
-  [/not dated in full/i, "No buy dates"],
-  [/only as a span/i, "Range only"],
-  [/only as a month/i, "Month only"],
-  [/record ends .* before/i, "Record ends early"],
-  [/reaches inception/i, "Start not on record"],
-  [/capital is known only as a total|no dated record|no dated payment|dated capital record/i, "No dated capital"],
-  [/purchase|dated trade|bought|lot register|cost but not the date/i, "No buy dates"],
-];
-export function benchGapLabel(reason: string | null | undefined): string {
-  const m = /(\d+) of the (\d+) /.exec(reason ?? "");
-  const r = m && m[1] !== m[2] ? `some of ${reason}` : reason ?? "";
-  return BENCH_GAPS.find(([re]) => re.test(r))?.[1] ?? "Not available";
-}
-
 /** The index's own move between two closes — a YTD window measured from a dated value. */
 export function indexMove(from: string, to: string, level: IndexLevel): IndexFigure {
   const l0 = level(from), l1 = level(to);
   if (l0 == null || !(l0 > 0)) return { shown: false, reason: `the index has no close on or before ${fmtDay(from)}` };
   if (l1 == null || !(l1 > 0)) return { shown: false, reason: `the index has no close on or before ${fmtDay(to)}` };
   return { shown: true, pct: (l1 / l0 - 1) * 100, annual: false, from, to, how: `The index's move from ${fmtDay(from)} to ${fmtDay(to)}, the same window.` };
+}
+
+/**
+ * THE INDEX OVER THE HOLDING PERIOD (Stage 10nt): where a row's purchases are
+ * not each dated, the index's own move from the period's start
+ * (`holdingPeriodStart`) to the row's value date — point to point, compounded a
+ * year only where the cell's measure is annual. `period` marks it for the hover
+ * and the page sweep.
+ */
+export function indexOverPeriod(since: string, to: string, level: IndexLevel, annual: boolean, basis: string): IndexFigure {
+  const fig = annual ? indexCompound(since, to, level) : indexMove(since, to, level);
+  if (!fig.shown) return fig;
+  return { ...fig, period: true,
+    how: `The index over the holding period, ${fmtDay(since)} (${basis}) to ${fmtDay(to)}${annual ? `, compounded a year (${dayList(since, to)} days)` : ""}.` };
 }
 
 /** One purchase on `since`, valued on `to`: the index's compound rate over the same days. */

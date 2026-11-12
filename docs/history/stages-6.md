@@ -1635,9 +1635,32 @@ Codex's review of #352, verified against the code and the book:
 - `TrFoot`'s merged label ("Total") is pinned inside its own span (`data-foot-label`), so it stays beside the frozen column until its span scrolls past. Holdings keeps its own one-column Total (Stage 10nb).
 - `scripts/dev/table-headers.mjs` checks every horizontally scrolling table: the first heading and body cell stay at the scrollport's edge with an opaque surface, both themes. Proven by disabling the pin on Real Estate and Private Market (both fail).
 
-### Stage 10nk — Ledger Insights' transactions filter by date, side and account
+### Stage 10nk — Home: compact allocation cards and coordinated hovers
+
+- Allocation pairs its donut with a compact value/weight legend. Pointer hover and keyboard focus highlight the same slice and show details inside the donut; no floating label covers the chart. Cards respond to their saved width, and narrower screens stack them earlier.
+- Geographic exposure uses a compact coverage state for the India-focused book. Underlying country weights remain unverified rather than being inferred from account location or fund registration.
+- Personal widget removals stay removed. A one-time layout migration balances an adjacent AUM/cash pair after the three summary metrics have been removed, preserving all other choices, order and dimensions. All 18 widgets remain available, with an explicit Wide size option; later saved widths are respected.
+- Checks cover saved-layout migration, chart/legend keyboard and pointer interaction, card geometry, responsive themes, existing widget lifecycle and source-precision exports. Results are recorded on the PR.
+- CI exposed a long frozen name painting over a neighbouring return-info button on phones. Frozen body-cell content now stays inside its cell; the INR return test explicitly checks the button's hit target before opening its calculation. The table's full text and Excel values are retained.
+- Tree-table name columns use the intended 10rem phone width across heading, body and footer; full names remain in their hover. The pointer regression scrolls the button into the data area beside the pinned column before checking the hit target.
+- The market-history request-budget check waits for both active and sold-holding TWR histories before taking its initial count; date changes must still make zero extra requests.
+- The invested-this-year table also caps its frozen phone name column at 10rem (the previous 240px minimum left almost no data area). Its mobile sorting check reveals the actual sort button beside that column and verifies its pointer target before clicking.
+- The latest-account browser check distinguishes the available-history card's measured close (which can include newer same-unit NAV windows) from each manager record's own closing date. It checks both dates in the included records and keeps the Performance/Family source-record assertions.
+- The CI browser step collects every check in one run; an error trap retains a failing job status if any check fails, and the existing EXIT trap still tears down its preview server.
+- Home contains its hidden widget-status announcement in its own positioning context. The announcement previously used the document as its containing block and added a second scrollbar with a large blank area below the page. Browser checks require zero outer scroll range and a reachable footer before and after widget changes, in both themes and phone/desktop sizes.
+
+### Stage 10nt — Portfolio Monitor: every return shows its index, no gap words
+
+*"if there is no buy date then how is HPR calculated this is confusing remove all fluff and just add index return"* — the family, 12 Nov 2026.
+
+- Where a row's purchases are not each dated, its index line is the index's move over the holding period instead of "— No buy dates / Dates incomplete / Range only": from its first investment (Invested on), else the inception of the account that holds it, else a lot register's date, to the row's value date (`holdingPeriodStart` in `investedOn.ts`, `indexOverPeriod` in `holdingBenchmark.ts`). Rows whose lines are valued on different days strike each line on its own start, cost and value date (`periodLegsOf`). The hover names the window and its basis; `data-bench-period` marks it.
+- Section and footer totals pool those same legs; rows no equity index measures (cash, debt, hybrid) are left out of the total's index and named in its hover.
+- A dash that remains carries its reason as the hover only (`data-bench-reason`); `benchGapLabel` is gone. The `monitor` check now asks for that hover instead of a face label.
+
+### Stage 10nu — Ledger Insights' transactions filter by date, side and account
 
 - The client (#377) asked for the dated transaction ledger to be sliceable — "show me purchases from June", one account, one side — and exported from there. The Transactions tab now carries a filter bar (From / To dates, Side, Account) above its tiles, reusing `FormBits`' `TextField`/`SelectField`. Member scope stays the page-wide selector; these narrow WITHIN the chosen members, and the existing `ExportableTable` carries whatever the filter shows to Excel.
 - Every figure on the tab is struck over the filtered set, so the summary ties to the rows on screen: the Transactions count, Bought and Sold tiles and the table all read `filtered`, and the Bought/Sold window follows the chosen dates. Sold with no sell in view renders `—` ("no sells in this view"), never ₹0.
 - The statements' own Realised total is a whole-record primitive over every lot — not narrowable by a per-trade filter — so under any active filter it renders `—` ("not sliced by these filters") rather than a figure that would not tie, and the lots-by-sale cross-check and the Sales & exits roll-up (both whole-window) are hidden until the filter is cleared. An active filter that matches nothing renders an `AbsentSection`, not a grid of zeros.
+- Numbered 10nu after merging main: the branch first used 10nk, which main had meanwhile given to Home's allocation cards.
 - `build`, `test:family` and `check:pages ONLY=ledger` green (2 combos clean; the tab's existing measured-zero leads and the tape-window not-checked invariant are unchanged). No book or generated file changed.

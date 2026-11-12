@@ -292,3 +292,39 @@ export function accountInvestedOn(accountIds: readonly string[]): InvestedOn | n
   dates.sort();
   return { first: dates[0], last: dates[dates.length - 1], payments, sources: ["account"] };
 }
+
+/**
+ * ── WHERE A HOLDING'S PERIOD STARTS, FOR ITS INDEX LINE (Stage 10nt) ────────
+ *
+ *   *"if there is no buy date then how is HPR calculated this is confusing
+ *    remove all fluff and just add index return"* — the family, 12 Nov 2026.
+ *
+ * Where a row's purchases are not each dated, its index is struck over the
+ * holding period instead of on the same money: from the first date the line's
+ * own money is on record (its Invested on), or, where units predate every dated
+ * trade, the inception of the account they sit in (the manager bought them on
+ * or after it), else a lot register's start. The row starts at its oldest line;
+ * a line with none of the three leaves the row without a start. A month is
+ * read from its first day.
+ */
+export function holdingPeriodStart(ps: readonly Position[]): { date: string; basis: string } | null {
+  if (!ps.length) return null;
+  let best: { date: string; basis: string } | null = null;
+  for (const p of ps) {
+    const d = (p.tradeRecord?.unaccounted ?? 0) > 0 ? null : investedOnOf([p]);
+    const inception = ACCOUNTS.get(p.accountId)?.inceptionDate ?? null;
+    const s = d ? { date: d.first, basis: "its first investment" }
+      : inception ? { date: inception, basis: "the inception of the account that holds it; its purchases before the dated trades are not each on record" }
+      : p.heldSince ? { date: p.heldSince, basis: "the lot register's acquisition date" }
+      : null;
+    if (!s) {
+      const row = investedOnOf(ps);
+      return row && !ps.some((x) => (x.tradeRecord?.unaccounted ?? 0) > 0)
+        ? { date: /^\d{4}-\d{2}$/.test(row.first) ? `${row.first}-01` : row.first, basis: "its first investment" }
+        : null;
+    }
+    const date = /^\d{4}-\d{2}$/.test(s.date) ? `${s.date}-01` : s.date;
+    if (!best || date < best.date) best = { date, basis: s.basis };
+  }
+  return best;
+}

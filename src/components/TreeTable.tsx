@@ -211,7 +211,7 @@ export function TreeNameCell({ depth, title, sub, hint, open, onToggle, toggleLa
       </div>
     );
     return (
-      <td data-tree-depth={depth} className={`relative ${g.child[d]} ${className}`} title={hint}>
+      <td data-tree-depth={depth} className={`relative ${g.child[d]} ${className}`} title={hint ?? (typeof title === 'string' ? title : undefined)}>
         {through.map((wasLast, i) => !wasLast && (
           <span key={i} aria-hidden className={`absolute ${g.guide[i]} top-0 bottom-0 border-l border-ink-600`} />
         ))}
@@ -235,7 +235,7 @@ export function TreeNameCell({ depth, title, sub, hint, open, onToggle, toggleLa
   const gap = density === "dense" ? "gap-1.5" : "gap-2";
   const hole = density === "dense" ? "h-4 w-4" : "h-5 w-5";
   return (
-    <td data-tree-depth={depth} className={`${g.parent} ${className}`} title={hint}>
+    <td data-tree-depth={depth} className={`${g.parent} ${className}`} title={hint ?? (typeof title === 'string' ? title : undefined)}>
       <div className={`flex items-start ${gap}`}>
         {onToggle
           ? <TreeChevron density={density} open={!!open} onToggle={onToggle} label={toggleLabel ?? (open ? "Close" : "Open")} {...(toggleData ?? {})} />
