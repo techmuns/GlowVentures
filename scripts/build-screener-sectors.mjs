@@ -78,10 +78,24 @@ const REUSE = process.env.REUSE === "1";
  * names (6 Nov 2026). The page must still prove itself at run time — its own
  * symbol or scrip code echoed back — so a typo here is refused, never stored.
  *
- * Not listed, on purpose: HEG Graphite (the demerged graphite business, not
- * HEG Advanced Materials, its parent), GSPL India Transco and Talwandi Sabo
- * Power (demerged, unlisted) and Gujarat Gas (merged; its page keeps no
- * classification). They keep their funds' filing where it prints one.
+ * THE GSPC AND VEDANTA RESTRUCTURINGS, rechecked 12 Nov 2026 (Stage 10ob). On
+ * 6 Nov three fund-held names reached no page; each has since listed, or kept
+ * its listing, under another name. NSE's master and each page are the evidence:
+ *   • Gujarat Gas Ltd is GUJARAT ENERGY LIMITED — the same ISIN, INE844O01030,
+ *     and screener's page for it says "Gujarat Gas Limited (GGL)". The id this
+ *     table carried, GUJRATGAS, is screener's page for the OTHER, older Gujarat
+ *     Gas Company, merged away in 2015, which is why it carried no sector.
+ *   • Talwandi Sabo Power Ltd was renamed VEDANTA POWER LIMITED on 3 Jun 2026
+ *     and listed on 15 Jun from Vedanta's demerger; its paper keeps the issuer
+ *     code INE694L, which a fund's Vedanta Power CP line carries.
+ *   • "GSPL India Transco Ltd" is how ICICI Pru India Opportunities' 31 Jul
+ *     2026 portfolio names its allotment of GSPL TRANSMISSION LIMITED — the
+ *     gas-transmission company Gujarat Gas demerged, 1 share for every 3 held
+ *     (record date 2 Jul, allotted 8 Jul, listed 30 Sep). The filing holds
+ *     17,44,132 of these — the 1-for-3 allotment on 52,32,396 shares — beside
+ *     the 51,35,100 Gujarat Gas shares it still held on 31 Jul; the unlisted
+ *     pipeline joint venture of a similar name is not a fund holding. Either
+ *     reading lands in the same industry, Gas.
  */
 const LISTED_AS = {
   "national-stock-exchange-of-india": "544937",     // its BSE listing; NSE does not list itself
@@ -91,7 +105,9 @@ const LISTED_AS = {
   "credit-access-grameen": "CREDITACC",             // NSE prints "CreditAccess Grameen"
   "punjab-chem-and-crop-prot-l": "PUNJABCHEM",      // the statement clips the name
   "affle-india": "AFFLE",                           // renamed Affle 3i
-  "gujarat-gas": "GUJRATGAS",                       // screener keeps the merged company's page
+  "gujarat-gas": "GUJENERGY",                       // renamed Gujarat Energy, ISIN INE844O01030 unchanged
+  "gspl-india-transco": "GSPLTRANS",                // the fund's name for its GSPL Transmission allotment
+  "talwandi-sabo-power": "VEDPOWER",                // renamed Vedanta Power, 3 Jun 2026
   "manali-petrochemical": "MANALIPETC",
   "chambal-fertilisers-and-chemicals": "CHAMBLFERT", // NSE spells it "Fertilizers"
   "sasken-communication-technologies": "SASKEN",    // renamed Sasken Technologies
@@ -108,6 +124,26 @@ const LISTED_AS = {
   "indus-infra-trust": "INDUSINVIT",
   "raajmarg-infra-investment-trust": "RIIT",
   "altius-telecom-infrastructure-trust": "543225",  // BSE only
+};
+
+/**
+ * A DEMERGED BUSINESS THAT HAS NOT LISTED YET, placed by the classification NSE
+ * gave that same business inside its parent — never a company's own page, and
+ * reported apart from LISTED_AS so a reader never mistakes one for the other.
+ *
+ *   • HEG Graphite Limited is HEG Ltd's graphite-electrode business, demerged
+ *     with effect from 1 Sep 2026 (record date 7 Sep, 1 share for 1). Green
+ *     Lantern bought into both halves (Stage 10mh), but on 12 Nov 2026 neither
+ *     NSE's nor BSE's list carries the new company. NSE classified that business
+ *     as Capital Goods › Industrial Products › Electrodes & Refractories, which
+ *     HEG Advanced Materials' page (HEGAM, the renamed parent) still carries and
+ *     which Graphite India, the same trade, carries in its own right.
+ *
+ * The page asked about must still echo its own symbol. An entry is dropped once
+ * the company lists: the name join in NSE's master then reaches its own page.
+ */
+const DEMERGED_FROM = {
+  "heg-graphite": "HEGAM",
 };
 
 // ── NSE's own masters (cached beside `build-symbols`' copies, gitignored) ───
@@ -245,6 +281,7 @@ for (const c of companies) {
   if (!id) { const s = unique(c.isins.flatMap((i) => byIssuer.get(i.slice(0, 7)) ?? [])); if (s) { id = s; joinedBy = "issuer-code"; } }
   if (!id) { const s = unique(byName.get(nameKey(c.name)) ?? []); if (s) { id = s; joinedBy = "name"; } }
   if (!id && LISTED_AS[c.key]) { id = LISTED_AS[c.key]; joinedBy = "listed-as"; }
+  if (!id && DEMERGED_FROM[c.key]) { id = DEMERGED_FROM[c.key]; joinedBy = "demerged-from"; }
   joins.push({ ...c, id, joinedBy });
 }
 const ids = [...new Map(joins.filter((j) => j.id).map((j) => [j.id, j])).values()];
@@ -329,6 +366,15 @@ writeFileSync(DOC, [
   "| Company | screener.in page | Joined by |", "| --- | --- | --- |",
   ...joins.filter((j) => (j.joinedBy === "name" || j.joinedBy === "listed-as") && store[j.id])
     .map((j) => `| ${j.name} | ${store[j.id].page} (${j.id}) | ${j.joinedBy} |`),
+  "",
+  "## Demerged and not yet listed",
+  "",
+  "Placed by the classification NSE gave the same business inside its parent, until",
+  "it lists (`DEMERGED_FROM` in `scripts/build-screener-sectors.mjs`).",
+  "",
+  "| Company | Classified as its parent's page | Industry |", "| --- | --- | --- |",
+  ...joins.filter((j) => j.joinedBy === "demerged-from" && store[j.id])
+    .map((j) => `| ${j.name} | ${store[j.id].page} (${j.id}) | ${store[j.id].screenerIndustry} → ${store[j.id].gics} |`),
   "",
 ].join("\n"));
 console.log("wrote src/data/screenerSectors.json, src/data/screenerKeys.json and docs/SCREENER-SECTORS.md");

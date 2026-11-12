@@ -1702,3 +1702,18 @@ Codex's review of #352, verified against the code and the book:
 - Capital relationships remain visible as audit warnings while single-cell edits and optional atomic groups both work. The input API follows the supported current published schema and retains per-record source/version protection; a deployment hash cannot lock an otherwise valid source record.
 - Independent arithmetic is compared beside the canonical result. Audit failures are contained, and existing source-scoped decisions survive reminder expiry without claiming a new review. The original new/worsening-source conflict protections remain in place.
 - Regression checks cover retained figures, capital corrections, dated-return coverage, current-source editing, expired reviews and audit failure isolation. Before/after comparison of the complete established book is retained with the local validation evidence.
+
+### Stage 10ob — Sector Composition: the last six Unclassified issuers placed
+
+*"for all unclassified in sector composition please put them in correct classification"* — the family, 12 Nov 2026.
+
+- **Root causes.** Unclassified held six issuers (₹1.23 Cr). `sectorUniverse.ts` never included `BOOK_TAPE_ROWS` (Stage 10mh), so `build-sectors` never asked screener.in about Elgi Equipments or HEG Advanced Materials. Three fund-held names had since listed under new names.
+- **Now placed, all through screener.in:**
+  - Elgi Equipments and HEG Advanced Materials → Industrials (Industrial Products).
+  - Gujarat Gas → Gujarat Energy, `GUJENERGY` (same ISIN INE844O01030). `LISTED_AS` had pointed at `GUJRATGAS`, the older Gujarat Gas Company merged in 2015, whose page has no sector.
+  - Talwandi Sabo Power → Vedanta Power, `VEDPOWER` (renamed 3 Jun 2026, listed 15 Jun).
+  - ICICI Pru India Opportunities' "GSPL India Transco Ltd" → GSPL Transmission, `GSPLTRANS`. It is the 1-for-3 demerger allotment beside the fund's Gujarat Gas shares (listed 30 Sep).
+  - These three are Utilities (Gas, Power).
+- **HEG Graphite** (graphite electrodes, demerged from HEG Ltd on 1 Sep) is on neither NSE's nor BSE's list yet. A new reviewed table, `DEMERGED_FROM`, gives it the classification NSE gave that business inside HEG Ltd: Electrodes & Refractories → Industrials. That is HEGAM's page, and Graphite India carries the same classification. `docs/SCREENER-SECTORS.md` lists it apart. The entry drops once the company lists.
+- 548 of 552 companies placed. The four left (Nicco, Sterlite Electric, Sterlite Grid ×2) are quantity-only depository lines with no value, and draw no row. Consolidated: 425 issuers, all placed by screener.in, no Unclassified row.
+- check-pages: the Monitor sector index (`MONITOR_BASIS_BOOK.sector`) now reads screener.in first and through `screenerKeys.json`, as `companyExposure` does. It had kept the pre-10md statement-first order and failed on main (Engineers India, eClerx, MPS, PVR Inox, Tejas). The Consolidated "Unclassified row names its cause" check abstains on the book's own unclassified count.

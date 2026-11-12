@@ -1726,6 +1726,17 @@
     "joinedBy": "nse-symbol",
     "page": "Elecon Engineering Company Ltd"
   },
+  "ELGIEQUIP": {
+    "gics": "Industrials",
+    "gicsFrom": "broadIndustry",
+    "screenerBroadSector": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadIndustry": "Industrial Products",
+    "screenerIndustry": "Compressors, Pumps & Diesel Engines",
+    "joinedBy": "nse-symbol",
+    "page": "Elgi Equipments Ltd"
+  },
   "EMAPARTNER": {
     "gics": "Industrials",
     "gicsFrom": "broadIndustry",
@@ -2254,6 +2265,28 @@
     "joinedBy": "nse-symbol",
     "page": "Garware Hi Tech Films Ltd"
   },
+  "GSPLTRANS": {
+    "gics": "Utilities",
+    "gicsFrom": "broadIndustry",
+    "screenerBroadSector": "Energy",
+    "screenerSector": "Oil, Gas & Consumable Fuels",
+    "screenerSectorCode": "IN03/IN0301",
+    "screenerBroadIndustry": "Gas",
+    "screenerIndustry": "LPG/CNG/PNG/LNG Supplier",
+    "joinedBy": "nse-symbol",
+    "page": "GSPL Transmission Ltd"
+  },
+  "GUJENERGY": {
+    "gics": "Utilities",
+    "gicsFrom": "broadIndustry",
+    "screenerBroadSector": "Energy",
+    "screenerSector": "Oil, Gas & Consumable Fuels",
+    "screenerSectorCode": "IN03/IN0301",
+    "screenerBroadIndustry": "Gas",
+    "screenerIndustry": "LPG/CNG/PNG/LNG Supplier",
+    "joinedBy": "nse-symbol",
+    "page": "Gujarat Energy Ltd"
+  },
   "GVT&D": {
     "gics": "Industrials",
     "gicsFrom": "broadIndustry",
@@ -2330,6 +2363,17 @@
     "screenerIndustry": "Life Insurance",
     "joinedBy": "nse-symbol",
     "page": "HDFC Life Insurance Company Ltd"
+  },
+  "HEGAM": {
+    "gics": "Industrials",
+    "gicsFrom": "broadIndustry",
+    "screenerBroadSector": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadIndustry": "Industrial Products",
+    "screenerIndustry": "Electrodes & Refractories",
+    "joinedBy": "nse-symbol",
+    "page": "HEG Advanced Materials Ltd"
   },
   "HEROMOTOCO": {
     "gics": "Consumer Discretionary",
@@ -5696,6 +5740,17 @@
     "screenerIndustry": "Diversified Metals",
     "joinedBy": "nse-symbol",
     "page": "Vedanta Ltd"
+  },
+  "VEDPOWER": {
+    "gics": "Utilities",
+    "gicsFrom": "broadIndustry",
+    "screenerBroadSector": "Utilities",
+    "screenerSector": "Power",
+    "screenerSectorCode": "IN11/IN1101",
+    "screenerBroadIndustry": "Power",
+    "screenerIndustry": "Power Generation",
+    "joinedBy": "nse-symbol",
+    "page": "Vedanta Power Ltd"
   },
   "VGUARD": {
     "gics": "Consumer Discretionary",
