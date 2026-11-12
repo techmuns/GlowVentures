@@ -42,6 +42,19 @@ assert.equal(printedBenchmark('svan-investment-managers-llp-8710067')?.key, 'bse
 assert.equal(printedBenchmark('goldstandard-wealth-private-limited-100023')?.key, 'nifty-50');
 assert.equal(rowBenchmark([], ['svan-investment-managers-llp-8710067']).bench?.key, 'bse-500');
 assert.equal(rowBenchmark([], ['no-such-account']).bench?.key, 'nifty-500');
+// The SOURCE of each benchmark choice (task 370): a mandate's printed benchmark
+// is "from the document"; every rule-assigned one (size class, category,
+// fallback) is a best guess to confirm with Yamini.
+{
+  const share = positionBenchmark(pos({ assetClass: 'Equity', marketSide: 'listed', isin: 'INE002A01018' }));
+  assert.equal(share.bench && share.source, 'rule');
+  const idx = fund('ICICI Prudential Nifty Next 50 Index Fund');
+  assert.equal(idx.bench && idx.source, 'rule');
+  const mandate = rowBenchmark([], ['svan-investment-managers-llp-8710067']);
+  assert.equal(mandate.bench && mandate.source, 'document');
+  const fallback = rowBenchmark([], ['no-such-account']);
+  assert.equal(fallback.bench && fallback.source, 'rule');
+}
 // Every line in the book is classified — an index, or a stated reason for none.
 for (const p of BOOK_POSITIONS) {
   const b = positionBenchmark(p as Position);
