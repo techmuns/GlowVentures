@@ -216,6 +216,10 @@ function TransactionsView({ data, sales, scoped }: {
       (acctFilter === "all" || t.account === acctFilter)),
     [data.txns, fromDate, toDate, sideFilter, acctFilter]);
   const clearFilters = () => { setFromDate(""); setToDate(""); setSideFilter("all"); setAcctFilter("all"); };
+  // The native date pickers are bounded to the tape's own window (and kept in
+  // order), so a reader cannot pick a day the record could never carry.
+  const dmin = data.periodFrom ? data.periodFrom.slice(0, 10) : undefined;
+  const dmax = data.periodTo ? data.periodTo.slice(0, 10) : undefined;
   // THE DEFAULT ORDER IS THE LEDGER'S OWN and stays untouched until a reader
   // ranks a column: `ledger.ts` returns these dated rows newest-first, which is
   // a fact about the record rather than a ranking this page chose.
@@ -281,8 +285,10 @@ function TransactionsView({ data, sales, scoped }: {
       <div className="rounded-lg border border-ink-700 bg-ink-800/40 p-3">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <TextField label="From" type="date" mono={false} value={fromDate} onChange={setFromDate}
+            min={dmin} max={toDate || dmax}
             hint="Show trades dated on or after this day. The record covers the transaction statements' window shown as the tape pill above." />
           <TextField label="To" type="date" mono={false} value={toDate} onChange={setToDate}
+            min={fromDate || dmin} max={dmax}
             hint="Show trades dated on or before this day." />
           <SelectField label="Side" value={sideFilter} onChange={(v) => setSideFilter(v as "all" | "Buy" | "Sell")}
             options={[{ value: "all", label: "All" }, { value: "Buy", label: "Buys" }, { value: "Sell", label: "Sells" }]} />
