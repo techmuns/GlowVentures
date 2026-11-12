@@ -1634,3 +1634,10 @@ Codex's review of #352, verified against the code and the book:
 - The frozen cell is opaque whatever its row paints: a `::before` card surface under a `::after` copy of the cell's own colour, sorted-column fill and child-row guide, so translucent row tints (`bg-ink-900/50`, a selected source row) composite exactly as the rest of the row. Rows themselves stay clear, so an odd row still shows what it sits on. Phones cap the frozen cell at 10rem.
 - `TrFoot`'s merged label ("Total") is pinned inside its own span (`data-foot-label`), so it stays beside the frozen column until its span scrolls past. Holdings keeps its own one-column Total (Stage 10nb).
 - `scripts/dev/table-headers.mjs` checks every horizontally scrolling table: the first heading and body cell stay at the scrollport's edge with an opaque surface, both themes. Proven by disabling the pin on Real Estate and Private Market (both fail).
+
+### Stage 10nk — Home: compact allocation cards and coordinated hovers
+
+- Allocation pairs its donut with a compact value/weight legend. Pointer hover and keyboard focus highlight the same slice and show details inside the donut; no floating label covers the chart. Cards respond to their saved width, and narrower screens stack them earlier.
+- Geographic exposure uses a compact coverage state for the India-focused book. Underlying country weights remain unverified rather than being inferred from account location or fund registration.
+- Personal widget removals stay removed. A one-time layout migration balances an adjacent AUM/cash pair after the three summary metrics have been removed, preserving all other choices, order and dimensions. All 18 widgets remain available, with an explicit Wide size option; later saved widths are respected.
+- Checks cover saved-layout migration, chart/legend keyboard and pointer interaction, card geometry, responsive themes, existing widget lifecycle and source-precision exports. Results are recorded on the PR.
