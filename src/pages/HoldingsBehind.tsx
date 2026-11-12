@@ -606,7 +606,7 @@ export function HoldingsBehind() {
 
 
   return (
-    <div>
+    <div data-home-cash={homeCash ? '' : undefined}>
       {/* THE CRUMB NAMES THE FIGURE, AND THE THREE BUTTONS REPLACE A ONE-WAY
           LINK. "Back to Morning CIO" was a hardcoded parent, so a reader who
           reached this page from the allocation table's own row link was

@@ -213,16 +213,7 @@ html #root .home-table thead > tr:last-child > :is(th, td) { border-bottom: 1px 
 html #root .home-table tfoot td { border-bottom: 0; }
 @media (max-width: 700px) { .home-widget-dialog-content { max-height: calc(100dvh - 34px); } }
 .home-widget-tools > button { min-width: 26px; min-height: 26px; }
-@media (max-width: 640px) {
-  body:has(.home-dashboard) .app-topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; height: auto; padding: 10px 12px; flex-shrink: 0; }
-  body:has(.home-dashboard) .app-topbar > [data-member-scope] { grid-area: 1 / 1; min-width: 0; }
-  body:has(.home-dashboard) .app-topbar [data-member-scope-toggle] { width: 100%; }
-  body:has(.home-dashboard) [data-topbar-search] { grid-area: 2 / 1; width: 100%; max-width: none; }
-  body:has(.home-dashboard) [data-topbar-actions] { display: contents; }
-  body:has(.home-dashboard) [data-topbar-currency] { grid-area: 2 / 2; }
-  body:has(.home-dashboard) [data-topbar-buttons] { grid-area: 1 / 2; justify-content: flex-end; padding-left: 0; border-left: 0; }
-  body:has(.home-dashboard) [data-topbar-quotes], body:has(.home-dashboard) [data-topbar-total] { display: none; }
-}
+
 
 /* Let each allocation card respond to its own saved width. */
 .home-allocation-panel { container: home-allocation / inline-size; }
