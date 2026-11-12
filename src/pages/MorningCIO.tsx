@@ -1073,7 +1073,7 @@ export function MorningCIO() {
     data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
     data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}>
     {r.total.units.length ? 'Available data' : 'No usable return records'} · {r.coveredHoldings} of {r.totalHoldings} holdings<br />
-    {money(r.coveredValue)} covered · {r.coveredAccounts} {r.coveredAccounts === 1 ? 'account' : 'accounts'} <HoldingAssumptionInfo units={r.total.units} /></span>;
+    {money(r.coveredValue)} covered · {r.coveredAccounts} {r.coveredAccounts === 1 ? 'account' : 'accounts'} <HoldingAssumptionInfo units={r.total.units} showLabel={tab !== 'returns'} /></span>;
   /**
    * THE THREE RETURN CARDS' CAPTION — ONE LINE (the family, 5 Nov 2026: "more
    * minimal … I rather see number of records covered over total records"). The
@@ -1098,7 +1098,7 @@ export function MorningCIO() {
       <span className="block text-[11px] text-slate-300"><span className="tabular font-semibold text-slate-100">{fmtNum(covered)}</span> of <span className="tabular">{fmtNum(holdings)}</span> holdings</span>
       <span className="block text-[10px] text-slate-500">{r.to ? `to ${fmtDate(r.to)}` : 'No verified dates'}{measure && ` · ${measure}`}
         {/* The owner-specific explanation is behind the card's one info button. */}
-        {assumed > 0 && <span data-holding-assumption data-assumed-count={assumed}> · assumed</span>}</span>
+        {assumed > 0 && <span data-holding-assumption data-assumed-count={assumed}>{tab !== 'returns' && ' · assumed'}</span>}</span>
     </div>;
   };
   /**

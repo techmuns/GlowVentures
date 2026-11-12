@@ -50,7 +50,8 @@ try {
  assert.ok(await hdfc.first().locator('[data-holding-assumption]').count()>0,'March HDFC shares now carry a period return');
  await hdfc.first().locator('[data-seg-toggle]').click();
  const ownerRow=panel.locator('[data-seg-child]').filter({hasText:'Bharat Jaisinghani · HDFC Bank'}).first();
- await ownerRow.getByRole('button',{name:'Why is this holding assumed?',exact:true}).first().click();
+ assert.doesNotMatch(await page.locator('main').innerText(),/\bassumed\b/i,'Returns has no assumed labels, including summary cards and TWR cells');
+ await ownerRow.getByRole('button',{name:'How is this holding valued?',exact:true}).first().click();
  const dialog=page.getByRole('dialog'); await dialog.waitFor();
  assert.match(await dialog.locator('[data-assumption-explanation]').innerText(),/No sale appears in the records we have\. We assume Bharat Jaisinghani still holds these shares\./);
  await page.screenshot({path:out+'/owner-explanation.png'}); await page.keyboard.press('Escape');
@@ -63,7 +64,8 @@ try {
  const download=await pending; const file=out+'/assumed-holdings.xlsx'; await download.saveAs(file);
  const workbook=new ExcelJS.Workbook(); await workbook.xlsx.readFile(file); const sheet=workbook.worksheets[0];
  assert.equal(sheet.views[0].state,'frozen'); assert.ok(sheet.columns.every(c=>c.width>=12));
- const values=sheet.getSheetValues().flat(2); assert.ok(values.includes('Holding basis')); assert.ok(values.some(v=>typeof v==='string'&&v.includes('Assumed held')));
+ const values=sheet.getSheetValues().flat(2); assert.ok(values.includes('Holding basis')); assert.ok(values.some(v=>typeof v==='string'&&v.includes('Carried forward')));
+ assert.ok(values.every(v=>typeof v!=='string'||!/\bassumed\b/i.test(v)),'Returns exports have no assumed labels');
  assert.ok(values.some(v=>typeof v==='number'&&Number.isFinite(v)));
  // The card ends today; the custom period above left the toolbar's end on 22 Oct. Every record is
  // carried to its period's end (Stage 10la), so the two are compared over the same days.

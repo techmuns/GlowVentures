@@ -42,7 +42,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
       <div data-attribution-coverage className="space-y-3 whitespace-normal font-normal text-left">
         {assumed.length > 0 && <div className="rounded-lg bg-ink-900 p-3" data-return-assumption-summary>
           <p>{holdingAssumptionText(new Set(assumed.map(u => u.assumption!.owner)).size === 1 ? assumed[0].assumption!.owner : 'each owner')}</p>
-          <p className="mt-1 text-xs">{assumed.length} assumed holdings · published prices and gross dividend entitlements. No new purchase cost is assumed.</p>
+          <p className="mt-1 text-xs">{assumed.length} holdings carried forward · published prices and gross dividend entitlements. No new purchase cost is added.</p>
         </div>}
         {!selection.inception && starts.filter(x => x.date || x.close).length > 0 && <div data-return-starts>
           <p className="font-semibold text-slate-100">Measured from</p>
@@ -121,7 +121,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
         </details>}
         {l.units.length > 0 && <details data-attribution-included data-navigation-details="availablereturncoverage-5"><summary className="ring-focus cursor-pointer rounded text-slate-200">View included accounts and dates</summary>
           <ul className="mt-3 space-y-3 text-xs">{l.units.map(u => <li key={u.key}><p className="text-slate-100">{u.label}</p>
-            <p>{u.from ? fmtDate(u.from) : 'Purchase-cost record'} → {u.to ? fmtDate(u.to) : 'Date unavailable'} · closing value {money(u.close)} · gain {money(u.gain, true)}{u.assumption ? ' · assumed holding' : ''}</p></li>)}</ul>
+            <p>{u.from ? fmtDate(u.from) : 'Purchase-cost record'} → {u.to ? fmtDate(u.to) : 'Date unavailable'} · closing value {money(u.close)} · gain {money(u.gain, true)}{u.assumption ? ' · holding carried forward' : ''}</p></li>)}</ul>
         </details>}
       </div>
   );
