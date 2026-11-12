@@ -946,7 +946,8 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
     max-width: 10rem;
     overflow-wrap: anywhere;
   }
-  #root table:not([data-freeze-off]):has(> tbody > tr > td[data-tree-depth]:first-child) > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
+  #root table:not([data-freeze-off]):has(> tbody > tr > td[data-tree-depth]:first-child) > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]),
+  #root table[data-year-table]:not([data-freeze-off]) > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
     width: 10rem;
     min-width: 10rem;
     max-width: 10rem;

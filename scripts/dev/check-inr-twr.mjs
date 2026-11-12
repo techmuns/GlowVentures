@@ -5,6 +5,7 @@ import path from 'node:path';
 import { chromium } from 'playwright-core';
 import ExcelJS from 'exceljs';
 import { installReadModelRoutes } from './read-model-api.mjs';
+import { revealTableControl } from './table-pointer.mjs';
 
 const base = process.env.BASE ?? 'http://127.0.0.1:4173';
 assert.ok(['127.0.0.1', 'localhost'].includes(new URL(base).hostname));
@@ -135,18 +136,7 @@ try {
   assert.ok(exportedMatch, 'Excel exports a numeric percentage with the same value as the INR calculation');
   await page.setViewportSize({ width: 390, height: 844 });
   const mobileInfo = table.locator('[data-seg-cell="twrMtd"]').first().getByRole('button');
-  await mobileInfo.scrollIntoViewIfNeeded();
-  // A normal scrollIntoView can centre a cell underneath the pinned name.
-  // Reveal the control in the data area, as a reader scrolling the table does.
-  await mobileInfo.evaluate(el => {
-    let port = el.parentElement;
-    while (port && !(port.scrollWidth > port.clientWidth && /auto|scroll/.test(getComputedStyle(port).overflowX))) port = port.parentElement;
-    if (!port) throw Error('The return table has no horizontal scrollport');
-    const frozen = el.closest('tr').firstElementChild.getBoundingClientRect(), bounds = port.getBoundingClientRect(), r = el.getBoundingClientRect();
-    const left = Math.max(bounds.left, frozen.right), right = Math.min(bounds.right, innerWidth);
-    if (right <= left) throw Error('The pinned name leaves no visible data area');
-    port.scrollLeft += r.left + r.width / 2 - (left + right) / 2;
-  });
+  await revealTableControl(mobileInfo);
   assert.ok(await mobileInfo.evaluate(el => {
     const r = el.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
     return hit === el || el.contains(hit);

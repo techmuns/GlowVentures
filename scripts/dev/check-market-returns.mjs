@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 import { installReadModelRoutes } from './read-model-api.mjs';
+import { revealTableControl } from './table-pointer.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const out = '.cache/market-returns'; await fs.mkdir(out, { recursive: true });
@@ -169,7 +170,13 @@ try {
  assert.ok(purchases.every(p=>p.first>='2026-04-01' && p.last<='2026-11-05'));
  const weighted=purchases.reduce((n,p)=>n+p.value*p.pct,0)/purchases.reduce((n,p)=>n+p.value,0);
  assert.ok(Math.abs(weighted-counts.pct)<1e-8,'this year’s return uses only the included units and their portfolio weights');
- await yearly.locator('th[data-col="cost"]').click();
+ const costSort = yearly.locator('th[data-col="cost"] [data-col-button]');
+ await revealTableControl(costSort);
+ assert.ok(await costSort.evaluate(el => {
+  const r = el.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+  return hit === el || el.contains(hit);
+ }), 'the mobile cost sort is exposed beside the frozen investment name');
+ await costSort.click();
  const costs=await yearly.locator('[data-year-row]').evaluateAll(els=>els.map(el=>+el.dataset.yearCost));
  assert.ok(costs.every((n,i)=>i===0||n<=costs[i-1]),'purchase-cost sorting follows the real amounts, highest first');
  await yearly.getByRole('button',{name:'What is included in this year’s investments?',exact:true}).click();
