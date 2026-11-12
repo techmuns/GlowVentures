@@ -37,6 +37,8 @@ const SUITES = [
   // The calculation audit's book-side rules and the figures they moved (Stage 10fz).
   { name: "calcAudit", file: "calcAudit.test.mjs", required: true },
   { name: "holdingTrades", file: "holdingTrades.test.mjs", required: true },
+  // A PMS account's opening values rebuilt from its own ledgers (Stage 10ni).
+  { name: "tradeOpenings", file: "tradeOpenings.test.mjs", required: true },
   { name: "reviewPurchaseDates", file: "reviewPurchaseDates.test.mjs", required: true },
   { name: "registerPurchaseDates", file: "registerPurchaseDates.test.mjs", required: true },
   { name: "capitalCalls", file: "capitalCalls.test.mjs", required: true },

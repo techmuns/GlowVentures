@@ -8,7 +8,7 @@
 // carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the
 // list and what document would supply each.
 import type {
-  Account, AccountBridge, AdvisedBalance, EarlierBalance, StatementUnitNavs, UnitWindow, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
+  Account, AccountBridge, AdvisedBalance, EarlierBalance, StatementUnitNavs, UnitWindow, TradeOpening, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
   Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,
   PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, ShareRoll, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
@@ -93702,6 +93702,383 @@ export const BOOK_UNIT_WINDOWS: Record<string, UnitWindow> = {
       }
     ],
     "evidence": "the same units of the same holding on every statement from 2026-07-31 to 2026-09-30"
+  }
+};
+
+/** A PMS account's 31 Dec and 31 Mar values rebuilt from its own from-inception ledgers at exchange closes, tied to the manager's totals (Stage 10ni). */
+export const BOOK_TRADE_OPENINGS: Record<string, TradeOpening> = {
+  "svan-investment-managers-llp-8710067": {
+    "openings": [
+      {
+        "date": "2025-12-31",
+        "value": 143521738.63,
+        "equity": 135802141.16,
+        "cash": 7719597.47,
+        "names": 42,
+        "entries": [
+          {
+            "date": "2026-01-09",
+            "securityKey": "shankara-buildpro",
+            "units": 3295,
+            "close": 812.55,
+            "value": 2677352.25
+          }
+        ]
+      },
+      {
+        "date": "2026-03-31",
+        "value": 122026811.99,
+        "equity": 117124886.24,
+        "cash": 4901925.75,
+        "names": 45,
+        "entries": []
+      }
+    ],
+    "flows": [
+      {
+        "date": "2026-01-09",
+        "amount": -2677352.25,
+        "description": "shankara-buildpro: first exchange close after its demerger, joins at 812.55"
+      },
+      {
+        "date": "2026-02-10",
+        "amount": 1222,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-02-12",
+        "amount": 1380,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-02-12",
+        "amount": 1152,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-02-13",
+        "amount": 1604,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-06-10",
+        "amount": 986,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-07-03",
+        "amount": 7302,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-07-03",
+        "amount": 1191,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-07-13",
+        "amount": 1830,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-07-31",
+        "amount": 4044,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-10",
+        "amount": 6414,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-13",
+        "amount": 1380,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-13",
+        "amount": 2794.8,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-14",
+        "amount": 2076,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-14",
+        "amount": 1020,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-21",
+        "amount": 1728,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-25",
+        "amount": 1498,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-25",
+        "amount": 1380,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-26",
+        "amount": 5565,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-09-01",
+        "amount": 2415,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-09-03",
+        "amount": 2600,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-09-17",
+        "amount": 1378,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-09-23",
+        "amount": 3208,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-09-24",
+        "amount": 2008,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-09-30",
+        "amount": 1635,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-10-01",
+        "amount": 6700,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-10-06",
+        "amount": 2874,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-10-06",
+        "amount": 4479,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-10-12",
+        "amount": 986,
+        "description": "TDS on Payout"
+      }
+    ],
+    "capitalTo": "2026-11-04",
+    "checks": [
+      {
+        "date": "2026-05-31",
+        "docKey": "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
+        "rebuilt": 148034860.03,
+        "printed": 148009159.63,
+        "diffPct": 0.02
+      },
+      {
+        "date": "2026-06-30",
+        "docKey": "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
+        "rebuilt": 159964921.41,
+        "printed": 159942275.22,
+        "diffPct": 0.01
+      },
+      {
+        "date": "2026-07-31",
+        "docKey": "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
+        "rebuilt": 164764352.07,
+        "printed": 164761718.64,
+        "diffPct": 0
+      }
+    ],
+    "sources": [
+      "svan-investment-managers-llp-8710067-2026-11-04-transaction-statement",
+      "svan-investment-managers-llp-8710067-2026-11-04-bank-book",
+      "svan-investment-managers-llp-8710067-2026-11-04-capital-register"
+    ]
+  },
+  "svan-investment-managers-llp-8710090": {
+    "openings": [
+      {
+        "date": "2025-12-31",
+        "value": 93140403.04,
+        "equity": 92254081.97,
+        "cash": 886321.07,
+        "names": 42,
+        "entries": [
+          {
+            "date": "2026-01-09",
+            "securityKey": "shankara-buildpro",
+            "units": 2385,
+            "close": 812.55,
+            "value": 1937931.75
+          }
+        ]
+      },
+      {
+        "date": "2026-03-31",
+        "value": 78826166.08,
+        "equity": 78228762.1,
+        "cash": 597403.98,
+        "names": 45,
+        "entries": []
+      }
+    ],
+    "flows": [
+      {
+        "date": "2026-01-09",
+        "amount": -1937931.75,
+        "description": "shankara-buildpro: first exchange close after its demerger, joins at 812.55"
+      },
+      {
+        "date": "2026-02-10",
+        "amount": 797,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-02-12",
+        "amount": 900.75,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-02-13",
+        "amount": 1048,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-07-03",
+        "amount": 4764,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-07-13",
+        "amount": 1190,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-07-31",
+        "amount": 2624,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-10",
+        "amount": 4184,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-13",
+        "amount": 1824.1,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-14",
+        "amount": 1348,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-21",
+        "amount": 1121,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-25",
+        "amount": 1066,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-25",
+        "amount": 1801.5,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-08-26",
+        "amount": 3640,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-09-01",
+        "amount": 1576,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-09-03",
+        "amount": 1690,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-09-23",
+        "amount": 2096,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-09-30",
+        "amount": 1164,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-10-01",
+        "amount": 4780,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-10-06",
+        "amount": 1872,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-10-06",
+        "amount": 2913,
+        "description": "TDS on Payout"
+      },
+      {
+        "date": "2026-10-12",
+        "amount": 1280,
+        "description": "TDS on Payout"
+      }
+    ],
+    "capitalTo": "2026-11-04",
+    "checks": [
+      {
+        "date": "2026-05-31",
+        "docKey": "svan-investment-managers-llp-8710090-2026-05-31-investor-report",
+        "rebuilt": 96133120.24,
+        "printed": 96116056.08,
+        "diffPct": 0.02
+      },
+      {
+        "date": "2026-06-30",
+        "docKey": "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
+        "rebuilt": 103904790.42,
+        "printed": 103890192.28,
+        "diffPct": 0.01
+      },
+      {
+        "date": "2026-07-31",
+        "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+        "rebuilt": 107172172.2,
+        "printed": 107170992.85,
+        "diffPct": 0
+      }
+    ],
+    "sources": [
+      "svan-investment-managers-llp-8710090-2026-11-04-transaction-statement",
+      "svan-investment-managers-llp-8710090-2026-11-04-bank-book",
+      "svan-investment-managers-llp-8710090-2026-11-04-capital-register"
+    ]
   }
 };
 

@@ -237,6 +237,9 @@ One line per area; the history files explain each in depth.
   period on that one selection, and `selectionMarket.ts`, Market performance over its units, Stage 10lg), `useMarketReturns.ts` +
   `marketHistoryStore.ts` (public histories kept in the browser, warmed by Morning CIO),
   `returnMeasures.ts`, `returnColumns.ts`.
+- `scripts/lib/tradeOpenings.mjs` — a PMS account's 31 Dec / 31 Mar value rebuilt from its own from-inception ledgers at
+  exchange closes (`opening-closes.json`, `npm run build-opening-closes`), kept only where it reproduces the manager's
+  totals; `BOOK_TRADE_OPENINGS`, read by `withTradeOpening` in `availableCardReturns.ts` (Stage 10ni).
 - `src/lib/fundNavs.ts` (AMFI NAV overlay; never sets `live`; depository cash and
   fund rows on the live basis only), `depositoryShares.ts`, `recordedHoldings.ts`,
   `corporateActions.ts`, `dailyMovers.ts`, `quotes.ts`, `quoteCache.ts`,

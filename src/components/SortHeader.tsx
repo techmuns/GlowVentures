@@ -326,7 +326,7 @@ export function TrFoot({ view, label, labelTitle, labelInFirstColumn = false, ce
     <tr {...rest}>
       {/* A label spanning the lead columns scrolls with them, so its text is
           pinned to the left of the scroll container inside its own cell —
-          beside every table's frozen first column (Stage 10nh). */}
+          beside every table's frozen first column (Stage 10nj). */}
       <td colSpan={labelInFirstColumn ? 1 : span} className={className} title={labelTitle}>
         {labelInFirstColumn || span === 1 ? label : <span className="sticky left-3 inline-block" data-foot-label>{label}</span>}
       </td>
