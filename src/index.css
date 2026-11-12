@@ -759,11 +759,12 @@ html:not(.dark) .hover\:bg-champagne-400:hover { background-image: none; backgro
  * already says something with its colour — a section band, a child row, a total,
  * a fired alert, a hovered row — keeps its own, because any class beats it.
  */
-/* A frozen first cell (Holdings' Security, and every table's since Stage 10ng)
-   inherits its row's opaque surface. Keep this default
+/* A pinned Security cell inherits its row's opaque surface. Keep this default
    below the zebra, hierarchy and hover rules in specificity, and before them
-   in source order, so those states continue across the frozen column. */
-:where(#root table > tbody > tr) { background-color: var(--chart-tooltip-bg); }
+   in source order, so those states continue across the frozen column. Other
+   tables' frozen cells lay their own surface under a clear row (Stage 10ng),
+   so an odd row elsewhere still shows whatever it sits on. */
+:where([data-monitor-table="holdings"] > tbody > tr) { background-color: var(--chart-tooltip-bg); }
 :where(table > tbody > tr:nth-child(even)) { background-color: var(--row-alt); }
 /*
  * THE HOVERED ROW IS OPAQUE, AND ONLY A ROW. *"When I'm hovering over a lighter
