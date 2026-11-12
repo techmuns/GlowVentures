@@ -26,6 +26,11 @@ export function reviewedFinding(section, finding, { exceptions = RECONCILIATION_
 export function reconciliationReview(report, options = {}) {
   return reconciliationFindings(report).map(item => {
     const review = reviewedFinding(item.section, item.finding, options);
-    return { ...item, status: review ? review.status : 'needs-review', review: review ?? null };
+    const previous = (options.exceptions ?? RECONCILIATION_EXCEPTIONS).find(e => e.id === item.id);
+    const on = options.on ?? new Date().toISOString().slice(0, 10);
+    const establishedDecision = !review && previous?.reviewedOn <= on
+      ? reviewedFinding(item.section, item.finding, { ...options, on: previous.reviewedOn }) : null;
+    return { ...item, status: review ? review.status : 'needs-review', review: review ?? null,
+      ...(establishedDecision ? { establishedDecision } : {}) };
   });
 }

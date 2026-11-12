@@ -28,13 +28,13 @@ import { returnGapText, type SelectedLine } from '@/lib/selectedSegmentReturns';
 import type { Account } from '@/lib/types';
 
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
-/** A count of distinct accounts, never bridge rows (Stage 10ny). */
+/** A count of distinct accounts, never bridge rows (Stage 10oc). */
 const accountsWord = (n: number) => `${n} ${n === 1 ? 'account' : 'accounts'}`;
 /** Every signed realised figure behind the total, by the record that carries it (`capitalBridge`'s own rule). */
 const realisedRecords = (rows: readonly BridgeAccount[]) => rows.flatMap((r) => !r.split ? []
   : r.split.realisedBy ? r.split.realisedBy.map((x) => ({ label: `${x.label} · ${r.label}`, value: x.value })) : [{ label: r.label, value: r.split.realised }]);
 const RECORD = "Summed record by record: per lot where a statement's capital gain lots make its realised line, per scheme on a fund's unit record, per holding (or whole PMS mandate) on purchase cost, otherwise per account";
-const SOURCE_WORDS = { statement: "Statement's own profit and loss", 'fund-record': "Fund's dated unit record", 'purchase-cost': 'Purchase cost, first-in first-out', 'assumed-holding': 'Assumed still held' } as const;
+const SOURCE_WORDS = { statement: "Statement's own profit and loss", 'fund-record': "Fund's dated unit record", 'purchase-cost': 'Purchase cost, first-in first-out', 'assumed-holding': 'Holding carried forward' } as const;
 /** Where a record prints no separate charges, they are already inside another part. */
 const INSIDE = { statement: 'The statement prints no separate charges', 'fund-record': "A fund's costs are inside its NAV, so they are already in the unrealised change",
   'purchase-cost': 'Costs are inside the purchase prices and sale proceeds, so they are already in the realised and unrealised gain',
@@ -130,12 +130,12 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money, acc
   const dated = (d: string | null) => (d ? fmtDate(d) : '—');
   const assumed = total.units.some(u => u.assumption);
   const steps: { key: string; label: string; value: number; sign?: boolean; sub: string; title: string }[] = b.mode === 'window' ? [
-    { key: 'opening', label: 'Opening value', value: b.opening, sub: dated(b.from), title: "Statement values, plus published prices for labelled assumed holdings, on their measured starting dates" },
+    { key: 'opening', label: 'Opening value', value: b.opening, sub: dated(b.from), title: "Statement values, plus published prices for holdings carried forward, on their measured starting dates" },
     // A computed zero says why on its face: the dated record shows no movement.
     { key: 'added', label: '+ Money added', value: b.added, sub: b.added === 0 ? 'none in this period' : 'new capital', title: 'Money put into these accounts during the period, on its dates' },
-    { key: 'taken', label: assumed ? '− Payouts / taken out' : '− Money taken out', value: b.takenOut, sub: assumed ? 'includes dividend entitlements' : b.takenOut === 0 ? 'none in this period' : 'withdrawals', title: 'Recorded withdrawals and payouts, plus gross dividend entitlements on labelled assumed holdings' },
+    { key: 'taken', label: assumed ? '− Payouts / taken out' : '− Money taken out', value: b.takenOut, sub: assumed ? 'includes dividend entitlements' : b.takenOut === 0 ? 'none in this period' : 'withdrawals', title: 'Recorded withdrawals and payouts, plus gross dividend entitlements on holdings carried forward' },
     { key: 'gain', label: '+ Gain this period', value: b.gain, sign: true, sub: 'see the gain breakdown', title: 'Value at end − value at start − money added + money taken out' },
-    { key: 'closing', label: 'Closing value', value: b.closing, sub: dated(b.to), title: "Statement values, plus published prices for labelled assumed holdings, on their measured closing dates" },
+    { key: 'closing', label: 'Closing value', value: b.closing, sub: dated(b.to), title: "Statement values, plus published prices for holdings carried forward, on their measured closing dates" },
   ] : b.mode === 'inception' ? [
     { key: 'added', label: 'Money paid in', value: b.added, sub: `since ${dated(b.from)}`, title: 'Every dated purchase or contribution since the first investment' },
     { key: 'taken', label: '− Money taken out', value: b.takenOut, sub: 'redemptions and payouts', title: 'Every dated redemption, withdrawal and payout since the first investment' },
@@ -177,7 +177,7 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money, acc
           data-bridge-accounts-covered={coverage.covered} data-bridge-accounts-of={coverage.of}>
           <span>{coverage.covered} of {coverage.of} accounts covered</span>
           <AccountCoverageInfo c={coverage} money={(n) => money(n)} start={start} />
-          <HoldingAssumptionInfo units={total.units} />
+          <HoldingAssumptionInfo units={total.units} showLabel={false} />
         </div>
       </div>
       <div className="flex items-center gap-3" data-bridge-return={ret ?? ''} data-bridge-period-return={period ?? ''}>

@@ -5,6 +5,9 @@ export function financialUnitIssue(document, text = '') {
   const currency = units?.canonicalCurrency ?? document.currency ?? document.baseCurrency;
   if (currency != null && currency !== 'INR') return 'This document is not normalized to INR; a verified currency-conversion adapter is required.';
   if (units?.canonicalMultiplier != null && units.canonicalMultiplier !== 1) return 'Money must be normalized to rupees before publication; lakh/crore scale cannot cross the canonical boundary.';
+  // A verified adapter's explicit canonical contract takes precedence over
+  // source headers: already-normalized amounts must not be rejected again.
+  if (units?.canonicalCurrency === 'INR' && units.canonicalMultiplier === 1) return null;
   if (units?.sourceCurrency && units.sourceCurrency !== 'INR') return 'A foreign-currency source needs a separately verified conversion and valuation-date policy.';
   // Only explicit report-unit declarations count. A company name or a prose
   // reference to an overseas investment is not a declaration of units.

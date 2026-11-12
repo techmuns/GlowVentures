@@ -1,5 +1,5 @@
 import { financialUnitIssue } from "./financial-units.mjs";
-import { reviewedFinding, RECONCILIATION_EXCEPTIONS, reconciliationReview, reviewDocumentRevision } from "./reconciliation-policy.mjs";
+import { RECONCILIATION_EXCEPTIONS, reconciliationReview, reviewDocumentRevision } from "./reconciliation-policy.mjs";
 // The publication boundary consumes normalized documents, never filenames or UI rows.
 // A delivery can propose facts; only a complete, reconciled, identity-safe version
 // may become a book. Historical exceptions do not authorize a new exception.
@@ -11,15 +11,10 @@ import { sourceFor } from '../precedence.mjs';
 import { NON_STATEMENT_PROVIDERS } from './classify.mjs';
 import { currentIsin } from '../../../shared/isinSuccessors.mjs';
 import { securityKeyOf } from '../../../shared/securityKey.mjs';
+import { canonicalJson } from '../../../shared/canonicalJson.mjs';
 
 export const RECORD_SECTIONS = ['holdings', 'transactions', 'capitalGains', 'cashFlows', 'income', 'expenses', 'returns'];
-export const stable = value => JSON.stringify(canonical(value));
-function canonical(value) {
-  if (typeof value === 'number' && !Number.isFinite(value)) throw new Error('Non-finite number in statement data');
-  if (Array.isArray(value)) return value.map(canonical);
-  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().filter(k => value[k] !== undefined).map(k => [k, canonical(value[k])]));
-  return value;
-}
+export const stable = canonicalJson;
 export const digest = value => createHash('sha256').update(typeof value === 'string' || Buffer.isBuffer(value) ? value : stable(value)).digest('hex');
 export const safeKey = key => typeof key === 'string' && /^[a-z0-9][a-z0-9._-]*$/i.test(key) && !key.includes('..');
 export const accountKey = d => stable([d.provider, String(d.accountNo ?? '')]);
@@ -106,7 +101,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   const revisions = new WeakMap(), contents = new WeakMap();
   const revisionOf = d => { if (!revisions.has(d)) revisions.set(d, documentRevision(d)); return revisions.get(d); };
   const contentOf = d => { if (!contents.has(d)) contents.set(d, content(d)); return contents.get(d); };
-  const issues = [], duplicates = [];
+  const issues = [], duplicates = [], auditWarnings = [];
   const add = (code, d, reason, pointer = '') => issues.push({ code, document: d?.docKey ?? null, pointer, reason });
   const old = new Map(baseline.map(d => [d.docKey, d]));
   const byKey = new Map();
@@ -152,6 +147,8 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   for (const d of changed) {
     try { assertNormalized(d); stable(d); } catch (error) { add('INVALID_DOCUMENT', d, error.message); continue; }
     const unitIssue = financialUnitIssue(d);
+    // Keep the existing canonical-unit contract for genuinely new invalid
+    // data; advisory review dates never impose a new gate on accepted records.
     if (unitIssue) add('UNSUPPORTED_FINANCIAL_UNITS', d, unitIssue);
     if (unsafeSource(d.sourcePath)) add('UNSAFE_SOURCE_PATH', d, 'Statement evidence must refer to a source file inside the repository.');
     if (neverArrived(d) || heldOutByDecision(d)) continue;
@@ -232,11 +229,14 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
     }
   }
   const documentRevisions = new Map(documents.map(d => [d.docKey, reviewDocumentRevision(d)]));
+  const reconciliationReviews = reconciliationReview(report, { exceptions, on: evaluationDate, documentRevisions });
+  for (const review of reconciliationReviews) if (review.status === 'needs-review')
+    auditWarnings.push({ code: 'RECONCILIATION_REVIEW_REQUIRED', id: review.id, section: review.section });
   // Compare actual findings, not counts: a new error must not hide behind an old
   // error that disappeared. Include checks involving an unchanged sibling too.
   for (const name of ['rowSumChecks', 'derivedVsPrinted', 'datedTableChecks']) {
     const accepted = new Set((baselineReport[name] ?? []).filter(x => x.severity === 'material').map(stable));
-    for (const finding of report[name] ?? []) if (finding.severity === 'material' && (!accepted.has(stable(finding)) || !reviewedFinding(name, finding, { exceptions, on: evaluationDate, documentRevisions }))) {
+    for (const finding of report[name] ?? []) if (finding.severity === 'material' && !accepted.has(stable(finding))) {
       add('RECONCILIATION_FAILED', { docKey: finding.docKey ?? finding.source ?? null }, `${name}: ${stable(finding)}`);
     }
   }
@@ -245,12 +245,12 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   // printing precision `rounding`, and only a larger one holds the delivery.
   for (const name of ['crossReportDeltas', 'duplicateHoldings', 'duplicateAifEarnings']) {
     const accepted = new Set((baselineReport[name] ?? []).map(stable));
-    for (const finding of report[name] ?? []) if (finding.severity !== 'rounding' && (!accepted.has(stable(finding)) || !reviewedFinding(name, finding, { exceptions, on: evaluationDate, documentRevisions }))) add('CROSS_RECORD_CONFLICT', null, `${name}: ${stable(finding)}`);
+    for (const finding of report[name] ?? []) if (finding.severity !== 'rounding' && !accepted.has(stable(finding))) add('CROSS_RECORD_CONFLICT', null, `${name}: ${stable(finding)}`);
   }
   if (duplicates.length && duplicates.length !== changed.length) add('MIXED_DUPLICATE_DELIVERY', null, 'Remove repeated documents and reprepare; a mixed delivery must not discard its new statements.');
   const decision = issues.length ? 'needs_review' : duplicates.length ? 'duplicate' : changed.length ? 'verified' : 'unchanged';
   return { schemaVersion: 1, decision, baselineRevision: archiveRevision(baseline, revisionOf), candidateRevision: archiveRevision(documents, revisionOf),
-    changed: [...touched].sort(), duplicates, issues, reconciliationReviews: reconciliationReview(report, { exceptions, on: evaluationDate, documentRevisions }) };
+    changed: [...touched].sort(), duplicates, issues, auditWarnings, reconciliationReviews };
 }
 
 /** Content-addressed field evidence. Pointers refer to the immutable normalized

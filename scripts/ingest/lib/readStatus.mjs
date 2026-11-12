@@ -44,6 +44,7 @@ export const STATEMENT_NOTES = Object.freeze(new Set([
   "no-rate-published",               // the depository prints no rate for the line
   "advice-only",                     // the advice e-mail announces, the letter carries the figures
   "statement-basis",                 // the basis the figures are struck on
+  "financial-units-audit",           // advisory metadata; does not change the established adapter's reading
   "weights-on-aum-basis",
   "price-date-precedes-holding-date",
   "profit-and-loss-capital-is-a-balance", // the window opens on a years-old account

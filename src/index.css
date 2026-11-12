@@ -25,6 +25,17 @@
   .app-sidebar[data-mobile-expanded="true"] [data-sidebar-wordmark] { display: block; }
   .mobile-nav-backdrop { display: block; position: fixed; inset: 0; z-index: 50; background: rgb(14 12 28 / 0.4); }
 }
+@media (max-width: 640px) {
+  body:has(.home-dashboard, [data-home-cash]) .app-topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; height: auto; padding: 10px 12px; flex-shrink: 0; }
+  body:has(.home-dashboard, [data-home-cash]) .app-topbar > [data-member-scope] { grid-area: 1 / 1; min-width: 0; }
+  body:has(.home-dashboard, [data-home-cash]) .app-topbar [data-member-scope-toggle] { width: 100%; }
+  body:has(.home-dashboard, [data-home-cash]) [data-topbar-search] { grid-area: 2 / 1; width: 100%; max-width: none; }
+  body:has(.home-dashboard, [data-home-cash]) [data-topbar-actions] { display: contents; }
+  body:has(.home-dashboard, [data-home-cash]) [data-topbar-currency] { grid-area: 2 / 2; }
+  body:has(.home-dashboard, [data-home-cash]) [data-topbar-buttons] { grid-area: 1 / 2; justify-content: flex-end; padding-left: 0; border-left: 0; }
+  body:has(.home-dashboard, [data-home-cash]) [data-topbar-quotes], body:has(.home-dashboard, [data-home-cash]) [data-topbar-total] { display: none; }
+}
+
 /* Report controls borrow the reference PDF's teal. The PDF itself has fixed colours in every theme. */
 .cio-report-export, .cio-report-download {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -881,6 +892,15 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
     width: 10rem;
     min-width: 10rem;
     max-width: 10rem;
+    overflow-wrap: anywhere;
+  }
+  /* Keep frozen Returns names inside their cell so they cannot cover the
+     adjacent return figures and info buttons on narrow screens. */
+  #root :is([data-seg-table], [data-sa-table], [data-year-table]) > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
+    width: 10rem;
+    min-width: 10rem;
+    max-width: 10rem;
+    white-space: normal;
     overflow-wrap: anywhere;
   }
 }

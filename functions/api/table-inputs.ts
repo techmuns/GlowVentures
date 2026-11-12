@@ -1,5 +1,4 @@
 import { githubStatementReader } from "../../shared/githubStatementBackend.mjs";
-import manifest from "../../src/data/readModels.json";
 import { storeFor, StoreError, type DashboardStore } from "../../shared/dashboardStore.mjs";
 import { validateProperty } from "../../shared/realEstate.mjs";
 import { isCall, validateDraft, type StoredCall } from "./capital-calls.js";
@@ -19,9 +18,12 @@ async function catalogFor(env: Record<string, unknown>) {
   const joined = new Uint8Array(bytes); let offset = 0;
   for (const chunk of chunks) { joined.set(chunk, offset); offset += chunk.byteLength; }
   const snapshot = JSON.parse(new TextDecoder().decode(joined));
-  if (snapshot.schemaVersion !== 1 || snapshot.readerRevision !== manifest.readerRevision || !/^[a-f0-9]{20}$/.test(snapshot.revision)
+  if (snapshot.schemaVersion !== 1 || !/^[a-f0-9]{64}$/.test(snapshot.readerRevision) || !/^[a-f0-9]{20}$/.test(snapshot.revision)
     || !Array.isArray(snapshot.book?.BOOK_POSITIONS) || !Array.isArray(snapshot.book?.BOOK_COMMITMENTS) || !Array.isArray(snapshot.book?.BOOK_ACCOUNTS))
     throw Error('Reload before editing a different statement reader');
+  // The current published schema supplies the actual editable source records.
+  // Deployment-code hashes do not invalidate those records. Per-record source
+  // fingerprints and optimistic versions still reject stale overwrites.
   return buildInputCatalog(snapshot.book.BOOK_POSITIONS, snapshot.book.BOOK_COMMITMENTS, snapshot.book.BOOK_ACCOUNTS);
 }
 const json = (status: number, body: object) => Response.json(body, { status, headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } });

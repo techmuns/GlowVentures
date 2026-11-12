@@ -70,7 +70,7 @@ export type CapitalBridge = {
   /** The gain of the accounts no record splits — named in `rows`. */
   unsplit: number; splitCount: number; unsplitCount: number;
   /**
-   * DISTINCT accounts, not rows (Stage 10ny): a row is a whole account or one
+   * DISTINCT accounts, not rows (Stage 10oc): a row is a whole account or one
    * holding measured on its own, so one account can give several rows.
    * `accounts` is every account the bridge covers; `unsplitAccounts` those with a row not split.
    */
@@ -206,7 +206,7 @@ function stepOf(u: ReturnUnit, b: BridgeBook): BridgeAccount {
       const sold = w.capitalOut - u.assumption.income > 0.005;
       return { ...base, from: w.openDate, to: w.closeDate, opening: w.openValue, added: w.capitalIn, takenOut: w.capitalOut,
         split: sold ? null : { realised: 0, unrealised: u.gain - u.assumption.income, income: u.assumption.income, charges: null, source: 'assumed-holding',
-          note: 'Assumed unchanged holding: published prices and gross dividend entitlements; no sale or withdrawal is claimed.' },
+          note: 'Holding carried forward unchanged: published prices and gross dividend entitlements; no sale or withdrawal is claimed.' },
         unsplitReason: sold ? 'a sale on its purchase record realised part of its gain, and no cost here says how much' : null };
     }
     const own = u.key === u.accountId;

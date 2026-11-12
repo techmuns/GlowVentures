@@ -1690,7 +1690,20 @@ Codex's review of #352, verified against the code and the book:
 - Investment performance's (i) lists "Held at latest valuation" accounts with their value and valuation date (`data-bridge-account-held`). Morning CIO's card captions count private holdings (`privateCoveredHoldings` / `privateHoldings`), and the Private row says "in this return" instead of "reported apart". The NAV card's hover reads "Covers N% of investments … ₹X of it private"; its `check:pages` probe follows.
 - Unchanged: Sector attribution's price-only market figure still reports private apart (no published price; its wording no longer says "as on the return cards"); the adjusted TWR columns still need a valuation series for a held unit; Since investment already held everything at value.
 
-### Stage 10ny — "Not split" counts accounts, not lines
+### Stage 10ny — Keep number editing available for an unchanged financial book
+
+- A new app deployment can change the reader identifier before scheduled statement publication catches up. Number editing now accepts that older reader only when the canonical SHA-256 fingerprint of its complete received book equals the deployment's verified book. A changed valuation, cash-flow history, source pointer or other book fact still blocks an incompatible reader.
+- Build and edge validation share canonical JSON serialization. The server computes the fingerprint itself; a supplied hash cannot authorize a different book. Matching-reader statement updates retain their existing behavior.
+- Isolated API regressions cover identical books across readers, a real local correction, changed facts outside the editable columns, invalid reader metadata and absent fingerprint evidence. No manual production data publication is required.
+
+### Stage 10oa — Preserve established figures while keeping financial audits advisory
+
+- The family explicitly requires the existing dashboard's figures, coverage, curated assumptions and working flows to remain intact. Financial audits are additive observations and cannot introduce review-expiry publication holds, discard saved corrections or blanket-disable existing returns.
+- Capital relationships remain visible as audit warnings while single-cell edits and optional atomic groups both work. The input API follows the supported current published schema and retains per-record source/version protection; a deployment hash cannot lock an otherwise valid source record.
+- Independent arithmetic is compared beside the canonical result. Audit failures are contained, and existing source-scoped decisions survive reminder expiry without claiming a new review. The original new/worsening-source conflict protections remain in place.
+- Regression checks cover retained figures, capital corrections, dated-return coverage, current-source editing, expired reviews and audit failure isolation. Before/after comparison of the complete established book is retained with the local validation evidence.
+
+### Stage 10oc — "Not split" counts accounts, not lines
 
 *"what is not split here?"* — the family, 12 Nov 2026, on Investment performance's breakdown: "Not split · 34 accounts" beside "53 accounts" at the top.
 

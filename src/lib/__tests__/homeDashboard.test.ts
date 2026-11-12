@@ -65,3 +65,21 @@ const { homeExportNumber } = await import('../homeDashboard');
 assert.equal(homeExportNumber(null)['data-export-value'], undefined);
 assert.equal(homeExportNumber(12345678.901)['data-export-value'], '12345678.901');
 assert.equal(homeExportNumber(0)['data-export-type'], 'number');
+
+// Cash drill-down reconciles to Home, including balances below the usual holdings floor.
+const { resolveDrilldown, parseDrilldown, drilldownHref } = await import('../drilldown');
+const cashPositions = [
+  ...positions,
+  { ...positions[1], securityKey: 'small', marketValue: 5, dedupeGroup: 'small-cash' },
+  { ...positions[1], securityKey: 'small-copy', marketValue: 5, dedupeGroup: 'small-cash' },
+  { ...positions[1], securityKey: 'overdraft', marketValue: -2 },
+  { ...positions[1], securityKey: 'zero', marketValue: 0 },
+];
+const cashScope = parseDrilldown(new URLSearchParams(drilldownHref('home-cash').split('?')[1]))!;
+const cashDetail = resolveDrilldown(cashScope, { portfolio: { positions: cashPositions, accounts } as import('../types').Portfolio, consolidated: cashPositions });
+assert.equal(cashDetail.rows.length, 3);
+assert.equal(cashDetail.rows.reduce((n, p) => n + p.marketValue, 0), 23);
+assert.equal(cashDetail.rows.reduce((n, p) => n + p.marketValue, 0), homeAssets(currentHomeValues(cashPositions, accounts)).assets.find(a => a.key === 'Cash')?.value);
+assert.equal(cashDetail.negligibleExcluded.count, 0, 'small cash balances remain in the figure');
+assert.equal(cashDetail.crumb, 'Total cash');
+console.log('Home cash link reconciles every non-zero balance, deduplicates holdings and includes overdrafts.');

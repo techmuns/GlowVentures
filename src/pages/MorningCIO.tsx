@@ -231,28 +231,9 @@ const sectionColor = (axis: GroupAxis, key: string, i: number) => {
   return map[key] ?? CHART_COLORS[i % CHART_COLORS.length];
 };
 
-export function MorningCIO() {
-  const { consolidated, portfolio, statementPortfolio, enteredPortfolio, fmtFromBase, convertFromBase, displayCurrency, corporateActions, scope: memberScope } = usePortfolio();
-  /**
-   * WHICH AXIS THE ALLOCATION CARD IS GROUPED ON. In the URL (`?alloc=`) like
-   * every other view in this app, and for the reason the Portfolio Monitor's
-   * own axis is: the family asked for three ways to read one book, and "send me
-   * the basket view" has to be a link rather than an instruction. The default
-   * stays param-free and stays CATEGORY, which is the table they already read.
-   */
-  const [allocAxis, setAllocAxis] = useViewParam(GROUP_VIEWS, {}, "alloc");
-  // WHICH PANEL IS ON SCREEN. See `CIO_TABS` above for what the three are and
-  // why the choice lives in the URL.
-  /**
-   * `?tab=attribution` WAS A TAB OF ITS OWN for one release (Stage 10ez); the
-   * family put the attribution inside Returns (Stage 10fd), so a link to it
-   * lands there rather than on the movers panel.
-   */
-  const [tab, setTab] = useViewParam(CIO_TABS, { attribution: "returns", alerts: "movers" }, "tab");
-  // A HOOK, so it is declared here rather than beside the rows it arranges:
-  // this component returns early on an unloaded book, and a hook after that is
-  // a different bug from the one being fixed.
-  const allocView = useTableView("cio-allocation", ALLOC_COLS, { reviewKind: "category" });
+function useCioModel() {
+  const context = usePortfolio();
+  const { consolidated, portfolio, statementPortfolio, enteredPortfolio, convertFromBase, corporateActions } = context;
   // One "today" for every XIRR on the page, so every figure closes on the same
   // date against the same valuation.
   const today = useMemo(() => new Date(), []);
@@ -962,6 +943,44 @@ export function MorningCIO() {
     };
   }, [portfolio, statementPortfolio, enteredPortfolio, convertFromBase, today, assumptionBook]);
 
+  const reportSnapshot = (period: Parameters<typeof cioReportSnapshot>[0]['period']) => {
+    if (!portfolio || !model) throw new Error('The portfolio is still loading.');
+    return cioReportSnapshot({ portfolio, positions: model.p, summary: model, period,
+      selected: cioReportReturns({ statement: statementPortfolio ?? portfolio, current: model.p, period, assumptions: assumptionBook }),
+      scope: context.scope.label, currency: context.displayCurrency, convert: convertFromBase });
+  };
+  return { ...context, model, reportSnapshot };
+}
+
+/** Both entry points export the same scoped book, figures and return assumptions. */
+export function PortfolioReportExport() {
+  const { portfolio, model, reportSnapshot } = useCioModel();
+  return portfolio && model ? <CioReportExport snapshot={reportSnapshot} /> : null;
+}
+
+export function MorningCIO() {
+  const { portfolio, statementPortfolio, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope, model, reportSnapshot } = useCioModel();
+  /**
+   * WHICH AXIS THE ALLOCATION CARD IS GROUPED ON. In the URL (`?alloc=`) like
+   * every other view in this app, and for the reason the Portfolio Monitor's
+   * own axis is: the family asked for three ways to read one book, and "send me
+   * the basket view" has to be a link rather than an instruction. The default
+   * stays param-free and stays CATEGORY, which is the table they already read.
+   */
+  const [allocAxis, setAllocAxis] = useViewParam(GROUP_VIEWS, {}, "alloc");
+  // WHICH PANEL IS ON SCREEN. See `CIO_TABS` above for what the three are and
+  // why the choice lives in the URL.
+  /**
+   * `?tab=attribution` WAS A TAB OF ITS OWN for one release (Stage 10ez); the
+   * family put the attribution inside Returns (Stage 10fd), so a link to it
+   * lands there rather than on the movers panel.
+   */
+  const [tab, setTab] = useViewParam(CIO_TABS, { attribution: "returns", alerts: "movers" }, "tab");
+  // A HOOK, so it is declared here rather than beside the rows it arranges:
+  // this component returns early on an unloaded book, and a hook after that is
+  // a different bug from the one being fixed.
+  const allocView = useTableView("cio-allocation", ALLOC_COLS, { reviewKind: "category" });
+
   if (!portfolio || !model) return null;
   const m = model;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
@@ -1073,7 +1092,7 @@ export function MorningCIO() {
     data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
     data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}>
     {r.total.units.length ? 'Available data' : 'No usable return records'} · {r.coveredHoldings} of {r.totalHoldings} holdings<br />
-    {money(r.coveredValue)} covered · {r.coveredAccounts} {r.coveredAccounts === 1 ? 'account' : 'accounts'} <HoldingAssumptionInfo units={r.total.units} /></span>;
+    {money(r.coveredValue)} covered · {r.coveredAccounts} {r.coveredAccounts === 1 ? 'account' : 'accounts'} <HoldingAssumptionInfo units={r.total.units} showLabel={tab !== 'returns'} /></span>;
   /**
    * THE THREE RETURN CARDS' CAPTION — ONE LINE (the family, 5 Nov 2026: "more
    * minimal … I rather see number of records covered over total records"). The
@@ -1098,7 +1117,7 @@ export function MorningCIO() {
       <span className="block text-[11px] text-slate-300"><span className="tabular font-semibold text-slate-100">{fmtNum(covered)}</span> of <span className="tabular">{fmtNum(holdings)}</span> holdings</span>
       <span className="block text-[10px] text-slate-500">{r.to ? `to ${fmtDate(r.to)}` : 'No verified dates'}{measure && ` · ${measure}`}
         {/* The owner-specific explanation is behind the card's one info button. */}
-        {assumed > 0 && <span data-holding-assumption data-assumed-count={assumed}> · assumed</span>}</span>
+        {assumed > 0 && <span data-holding-assumption data-assumed-count={assumed}>{tab !== 'returns' && ' · assumed'}</span>}</span>
     </div>;
   };
   /**
@@ -1514,9 +1533,7 @@ export function MorningCIO() {
              to reword. Same contract `data-movers-scope` and `data-alloc-axis`
              already carry on this page. */
           <div className="flex flex-wrap items-center gap-2">
-          <CioReportExport snapshot={period => cioReportSnapshot({ portfolio, positions: m.p, summary: m, period,
-            selected: cioReportReturns({ statement: statementPortfolio ?? portfolio, current: m.p, period, assumptions: assumptionBook }),
-            scope: memberScope.label, currency: displayCurrency, convert: convertFromBase })} />
+          <CioReportExport snapshot={reportSnapshot} />
           <div role="tablist" aria-label="Which part of the briefing to show" data-cio-tabs
             className="inline-flex items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
             {CIO_TABS.map((v) => (
@@ -1566,7 +1583,7 @@ export function MorningCIO() {
           `min-h-0` is what makes `flex-1` shrink rather than grow the column
           past the window — without it the panel is as tall as its content and
           the page scrolls again, which is the whole of what was asked. */}
-      <div className={`mt-4 min-h-0 overflow-y-auto ${tab === "returns" ? "flex-none lg:flex-1" : "flex-1"}`} data-cio-panel={tab} data-navigation-scroll="morningcio-1">
+      <div className={`mt-4 min-h-0 overflow-y-auto ${tab === "returns" || tab === "movers" ? "flex-none lg:flex-1" : "flex-1"}`} data-cio-panel={tab} data-navigation-scroll="morningcio-1">
 
         {/* DAILY MOVERS — the first thing the family asked for, and the first
             card under the strip for that reason. It is the only figure on this

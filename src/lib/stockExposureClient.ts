@@ -20,7 +20,7 @@ export function fetchStockExposure(funds: HeldFund[], identities: ReadonlyMap<st
           const data = await response.json();
           if (data.status === "revision_changed") {
             markDeploymentChanged();
-            return { status: "loading" }; // App presents the reload prompt immediately.
+            return { status: "unreachable" }; // Keep the page; never mix another revision's fund data.
           }
         }
         if (!response.ok) return { status: "unreachable" };

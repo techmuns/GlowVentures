@@ -174,9 +174,10 @@ try {
   await updatePage.route('**/api/**',r=>r.fulfill({json:{ok:false}}));
   await updatePage.route('**/api/stock-exposure',r=>r.fulfill({status:409,json:{status:'revision_changed'}}));
   await updatePage.goto(base+'/monitor');
-  await updatePage.getByRole('heading',{name:'A new dashboard version is ready'}).waitFor();
-  assert.equal(await updatePage.getByRole('button',{name:'Reload dashboard'}).count(),1);
-  assert.equal(await updatePage.locator('[data-monitor-table]').count(),0,'deployment prompt replaces misleading partial tables');
+  await updatePage.locator('[data-dashboard-update]').waitFor();
+  assert.equal(await updatePage.getByRole('button',{name:'Load latest dashboard'}).count(),1);
+  assert.ok(await updatePage.locator('[data-monitor-table]').count()>0,'deployment changes keep the existing page mounted');
+  assert.equal(await updatePage.getByRole('heading',{name:'A new dashboard version is ready'}).count(),0);
   await updatePage.close();
   await fs.mkdir('.cache/table-scroll-check',{recursive:true});
   await fs.writeFile('.cache/table-scroll-check/data-performance.json',JSON.stringify(results,null,2));

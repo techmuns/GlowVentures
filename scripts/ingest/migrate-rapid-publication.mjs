@@ -1,4 +1,4 @@
-import { buildFinancialIntegrity } from "./lib/financial-integrity.mjs";
+import { collectFinancialAudit } from "./lib/financial-integrity.mjs";
 // A normal application deployment must retain statements processed since its
 // compiled baseline. Rebuild the union under the new verified reader rules.
 import { assessPublication, digest, positionEvidenceReader, holdingKey, sameFinancialStatement } from './lib/publication.mjs';
@@ -40,7 +40,7 @@ export function migrateRapidPublication(previous, initial, references, instantia
   for (const name of ['deriveTransactions', 'deriveRealisedLots', 'deriveIncome', 'deriveSales', 'buildConsolidatedSheet']) model[name](documents);
   const archiveRevision = assessment.candidateRevision;
   const revision = digest({ readerRevision: initial.readerRevision, baseCommit: initial.baseCommit, archiveRevision, book }).slice(0, 20);
-  return { ...initial, revision, archiveRevision, book, documents, records, financialIntegrity: buildFinancialIntegrity(book, documents, { report, registry: previous.financialIntegrity?.registry, readerRevision: initial.readerRevision, bookRevision: digest(book) }),
+  return { ...initial, revision, archiveRevision, book, documents, records, financialIntegrity: collectFinancialAudit(book, documents, { report, registry: previous.financialIntegrity?.registry, readerRevision: initial.readerRevision, bookRevision: digest(book) }),
     manifest: [...initial.manifest, ...runtime.map(d => records[d.docKey].manifest)],
     originals: { ...initial.originals, ...Object.fromEntries(Object.entries(previous.originals).filter(([key]) => kept.has(key))) },
     previews: previous.previews,

@@ -35,7 +35,7 @@ const book = (o: Partial<BridgeBook>): BridgeBook => ({ accounts: [], positions:
   const other = capitalBridge([unit(w)], book({ accounts: [acct('pms', 'PMS')], bridges: { pms: [bridgeRow({ periodTo: '2026-08-10' })] } }))!;
   assert.equal(other.realised, null); near(other.unsplit, 20); assert.equal(other.unsplitCount, 1);
   assert.equal(other.unsplitAccounts, 1); assert.equal(other.accounts, 1);
-  // Two holdings of one account measured on their own are two rows but ONE account not split (Stage 10ny).
+  // Two holdings of one account measured on their own are two rows but ONE account not split (Stage 10oc).
   const held = (k: string) => ({ ...unit(win({ accountId: 'demat', label: k, gain: 5 })), key: `demat|${k}` });
   const mixed = capitalBridge([unit(w), held('a'), held('b')], book({ accounts: [acct('pms', 'PMS'), acct('demat', 'Direct')], bridges: { pms: [bridgeRow({})] } }))!;
   assert.equal(mixed.splitCount, 1); assert.equal(mixed.unsplitCount, 2); near(mixed.unsplit, 10);

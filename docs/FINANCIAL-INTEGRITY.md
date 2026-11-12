@@ -1,112 +1,99 @@
-# Financial integrity contract
+# Financial audit and preservation contract
 
-The dashboard retains its layout. Financial calculations, source records and
-corrections now have a shared backend evidence contract. It distinguishes a
-measured zero from missing data, a carrying amount from a valuation, a source
-conflict from a parse failure, and an assumed balance from a reconciled one.
+The financial audit is an additive sidecar. The dashboard's established figures,
+coverage, curated assumptions and working editing/publication flows remain the
+baseline. New audit metadata does not replace those values or introduce new
+eligibility rules. This follows the family's instruction of 12 November 2026:
+"nothing should hamper where we have already reached".
 
-## Calculation and normalization boundaries
+## Established calculations and values
 
-`src/lib/xirr.ts` aggregates same-instant cash flows, validates dates/amounts,
-isolates roots using stationary points of the cash-flow equation in log-rate
-space, and checks the residual before returning one unique stable rate. An
-arbitrary rate scan or starting guess cannot select between multiple rates.
-Independent analytic tests cover losses, nearby roots, negative roots, scaling,
-row order and same-day splitting. An exhausted numerical budget returns no rate.
+Existing calculation methods remain authoritative. XIRR retains its checked
+dates, unique-root calculation and residual validation. NAV projections retain
+their reconciled day-weighted capital and established fallback methods. The
+family's existing ownership assumptions, private holdings at latest valuation,
+period rules and selected source records remain intact.
 
-NAV projections emit day-weighted capital, whether timing is known, and the
-method used. End-of-day Modified Dietz weights are based on the actual dated
-record, reconciled with the printed net. An undated residual is never given a
-fabricated date: it remains an explicitly marked end-dated approximation. The
-active benchmark chart continues to use the return cards' shared selection.
+The audit reports the canonical value already used by the dashboard. An
+independent arithmetic comparison lives in the checks, with its expected and
+reported amounts; it never overwrites the canonical result. A missing witness
+in the audit cannot erase a value or blanket-disable an established return.
 
-Canonical money is INR rupees. Explicit foreign-currency or unconverted scale
-metadata cannot cross publication. Known adapter scale conversions remain in
-their adapters. Settlement amounts and reconciliation use decimal paise
-integers; quantities keep their own precision. Currency display conversion does
-not rewrite the ledger. Original raw-file hashes are included in static field
-evidence when the original index is bound to the same archive manifest.
+Canonical money remains INR rupees. Settlement checks use exact decimal paise;
+quantities keep their own precision. Unit-header observations are audit notes,
+not a reason to demote an otherwise complete reading. An adapter's explicit
+normalized-INR contract takes precedence over its source header. Existing
+validation of invalid numeric data, unsafe paths and genuinely unconverted new
+canonical records remains in place.
 
-## Ownership graph and event ledger
+## Asset graph and supporting evidence
 
-`config/financial-identities.json` gives instruments persistent internal IDs.
-Exact ISIN witnesses and reviewed name aliases extend an identity; a conflicting
-identifier or an unreviewed merge is held. Account, member and position identity
-remain separate. A custodian observation of fund units is not automatically a
-second economic investment.
+Persistent instrument IDs and documented aliases connect accounts, holders,
+positions, instruments and custody observations. Conflicting identifiers and
+ownership relationships are recorded in the audit, without changing the
+established portfolio. No beneficiary or ownership percentage is inferred from
+a family name. An unresolved ownership projection belongs to the diagnostic;
+it does not remove the holding from existing totals.
 
-The versioned graph contains canonical holders, accounts, positions, instruments
-and custody links. `config/ownership-relationships.json` can add independently
-sourced legal entities and effective-dated ownership fractions. No trust
-beneficiary or indirect ownership percentage is inferred from a family name.
-Cycles, invalid dates and overlapping ownership above 100% are rejected.
-Ownership-path projections name missing fractions and disputed/at-cost marks.
-A holder-of-record relationship identifies the account's named legal holder; it
-does not assert who beneficially owns a trust or company above that holder.
+The event observations retain trades, capital, gross income and supporting
+corporate-action notices separately. Settlement-control postings balance in
+exact paise. Gross income is a receivable until cash evidence establishes a
+receipt; supporting notices do not post the same payment twice.
 
-The event ledger keeps dated trades, gross income, capital records and supporting
-corporate-action notices distinct. Settlement-control postings balance in exact
-paise. Gross income is first a receivable: a cash receipt and withholding credit
-need their own evidence. Supporting notices never post the same payment again.
-This is not a claim that missing acquisition lots or bank funding were supplied.
+Optional bank, lot and transaction comparisons record their available evidence
+and gaps. Missing mappings do not add requirements to the existing dashboard.
+Unvalued supporting custody rows may overlap holdings and are not added as new
+investments. Source files retain their original checksum evidence.
 
-Three-way checks compare unit registers/transactions, acquisition-lot costs and
-bank cash chains. `config/settlement-accounts.json` supplies reviewed account
-mappings. A bank match requires the exact settlement reference, holder, date and
-paise amount; equal amounts alone cannot create an internal transfer. Without
-those sources the check is unavailable, with a reason. Retained unvalued custody
-rows may overlap other positions and are never counted as additional investments.
+## Reviews are advisory
 
-## Historical discrepancies
+The reconciliation-exceptions registry records scoped findings, source
+revisions, prior decisions and review dates. Expiry or missing review metadata
+creates an audit reminder, not a static-build, intake or reader-migration hold.
+An established decision stays attached to its exact original source scope even
+when its reminder expires. It is not silently attached to changed source facts.
 
-`config/reconciliation-exceptions.json` records exact finding fingerprints,
-source-document revisions, affected metrics, disposition, reason, review owner
-and review dates. Existing baseline membership is not permission for a finding.
-An altered source/finding, missing review or expired review holds publication.
-The recorded review days use UTC. Unresolved entries remain unresolved, including
-the Kotak valuation discrepancy; this release does not invent a corrected value.
-Printed weights are not substituted for derived weights. Printed settled cash
-is not replaced by a reconstruction from rounded per-unit rates.
+The publication pipeline keeps its established comparison against actual
+baseline findings. A genuinely new or worsening reconciliation conflict remains
+subject to that existing validation. An unchanged historical finding does not
+acquire an additional gate from the audit layer.
 
-## Corrections and versioning
+## Existing editing flows remain available
 
-The server reads the same current immutable statement version as the application
-before offering editable inputs. It validates the entire proposed batch,
-including restores, against capital identities and any specifically evidenced
-reinvestment adjustment. Partial records remain partial. Corrections retain the
-previous/original value, source fingerprint, effective date and validator version
-in the existing Git-backed store history. There is one authenticated dashboard
-session, so no individual editor identity is invented.
+Single-cell capital edits, workbook imports, related-field saves and restores
+continue to work. Capital relationships are advisory warnings. A previously
+saved family correction is not discarded because a new relational check lacks
+supporting evidence. The grouped editor remains an optional atomic workflow.
 
-The existing number editor stages related capital fields and restores in one
-atomic save. Inline cells link to that same grouped editor when a relationship
-needs more than one amount changed. Incomplete source balances are unavailable
-checks, not reconciled capital identities. Static builds evaluate source-review
-expiry on the publication day and block expired or altered review evidence.
+The server builds the input catalog from the current published book using the
+supported schema. A different application-reader hash does not disable that
+catalog, even when new statement facts have arrived. Per-record source
+fingerprints and optimistic versions still prevent stale overwrites. Basic
+numeric, field, authentication and request-origin validation remain in place.
 
-A correction cannot silently preserve an XIRR based on incompatible dated cash
-or units. The dated return remains unavailable until the transaction record
-reconciles with the correction. The canonical statements are not overwritten.
+Corrections retain original/previous values, source identity, effective dates,
+units and versioned store history. The canonical statements and recorded dated
+flows are not rewritten. Correction context is advisory; established return
+methods continue to apply their own existing evidence rules.
 
-## Published evidence
+## Audit isolation and interpretation
 
-Each immutable publication includes:
+The audit collector contains optional audit failures. It reports advisory mode,
+an explicit audit status and no blocking issues. If the audit cannot run, it
+returns an unavailable diagnostic without mutating the book or claiming that
+unknown discrepancy counts are zero.
 
-- `financial/integrity.json`: complete contract and coverage summary.
-- `financial/graph.json` and `financial/registry.json`: identities and relationships.
-- `financial/events.json`: event observations and settlement-control postings.
-- `financial/metrics.json`: units, currency, dates, formula versions, source
-  pointers, status and usable values for holding measurements.
-- `financial/checks.json`: reconciled, disputed and unavailable controls.
-- `financial/reconciliationReviews.json`: exact historical review decisions.
+Audit metrics carry the canonical value alongside evidence and a diagnostic
+status. The independent usableValue field expresses the audit's confidence
+only. It must not be used to clear established dashboard values, narrow
+coverage or introduce additional publication/editing gates.
 
-`/api/financial-integrity?part=integrity` discovers the current authenticated
-report. It also accepts `graph`, `events`, `metrics`, `checks`,
-`reconciliationReviews` and `registry`. Existing immutable statement-data paths
-can pin a report to a specific version. The same preparation and identity checks
-run for static builds, fast intake and reader migration. Configuration is part
-of the reader revision, so a policy change cannot silently reuse old indexes.
+Each immutable publication retains financial integrity, graph, registry, event,
+metric, check and reconciliation-review artifacts. The authenticated financial
+integrity endpoint serves that evidence for its exact book version. The same
+advisory policy applies to static builds, rapid intake and reader migration.
+Software tests check the audit's behaviour; audit reminders do not impose a new
+maintenance schedule on the family.
 
-Source gaps remain real: purchase records, dated cash flows, bank mappings and
-private valuations must arrive from the family, custodian or issuer. The
-contract records these gaps; enrichment cannot turn them into verified facts.
+Source records can improve the book when supported updates arrive. The audit
+adds traceability and comparisons while preserving the established work.
