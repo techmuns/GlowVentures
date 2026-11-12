@@ -26456,25 +26456,15 @@ const INVARIANTS = {
         // says the figures are the last complete round.
         return !!r && r.text === "" && /last complete round/i.test(r.title);
       }],
-    /**
-     * …AND NO RUPEE FIGURE OVER AN EMPTY SET (Stage 10dc). On this reopen the
-     * saved event capture is days behind the cached quotes, so the gate
-     * verifies no share count and the money total covers no name at all. #104's
-     * line printed "₹0 of ₹64.8 Cr held" there — a measured zero standing in for
-     * an absent measurement, which Convention 2 forbids. Where the verified
-     * count is nought the line carries no rupee figure; where it is not, the
-     * value clause must cover that count.
-     */
-    ["...and the coverage line prints no rupee figure over names it does not cover",
+    /** An unverified money total stays absent; the info control explains its coverage. */
+    ["...and the daily money figure stays absent when no share counts are verified",
       () => {
         if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
         const cov = CACHED.coverage;
         if (cov == null) return false;
-        const m = /(?:^|·\s*)(\d+) of (\d+) names/.exec(cov);
-        if (!m) return false;
-        if (/₹0\s+of\b/.test(cov)) return false;
-        return Number(m[1]) === 0 ? !/₹/.test(cov)
-          : /₹[\d,.]+\s*(?:Cr|L|K)? of ₹[\d,.]+\s*(?:Cr|L|K)? held/.test(cov);
+        if (cov.startsWith("No money move is struck:")) return CACHED.impact === "—";
+        return /^The move is struck on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held, across [1-9]\d* of \d+ direct-equity names/.test(cov)
+          && /₹/.test(CACHED.impact ?? "");
       }],
   ],
 
@@ -31346,30 +31336,14 @@ const INVARIANTS = {
         const card = moversCard(ctx?.cioLayout?.text);
         // The tile's label is the SCOPE's, and the scope is Direct Equity —
         // *"we will only show direct equity as default."*
-        const m = /DIRECT EQUITY · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
+        const m = /DIRECT EQUITY · TODAY\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*([+-]\d+\.\d+)%/i.exec(card);
         return !!m && Math.abs(Number(m[1]) - 10) < 0.02;
       }],
-    /**
-     * ...AND THE TILE SAYS WHAT IT COVERS, on its face rather than in a hover —
-     * in NAMES and in RUPEES, both. A name count alone hides how much of a scope
-     * a percentage stands on: four of this book's Direct Equity names resolve
-     * to no NSE symbol, so "33 of 37" and the value behind it disclose the same
-     * fact very differently, and the second is the one a reader needs beside a
-     * figure printed at 22px.
-     */
-    ["the day-move tile names its own coverage, in rupees and in names",
-      // THE FIGURES ON ITS FACE, THE SENTENCE IN ITS HOVER (Stage 10cp): the
-      // face is "₹X of ₹Y held · N of M names", and why the rest are not
-      // counted is the line's own `title`. Both halves are required — a face
-      // that dropped the names, or a hover that stopped naming the scope, fails.
-      (t, ctx) => /₹[\d,.]+\s*(?:Cr|L|K)? of ₹[\d,.]+\s*(?:Cr|L|K)? held\s*·\s*\d+ of \d+ names/.test(t)
-        && (ctx?.titles ?? []).some((x) => /^The move is struck on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held, across \d+ of \d+ direct-equity names — the rest lack a quote or a verified share count/.test(x))
-        && !/across \d+ of \d+ direct-equity names/.test(t)
-        // #104's sentence form of the same line (Stage 10dc): "N of M names
-        // with price changes · … · K of M names with verified impact" reads as
-        // a sentence by Stage 10cp's measure, and is two counts where one is
-        // the tile's and the other is the ranking's.
-        && !/names with (?:price changes|verified impact)/.test(t)],
+    /** Coverage is available through the info control without a permanent caption. */
+    ["the compact day-move tile keeps coverage in its info control",
+      (t, ctx) => (ctx?.titles ?? []).some((x) => /^The move is struck on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held, across \d+ of \d+ direct-equity names — the rest lack a quote or a verified share count/.test(x))
+        && !/₹[\d,.]+\s*(?:Cr|L|K)? of ₹[\d,.]+\s*(?:Cr|L|K)? held\s*·\s*\d+ of \d+ names/.test(t)
+        && !/across \d+ of \d+ direct-equity names/.test(t)],
     /**
      * ALL FOUR INDICES, EACH WITH A LEVEL AND A MOVE — the family named these
      * four. An index that resolved but printed no level would satisfy a check
@@ -31377,7 +31351,7 @@ const INVARIANTS = {
      */
     ["all four NSE indices render a level and a −1.00% day move",
       (t) => ["Nifty 50", "Nifty 500", "Nifty Midcap 150", "Nifty Smallcap 250"].every((label) =>
-        new RegExp(`${label}\\s*\\n\\s*[\\d,]+\\.\\d+\\s*\\n\\s*-1\\.00%`).test(t))],
+        new RegExp(`${label}\\s*[\\d,]+\\.\\d+\\s*-1\\.00%`).test(t))],
     /**
      * THE BOOK-AGAINST-NIFTY-500 LINE STAYS REMOVED (Stage 10ng). The family
      * highlighted "Direct equity is +1.33 pts against the Nifty 500 · session …"
@@ -38403,11 +38377,9 @@ for (const theme of THEMES) {
             const e = document.querySelector("[data-movers-refreshing]");
             return e ? { text: (e.textContent ?? "").replace(/\s+/g, " ").trim(), title: e.getAttribute("title") ?? "" } : null;
           })(),
-          // The coverage line's face, whitespace folded (Stage 10dc).
-          coverage: (() => {
-            const e = document.querySelector('[data-testid="movers-coverage"]');
-            return e ? (e.textContent ?? "").replace(/\s+/g, " ").trim() : null;
-          })(),
+          // Coverage is in the info control; the money figure remains on the tile.
+          coverage: document.querySelector('[data-testid="movers-coverage"]')?.getAttribute('title') ?? null,
+          impact: document.querySelector('[data-movers-daily] .font-display')?.textContent?.trim() ?? null,
         }));
       }
       if (name === "cio-tiles-saved") {

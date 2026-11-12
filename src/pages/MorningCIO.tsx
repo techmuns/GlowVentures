@@ -1583,7 +1583,7 @@ export function MorningCIO() {
           `min-h-0` is what makes `flex-1` shrink rather than grow the column
           past the window — without it the panel is as tall as its content and
           the page scrolls again, which is the whole of what was asked. */}
-      <div className={`mt-4 min-h-0 overflow-y-auto ${tab === "returns" ? "flex-none lg:flex-1" : "flex-1"}`} data-cio-panel={tab} data-navigation-scroll="morningcio-1">
+      <div className={`mt-4 min-h-0 overflow-y-auto ${tab === "returns" || tab === "movers" ? "flex-none lg:flex-1" : "flex-1"}`} data-cio-panel={tab} data-navigation-scroll="morningcio-1">
 
         {/* DAILY MOVERS — the first thing the family asked for, and the first
             card under the strip for that reason. It is the only figure on this
