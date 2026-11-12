@@ -136,6 +136,17 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   const mobileInfo = table.locator('[data-seg-cell="twrMtd"]').first().getByRole('button');
   await mobileInfo.scrollIntoViewIfNeeded();
+  // A normal scrollIntoView can centre a cell underneath the pinned name.
+  // Reveal the control in the data area, as a reader scrolling the table does.
+  await mobileInfo.evaluate(el => {
+    let port = el.parentElement;
+    while (port && !(port.scrollWidth > port.clientWidth && /auto|scroll/.test(getComputedStyle(port).overflowX))) port = port.parentElement;
+    if (!port) throw Error('The return table has no horizontal scrollport');
+    const frozen = el.closest('tr').firstElementChild.getBoundingClientRect(), bounds = port.getBoundingClientRect(), r = el.getBoundingClientRect();
+    const left = Math.max(bounds.left, frozen.right), right = Math.min(bounds.right, innerWidth);
+    if (right <= left) throw Error('The pinned name leaves no visible data area');
+    port.scrollLeft += r.left + r.width / 2 - (left + right) / 2;
+  });
   assert.ok(await mobileInfo.evaluate(el => {
     const r = el.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
     return hit === el || el.contains(hit);
