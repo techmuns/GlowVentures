@@ -100,14 +100,41 @@ assert.ok(actual.gain.gainCoverage.sinceInvestmentValue > 0 && actual.gain.gainC
 // statements hold the same units (Buoyant ×2, Founders ×2, Mirae, ABSL),
 // each from its first statement this year.
 const verified = windowReturns(statementReturnInputs(book), '2026-03-31', '2026-10-22').included;
-assert.equal(verified.length, 17);
+// 17 verified records, plus SVAN 8710067 and 8710090 opened on their rebuilt 31 March values (Stage 10ni).
+assert.equal(verified.length, 19);
 for (const w of verified) near(actual.fytd.total.units.find(u => u.accountId === w.accountId)?.gain ?? null, w.gain);
 const unitWindowed = actual.fytd.total.units.filter(u => BOOK_UNIT_WINDOWS[u.accountId]);
 assert.deepEqual(unitWindowed.map(u => u.from).sort(), ['2026-07-01', '2026-07-02', '2026-07-31', '2026-07-31', '2026-07-31', '2026-07-31']);
-near(actual.fytd.total.gain, 198576986.99);
-assert.equal(actual.fytd.coveredAccounts, 23);
+// SVAN's two accounts from their rebuilt 31 March values (Stage 10ni) add ₹4,02,59,338.13 and ₹2,83,35,982.54.
+near(actual.fytd.total.gain, 198576986.99 + 40259338.13 + 28335982.54);
+assert.equal(actual.fytd.coveredAccounts, 25);
 // The calendar-year card reads at least every account the financial year does.
 assert.ok(actual.ytd.coveredAccounts >= actual.fytd.coveredAccounts && actual.ytd.coveredHoldings >= actual.fytd.coveredHoldings);
 assert.ok(actual.history.total.returnPct != null);
 assert.ok(actual.history.total.missing.length > 0);
 console.log('available headline returns: verified gain, exits, partial periods, live isolation, real coverage');
+
+// THE OPENING VALUES WE REBUILT (Stage 10ni): a refused account opens on its
+// rebuilt 31 Dec value, takes the ledger's money, the manager's later values,
+// and closes where its capital register reaches; a record already opening on
+// the day is left alone.
+{
+  const { withTradeOpening, tradeOpeningNote } = await import('../availableCardReturns');
+  const o = { openings: [{ date: '2025-12-31', value: 100, equity: 90, cash: 10, names: 2, entries: [{ date: '2026-01-09', securityKey: 'new-co', units: 1, close: 5, value: 5 }] },
+    { date: '2026-03-31', value: 90, equity: 80, cash: 10, names: 3, entries: [] }],
+    flows: [{ date: '2026-01-09', amount: -5, description: 'new-co joins' }, { date: '2026-05-10', amount: 1, description: 'TDS on Payout' }],
+    capitalTo: '2026-09-30', checks: [{ date: '2026-05-31', docKey: 'x', rebuilt: 120, printed: 120.02, diffPct: -0.02 }, { date: '2026-06-30', docKey: 'y', rebuilt: 130, printed: 130, diffPct: 0 }], sources: [] };
+  const opened = withTradeOpening(missing, o, [{ date: '2026-06-30', nav: 130 }, { date: '2026-09-30', nav: 140 }]);
+  assert.equal(opened.flowsUnknown, null); assert.equal(opened.knownFrom, '2025-12-31'); assert.equal(opened.knownTo, '2026-09-30'); assert.equal(opened.tradeOpening, true);
+  assert.deepEqual(opened.valuations.map(v => v.date), ['2025-12-31', '2026-03-31', '2026-06-30', '2026-09-30']);
+  const ytd = windowReturns([opened], '2025-12-31', '2026-10-22').included[0];
+  // 140 − 100 − 5 in + 1 out = 36.
+  near(ytd.gain, 36); assert.equal(ytd.openDate, '2025-12-31');
+  near(windowReturns([opened], '2026-03-31', '2026-10-22').included[0].gain, 140 - 90 + 1);
+  const kept = { ...input, knownFrom: '2025-12-31' };
+  assert.equal(withTradeOpening(kept, o), kept, 'a record already opening on the day is kept');
+  assert.equal(withTradeOpening({ ...missing, outside: 'nothing to measure' }, o).flowsUnknown, missing.flowsUnknown);
+  assert.match(tradeOpeningNote(o, '2025-12-31'), /rebuilt from the manager's own records.*within 0.02%.*New Co was not yet listed/);
+  assert.doesNotMatch(tradeOpeningNote(o, '2026-03-31'), /not yet listed/);
+}
+console.log('available card returns: rebuilt openings open a refused account on the period\'s first day.');

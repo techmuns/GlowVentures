@@ -104,6 +104,8 @@ export type AccountInput = {
   outside?: string | null;
   /** Measured from consecutive statements holding the same units (Stage 10la): the evidence, in words. */
   unitWindow?: string;
+  /** Opened on a value rebuilt from the manager's own ledgers (Stage 10ni, `BOOK_TRADE_OPENINGS`). */
+  tradeOpening?: boolean;
 };
 
 export type AccountWindow = {

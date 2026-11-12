@@ -63,7 +63,8 @@
     "predev": "npm run build:statement-files && npm run build:views && npm run build:pdf-assets",
     "pretest:family": "npm run build:statement-files && npm run build:views",
     "build:pdf-assets": "node scripts/build-pdf-assets.mjs",
-    "check:financial-integrity": "node scripts/check-financial-integrity.mjs"
+    "check:financial-integrity": "node scripts/check-financial-integrity.mjs",
+    "build-opening-closes": "node scripts/build-opening-closes.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
