@@ -885,7 +885,7 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
   }
   /* Keep frozen Returns names inside their cell so they cannot cover the
      adjacent return figures and info buttons on narrow screens. */
-  #root [data-seg-table] > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
+  #root :is([data-seg-table], [data-sa-table], [data-year-table]) > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
     width: 10rem;
     min-width: 10rem;
     max-width: 10rem;
