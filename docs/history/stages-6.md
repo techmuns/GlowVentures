@@ -1702,3 +1702,9 @@ Codex's review of #352, verified against the code and the book:
 - Capital relationships remain visible as audit warnings while single-cell edits and optional atomic groups both work. The input API follows the supported current published schema and retains per-record source/version protection; a deployment hash cannot lock an otherwise valid source record.
 - Independent arithmetic is compared beside the canonical result. Audit failures are contained, and existing source-scoped decisions survive reminder expiry without claiming a new review. The original new/worsening-source conflict protections remain in place.
 - Regression checks cover retained figures, capital corrections, dated-return coverage, current-source editing, expired reviews and audit failure isolation. Before/after comparison of the complete established book is retained with the local validation evidence.
+
+### Stage 10oc — The Monitor's return cells: the holding's figure leads, its index under it
+
+- *"make the main return bold and the bottom benchmark also better ui so can easily read the cell"* — the holding's return is a size up (13px) and semibold; the index line under it is quieter.
+- `BenchLine` (`src/components/HoldingBenchmark.tsx`): the index's short name is a small-caps label (`.bench-name` in `index.css`), its return a lighter medium-weight figure beside it, with a small gap above. Same data attributes, hover and absence handling as Stage 10nt; the best-guess asterisk stays.
+- The first-column freeze this PR first carried landed separately as Stage 10nj (#399), so it is dropped here.

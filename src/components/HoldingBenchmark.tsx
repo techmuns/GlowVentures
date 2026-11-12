@@ -54,10 +54,15 @@ const PRICE_BASIS = "A price index: dividends are not in it.";
 /**
  * The line itself. `inline-block w-full` puts it under the figure without a
  * line break in the cell's text, which the page sweep reads row by row.
+ * Quieter than the holding's figure above it (Stage 10oc): the index's name is
+ * a small-caps label and its return a lighter figure beside it, so the cell
+ * reads as the holding first and its index second.
  */
+const LINE = "mt-1 inline-block w-full whitespace-nowrap text-[10.5px] font-normal leading-tight text-slate-500";
+
 export function BenchLine({ hb, fig, holdingPct }: { hb: HoldingBenchmark; fig: IndexFigure | null; holdingPct: number | null }) {
   if (!hb.bench) {
-    return <span data-bench="none" title={hb.why} className="inline-block w-full whitespace-nowrap text-[10px] leading-tight text-slate-500">no index</span>;
+    return <span data-bench="none" title={hb.why} className={LINE}>no index</span>;
   }
   const b = hb.bench;
   const guess = hb.source === "rule";
@@ -71,11 +76,11 @@ export function BenchLine({ hb, fig, holdingPct }: { hb: HoldingBenchmark; fig: 
     <span data-bench={b.key} data-bench-source={hb.source} data-bench-pct={fig?.shown ? fig.pct : ""} data-bench-from={fig?.shown ? fig.from : undefined}
       data-bench-to={fig?.shown ? fig.to : undefined} data-bench-annual={fig?.shown && fig.annual ? "true" : undefined} data-bench-period={fig?.shown && fig.period ? "" : undefined}
       data-bench-reason={fig && !fig.shown ? fig.reason : undefined} data-bench-feed={fig && !fig.shown && fig.feed ? "" : undefined}
-      title={title} className="inline-block w-full whitespace-nowrap text-[10px] leading-tight text-slate-500">
-      {BENCH_SHORT[b.key]}{guess && <sup data-bench-guess title="Benchmark is a best guess — to confirm with Yamini" className="text-amber-400/90">*</sup>}{" "}
+      title={title} className={LINE}>
+      <span className="bench-name">{BENCH_SHORT[b.key]}</span>{guess && <sup data-bench-guess title="Benchmark is a best guess — to confirm with Yamini" className="text-amber-400/90">*</sup>}{" "}
       {/* The index's return, or a plain dash with its reason as the hover — no
           words on the face (Stage 10nt: "remove all fluff and just add index return"). */}
-      {fig?.shown ? <span className="mono">{fmtPct(fig.pct, { sign: true, decimals: 1 })}</span>
+      {fig?.shown ? <span className="mono ml-0.5 font-medium text-slate-400">{fmtPct(fig.pct, { sign: true, decimals: 1 })}</span>
         : <AbsentCell reason={fig ? `No index figure: ${fig.reason}.` : "No index figure."} />}
     </span>
   );
