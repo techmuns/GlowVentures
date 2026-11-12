@@ -143,7 +143,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, e
     add(a.total);
     return m;
   }, [a, selection, benchLevels, benchCtx]);
-  // Since investment covers every holding; a period, the public ones — private investments are reported apart, as on the cards.
+  // Since investment covers every holding; a period, the public ones — private investments have no price, so this price figure reports them apart.
   const marketBase = useMemo(() => current.filter(p => p.marketValue > 0 && (selection.inception || p.marketSide !== 'private')), [current, selection.inception]);
   const marketPrivate = selection.inception ? 0 : current.filter(p => p.marketValue > 0 && p.marketSide === 'private').length;
   const marketOf = (ps: readonly typeof current[number][]) => {
@@ -204,7 +204,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, e
   const accessors = withReviewAccessors<SelectedLine>({ seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
     weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, bench: r => bench(r).pct, ret: r => r.returnPct, contrib: r => r.contribution,
     ...Object.fromEntries(TWR_COLUMNS.map(c => [c.key, (r: SelectedLine) => twrOf(r)[c.key].pct])),
-    basis: r => r.units.some(u => u.assumption) ? 'Assumed held' : 'Statement records',
+    basis: r => r.units.some(u => u.assumption) ? 'Carried forward' : 'Statement records',
     qty: r => fig(r).quantity, avgCost: r => fig(r).avgCost, cmp: r => fig(r).price, day: r => fig(r).day.pct,
     investedOn: r => fig(r).investedOn?.first, cost: r => fig(r).costReason ? null : fig(r).cost.cost,
     pnl: r => fig(r).unrealised, realised: r => fig(r).realised,
@@ -267,17 +267,17 @@ export default function SegmentReturns({ selection: recordedSelection, period, e
       <td key="deployed" className={`${pad} text-right mono text-slate-300`}>{l.invested != null ? money(l.invested) : <AbsentCell reason={reason(l)} />}</td>,
       h.investedOn, h.cost,
       <td key="gain" data-seg-cell="gain" className={`${pad} text-right mono ${changeColor(l.gain)}`}><span className="inline-flex items-center justify-end gap-1">
-        {l.gain != null ? money(l.gain, true) : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} />{info(l, 'gain')}</span></td>,
+        {l.gain != null ? money(l.gain, true) : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} showLabel={false} />{info(l, 'gain')}</span></td>,
       h.pnl, h.realised,
       <LineBenchmarkCell key="bench" label={l.key === 'total' ? 'Total' : l.label} b={bench(l)} pad={pad} requested={selection.type} money={money} />,
       <td key="ret" data-seg-cell="ret" data-seg-shown-as={l.measured?.shown ? (l.measured.shownAs ?? selection.type) : undefined} className={`${pad} text-right mono ${changeColor(l.returnPct)}`}><span className="inline-flex items-center justify-end gap-1"
         title={shownAbsolute(l) ? `Held under a year, so this is the absolute return, not ${type.label}: a return under a year is never annualised.`
           : l.measured?.basis === 'annual' && l.periodPct != null ? `${pct(l.periodPct)} over the period itself, not stated per year` : undefined}>
-        {l.returnPct != null ? <>{shownAbsolute(l) && <span className="ret-tag">ABS</span>}{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} />{info(l, 'return')}</span></td>,
+        {l.returnPct != null ? <>{shownAbsolute(l) && <span className="ret-tag">ABS</span>}{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} showLabel={false} />{info(l, 'return')}</span></td>,
       ...TWR_COLUMNS.map(c => <AdjustedTwrCell key={c.key} column={c.key} result={twrOf(l)[c.key]} pad={pad} label={l.label} onRetry={retryTwr} />),
       <td key="contrib" className={`${pad} text-right mono ${changeColor(l.contribution)}`}>{l.contribution != null ? `${l.contribution >= 0 ? '+' : ''}${l.contribution.toFixed(2)} pp` : <AbsentCell reason={contributionReason} />}</td>,
       <td key="basis" className={`${pad} text-right text-[11px] text-slate-400`}>{l.units.some(u => u.assumption)
-        ? l.units.every(u => u.assumption) ? 'Assumed held' : 'Statements + assumed held' : l.units.length ? 'Statement records' : 'Missing records'}</td>,
+        ? l.units.every(u => u.assumption) ? 'Carried forward' : 'Statements + carried forward' : l.units.length ? 'Statement records' : 'Missing records'}</td>,
       h.sector, h.entity,
       ...REVIEW_COLS.map(id => <ReviewColumnCell key={id} id={id} scope={scope} />),
     ];
@@ -321,7 +321,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, e
           {TWR_COLUMNS.map(c => <SortHeader key={c.key} col={c.key} view={view} pad="px-4 py-2"
             title="Time-weighted return from INR values and dated cash flows, linked at every cash-flow date. Fixed calendar period, through the selected ending date or latest common valuation. Missing valuations are explained in the info button. The INR basis is retained when the display currency changes.">{c.label}</SortHeader>)}
           <SortHeader col="contrib" view={view} pad="px-4 py-2" title="For Absolute return only: row gain divided by the total's shared money base, so these contributions add to the total return.">Contribution</SortHeader>
-          <SortHeader col="basis" view={view} pad="px-4 py-2" title="Assumed held means no later sale or transfer appears in the records we have. This basis is also included in Excel exports.">Holding basis</SortHeader>
+          <SortHeader col="basis" view={view} pad="px-4 py-2" title="Carried forward means no later sale or transfer appears in the records we have. This basis is also included in Excel exports.">Holding basis</SortHeader>
           <SortHeader col="sector" view={view} align="left" pad="px-4 py-2">Sector</SortHeader>
           <SortHeader col="entity" view={view} align="left" pad="px-4 py-2">Entities</SortHeader>
           {REVIEW_COLS.map(id => { const c = reviewColumn(id)!;

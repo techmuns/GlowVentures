@@ -1657,6 +1657,39 @@ Codex's review of #352, verified against the code and the book:
 - Section and footer totals pool those same legs; rows no equity index measures (cash, debt, hybrid) are left out of the total's index and named in its hover.
 - A dash that remains carries its reason as the hover only (`data-bench-reason`); `benchGapLabel` is gone. The `monitor` check now asks for that hover instead of a face label.
 
+### Stage 10nv — Portfolio Monitor: every YTD from 31 December
+
+*"for all the holdings the returns need to be simply YTD return from the same YTD"* — the family, 12 Nov 2026. Asked what a row with no 31 December value shows, they chose a dash over carrying units back to 1 January.
+
+- `ytdBook.of` (the Monitor's YTD column) accepts a window only if it opens on or before 31 December, or at nil on a holding first bought this year. The "from 31 Mar" / "from 6 Oct" chips are gone. Any other row is a dash naming its first dated value and the 31 Dec 2025 record it needs. An account window that opens later falls back to its holdings, so a purchase record can still open them on 1 January.
+- A row bought this year carries `bought` (`data-ytd-bought`), and its hover says nothing was held on 1 January.
+- `account`, `holding` and `ytdSelection` are unchanged, so Morning CIO's YTD card and the Returns tab's YTD still measure from the first dated value (see the 12 Nov explain-only decision).
+- `monitor-ytd` now checks that no cell carries a later start. Its whole-account re-solver reads `BOOK_TRADE_OPENINGS` and `BOOK_ACCOUNT_NAV_HISTORY`, so SVAN Velocity's 31 Dec opening (Stage 10ni) re-solves off the book.
+
+### Stage 10nw — Ledger Insights' transactions filter by date, side and account
+
+- The client (#377) asked for the dated transaction ledger to be sliceable — "show me purchases from June", one account, one side — and exported from there. The Transactions tab now carries a filter bar (From / To dates, Side, Account) above its tiles, reusing `FormBits`' `TextField`/`SelectField`. Member scope stays the page-wide selector; these narrow WITHIN the chosen members, and the existing `ExportableTable` carries whatever the filter shows to Excel.
+- Every figure on the tab is struck over the filtered set, so the summary ties to the rows on screen: the Transactions count, Bought and Sold tiles and the table all read `filtered`, and the Bought/Sold window follows the chosen dates. Sold with no sell in view renders `—` ("no sells in this view"), never ₹0.
+- The statements' own Realised total is a whole-record primitive over every lot — not narrowable by a per-trade filter — so under any active filter it renders `—` ("not sliced by these filters") rather than a figure that would not tie, and the lots-by-sale cross-check and the Sales & exits roll-up (both whole-window) are hidden until the filter is cleared. An active filter that matches nothing renders an `AbsentSection`, not a grid of zeros. The From/To date pickers are bounded to the tape's own window and kept in order (`TextField` gained `min`/`max`).
+- Numbered 10nw after rebasing onto a fast-moving main: the branch first used 10nk, then 10nu, both taken meanwhile by Home's allocation cards and the YTD work.
+- `build`, `test:family` and `check:pages ONLY=ledger` green (2 combos clean; the tab's existing measured-zero leads and the tape-window not-checked invariant are unchanged). No book or generated file changed.
+
+### Stage 10nx — Sector Composition drills into sub-industries
+
+- The client (#406) asked that a large sector open into its sub-industries, not just its companies: Financials → Banks / Finance / Insurance / Capital Markets / Fintech. An opened sector that spans more than one of screener.in's Broad Industries now groups its company rows under a non-collapsing sub-industry band carrying the group's issuer count and total; a single-sub-industry sector stays the flat list exactly as before.
+- `CompanyExposure` gains `subIndustry` (`src/lib/lookthrough.ts`): screener's Broad Industry, set only on the `vendor` tier (it is `hit.screenerBroadIndustry`), `null` where a filing or the statement placed the sector or screener names none. It is a projection of the one classification — no second resolver — and rides `equityOnly`'s spread into `SectorEntry`, so the page reads it on each row with no change to `sectorRollup.ts`.
+- The band is modelled on `CompareGroup` — a `tree-section-row` inside the existing `[data-sector-companies]` table, carrying `data-sub-industry` / `data-sub-industry-total`. Every `[data-sector-company]` row is still rendered, in the reader's sort order, so the per-row Direct/PMS/derived/total split, the summing footer and the `sectorSplit` check-pages probe are untouched; the band has no `data-sector-company`, and its `data-table-depth="1"` ancestor keeps it out of the zebra check. Only the Consolidated (companies) view groups; Direct Equity's holdings view is unchanged.
+- `build`, `test:family`, `check:pages ONLY=sectors` (2 combos clean) and `scripts/dev/check-sector-return-details.mjs` all green. No book or generated file changed.
+
+### Stage 10nu — Returns hold every private investment at its latest valuation
+
+*"all others i think you can assume to be held at value right as new data comes we can show updated but dont show this incomplete"* — the family, 12 Nov 2026, on Investment performance reading "53 of 73 accounts covered".
+
+- The 20 accounts left out were private: MOPWM review blocks, the Glowterra/Glowsphere demats' unlisted shares, Franklin Credit AIF, India SME, Neo Infra and the like. `heldAtLastValue` (`periodRules.ts`) refused any private holding, so `periodSelection` dropped them (Stage 10la's rule 7, "private kept on its own line").
+- Rule 7 is replaced: a private holding no record measures is held at its latest valuation to the period's end, 0% and in the base, exactly as rule 8 holds a one-statement fund. Its reason is `PRIVATE_HELD`. A new valuation then counts the change. The Returns tab, Morning CIO's FYTD / YTD / available-history cards, the NAV card's line and the CIO report all read this one selection, so they move together; the figures fall as the base widens.
+- Investment performance's (i) lists "Held at latest valuation" accounts with their value and valuation date (`data-bridge-account-held`). Morning CIO's card captions count private holdings (`privateCoveredHoldings` / `privateHoldings`), and the Private row says "in this return" instead of "reported apart". The NAV card's hover reads "Covers N% of investments … ₹X of it private"; its `check:pages` probe follows.
+- Unchanged: Sector attribution's price-only market figure still reports private apart (no published price; its wording no longer says "as on the return cards"); the adjusted TWR columns still need a valuation series for a held unit; Since investment already held everything at value.
+
 ### Stage 10ny — Keep number editing available for an unchanged financial book
 
 - A new app deployment can change the reader identifier before scheduled statement publication catches up. Number editing now accepts that older reader only when the canonical SHA-256 fingerprint of its complete received book equals the deployment's verified book. A changed valuation, cash-flow history, source pointer or other book fact still blocks an incompatible reader.

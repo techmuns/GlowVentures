@@ -17,8 +17,8 @@
  *     on its own close, or its first exchange close if it listed later
  *     (`earlierBalanceOptions`): ESDS, Sotefin, NSE.
  *
- * And, for whatever public holding none of them measures, its LAST VALUE held
- * flat to the period's end (`heldAtLastValue`) — a 0% that is named.
+ * And, for whatever holding none of them measures — public or private — its LAST
+ * VALUE held flat to the period's end (`heldAtLastValue`) — a 0% that is named.
  *
  * Every window is labelled with the assumption it rests on, as `assumedHolding`'s are.
  */
@@ -131,13 +131,18 @@ export function tradedWindow(p: Position, a: Account, open: string | null, end: 
 }
 
 /**
- * HELD AT ITS LAST VALUE (the family, 4 Nov 2026): a public holding no record
+ * HELD AT ITS LAST VALUE (the family, 4 Nov 2026): a holding no record
  * measures this period is carried flat from its latest valuation to the end —
  * a 0% that adds its money to the base and is named, so the caption can say
  * how much of the coverage is measured and how much is held.
+ *
+ * PRIVATE INVESTMENTS TOO (Stage 10nu; the family, 12 Nov 2026: "all others
+ * … assume to be held at value … as new data comes we can show updated but
+ * dont show this incomplete"). A private company, AIF or at-cost line has no
+ * published price, so it is held at its latest valuation until the next one.
  */
 export function heldAtLastValue(p: Position, a: Account, open: string | null, end: string, reason: string): ReturnUnit | null {
-  if (!positive(p.marketValue) || p.marketSide === 'private') return null;
+  if (!positive(p.marketValue)) return null;
   const valuedOn = p.navDate ?? a.asOf;
   const from = open && valuedOn < open ? open : valuedOn;
   if (!(from < end)) return null;

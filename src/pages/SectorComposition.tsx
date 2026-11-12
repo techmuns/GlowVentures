@@ -1446,7 +1446,15 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                         </Tr>
                                       </thead>
                                       <tbody className="divide-y divide-ink-700/50">
-                                        {companies.map((e) => {
+                                        {(() => {
+                                          // #406 — the sub-industry drill-down. One company row is unchanged;
+                                          // where a sector spans more than one of screener.in's Broad Industries
+                                          // (Financials → Banks / Finance / Insurance / Capital Markets, …) the
+                                          // rows are grouped under a non-collapsing sub-industry band carrying the
+                                          // group's issuer count and total. Every [data-sector-company] row is
+                                          // still rendered in the reader's sort order, so the per-row split and the
+                                          // sector footer are untouched.
+                                          const renderRow = (e: (typeof companies)[number]) => {
                                           const sp = splits.get(e.key)!;
                                           return (
                                           <Tr view={companyView} reviewScope={{ positions: e.derived > 0 ? [] : e.positions }} key={e.key} className="hover:bg-ink-700/30" data-sector-company={e.key}
@@ -1481,7 +1489,34 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                             })()}
                                           </Tr>
                                           );
-                                        })}
+                                          };
+                                          const subOf = (e: (typeof companies)[number]) => e.subIndustry ?? "Other / unclassified";
+                                          const labels = companies.map(subOf);
+                                          if (new Set(labels).size <= 1) return companies.map(renderRow);
+                                          const order: string[] = [];
+                                          const groups = new Map<string, (typeof companies)[number][]>();
+                                          companies.forEach((e, i) => {
+                                            const L = labels[i];
+                                            if (!groups.has(L)) { groups.set(L, []); order.push(L); }
+                                            groups.get(L)!.push(e);
+                                          });
+                                          const span = companyView.order.length;
+                                          return order.map((L) => {
+                                            const rows = groups.get(L)!;
+                                            const groupTotal = sum(rows.map((e) => e.total));
+                                            return (
+                                              <Fragment key={`sub-${L}`}>
+                                                <tr className="tree-section-row bg-ink-900/40" data-sub-industry={L} data-sub-industry-total={groupTotal}>
+                                                  <td colSpan={span} className="px-3 pb-1 pt-2.5">
+                                                    <span className="label-xs text-champagne-400/80">{L}</span>
+                                                    <span className="ml-2 text-[11px] text-slate-500">{rows.length} {rows.length === 1 ? "issuer" : "issuers"} · {fmtFromBase(groupTotal, { compact: true })}</span>
+                                                  </td>
+                                                </tr>
+                                                {rows.map(renderRow)}
+                                              </Fragment>
+                                            );
+                                          });
+                                        })()}
                                       </tbody>
                                       {/* THE SECTOR'S OWN SPLIT — each column summed from the rows
                                           above it, so the footer ties to its columns and Total is

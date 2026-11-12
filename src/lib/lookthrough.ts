@@ -736,6 +736,13 @@ export type CompanyExposure = {
    * Technology because one PMS files it under "Consulting Services".
    */
   sectorFrom: "book" | "disclosure" | "vendor" | null;
+  /**
+   * The finer industry under `sector`, for the sub-industry drill-down (#406):
+   * screener.in's Broad Industry (Financials → Banks / Finance / Insurance /
+   * Capital Markets, etc.). Only the `vendor` tier carries it; `null` where the
+   * sector came from a filing or the statement, or screener names none.
+   */
+  subIndustry: string | null;
   /** The book rows behind `measured`, for a drill-down. Empty on a derived-only company. */
   positions: Position[];
   /**
@@ -810,7 +817,7 @@ export function companyExposure(
     const e = byKey.get(p.securityKey) ?? {
       key: p.securityKey, name: p.security, isin: p.isin ?? null,
       measured: 0, derived: 0, total: 0, derivedEquity: 0, derivedGross: 0,
-      sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[], classes: [] as string[],
+      sector: UNCLASSIFIED, sectorFrom: null, subIndustry: null, positions: [] as Position[], classes: [] as string[],
     };
     e.measured += p.marketValue;
     e.positions.push(p);
@@ -824,7 +831,7 @@ export function companyExposure(
       const e = byKey.get(x.key) ?? {
         key: x.key, name: x.name, isin: x.isin,
         measured: 0, derived: 0, total: 0, derivedEquity: 0, derivedGross: 0,
-        sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[], classes: [] as string[],
+        sector: UNCLASSIFIED, sectorFrom: null, subIndustry: null, positions: [] as Position[], classes: [] as string[],
       };
       e.derived += x.total;
       // The equity half, line by line, and the gross half apart (Stage 10fz).
@@ -859,7 +866,7 @@ export function companyExposure(
     const hit = (symbol ? VENDOR_SECTORS[symbol] : undefined) ?? (VENDOR_KEYS[e.key] ? VENDOR_SECTORS[VENDOR_KEYS[e.key]] : undefined);
     const filed = filedSector.get(e.key);
     const book = bookSector.get(e.key);
-    if (hit && hit.gics && hit.gics !== UNCLASSIFIED) { e.sector = hit.gics; e.sectorFrom = "vendor"; }
+    if (hit && hit.gics && hit.gics !== UNCLASSIFIED) { e.sector = hit.gics; e.sectorFrom = "vendor"; e.subIndustry = hit.screenerBroadIndustry ?? null; }
     else if (filed) { e.sector = filed; e.sectorFrom = "disclosure"; }
     else if (book) { e.sector = book; e.sectorFrom = "book"; }
   }

@@ -71,7 +71,7 @@ function MarketReturnDetails({ label, units, gaps, positions, accounts, totalVal
       {tab==='overview' && <div className="space-y-3" data-market-overview>
         {!units.length && !pending && missingCount > 0 && <p className="rounded-lg bg-ink-900 p-3">We can’t calculate this market return yet. Open Missing Values to see what’s needed.</p>}
         <p><strong>{units.length} of {positions.length} holdings</strong> are included. <strong>{missingCount}</strong> are left out{pending>0?`, including ${waiting.length} still loading`:''}.</p>
-        {privateApart && privateApart.count > 0 && <p data-market-private-apart={privateApart.count}><strong>{privateApart.count} private investments</strong> ({money(privateApart.value)}) are reported apart, at Private Market’s value, as on the return cards. They are not in these lists or totals.</p>}
+        {privateApart && privateApart.count > 0 && <p data-market-private-apart={privateApart.count}><strong>{privateApart.count} private investments</strong> ({money(privateApart.value)}) have no published price, so this price-based figure reports them apart. The return figures hold them at their latest valuation. They are not in these lists or totals.</p>}
         <dl className="grid grid-cols-2 gap-3 rounded-lg bg-ink-900 p-3">
           <div><dt className="text-xs text-slate-400">Value included</dt><dd className="font-semibold tabular">{money(covered)}</dd></div>
           <div><dt className="text-xs text-slate-400">Total current value</dt><dd className="font-semibold tabular">{money(totalValue)}</dd></div>

@@ -10,9 +10,11 @@ import type { ReactNode } from "react";
 // bank balance is not set; a typed 0 target weight is a decision. Putting a
 // parser in here would hide that distinction behind a shared default.
 
-export function TextField({ label, value, onChange, placeholder, type = "text", wide, hint, mono = true }: {
+export function TextField({ label, value, onChange, placeholder, type = "text", wide, hint, mono = true, min, max }: {
   label: string; value: string; onChange: (v: string) => void;
   placeholder?: string; type?: string; wide?: boolean; hint?: string; mono?: boolean;
+  /** Bounds for a `date` or `number` input — the native picker refuses values outside them. */
+  min?: string; max?: string;
 }) {
   return (
     <label className={`block ${wide ? "sm:col-span-2" : ""}`}>
@@ -21,6 +23,8 @@ export function TextField({ label, value, onChange, placeholder, type = "text", 
         type={type}
         value={value}
         placeholder={placeholder}
+        min={min}
+        max={max}
         onChange={(e) => onChange(e.target.value)}
         className={`${mono ? "mono " : ""}mt-1 w-full rounded-md border border-ink-700 bg-ink-900/60 px-2.5 py-1.5 text-[12.5px] text-slate-200 placeholder:text-slate-600 focus:border-champagne-500/40 focus:outline-none`}
       />

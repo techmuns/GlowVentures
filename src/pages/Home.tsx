@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Area, AreaChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ArrowDownLeft, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronRight, Globe2, Info, Wallet } from 'lucide-react';
@@ -25,6 +25,8 @@ import type { HomeWidgetId } from '@/lib/homeWidgets';
 import { HomeReturnCoverage } from '@/components/HomeReturnCoverage';
 import { ExportableTable } from '@/components/ExportableTable';
 import './Home.css';
+
+const PortfolioReportExport = lazy(() => import('./MorningCIO').then(m => ({ default: m.PortfolioReportExport })));
 
 const pct = (n: number | null | undefined) => n == null ? '—' : `${n > 0 ? '+' : ''}${n.toFixed(2)}%`;
 const weightLabel = (n: number) => n > 0 && n < 0.1 ? '<0.1%' : `${n.toFixed(1)}%`;
@@ -85,12 +87,11 @@ export function Home() {
     aum: (<section className="home-hero" data-home-aum={model.total ?? ''}>
       <div className="home-hero-main"><div className="home-hero-label"><span>{historical ? 'Recorded AUM' : 'Investment AUM'}</span><Hint text={sourceNote} /></div><div className="home-aum-value">{money(model.total)}</div><div className="home-hero-meta"><span className="home-status-dot" />{scope.label}<span>·</span><span>{historical ? `As of ${fmtDate(to)}` : 'Latest available values'}</span></div></div>
       <div className="home-hero-side"><span className="home-eyebrow">INVESTMENT BOOK</span><div><strong>{new Set(values.filter(v => v.value !== 0).map(v => v.accountId)).size}</strong> accounts <span className="home-hero-rule" /><strong>{historical ? values.filter(v => v.value !== 0).length : currentHoldings(dedupedPositions(portfolio.positions)).length}</strong> {historical ? 'valuation records' : 'holdings'}</div><Link to="/monitor">Explore portfolio <ArrowUpRight size={14} /></Link></div>
-      <span className="home-hero-footnote">Polycab promoter holding is shown separately</span>
     </section>),
     netWorth: (<Metric label="Total net worth" value={<AbsentCell reason="A complete family balance sheet, including all assets and liabilities, is needed. Investment AUM excludes the ring-fenced Polycab holding and separately managed property records." />} note="Balance sheet needed" />),
     assetsTotal: (<Metric label="Total assets" value={money(model.positiveAssets)} note={historical ? 'Recorded investment assets' : 'Investment book · positive values'} hint="Positive valued investment positions in this book. This is not the family's complete household asset register." />),
     liabilities: (<Metric label="Total liabilities" value={<AbsentCell reason="The book does not carry a complete borrowing and liability register. Negative investment cash balances alone cannot establish total liabilities." />} note={knownNegative > 0 ? `${money(knownNegative)} negative balances in book` : 'Liability records needed'} />),
-    cash: (<Metric label="Total cash" value={cash == null ? <AbsentCell reason={historical ? 'Historical account values do not split out all cash balances.' : 'No separately valued cash class is recorded in this selection.'} /> : money(cash)} note={historical ? 'Historical split unavailable' : 'Cash class in investment book'} />),
+    cash: (<Metric label="Total cash" value={cash == null ? <AbsentCell reason={historical ? 'Historical account values do not split out all cash balances.' : 'No separately valued cash class is recorded in this selection.'} /> : money(cash)} note={historical ? 'Historical split unavailable' : undefined} link={cash == null ? undefined : { to: drilldownHref('home-cash'), label: 'View cash holdings' }} />),
     performance: (<HomePerformance from={from} to={to} />),
     allocation: (<HomeAllocation model={model} money={money} displayCurrency={displayCurrency} />),
     geography: (<Panel title="Geographic exposure" label="INVESTMENT FOOTPRINT" className="home-geography-panel" right={<Hint text="The book contains India-focused accounts. A fund's registration, listing venue or currency does not establish where its underlying investments are located. Verified country allocations are not recorded." />}>
@@ -117,7 +118,7 @@ export function Home() {
     sectors: (<HomeSectors historical={historical} />),
   };
   return <div className="home-dashboard" data-home-overview data-home-total={model.total ?? ''}>
-    <PageHeader title="Home" right={<HomeWidgetActions state={widgetState} />} />
+    <PageHeader title="Home" right={<div className="flex flex-wrap items-center gap-2"><Suspense fallback={null}><PortfolioReportExport /></Suspense><HomeWidgetActions state={widgetState} /></div>} />
     <div className="home-heading"><div><span className="home-eyebrow">YOUR WEALTH, AT A GLANCE</span><p className="home-intro">A clear view of the bigger picture.</p></div>
       <div className="home-date-toolbar"><div className="home-periods" role="group" aria-label="Home date presets">{(['mtd', 'ytd', 'fytd', 'y1'] as const).map((key, i) => <button type="button" key={key} aria-pressed={from === periodStart(key, to)} onClick={() => applyDates(periodStart(key, today)!, today)}>{['MTD', 'YTD', 'FYTD', '1Y'][i]}</button>)}</div>
         <form className="home-date-range" onSubmit={e => { e.preventDefault(); applyDates(draftFrom, draftTo); }}><CalendarDays size={14} aria-hidden /><label><span className="sr-only">Home start date</span><input type="date" min="2000-01-01" max={draftTo} value={draftFrom} onChange={e => setDraftFrom(e.target.value)} required /></label><span className="home-date-divider">—</span><label><span className="sr-only">Home end date</span><input type="date" min={draftFrom} max={today} value={draftTo} onChange={e => setDraftTo(e.target.value)} required /></label><button type="submit" aria-label="Apply Home dates" title="Apply dates"><Check size={15} /></button></form></div></div>
@@ -127,8 +128,8 @@ export function Home() {
   </div>;
 }
 
-function Metric({ label, value, note, hint }: { label: string; value: ReactNode; note: string; hint?: string }) {
-  return <div className="home-metric"><span>{label}{hint && <Hint text={hint} />}</span><strong>{value}</strong><small>{note}</small></div>;
+function Metric({ label, value, note, hint, link }: { label: string; value: ReactNode; note?: string; hint?: string; link?: { to: string; label: string } }) {
+  return <div className="home-metric"><span>{label}{hint && <Hint text={hint} />}</span><strong>{value}</strong>{note && <small>{note}</small>}{link && <Link className="home-metric-link" to={link.to}>{link.label}<ArrowUpRight size={12} /></Link>}</div>;
 }
 
 function HomeAllocation({ model, money, displayCurrency }: { model: ReturnType<typeof homeAssets>; money: (value: number | null | undefined) => string; displayCurrency: string }) {

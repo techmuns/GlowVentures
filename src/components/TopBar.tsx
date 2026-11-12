@@ -1,5 +1,7 @@
 import { Sun, Moon, RefreshCw, TrendingUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { deploymentChanged, deploymentUpdateBlocked, subscribeToDeployment } from "@/lib/deploymentVersion";
+import { publicationRefreshBlocked } from "../../shared/publicationRefresh.mjs";
 import { usePortfolio, SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency } from "@/context/PortfolioContext";
 import { lastQuoteFailure } from "@/lib/quotes";
 import { outageShort } from "@/lib/upstreamStatus";
@@ -169,6 +171,8 @@ export function TopBar() {
   const { portfolio, fmtFromBase, clearPortfolio, refreshQuotes, quotesStatus, scope } = usePortfolio();
   const [isDark, setIsDark] = useState<boolean>(readInitialTheme);
   const [refreshing, setRefreshing] = useState(false);
+  const updated = useSyncExternalStore(subscribeToDeployment, deploymentChanged);
+  const updateBlocked = useSyncExternalStore(subscribeToDeployment, deploymentUpdateBlocked);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -178,6 +182,12 @@ export function TopBar() {
 
   const refresh = () => {
     if (refreshing) return;
+    if (updated) {
+      if (publicationRefreshBlocked()) return;
+      // Only this explicit action replaces the app and all financial indexes.
+      window.location.reload();
+      return;
+    }
     setRefreshing(true);
     clearPortfolio();  // reload the ingested book from source
     refreshQuotes();   // and force a fresh pull past the 60s server cache
@@ -228,8 +238,11 @@ export function TopBar() {
           </span>
         )}
         <div className="flex items-center gap-2 border-l border-ink-700 pl-3" data-topbar-buttons>
-          <button onClick={refresh} disabled={refreshing} className="btn-ghost h-9 px-2.5" title="Reload data">
+          <button onClick={refresh} disabled={refreshing || (updated && updateBlocked)} className="btn-ghost relative h-9 px-2.5"
+            aria-label={updated ? "Load latest dashboard" : "Reload data"} data-dashboard-update={updated || undefined}
+            title={updated ? updateBlocked ? "Finish editing or close the open dialog to load the update" : "Update available — load when ready" : "Reload data"}>
             <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            {updated && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-champagne-500" />}
           </button>
           <button onClick={() => setIsDark((v) => !v)} className="btn-ghost h-9 px-2.5" title="Toggle theme">
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

@@ -2079,13 +2079,14 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
         note: `Opened ${y.since}, during the current year, so its year-to-date return is its whole return since purchase.` };
     }
     /**
-     * …OR FROM THE FIRST DATE WE HAVE THIS YEAR (Stage 10jl): *"for YTD at
-     * least for this year lets show from the date we have"*. Tagged with its
-     * start date, so it never reads as a full year to date.
+     * …OR ON THE ROW'S YEAR-TO-DATE RECORD (`ytdBook.of`): since Stage 10nv
+     * every part opens on 31 December, or at nil on a holding bought this
+     * year, so a shown figure is a full year to date. A `from` tag survives
+     * only for a book built with no opening day.
      */
     const a = p.ytdFrom;
     if (a?.shown) return { shown: true, pct: a.pct, tag: a.fullYear ? "YTD" : `from ${ytdTagDay(a.from)}`, note: a.note, from: a.from, ...(a.assumed ? { assumed: true } : {}) };
-    return { shown: false, tag: "YTD", reason: a ? `${y.reason.replace(/\.?$/, ".")} From a later date this year: ${a.reason}` : y.reason };
+    return { shown: false, tag: "YTD", reason: a ? `${y.reason.replace(/\.?$/, ".")} On its dated record: ${a.reason}` : y.reason };
   }
 
   if (measure === "xirr") {

@@ -44,8 +44,15 @@ const downloadReport = async () => {
   const pending = page.waitForEvent('download'); await link.click(); return readPdf(await pending);
 };
 try {
-  await page.goto(base + '/cio');
-  const value = page.locator('[data-tile-slot="value"]').first(); await value.waitFor();
+  await page.goto(base + '/home');
+  let value = page.locator('[data-home-widget="aum"] .home-aum-value'); await value.waitFor();
+  assert.ok(!await page.getByText('Polycab promoter holding is shown separately', { exact: true }).count());
+  assert.ok(!await page.getByText('Cash class in investment book', { exact: true }).count());
+  const cash = Number(await page.locator('[data-home-class="Cash"]').getAttribute('data-value'));
+  await page.getByRole('link', { name: 'View cash holdings', exact: true }).click();
+  await page.getByRole('heading', { name: 'Cash holdings', exact: true }).waitFor();
+  assert.equal(Number(await page.locator('[data-hb-total]').getAttribute('data-hb-total')), cash, 'Cash detail matches Home to the rupee');
+  await page.goto(base + '/home'); await value.waitFor();
   const headline = (await value.innerText()).match(/₹[\d,.]+\s*(?:Cr|L)?/)?.[0].trim(); assert.ok(headline);
   // An unavailable asset must give a retryable error, rather than an empty PDF.
   await page.route('**/report-assets/NotoSans-Bold.ttf', r => r.fulfill({ status: 503, body: 'Unavailable test asset' }));
@@ -63,6 +70,7 @@ try {
   assert.ok(await page.getByRole('button', { name: 'Export report', exact: true }).evaluate(el => el === document.activeElement), 'Focus restored');
   // Capture the chosen member and USD, then confirm the second export uses that snapshot.
   await page.goto(base + '/cio?members=ajay-jaisinghani');
+  value = page.locator('[data-tile-slot="value"]').first();
   await value.waitFor(); await page.getByRole('button', { name: 'USD', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('[data-tile-slot="value"]')?.textContent.includes('$'));
   const usdHeadline = (await value.innerText()).match(/\$[\d,.]+\s*[KMBT]?/)?.[0].trim(); assert.ok(usdHeadline);
@@ -93,7 +101,7 @@ try {
   assert.ok(!historical.text.includes('Equity Holdings')); assert.ok(!historical.text.includes('Asset Table')); assert.ok(!historical.text.includes(usdHeadline));
   await page.getByRole('button', { name: 'Close report preview', exact: true }).click();
   assert.deepEqual(errors, []);
-  await fs.writeFile(path.join(out, 'results.json'), JSON.stringify({ base, whole: { file: whole.file, pages: whole.pages, headline }, scoped: { file: scoped.file, pages: scoped.pages, headline: usdHeadline }, trailing: { file: trailing.file, from: trailingFrom }, historical: { file: historical.file, pages: historical.pages }, assetRetry: true, focusRestored: true, mobile: true, errors }, null, 2));
+  await fs.writeFile(path.join(out, 'results.json'), JSON.stringify({ base, whole: { file: whole.file, pages: whole.pages, headline }, scoped: { file: scoped.file, pages: scoped.pages, headline: usdHeadline }, trailing: { file: trailing.file, from: trailingFrom }, historical: { file: historical.file, pages: historical.pages }, assetRetry: true, focusRestored: true, mobile: true, homeExport: true, cashDetail: { value: cash, matchesHome: true }, errors }, null, 2));
   console.log('Colour CIO report: real-book totals, selected member, USD, landscape pages, text bounds, omissions, retry, PDF preview, download and mobile passed.');
 } catch (e) { await page.screenshot({ path: path.join(out, 'failure.png') }).catch(() => {}); throw e; }
 finally { await browser.close(); }

@@ -16,7 +16,6 @@ export function AdjustedTwrCell({ column, result: r, pad, label, onRetry }: { co
     <span className="inline-flex items-center justify-end gap-1">
       {periodOnly && <span className="ret-tag" title="Under a year: period TWR, without annualising. Debt alone may be annualised under a year.">ABS</span>}
       {value}{r.annual && <span className="text-[10px]">p.a.</span>}
-      {r.assumed && r.pct != null && <span className="text-[10px] text-slate-500">assumed</span>}
       <ReturnCalculationInfo label={`${label} · ${def.label}`} value={value} intro="Time-weighted performance" wide
         triggerLabel={`How is ${label}'s ${def.label} calculated?`}>{() => <div className="space-y-3 text-[12px] leading-relaxed" data-twr-details>
           <p>Calculated from INR valuations and INR cash flows. The display currency does not change these return percentages.</p>

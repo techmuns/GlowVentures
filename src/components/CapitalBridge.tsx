@@ -32,7 +32,7 @@ const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 const realisedRecords = (rows: readonly BridgeAccount[]) => rows.flatMap((r) => !r.split ? []
   : r.split.realisedBy ? r.split.realisedBy.map((x) => ({ label: `${x.label} · ${r.label}`, value: x.value })) : [{ label: r.label, value: r.split.realised }]);
 const RECORD = "Summed record by record: per lot where a statement's capital gain lots make its realised line, per scheme on a fund's unit record, per holding (or whole PMS mandate) on purchase cost, otherwise per account";
-const SOURCE_WORDS = { statement: "Statement's own profit and loss", 'fund-record': "Fund's dated unit record", 'purchase-cost': 'Purchase cost, first-in first-out', 'assumed-holding': 'Assumed still held' } as const;
+const SOURCE_WORDS = { statement: "Statement's own profit and loss", 'fund-record': "Fund's dated unit record", 'purchase-cost': 'Purchase cost, first-in first-out', 'assumed-holding': 'Holding carried forward' } as const;
 /** Where a record prints no separate charges, they are already inside another part. */
 const INSIDE = { statement: 'The statement prints no separate charges', 'fund-record': "A fund's costs are inside its NAV, so they are already in the unrealised change",
   'purchase-cost': 'Costs are inside the purchase prices and sale proceeds, so they are already in the realised and unrealised gain',
@@ -44,7 +44,8 @@ function signedSum(r: BridgeAccount, gains: boolean) {
 }
 
 /**
- * WHICH ACCOUNTS THE FIGURE COVERS, AND WHICH IT DOES NOT (Stage 10nc).
+ * WHICH ACCOUNTS THE FIGURE COVERS, AND WHICH IT DOES NOT (Stage 10nc; held
+ * accounts named since Stage 10nu).
  *
  * *"What are these 53 accounts covered? … they have over 100 accounts."* A bare
  * "53 accounts covered" named neither what an account is nor how many there
@@ -69,7 +70,15 @@ export function accountCoverage(total: SelectedLine, accounts: readonly Account[
     const left = total.positions.filter(p => p.accountId === id && p.marketValue > 0 && !coveredKeys.has(`${p.accountId}|${p.securityKey}`));
     return { id, label: label(id), holdings: left.length, of: h.holdings, value: left.reduce((s, p) => s + p.marketValue, 0) };
   }).filter(x => x.holdings > 0).sort((x, y) => y.value - x.value);
-  return { covered: covered.size, of: all.size, inBook: accounts.length, outside, partly,
+  // HELD AT THEIR LAST VALUE (Stage 10nu): an account whose every part is carried
+  // flat — a private investment, or a holding with one value on record — is in
+  // the figure at 0% until a new valuation arrives, and is named here.
+  const heldOnly = [...covered].filter(id => total.units.filter(u => u.accountId === id).every(u => u.held)).map(id => {
+    const us = total.units.filter(u => u.accountId === id), dates = [...new Set(us.map(u => u.held!.date))].sort();
+    return { id, label: label(id), value: us.reduce((s, u) => s + u.close, 0), holdings: us.length, dates,
+      private: us.every(u => u.positions.every(p => p.marketSide === 'private')) };
+  }).sort((x, y) => y.value - x.value);
+  return { covered: covered.size, of: all.size, inBook: accounts.length, outside, partly, heldOnly,
     holdingNothing: [...covered].filter(id => !held.has(id)).length };
 }
 
@@ -81,7 +90,15 @@ function AccountCoverageInfo({ c, money, start }: { c: ReturnType<typeof account
         consolidated review (MOPWM), which carries that owner’s private investments as one account.</p>
       <p>The book has <strong>{c.inBook}</strong> such accounts. <strong>{c.of}</strong> of them count here — every one holding an investment today
         {c.holdingNothing > 0 ? `, plus ${c.holdingNothing} that held one during the period and hold nothing now` : ''}; the rest are closed or hold nothing.
-        This figure measures <strong>{c.covered}</strong>.</p>
+        This figure covers <strong>{c.covered}</strong>{c.heldOnly.length > 0 && <>: {c.covered - c.heldOnly.length} measured on their own records and {c.heldOnly.length} held at their latest valuation</>}.</p>
+      {c.heldOnly.length > 0 && <div data-bridge-accounts-held={c.heldOnly.length}>
+        <p className="font-semibold text-slate-100">Held at latest valuation · {c.heldOnly.length} {c.heldOnly.length === 1 ? 'account' : 'accounts'} · {money(c.heldOnly.reduce((s, x) => s + x.value, 0))}</p>
+        <p className="mt-1 text-xs text-slate-400">No second value is on record for these dates, so each is in the figure at its latest valuation, 0% this period. A new statement or valuation then counts the change.</p>
+        <ul className="mt-2 space-y-2 text-xs">{c.heldOnly.map(x => <li key={x.id} data-bridge-account-held={x.id}>
+          <strong className="text-slate-100">{x.label}</strong> · {money(x.value)} · {x.holdings} {x.holdings === 1 ? 'holding' : 'holdings'}
+          <span className="block text-slate-400">{x.private ? 'Private: no published price. ' : ''}Valued {x.dates.map(d => fmtDate(d)).join(', ')}</span>
+        </li>)}</ul>
+      </div>}
       {c.outside.length > 0 && <div data-bridge-accounts-outside={c.outside.length}>
         <p className="font-semibold text-slate-100">Not included · {c.outside.length} {c.outside.length === 1 ? 'account' : 'accounts'} · {money(c.outside.reduce((s, x) => s + x.value, 0))}</p>
         <ul className="mt-2 space-y-2 text-xs">{c.outside.map(x => <li key={x.id} data-bridge-account-outside={x.id}>
@@ -112,12 +129,12 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money, acc
   const assumed = total.units.some(u => u.assumption);
   const accountCount = new Set(total.units.map(u => u.accountId)).size;
   const steps: { key: string; label: string; value: number; sign?: boolean; sub: string; title: string }[] = b.mode === 'window' ? [
-    { key: 'opening', label: 'Opening value', value: b.opening, sub: dated(b.from), title: "Statement values, plus published prices for labelled assumed holdings, on their measured starting dates" },
+    { key: 'opening', label: 'Opening value', value: b.opening, sub: dated(b.from), title: "Statement values, plus published prices for holdings carried forward, on their measured starting dates" },
     // A computed zero says why on its face: the dated record shows no movement.
     { key: 'added', label: '+ Money added', value: b.added, sub: b.added === 0 ? 'none in this period' : 'new capital', title: 'Money put into these accounts during the period, on its dates' },
-    { key: 'taken', label: assumed ? '− Payouts / taken out' : '− Money taken out', value: b.takenOut, sub: assumed ? 'includes dividend entitlements' : b.takenOut === 0 ? 'none in this period' : 'withdrawals', title: 'Recorded withdrawals and payouts, plus gross dividend entitlements on labelled assumed holdings' },
+    { key: 'taken', label: assumed ? '− Payouts / taken out' : '− Money taken out', value: b.takenOut, sub: assumed ? 'includes dividend entitlements' : b.takenOut === 0 ? 'none in this period' : 'withdrawals', title: 'Recorded withdrawals and payouts, plus gross dividend entitlements on holdings carried forward' },
     { key: 'gain', label: '+ Gain this period', value: b.gain, sign: true, sub: 'see the gain breakdown', title: 'Value at end − value at start − money added + money taken out' },
-    { key: 'closing', label: 'Closing value', value: b.closing, sub: dated(b.to), title: "Statement values, plus published prices for labelled assumed holdings, on their measured closing dates" },
+    { key: 'closing', label: 'Closing value', value: b.closing, sub: dated(b.to), title: "Statement values, plus published prices for holdings carried forward, on their measured closing dates" },
   ] : b.mode === 'inception' ? [
     { key: 'added', label: 'Money paid in', value: b.added, sub: `since ${dated(b.from)}`, title: 'Every dated purchase or contribution since the first investment' },
     { key: 'taken', label: '− Money taken out', value: b.takenOut, sub: 'redemptions and payouts', title: 'Every dated redemption, withdrawal and payout since the first investment' },
@@ -159,7 +176,7 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money, acc
           data-bridge-accounts-covered={coverage.covered} data-bridge-accounts-of={coverage.of}>
           <span>{coverage.covered} of {coverage.of} accounts covered</span>
           <AccountCoverageInfo c={coverage} money={(n) => money(n)} start={start} />
-          <HoldingAssumptionInfo units={total.units} />
+          <HoldingAssumptionInfo units={total.units} showLabel={false} />
         </div>
       </div>
       <div className="flex items-center gap-3" data-bridge-return={ret ?? ''} data-bridge-period-return={period ?? ''}>
