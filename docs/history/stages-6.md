@@ -1656,3 +1656,12 @@ Codex's review of #352, verified against the code and the book:
 - Where a row's purchases are not each dated, its index line is the index's move over the holding period instead of "— No buy dates / Dates incomplete / Range only": from its first investment (Invested on), else the inception of the account that holds it, else a lot register's date, to the row's value date (`holdingPeriodStart` in `investedOn.ts`, `indexOverPeriod` in `holdingBenchmark.ts`). Rows whose lines are valued on different days strike each line on its own start, cost and value date (`periodLegsOf`). The hover names the window and its basis; `data-bench-period` marks it.
 - Section and footer totals pool those same legs; rows no equity index measures (cash, debt, hybrid) are left out of the total's index and named in its hover.
 - A dash that remains carries its reason as the hover only (`data-bench-reason`); `benchGapLabel` is gone. The `monitor` check now asks for that hover instead of a face label.
+
+### Stage 10nv — Portfolio Monitor: every YTD from 31 December
+
+*"for all the holdings the returns need to be simply YTD return from the same YTD"* — the family, 12 Nov 2026. Asked what a row with no 31 December value shows, they chose a dash over carrying units back to 1 January.
+
+- `ytdBook.of` (the Monitor's YTD column) accepts a window only if it opens on or before 31 December, or at nil on a holding first bought this year. The "from 31 Mar" / "from 6 Oct" chips are gone. Any other row is a dash naming its first dated value and the 31 Dec 2025 record it needs. An account window that opens later falls back to its holdings, so a purchase record can still open them on 1 January.
+- A row bought this year carries `bought` (`data-ytd-bought`), and its hover says nothing was held on 1 January.
+- `account`, `holding` and `ytdSelection` are unchanged, so Morning CIO's YTD card and the Returns tab's YTD still measure from the first dated value (see the 12 Nov explain-only decision).
+- `monitor-ytd` now checks that no cell carries a later start. Its whole-account re-solver reads `BOOK_TRADE_OPENINGS` and `BOOK_ACCOUNT_NAV_HISTORY`, so SVAN Velocity's 31 Dec opening (Stage 10ni) re-solves off the book.
