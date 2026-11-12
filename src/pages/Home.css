@@ -44,7 +44,7 @@ html.dark .home-hero { background: linear-gradient(110deg, #203c35, #252c37 70%,
 .home-metric-link:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 3px; border-radius: 2px; }
 .home-metric > small { font-size: var(--home-font-caption); color: var(--home-muted); }
 .home-panel { min-width: 0; padding: 24px; border: 1px solid var(--home-border); border-radius: 12px; background: var(--home-surface); margin-bottom: 20px; }
-.home-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 24px; }
+.home-panel-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 24px; }
 .home-panel-heading h2 { font-weight: 600; font-size: var(--home-font-title); letter-spacing: -.02em; margin-top: 5px; }
 .home-tag { color: var(--home-muted); font-size: var(--home-font-secondary); }
 .home-muted { color: var(--home-muted); }
@@ -71,7 +71,7 @@ html.dark .home-hero { background: linear-gradient(110deg, #203c35, #252c37 70%,
 .home-benchmark-select { position: relative; display: flex; align-items: center; gap: 6px; border: 1px solid var(--home-border); border-radius: 7px; padding: 7px 10px; font-size: var(--home-font-body); }
 .home-benchmark-select select { appearance: none; background: transparent; max-width: 180px; padding-right: 5px; outline-offset: 5px; }
 .home-benchmark-select option { background: var(--home-surface); color: var(--home-text); }
-.home-performance-stats { display: flex; gap: 42px; margin-bottom: 16px; }
+.home-performance-stats { display: flex; flex-wrap: wrap; gap: 42px; margin-bottom: 16px; }
 .home-performance-stats > div { display: flex; flex-direction: column; gap: 7px; }
 .home-performance-stats span { display: flex; align-items: center; gap: 6px; font-size: var(--home-font-body); color: var(--home-muted); }
 .home-performance-stats strong { font-size: 32px; font-weight: 450; line-height: 1.2; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
