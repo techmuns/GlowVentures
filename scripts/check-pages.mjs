@@ -18557,12 +18557,16 @@ const pmViewChecks = (expected) => [
    * "Transactions" are phrases this page's own prose uses, so a text match
    * cannot tell a rendered button from a sentence about one.
    */
-  [`the private book is one card with three tabs (fund, brand, transactions), no legal-entity or review tab, and this address opens on ${expected}`, (t, ctx) => {
+  [`the private book is one card with four tabs (fund, brand, transactions, history), no legal-entity or review tab, and this address opens on ${expected}`, (t, ctx) => {
     const pv = ctx?.pmView;
     if (!pv) return { notChecked: "the private-view probe did not run" };
     const keys = pv.views.map((v) => v.key);
-    return keys.length === 3
-      && ["funds", "brands", "transactions"].every((k) => keys.includes(k))
+    // The History tab (client #414 / #415) is one fund's dated calls and
+    // distributions over time, its valuation history and a money-weighted return
+    // over a chosen window — a fourth view of the SAME book, not the old
+    // legal-entity or review tab, whose absence is still asserted.
+    return keys.length === 4
+      && ["funds", "brands", "transactions", "history"].every((k) => keys.includes(k))
       && !keys.includes("owners") && !keys.includes("folios") && !keys.includes("review")
       && pv.views.find((v) => v.active)?.key === expected;
   }],
