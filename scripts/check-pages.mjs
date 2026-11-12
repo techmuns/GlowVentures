@@ -14068,6 +14068,11 @@ const MONITOR_BASIS_BOOK = (() => {
     }
     const SYM = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
     const VENDOR = JSON.parse(readFileSync(new URL("../src/data/screenerSectors.json", import.meta.url), "utf8"));
+    // The listing `build-sectors` joined for a company the app's symbol tier does
+    // not reach (Stage 10md) — a renamed, BSE-only or demerged company (Stage
+    // 10nx: HEG Graphite carries no symbol of its own). `companyExposure` reads
+    // it after the symbol, so this does too.
+    const VENDOR_KEYS = JSON.parse(readFileSync(new URL("../src/data/screenerKeys.json", import.meta.url), "utf8"));
     // Deduped over EVERY position, as the page's `consolidated` is — the index
     // is built over it, closed and small rows included.
     const seenAll = new Set();
@@ -14082,22 +14087,26 @@ const MONITOR_BASIS_BOOK = (() => {
       // The index is built over the CONSOLIDATED company shares, current or not
       // — a company's sector does not depend on how much of it is held.
       const rows = allShares.filter((p) => p.securityKey === k);
-      const book = rows.find((p) => !!p.sector && p.sector !== "Unclassified");
-      if (book) { sector.set(k, { sector: book.sector, from: "book" }); continue; }
-      // …THEN THE INDUSTRY EVERY FUND FILING AGREES ON — the middle of the three
-      // tiers (`placeOf` in SECURITY_AXIS_BOOK writes the same order out). With
-      // two tiers only, a company the funds place and screener.in does not
-      // (Kajaria Ceramics) read Unclassified here and Consumer Discretionary
-      // on the page that was right.
+      // Stage 10md's ORDER, which this index kept the old way round until Stage
+      // 10nx: screener.in wherever it has a page, then the industry every fund
+      // filing agrees on, then the statement — `companyExposure`'s three tiers,
+      // the same order `placeOf` in SECURITY_AXIS_BOOK writes out. Statement
+      // first read Engineers India as IT off one PMS's "Consulting Services".
+      const symbol = rows.find((p) => !!p.symbol)?.symbol ?? SYM[k] ?? null;
+      const g = (symbol ? VENDOR[symbol]?.gics : null) ?? (VENDOR_KEYS[k] ? VENDOR[VENDOR_KEYS[k]]?.gics : null);
+      if (g && g !== "Unclassified") { sector.set(k, { sector: g, from: "vendor" }); continue; }
+      // …THEN THE INDUSTRY EVERY FUND FILING AGREES ON. With two tiers only, a
+      // company the funds place and screener.in does not (Kajaria Ceramics)
+      // read Unclassified here and Consumer Discretionary on the page that was
+      // right.
       const agreed = new Set();
       for (const s of SECURITY_AXIS_BOOK?.derivedByKey?.get(k)?.fundSector?.values() ?? []) {
         const hit = resolveSector(s);
         if (hit?.matchedBy) agreed.add(hit.sector);
       }
       if (agreed.size === 1) { sector.set(k, { sector: [...agreed][0], from: "disclosure" }); continue; }
-      const symbol = rows.find((p) => !!p.symbol)?.symbol ?? SYM[k] ?? null;
-      const g = symbol ? VENDOR[symbol]?.gics : null;
-      sector.set(k, g && g !== "Unclassified" ? { sector: g, from: "vendor" } : { sector: "Unclassified", from: null, symbol });
+      const book = rows.find((p) => !!p.sector && p.sector !== "Unclassified");
+      sector.set(k, book ? { sector: book.sector, from: "book" } : { sector: "Unclassified", from: null, symbol });
     }
     // ── [C] ─ the by-entity overlap (MH-12), the dates a footer total blends
     // (MH-08), the PMS mandates' capital (DL-7), the call-dated and nil rows
@@ -30739,9 +30748,16 @@ const INVARIANTS = {
      * naming only the statement would be silent about the disclosure tier and
      * send the next reader to the wrong source.
      */
-    ["the Unclassified row names its cause, for this view's own sources", (t, ctx) =>
+    ["the Unclassified row names its cause, for this view's own sources", (t, ctx) => {
+      // Stage 10nx: every issuer placed, so there is no row to carry a cause.
+      // Abstains on the BOOK's count (the same re-expression the Unclassified
+      // hover check reads), never on the page failing to draw the row.
+      const u = SECURITY_AXIS_BOOK?.tiers?.consolidated?.unclassMix;
+      if (!u) return { notChecked: "the book could not be read on this run" };
+      if (!(u.shares + u.debt + u.other)) return { notChecked: "no issuer on this page is unclassified" };
       // Stage 10md: the three sources in the order they are tried.
-      (ctx?.titles ?? []).some((x) => /screener\.in has no page that names these companies, and neither a fund disclosure nor the family[\u2019\']s own statement/i.test(x))],
+      return (ctx?.titles ?? []).some((x) => /screener\.in has no page that names these companies, and neither a fund disclosure nor the family[\u2019\']s own statement/i.test(x));
+    }],
   ],
   /**
    * ── THE DIRECT EQUITY VIEW ────────────────────────────────────────────────

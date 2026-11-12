@@ -15,9 +15,17 @@
  * the depository's share balances). A share balance has no value without a live
  * quote; it is given a nominal one here because only its KEY is wanted.
  *
+ * A PMS account's own tape also BOUGHT names its statement never held
+ * (Stage 10mh, `BOOK_TAPE_ROWS`), and `PortfolioContext` adds them to the live
+ * book. Until Stage 10nx this set left them out, so the build never asked about
+ * Elgi Equipments or HEG Advanced Materials and Sector Composition showed both
+ * as Unclassified beside a listing screener.in classifies. They count at their
+ * rolled units and dated mark — only the KEY is wanted here too, but the report
+ * orders by value.
+ *
  * Bundled by the build script with esbuild and never shipped.
  */
-import { BOOK_POSITIONS, BOOK_POLYCAB } from "../../src/data/glowData";
+import { BOOK_POSITIONS, BOOK_POLYCAB, BOOK_TAPE_ROWS } from "../../src/data/glowData";
 import { dedupedPositions, isCompanyShare } from "../../src/lib/analytics";
 import { lookthroughCompanies } from "../../src/lib/recordedHoldings";
 import { applyFundNavs, depositoryFundHoldings, unpricedStatementUnits } from "../../src/lib/fundNavs";
@@ -47,7 +55,12 @@ export async function sectorUniverse(source: { index: Index; portfolios: Record<
     isins: new Set(BOOK_POLYCAB.flatMap((p) => (p.isin ? [p.isin.trim().toUpperCase()] : []))),
   };
   const balances = shareCandidates().map((p) => ({ ...p, marketValue: 1 }));
-  const all = dedupedPositions(applyFundNavs([...BOOK_POSITIONS, ...depositoryFundHoldings(), ...unpricedStatementUnits(), ...balances]));
+  const tape = BOOK_TAPE_ROWS.map((p) => {
+    const r = p.rolledForward;
+    const v = r && r.price ? r.quantity * r.price.value : 0;
+    return { ...p, marketValue: Number.isFinite(v) && v > 0 ? v : 1 };
+  });
+  const all = dedupedPositions(applyFundNavs([...BOOK_POSITIONS, ...tape, ...depositoryFundHoldings(), ...unpricedStatementUnits(), ...balances]));
   const companies = lookthroughCompanies(all);
   const shares = companies.filter(isCompanyShare) as Position[];
   const exposure = await loadStockExposure(heldFundVehicles(all), bookIsinBridge(companies).index, fence,
