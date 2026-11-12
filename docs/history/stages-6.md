@@ -1648,3 +1648,10 @@ Codex's review of #352, verified against the code and the book:
 - The latest-account browser check distinguishes the available-history card's measured close (which can include newer same-unit NAV windows) from each manager record's own closing date. It checks both dates in the included records and keeps the Performance/Family source-record assertions.
 - The CI browser step collects every check in one run; an error trap retains a failing job status if any check fails, and the existing EXIT trap still tears down its preview server.
 - Home contains its hidden widget-status announcement in its own positioning context. The announcement previously used the document as its containing block and added a second scrollbar with a large blank area below the page. Browser checks require zero outer scroll range and a reachable footer before and after widget changes, in both themes and phone/desktop sizes.
+### Stage 10nt — Portfolio Monitor: every return shows its index, no gap words
+
+*"if there is no buy date then how is HPR calculated this is confusing remove all fluff and just add index return"* — the family, 12 Nov 2026.
+
+- Where a row's purchases are not each dated, its index line is the index's move over the holding period instead of "— No buy dates / Dates incomplete / Range only": from its first investment (Invested on), else the inception of the account that holds it, else a lot register's date, to the row's value date (`holdingPeriodStart` in `investedOn.ts`, `indexOverPeriod` in `holdingBenchmark.ts`). Rows whose lines are valued on different days strike each line on its own start, cost and value date (`periodLegsOf`). The hover names the window and its basis; `data-bench-period` marks it.
+- Section and footer totals pool those same legs; rows no equity index measures (cash, debt, hybrid) are left out of the total's index and named in its hover.
+- A dash that remains carries its reason as the hover only (`data-bench-reason`); `benchGapLabel` is gone. The `monitor` check now asks for that hover instead of a face label.
