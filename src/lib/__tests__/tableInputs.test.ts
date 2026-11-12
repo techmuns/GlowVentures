@@ -4,6 +4,7 @@ import ExcelJS from "exceljs";
 import { BOOK_POSITIONS, BOOK_COMMITMENTS, BOOK_ACCOUNTS } from "../../data/glowData";
 import { buildInputCatalog, applySavedInputs, privateCapitalId, type InputChange, type InputRecord, type SavedInput } from "../tableInputs";
 import { applyTableInputs } from "../applyTableInputs";
+import { holdingFlowsOf } from '../holdingFlows';
 import { createTableWorkbook } from "../exportTableExcel";
 import { readInputWorkbook } from "../tableInputExcel";
 import { privateBookFolios, figuresOf } from "../privateBook";
@@ -90,12 +91,12 @@ const position = applied.positions.find(p => privateCapitalId(p) === cap.id)!;
 assert.equal(position.quantity, 0);
 assert.equal(position.enteredCapital?.paid, 100);
 const paidOnly = applyTableInputs(book, [edits[1]])!.positions.find(p => privateCapitalId(p) === cap.id)!;
-assert.match(paidOnly.returnInputsUnavailableReason!, /paid-in capital.*dated transaction record/, 'capital-only corrections cannot preserve an incompatible dated return');
+assert.ok(paidOnly.returnInputsAuditReason, 'capital correction context is advisory');
 const sourcedCapital = source.find(r => r.kind === 'capital' && r.values.paid != null && r.values.paid >= 1 && r.values.called != null && book.positions.some(p => r.id === `capital:${p.accountId}`))!;
 assert.ok(sourcedCapital);
 const accountCapitalEdits = [change(sourcedCapital, 'paid', sourcedCapital.values.paid! - 1), ...(sourcedCapital.values.pending == null ? [] : [change(sourcedCapital, 'pending', sourcedCapital.values.pending + 1)])]
   .map(c => ({ ...c, updatedAt: '2026-11-11T00:00:00Z' }));
-assert.match(applyTableInputs(book, accountCapitalEdits)!.positions.find(p => `capital:${p.accountId}` === sourcedCapital.id)!.returnInputsUnavailableReason!, /paid-in capital/);
+assert.ok(applyTableInputs(book, accountCapitalEdits)!.positions.find(p => `capital:${p.accountId}` === sourcedCapital.id)!.returnInputsAuditReason);
 assert.deepEqual(position.integrity?.metrics.unrealizedPnL, book.positions.find(p => privateCapitalId(p) === cap.id)!.integrity?.metrics.unrealizedPnL, 'quantity and private-capital edits do not claim an unchanged P&L');
 const folios = privateBookFolios(applied, []).folios.filter(f => f.position === position);
 assert.equal(figuresOf(folios, true).paid, 100, "new capital numbers reach the shared private-book rollup");
@@ -214,9 +215,16 @@ try {
 } finally { globalThis.fetch = originalFetch; if (originalWindow) globals.window = originalWindow; else delete globals.window; }
 console.log("Table input persistence, source rollups and Excel round-trip contracts passed");
 
-// An edit of dated financial inputs must not leave an apparently reconciled
-// XIRR over the previous dates/amounts. Corrections retain source identity.
-assert.match(position.returnInputsUnavailableReason!, /dated transaction record/);
+// New audit information must not blanket-disable the established return rules.
+assert.ok(position.returnInputsAuditReason);
+{
+  const dated = BOOK_POSITIONS.find(p => !p.live && holdingFlowsOf(p, BOOK_ACCOUNTS.find(a => a.accountId === p.accountId)?.asOf ?? null)?.dated)!;
+  assert.ok(dated, 'the baseline contains a dated return');
+  const asOf = BOOK_ACCOUNTS.find(a => a.accountId === dated.accountId)?.asOf ?? null;
+  const input = source.find(r => r.id === `holding:${dated.accountId}|${dated.securityKey}|${dated.memberId ?? ''}`)!;
+  const corrected = applyTableInputs(book, [{ ...change(input, 'dividendReceived', input.values.dividendReceived), updatedAt: '2026-11-12T00:00:00Z' }])!.positions.find(p => p.accountId === dated.accountId && p.securityKey === dated.securityKey && p.memberId === dated.memberId)!;
+  assert.deepEqual(holdingFlowsOf(corrected, asOf), holdingFlowsOf(dated, asOf), 'a retained number plus new audit metadata cannot remove existing dated-return coverage');
+}
 {
   const basePosition = { ...BOOK_POSITIONS.find(p => p.costBasis != null && !p.valuedAtCost)!, marketValue: 120, costBasis: 100, quantity: 3, avgCost: 33.3333, currentPrice: 39.9999, unrealizedPnL: 20 };
   const sourceMetric = { status: 'source-backed' as const, basis: 'statement', effectiveDate: '2026-11-01', exceptions: [] as string[] };
@@ -253,6 +261,6 @@ assert.match(position.returnInputsUnavailableReason!, /dated transaction record/
     assert.ok(!result.catalog.some((r: InputRecord) => r.kind === 'holding' && !r.id.includes('integrity-new-publication-holding')));
     globalThis.fetch = async () => Response.json({ schemaVersion: 1, storage: 'github-actions-v1', revision: 'a'.repeat(20), readerRevision: 'b'.repeat(64) });
     const unavailable = await onRequest({ request: new Request('https://test.example/api/table-inputs'), env: { DASHBOARD_STORE: store, GLOW_GITHUB_TOKEN: 'fixture-only' } });
-    assert.equal(unavailable.status, 502, 'An incompatible publication cannot silently edit stale inputs');
+    assert.equal(unavailable.status, 502, 'A malformed publication cannot silently fall back to stale compiled inputs');
   } finally { globalThis.fetch = savedFetch; }
 }

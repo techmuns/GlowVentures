@@ -251,6 +251,7 @@ export type RecoveredHoldingCost = {
  */
 export type PolycabHolding = Omit<Position, "marketValue"> & { marketValue: number | null };
 
+/** Optional audit annotations; established amounts and coverage remain authoritative. */
 export type PositionIntegrity = {
   positionId: string;
   quantityAsOf: string;
@@ -260,7 +261,8 @@ export type PositionIntegrity = {
 
 export type Position = {
   integrity?: PositionIntegrity;
-  returnInputsUnavailableReason?: string;
+  /** Audit context only; never a blanket gate on established return coverage. */
+  returnInputsAuditReason?: string;
   /** Explicit family corrections; original statement records remain separate. */
   enteredNumbers?: string[];
   enteredCapital?: Record<string, number | null>;

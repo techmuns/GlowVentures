@@ -10,7 +10,8 @@ const f = read('financial/integrity.json'), book = read('canonical/book.json'), 
 assert.equal(f.readerRevision, publication.readerRevision);
 assert.equal(f.bookRevision, publication.bookRevision);
 assert.equal(f.summary.positions, book.BOOK_POSITIONS.length);
-assert.deepEqual(f.issues, []);
+assert.equal(f.mode, 'advisory');
+assert.deepEqual(f.blockingIssues, []);
 assert.equal(new Set(f.graph.nodes.map(n => n.id)).size, f.graph.nodes.length);
 assert.equal(new Set(f.events.map(n => n.id)).size, f.events.length);
 for (const event of f.events) {
@@ -34,6 +35,7 @@ for (const point of book.BOOK_NAV_HISTORY) {
 }
 const sources = publication.statementDocuments.map(d => read(d.evidence));
 const summary = { revision: manifest.revision, readerRevision: f.readerRevision, bookRevision: f.bookRevision, ...f.summary,
+  auditStatus: f.auditStatus, advisoryIssues: f.issues,
   nodes: f.graph.nodes.length, events: f.events.length, disputedChecks: f.checks.filter(c => c.status === 'disputed'),
   documents: sources.length, documentsWithRawChecksums: sources.filter(s => s.source.sha256).length };
 fs.mkdirSync('.cache/backend-integrity', { recursive: true });
