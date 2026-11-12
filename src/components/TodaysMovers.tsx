@@ -338,7 +338,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
        reporting exactly that kind of heading. So the scope moves into the
        heading, where it cannot be removed as chrome, and the quote timestamp
        moves to the tile that is actually as-of it. */
-    <Card className="lg:col-span-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col" title={`${model.session === istDate() ? "Today’s movers" : model.session ? "Latest session movers" : "Latest price movers"} · ${SCOPE.label}`}
+    <Card className="min-w-0 lg:col-span-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col" title={`${model.session === istDate() ? "Today’s movers" : model.session ? "Latest session movers" : "Latest price movers"} · ${SCOPE.label}`}
       right={
         /* TWO CONTROLS, AND THEY ANSWER DIFFERENT QUESTIONS. The SCOPE toggle
            (owned by `DailyMovers`) switches which MEASUREMENT this card shows —
