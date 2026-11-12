@@ -12,7 +12,7 @@ import { finalizationGate } from '../finalize-delivery.mjs';
 import { completedBotReview, unresolvedBotFindings, deploymentContains, monitorPublication } from '../lib/intakePublication.mjs';
 import { verifyAutomaticPublication } from '../lib/automaticPublication.mjs';
 import { git as repositoryGit } from '../verify-publication.mjs';
-import { refreshForPublication, startPublicationRefresh, publicationRefreshBlocked } from '../../../shared/publicationRefresh.mjs';
+import { startPublicationRefresh, publicationRefreshBlocked } from '../../../shared/publicationRefresh.mjs';
 import { extractLayout } from '../lib/layout.mjs';
 import { findTable, readRows } from '../lib/table.mjs';
 import { parseNum } from '../lib/parseNum.mjs';
@@ -533,30 +533,46 @@ function refreshBrowser() {
   };
   return { browser, doc, listeners, values, loads };
 }
-test('new book versions reload as a whole once, preserve the route and avoid storage/offline loops', () => {
-  const { browser, loads } = refreshBrowser();
-  const options = { revision: 'a'.repeat(20), published: { schemaVersion: 1, revision: 'b'.repeat(20) }, browser, now: 1000 };
-  assert.equal(refreshForPublication({ ...options, blocked: true }), false);
-  assert.equal(refreshForPublication(options), true); assert.deepEqual(loads, ['/audit']);
-  assert.equal(refreshForPublication({ ...options, now: 2000 }), false);
-  assert.equal(refreshForPublication({ ...options, published: { schemaVersion: 1, revision: '<invalid>' } }), false);
-  browser.navigator.onLine = false; assert.equal(refreshForPublication({ ...options, now: 400000 }), false);
-  browser.navigator.onLine = true; browser.sessionStorage.setItem = () => { throw new Error('storage disabled'); };
-  assert.equal(refreshForPublication({ ...options, now: 400000 }), false);
+test('publication discovery is read-only across repeated revisions, bad storage, outages and incompatible readers', async () => {
+  const { browser, doc, loads } = refreshBrowser();
+  const notices = [], readerRevision = 'c'.repeat(64);
+  let published = { schemaVersion: 1, revision: 'a'.repeat(20), readerRevision }, requests = 0;
+  browser.fetch = async () => { requests++; return { ok: true, headers: new Headers({ 'content-type': 'application/json' }), json: async () => published }; };
+  browser.sessionStorage.setItem = () => { throw Error('storage disabled'); };
+  const controller = startPublicationRefresh({ revision: published.revision, readerRevision, browser, onAvailable: value => notices.push(value.revision) });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(notices.length, 0);
+  for (const value of [
+    { schemaVersion: 1, revision: '<invalid>' },
+    { schemaVersion: 2, revision: 'b'.repeat(20) },
+    { schemaVersion: 1, revision: 'b'.repeat(20), readerRevision: 'd'.repeat(64) },
+  ]) { published = value; await controller.check(); }
+  assert.equal(notices.length, 0, 'Incompatible processor snapshots do not advertise an update that reload cannot fix');
+  published = { schemaVersion: 1, revision: 'b'.repeat(20), readerRevision };
+  for (let i = 0; i < 100; i++) await controller.check();
+  assert.equal(notices.length, 100, 'New compatible data remains discoverable without session storage');
+  assert.equal(loads.length, 0, 'Even a changing pointer cannot reload the document');
+  const before = requests;
+  browser.navigator.onLine = false; await controller.check();
+  browser.navigator.onLine = true; doc.visibilityState = 'hidden'; await controller.check();
+  assert.equal(requests, before);
+  doc.visibilityState = 'visible'; browser.fetch = async () => { throw Error('outage'); };
+  await controller.check(); assert.equal(loads.length, 0);
+  controller.stop();
 });
-test('draft edits defer data replacement until navigation; controllers clean up', async () => {
+test('draft edits block explicit updates until navigation; discovery never reloads', async () => {
   const { browser, doc, listeners, loads } = refreshBrowser();
   let published = { schemaVersion: 1, revision: 'a'.repeat(20) };
   browser.fetch = async () => ({ ok: true, headers: new Headers({ 'content-type': 'application/json' }), json: async () => published });
   const controller = startPublicationRefresh({ revision: published.revision, browser });
   await new Promise(resolve => setTimeout(resolve, 0));
   listeners.get('input')({ target: { tagName: 'TEXTAREA' } });
-  assert.equal(publicationRefreshBlocked(browser), true, 'The existing version-mismatch screen must not unmount a draft');
+  assert.equal(publicationRefreshBlocked(browser), true, 'An explicit update must not discard a draft');
   published = { schemaVersion: 1, revision: 'b'.repeat(20) };
   await controller.check(); assert.equal(loads.length, 0);
-  browser.location.pathname = '/monitor'; await controller.check(); assert.deepEqual(loads, ['/monitor']);
+  browser.location.pathname = '/monitor'; await controller.check(); assert.equal(publicationRefreshBlocked(browser), false); assert.deepEqual(loads, []);
   controller.stop(); assert.equal(listeners.size, 0); assert.equal(publicationRefreshBlocked(browser), false);
-  await controller.check(); assert.equal(loads.length, 1);
+  await controller.check(); assert.equal(loads.length, 0);
 });
 test('upload activity defers refresh, and file selection does not leave a permanent dirty flag', async () => {
   const { browser, doc, listeners, loads } = refreshBrowser();
@@ -566,7 +582,8 @@ test('upload activity defers refresh, and file selection does not leave a perman
   await new Promise(resolve => setTimeout(resolve, 0));
   listeners.get('change')({ target: { tagName: 'INPUT', type: 'file' } });
   await controller.check(); assert.equal(loads.length, 0);
-  doc.busy = false; await controller.check(); assert.equal(loads.length, 1);
+  assert.equal(publicationRefreshBlocked(browser), true);
+  doc.busy = false; await controller.check(); assert.equal(publicationRefreshBlocked(browser), false); assert.equal(loads.length, 0);
   controller.stop();
 });
 test('unmounting with a pending version request cannot reload a replaced page', async () => {

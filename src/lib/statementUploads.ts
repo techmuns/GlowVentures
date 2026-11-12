@@ -162,7 +162,7 @@ export function planUpload(picked: readonly PickedFile[], documents = false): Up
 // ── WHAT A FILE'S STATUS MEANS ON THE PAGE ──────────────────────────────────
 
 export type FileView = {
-  key: "queued" | "reading" | "publishing" | "in-library" | "duplicate" | "held" | "saved";
+  key: "queued" | "reading" | "publishing" | "update-ready" | "in-library" | "duplicate" | "held" | "saved";
   label: string;
   tone: "info" | "gain" | "default" | "warn" | "loss";
   /** The hover: what the status means for this file. */
@@ -207,12 +207,12 @@ export function uploadedFileHref(batch: string, f: InboxFile, manifest: readonly
 }
 
 /** True for a file that has come to rest: read, already there, kept, or held. */
-export const settledView = (v: Pick<FileView, "key">) => v.key === "in-library" || v.key === "duplicate" || v.key === "saved";
+export const settledView = (v: Pick<FileView, "key">) => v.key === "in-library" || v.key === "update-ready" || v.key === "duplicate" || v.key === "saved";
 
 /**
  * One file's status as the page shows it. A landed file is `in-library` only
- * once the site serving this page has its documents — until the redeploy from
- * the landing commit is live, it is `publishing`.
+ * once this page's version has its documents. A completed data publication waits
+ * quietly for an explicit update; legacy deployments may still be publishing.
  */
 export function fileView(f: InboxFile, served: ReadonlySet<string>): FileView {
   switch (f.status) {
@@ -225,6 +225,10 @@ export function fileView(f: InboxFile, served: ReadonlySet<string>): FileView {
     case "landed": {
       const keys = f.docKeys ?? [];
       const live = keys.length > 0 && keys.every((k) => served.has(k));
+      if (!live && keys.length && ['rapid', 'github'].includes(f.processor ?? '')) return {
+        key: 'update-ready', label: 'Update ready', tone: 'gain',
+        title: 'Analysis complete. Use the dashboard refresh button to load your new statement when ready.',
+      };
       return live
         ? { key: "in-library", label: "Ready", tone: "gain", title: "Statement analysed and added to your family office dashboard." }
         : { key: "publishing", label: "Updating dashboard", tone: "info", title: "Analysis complete. Your statement will appear here automatically when the update is ready." };

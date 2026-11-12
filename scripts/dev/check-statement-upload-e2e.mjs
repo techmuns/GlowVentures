@@ -209,6 +209,7 @@ try {
   for (const p of [page, watching]) p.on('pageerror', error => errors.push(error.stack));
   const mf = '/stock/hdfc-balanced-advantage-fund-regular-plan-growth?members=ajay-jaisinghani';
   await watching.goto(baseURL + mf); await watching.locator('main h1').waitFor(); assert.equal(await watching.locator('tr[data-account-row="hdfc-mutual-fund-15644806"]').count(), 0);
+  await watching.evaluate(() => { window.__publicationPage = document.querySelector('main'); });
   await page.goto(baseURL + '/statements'); await page.locator('[data-upload-state="ready"]').waitFor();
   const payload = fixtureFiles.map(f => ({ name: f.name, bytes: f.bytes.toString('base64') }));
   // Real drop event and File objects; directory entries page their children,
@@ -267,6 +268,11 @@ try {
   for (const e of expected) { const p = afterPositions.find(p => p.accountId === e.accountId && p.isin === e.isin); assert.ok(p);
     assert.equal(p.quantity, e.quantity); assert.equal(p.costBasis, e.costBasis); assert.equal(p.marketValue, e.marketValue); assert.equal(after.investedOnOf([p])?.first, e.date); }
   await watching.bringToFront(); await watching.evaluate(() => window.dispatchEvent(new Event('focus')));
+  const update = watching.getByRole('button', { name: 'Load latest dashboard', exact: true });
+  await update.waitFor({ timeout: 45_000 });
+  assert.ok(await watching.evaluate(() => window.__publicationPage === document.querySelector('main')), 'Publishing never unmounts the open report');
+  assert.equal(await watching.locator('tr[data-account-row="hdfc-mutual-fund-15644806"]').count(), 0, 'The open report stays on one complete version until requested');
+  await update.click();
   await watching.locator('tr[data-account-row="hdfc-mutual-fund-15644806"] [data-col-cell="investedOn"]').waitFor({ timeout: 45_000 });
   assert.equal(new URL(watching.url()).searchParams.get('members'), 'ajay-jaisinghani');
   assert.equal(await watching.locator('tr[data-account-row="hdfc-mutual-fund-15644806"] [data-col-cell="investedOn"]').getAttribute('data-invested-first'), '2022-08-03');

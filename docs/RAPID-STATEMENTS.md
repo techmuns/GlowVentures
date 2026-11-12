@@ -46,6 +46,14 @@ The browser selects every canonical collection before financial modules load.
 Every report and source request pins the same immutable revision. An open page
 also discovers the first GitHub publication when the initial archive was served
 from compiled assets; it does not require a new application deployment.
+Discovery is read-only: polling, focus and navigation never reload or unmount the
+open dashboard. A compatible new book adds a quiet dot to the existing refresh
+control. The reader can load it when ready; drafts, uploads and open dialogs defer
+that action. Live prices continue updating independently. Incompatible processor
+versions are ignored, retaining the coherent compiled book rather than entering
+a reload loop.
+Completed uploads show “Update ready” without a progress animation until that
+version is opened.
 
 ## Timing and recovery
 

@@ -477,7 +477,7 @@ export function StatementLibrary() {
   }, [linkedDocument, searchParams, setSearchParams]);
   const inbox = useStatementInbox();
   // Closed until asked for; a file dropped on this page opens it, so its progress is in view.
-  // Kept in the history entry, so the reload a new publication makes leaves it open.
+  // Kept in the history entry, so choosing to load a new version leaves it open.
   const [recentOpen, setRecentOpen] = useNavigationValue("library-recent-open", false, booleanNavigation);
   const newestSend = inbox.sending[0]?.id;
   useEffect(() => { if (newestSend) setRecentOpen(true); }, [newestSend]);
