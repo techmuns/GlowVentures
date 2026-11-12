@@ -124,6 +124,8 @@ try {
   }, bytes.toString('base64'));
   const update = page.getByRole('button', { name: 'Load latest dashboard', exact: true });
   await update.waitFor({ timeout: 30_000 });
+  await page.locator('tr[data-upload-status="update-ready"]').waitFor();
+  assert.equal(await page.locator('tr[data-upload-status="update-ready"] [role="progressbar"]').count(), 0, 'A completed upload is no longer animated as pending');
   assert.equal(documentLoads, beforePublicationLoads, 'A completed statement never reloads the open dashboard');
   assert.equal(await page.getByPlaceholder('Filter by provider or file type…').inputValue(), 'Bandhan');
   await update.click();

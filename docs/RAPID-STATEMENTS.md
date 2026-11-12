@@ -52,6 +52,8 @@ control. The reader can load it when ready; drafts, uploads and open dialogs def
 that action. Live prices continue updating independently. Incompatible processor
 versions are ignored, retaining the coherent compiled book rather than entering
 a reload loop.
+Completed uploads show “Update ready” without a progress animation until that
+version is opened.
 
 ## Timing and recovery
 
