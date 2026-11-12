@@ -39,6 +39,7 @@ const SUITES = [
   ["available headline returns", "src/lib/__tests__/availableCardReturns.test.ts"],
   ["ytd from the first date", "src/lib/__tests__/ytdAvailable.test.ts"],
   ["period rules", "src/lib/__tests__/periodRules.test.ts"],
+  ["fund history & period IRR", "src/lib/__tests__/fundHistory.test.ts"],
   ["return tiles against the index", "src/lib/__tests__/cardBenchmark.test.ts"],
   ["published data lineage", "src/lib/__tests__/publicationViews.test.ts"],
   ["selected attribution periods and coverage", "src/lib/__tests__/selectedSegmentReturns.test.ts"],

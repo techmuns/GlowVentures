@@ -1696,6 +1696,14 @@ Codex's review of #352, verified against the code and the book:
 - Build and edge validation share canonical JSON serialization. The server computes the fingerprint itself; a supplied hash cannot authorize a different book. Matching-reader statement updates retain their existing behavior.
 - Isolated API regressions cover identical books across readers, a real local correction, changed facts outside the editable columns, invalid reader metadata and absent fingerprint evidence. No manual production data publication is required.
 
+### Stage 10nz — Private Market: a fund's history over time, and its return over a chosen window
+
+- Client request #414 / #415. A fourth tab on the Private Market card, **History**: one fund (or company) at a time — its dated capital calls and distributions over time, its valuation history, and its money-weighted return over a window the reader picks. `src/lib/fundHistory.ts` (pure) and `src/components/FundHistory.tsx`, wired through `BOOK_VIEWS` in `PrivateMarket.tsx`.
+- Everything is a dated record the book already carries, and nothing is fabricated. The capital-flow timeline (and a cumulative paid-in/distributed step chart) is the fund's real dated calls and distributions from `FundDated`. A measured nil distribution is a real ₹0 (DPI 0.00×); an "unknown" payout record is an em dash for Distributed *and* DPI/TVPI, never a zero.
+- The **value & NAV trajectory** is drawn only from dated valuations. A private fund files one dated valuation today, so the trajectory is a single point and the rest is an `AbsentSection` — "awaiting the fund's quarterly NAV statements" — which fills on its own, per fund, the moment a second dated NAV lands.
+- The **money-weighted return over a chosen window** (#415) is shown only where a valuation exists at each end of the window; otherwise the cell is a dash naming the exact date and the missing NAV. Today only the full inception→latest window computes; a narrower range fills when the quarterly NAVs arrive. `periodFundXirr` reuses `xirr` and `moneyWeightedReturn` (annualised at ≥ 1 year, the absolute return under one).
+- Verified by a unit suite (`src/lib/__tests__/fundHistory.test.ts`, in `test:family`) over the timeline, the ILPA multiples, the honest period-IRR absents, the inception boundary and the trajectory filling on a second NAV; and a browser regression (`scripts/dev/check-fund-history.mjs`, in CI) driving the real page offline. The `check:pages` private-view probe now asserts the four tabs. The canonical book, statement basis and existing views are untouched.
+
 ### Stage 10oa — Preserve established figures while keeping financial audits advisory
 
 - The family explicitly requires the existing dashboard's figures, coverage, curated assumptions and working flows to remain intact. Financial audits are additive observations and cannot introduce review-expiry publication holds, discard saved corrections or blanket-disable existing returns.
