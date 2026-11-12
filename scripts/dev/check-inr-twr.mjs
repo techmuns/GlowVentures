@@ -5,7 +5,7 @@ import path from 'node:path';
 import { chromium } from 'playwright-core';
 import ExcelJS from 'exceljs';
 import { installReadModelRoutes } from './read-model-api.mjs';
-import { clickTableControl } from './table-scroll.mjs';
+import { revealTableControl } from './table-pointer.mjs';
 
 const base = process.env.BASE ?? 'http://127.0.0.1:4173';
 assert.ok(['127.0.0.1', 'localhost'].includes(new URL(base).hostname));
@@ -136,7 +136,12 @@ try {
   assert.ok(exportedMatch, 'Excel exports a numeric percentage with the same value as the INR calculation');
   await page.setViewportSize({ width: 390, height: 844 });
   const mobileInfo = table.locator('[data-seg-cell="twrMtd"]').first().getByRole('button');
-  await clickTableControl(mobileInfo); await dialog.waitFor();
+  await revealTableControl(mobileInfo);
+  assert.ok(await mobileInfo.evaluate(el => {
+    const r = el.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    return hit === el || el.contains(hit);
+  }), 'the frozen name cannot cover the adjacent return info button');
+  await mobileInfo.click(); await dialog.waitFor();
   assert.ok(await dialog.evaluate(el => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && el.scrollWidth <= el.clientWidth + 1; }));
   await page.screenshot({ path: path.join(out, 'mobile-info.png') }); await page.keyboard.press('Escape');
   // Recovery includes histories requested only for sold investments.

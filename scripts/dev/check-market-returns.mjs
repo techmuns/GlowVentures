@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 import { installReadModelRoutes } from './read-model-api.mjs';
-import { clickTableControl } from './table-scroll.mjs';
+import { revealTableControl } from './table-pointer.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const out = '.cache/market-returns'; await fs.mkdir(out, { recursive: true });
@@ -35,7 +35,12 @@ try {
  });
  await page.goto(base + '/cio?tab=returns&tiles=value,gain,fytd');
  const table = page.locator('[data-segment-returns]'), summary = table;
- await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.marketPending === '0');
+ // The fixed TWR columns also load sold holdings through the shared loader.
+ // Include that initial work before measuring requests caused by date changes.
+ await page.waitForFunction(() => {
+  const d = document.querySelector('[data-segment-returns]')?.dataset;
+  return d?.marketPending === '0' && d?.twrPending === '0';
+ });
  assert.ok(Number(await summary.getAttribute('data-market-covered')) > 20, 'stock and fund histories resolve from the actual book');
  assert.ok(requests > 10);
  assert.ok(nseSourceFailures > 0, 'the missing-listing-history fixture was exercised');
@@ -141,7 +146,7 @@ try {
  await page.waitForTimeout(1000);
  assert.equal(requests, kept, 'a reload draws the kept histories instead of refetching them');
  await page.setViewportSize({width:390,height:844});
- await clickTableControl(summary.getByRole('button', {name:'What is included in total market return?',exact:true})); await dialog.waitFor();
+ await summary.getByRole('button', {name:'What is included in total market return?',exact:true}).click(); await dialog.waitFor();
  // The tab is kept with its history entry (`useNavigationState`): the retry above left it on Missing, and the reload is the same entry.
  assert.equal(await dialog.locator('[data-market-tab="missing"]').getAttribute('aria-selected'),'true','reopening keeps the tab this history entry left it on');
  for(const tab of ['overview','included','missing']) {
@@ -165,7 +170,13 @@ try {
  assert.ok(purchases.every(p=>p.first>='2026-04-01' && p.last<='2026-11-05'));
  const weighted=purchases.reduce((n,p)=>n+p.value*p.pct,0)/purchases.reduce((n,p)=>n+p.value,0);
  assert.ok(Math.abs(weighted-counts.pct)<1e-8,'this year’s return uses only the included units and their portfolio weights');
- await yearly.locator('th[data-col="cost"]').click();
+ const costSort = yearly.locator('th[data-col="cost"] [data-col-button]');
+ await revealTableControl(costSort);
+ assert.ok(await costSort.evaluate(el => {
+  const r = el.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+  return hit === el || el.contains(hit);
+ }), 'the mobile cost sort is exposed beside the frozen investment name');
+ await costSort.click();
  const costs=await yearly.locator('[data-year-row]').evaluateAll(els=>els.map(el=>+el.dataset.yearCost));
  assert.ok(costs.every((n,i)=>i===0||n<=costs[i-1]),'purchase-cost sorting follows the real amounts, highest first');
  await yearly.getByRole('button',{name:'What is included in this year’s investments?',exact:true}).click();
