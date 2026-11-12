@@ -805,7 +805,7 @@ export function HoldingsBehind() {
               says how many those are, because Invested covers a narrower set
               than the value above it and a reader subtracting the two would
               otherwise land on a figure neither describes. */}
-          {!d.absent && (
+          {!d.absent && !homeCash && (
             <div className="mt-1.5 text-[12.5px] text-slate-300" data-hb-invested={invested ?? ""}
                  data-hb-invested-of={rows.length - noCost.length}>
               {invested == null ? (
