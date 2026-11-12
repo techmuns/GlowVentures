@@ -182,4 +182,12 @@ try {
   await fs.mkdir('.cache/table-scroll-check',{recursive:true});
   await fs.writeFile('.cache/table-scroll-check/data-performance.json',JSON.stringify(results,null,2));
   console.log('PASS all routes, source-request budgets, default row limits, infinite scrolling, sticky headers in both themes, full-data access and filter reset');
+} catch (error) {
+  const pages = browser.contexts().flatMap(context => context.pages());
+  await fs.writeFile('.cache/table-scroll-check/data-performance-failure.json', JSON.stringify({
+    message: error.message, stack: error.stack, pages: pages.map(page => page.url()), results,
+  }, null, 2));
+  for (const [index, page] of pages.entries())
+    await page.screenshot({ path: `.cache/table-scroll-check/data-performance-failure-${index + 1}.png`, timeout: 5000 }).catch(() => {});
+  throw error;
 } finally { await browser.close(); }

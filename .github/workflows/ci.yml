@@ -107,6 +107,9 @@ jobs:
       - name: Number edits preserve active source records and established workflows
         run: node scripts/dev/test-table-input-snapshots.mjs
 
+      - name: Excel export failures retain the original cause
+        run: node --test scripts/dev/test-table-export-failures.mjs
+
       - name: Preserve financial integrity evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -191,6 +194,14 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-dashboard-navigation.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-etf-unit-continuity.mjs
           exit "$browser_status"
+
+      - name: Preserve table performance and export diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: table-performance-diagnostics
+          path: .cache/table-scroll-check/
+          if-no-files-found: ignore
 
       - name: Preserve Morning CIO report evidence
         if: always()
