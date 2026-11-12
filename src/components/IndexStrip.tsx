@@ -92,7 +92,7 @@ function Cell({ q }: { q: IndexQuote }) {
 }
 
 /**
- * `aside` sits at the strip's right end, before the feed's own label — the
+ * `aside` sits at the strip's right end — the
  * shell's saved-numbers notice rides here rather than as a band of its own, so
  * it costs no page any height (Stage 10jb).
  */
@@ -137,19 +137,10 @@ export function IndexStrip({ aside }: { aside?: ReactNode } = {}) {
         </span>
       )}
       {rows.map((q) => <Cell key={q.id} q={q} />)}
+      {/* THE "NSE · close <date>" / "NSE · live" LABEL IS GONE AT THE FAMILY'S
+          REQUEST (Stage 10ng); `aside` takes the freed width. Each cell still
+          names its own session on its hover. */}
       {aside && <div className="ml-auto flex min-w-0 shrink items-center pl-4">{aside}</div>}
-      {state === "ok" && feed && (
-        <span className={`${aside ? "" : "ml-auto "}shrink-0 pl-4 text-[10px] text-slate-500`}
-          title={`${feed.source} · ${feed.resolved} of ${feed.requested} indices resolved · fetched ${new Date(feed.fetchedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}>
-          {(() => {
-            const sess = indexSession(feed);
-            // "live" only where the levels are today's session; otherwise the
-            // session they are from, named.
-            const when = sess.today || !sess.date ? "live" : `close ${sess.date}`;
-            return feed.resolved < feed.requested ? `${feed.resolved}/${feed.requested} ${when}` : `NSE · ${when}`;
-          })()}
-        </span>
-      )}
     </div>
   );
 }

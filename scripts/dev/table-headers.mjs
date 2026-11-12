@@ -91,7 +91,7 @@ export async function assertStickyTableHeaders(page, label) {
               await frame();
             }
           }
-          // Every table freezes its first column (Stage 10ng): scrolled sideways,
+          // Every table freezes its first column (Stage 10nh): scrolled sideways,
           // the first unspanned heading and body cell stay at the scrollport's
           // left edge, and the body cell paints an opaque surface under itself.
           let xport = table.parentElement;

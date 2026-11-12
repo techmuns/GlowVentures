@@ -1616,7 +1616,12 @@ Codex's review of #352, verified against the code and the book:
 - The band is now the totals row: its first cell keeps the heading (name, counts, subtotal, notes, chevron) and the other cells are the category's totals, drawn through `<Tr view>` so each stays under its column when columns are dragged. The row carries both `data-section` and `data-category-total`. A category with no totals still draws a full-width band. Nothing about what any cell computes changed.
 - `check:pages`: `sectionOf` finds the band's totals as the first table row after its count line (innerText breaks after the heading cell), and the tree-state walk counts the band's own totals. On the seven Monitor routes this branch shows the same three findings as a control build of main.
 
-### Stage 10ng — Every table freezes its first column
+### Stage 10ng — Two session labels removed; Sector breakdown's controls on its title row
+
+- The family, 12 Nov, highlighting both: the index strip's "NSE · close <date>" label and Daily Movers' "Direct equity is +1.33 pts against the Nifty 500 · session <date>" line are gone. The strip's `aside` takes the freed width; each index cell still names its session on its hover; the movers card's NSE indices heading still names the session. `check:pages` now holds the gap line ABSENT instead of checking its 11.00 points.
+- Sector Composition's Sector breakdown: Edit Columns and Export Excel move onto the card's title row (`manualEditor`, `controlsHost`, the Stage 10gy pattern), instead of two rows of their own above the header — the table starts two rows higher.
+
+### Stage 10nh — Every table freezes its first column
 
 - The family asked (12 Nov 2026) for Portfolio Monitor's frozen first column on every table — Private Market, Real Estate and the rest. `src/index.css` now pins the first heading, body and footer cell of every `#root` table to the left of its own scroll container (screen only). A cell spanning several columns (section band, expanded detail, merged footer label) still scrolls whole; a table opts out with `data-freeze-off="<reason>"`.
 - The frozen cell is opaque whatever its row paints: a `::before` card surface under a `::after` copy of the cell's own colour, sorted-column fill and child-row guide, so translucent row tints (`bg-ink-900/50`, a selected source row) composite exactly as the rest of the row. Rows themselves stay clear, so an odd row still shows what it sits on. Phones cap the frozen cell at 10rem.
