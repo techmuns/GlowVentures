@@ -31655,10 +31655,11 @@ const INVARIANTS = {
      *
      * Every return the Monitor shows — a row's, an opened line's, a section's,
      * the footer's — carries its index line: the index on the same dated money,
-     * or a dash that names its cause on its face ("No buy dates"), never a bare
-     * one. Struck on the handles (`[data-bench]`, `[data-absent-label]`).
+     * — over the holding period where the purchases are not each dated (Stage
+     * 10nt) — or a dash whose hover names its cause, never a bare one. Struck on
+     * the handles (`[data-bench]`, `data-bench-reason`, the dash's hover).
      */
-    ["every return carries its index line, and a gap in it names its cause", (t, ctx) => {
+    ["every return carries its index line, and a gap in it names its cause in its hover", (t, ctx) => {
       const m = ctx?.monitorBench;
       if (!m) return false;
       if (!m.figures) return { notChecked: "no return figure was on screen on this run" };
@@ -41418,7 +41419,8 @@ for (const theme of THEMES) {
           if (!b) { out.missing.push(`${name}: ${face}`); continue; }
           out.lines++;
           // The feed's own state (closes loading, the service down) keeps the plain dash; a gap in the record never does.
-          if (b.getAttribute("data-bench") !== "none" && !b.getAttribute("data-bench-pct") && !b.hasAttribute("data-bench-feed") && !b.querySelector("[data-absent-label]")) out.unlabelled.push(`${name}: ${face}`);
+          // Stage 10nt: no words on the face — a dash carries its reason as its hover.
+          if (b.getAttribute("data-bench") !== "none" && !b.getAttribute("data-bench-pct") && !b.hasAttribute("data-bench-feed") && !(b.getAttribute("data-bench-reason") ?? "").trim()) out.unlabelled.push(`${name}: ${face}`);
         }
         return out;
       });

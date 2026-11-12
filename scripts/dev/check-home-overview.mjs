@@ -7,7 +7,7 @@ import { chromium } from 'playwright-core';
 import ExcelJS from 'exceljs';
 const base = process.env.BASE ?? 'http://127.0.0.1:4173';
 assert.ok(['127.0.0.1', 'localhost'].includes(new URL(base).hostname), 'local environment required');
-const out = path.resolve('.cache/home-dashboard/browser');
+const out = path.resolve(process.env.HOME_CHECK_OUT ?? '.cache/home-dashboard/browser');
 await fs.mkdir(out, { recursive: true });
 const bundle = await build({ stdin: { contents: `
   export { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_TAPE_ROWS } from './src/data/glowData';
@@ -32,10 +32,31 @@ const scopedTotal = totalOf(raw.filter(p => ids.has(p.accountId)));
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 const results = [];
 let activePage;
+async function checkHomePageEnd(page) {
+  await page.locator('main').evaluate(el => { el.scrollTop = el.scrollHeight; });
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const end = await page.evaluate(() => {
+    const main = document.querySelector('main').getBoundingClientRect(), footer = document.querySelector('.home-page-footer').getBoundingClientRect();
+    return { outerScroll: document.documentElement.scrollHeight - document.documentElement.clientHeight, windowTop: scrollY,
+      footerVisible: footer.top >= main.top && footer.bottom <= main.bottom + 1 };
+  });
+  assert.ok(end.outerScroll <= 1 && end.windowTop === 0, 'Home has no outer document scroll range or blank area below its footer');
+  assert.ok(end.footerVisible, 'the real page footer remains reachable at the end of Home’s scroll area');
+  await page.locator('main').evaluate(el => { el.scrollTop = 0; });
+}
 try {
   for (const theme of ['light', 'dark']) for (const width of [1440, 390]) {
     const context = await browser.newContext({ viewport: { width, height: 1100 } });
-    await context.addInitScript(theme => localStorage.setItem('glow:theme', theme), theme);
+    await context.addInitScript(theme => {
+      localStorage.setItem('glow:theme', theme);
+      if (theme === 'light' && !localStorage.getItem('glow:home:widgets:v1') && !localStorage.getItem('glow:home:widgets:v2')) {
+        localStorage.setItem('glow:home:widgets:v1', JSON.stringify([
+          { id: 'aum', size: 'full' }, { id: 'cash', size: 'quarter' }, { id: 'performance', size: 'full' },
+          { id: 'allocation', size: 'half' }, { id: 'geography', size: 'half' }, { id: 'history', size: 'full' },
+          { id: 'flows', size: 'full' }, { id: 'assets', size: 'full' },
+        ]));
+      }
+    }, theme);
     const page = await context.newPage(), errors = [];
     activePage = page;
     page.on('pageerror', error => errors.push(error.message));
@@ -58,6 +79,25 @@ try {
     assert.ok(Math.abs(rows.reduce((sum, row) => sum + row.value, 0) - expected) < .01);
     assert.ok(Math.abs(rows.reduce((sum, row) => sum + row.weight, 0) - 100) < 1e-8);
     assert.equal(Number(await page.locator('[data-home-geography]').getAttribute('data-unclassified-value')), expected);
+    const choices = page.locator('[data-home-allocation-choice]');
+    const firstChoice = await choices.first().getAttribute('data-home-allocation-choice');
+    await choices.first().hover();
+    assert.equal(await page.locator('[data-home-allocation-selection]').getAttribute('data-home-allocation-selection'), firstChoice, 'legend hover updates the donut');
+    await choices.nth(1).focus();
+    assert.equal(await page.locator('[data-home-allocation-selection]').getAttribute('data-home-allocation-selection'), await choices.nth(1).getAttribute('data-home-allocation-choice'), 'keyboard focus has the same data detail');
+    assert.equal(await page.locator('[data-home-allocation-chart] .recharts-tooltip-wrapper').count(), 0, 'a floating tooltip never covers the donut');
+    await page.getByRole('button', { name: 'Add widgets', exact: true }).focus();
+    if (theme === 'light') {
+      for (const id of ['netWorth', 'assetsTotal', 'liabilities']) assert.equal(await page.locator(`[data-home-widget="${id}"]`).count(), 0, 'personal removals stay removed');
+      assert.match(await page.locator('[data-home-widget="aum"]').getAttribute('class'), /home-widget-wide/);
+      const aum = await page.locator('[data-home-widget="aum"]').boundingBox(), cash = await page.locator('[data-home-widget="cash"]').boundingBox();
+      if (width === 1440) {
+        assert.ok(Math.abs(aum.y - cash.y) < 1 && Math.abs(aum.height - cash.height) < 1, 'AUM and cash share a balanced row');
+      } else assert.ok(cash.y >= aum.y + aum.height && Math.abs(cash.width - aum.width) < 1, 'mobile summary cards fill the available width');
+    }
+    if (width === 1440) {
+      for (const id of ['allocation', 'geography']) assert.ok((await page.locator(`[data-home-widget="${id}"]`).boundingBox()).height < 440, 'allocation and geography stay compact');
+    }
     await page.waitForFunction(() => document.querySelector('[data-home-benchmark-return]')?.getAttribute('data-home-benchmark-return') !== '');
     const benchmarkBefore = Number(await page.locator('[data-home-benchmark-return]').getAttribute('data-home-benchmark-return'));
     await page.getByLabel('Indian benchmark', { exact: true }).selectOption('nifty-50');
@@ -69,6 +109,7 @@ try {
     await page.getByRole('button', { name: 'Close return coverage', exact: true }).click();
     assert.ok(await page.locator('[data-home-overview]').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'Home has no page-level horizontal overflow');
     assert.ok(await page.evaluate(() => document.body.scrollWidth <= innerWidth + 1), 'the global toolbar does not widen the mobile page');
+    await checkHomePageEnd(page);
     await page.locator('[data-home-overview]').screenshot({ path: path.join(out, `${theme}-${width}.png`) });
     if (theme === 'light' && width === 1440) {
       const downloadPromise = page.waitForEvent('download');
@@ -89,6 +130,7 @@ try {
     }
     await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
     const dialog = page.getByRole('dialog');
+    assert.equal(await dialog.locator('[data-widget-catalog]').count(), 18, 'all personal-choice widgets remain available');
     await page.getByRole('searchbox', { name: 'Search widgets' }).fill('currency');
     assert.equal(await dialog.locator('[data-widget-catalog]').count(), 1);
     await dialog.locator('[data-widget-catalog="currency"]').hover();
@@ -139,6 +181,7 @@ try {
     await page.locator('[data-page-nav-home]').first().click();
     await page.locator('[data-home-overview]').waitFor();
     assert.ok(Math.abs(Number(await page.locator('[data-home-aum]').getAttribute('data-home-aum')) - scopedTotal) < .01, 'Home preserves member scope');
+    await checkHomePageEnd(page);
     assert.deepEqual(errors, []);
     results.push({ theme, width, total: expected, scopedTotal, classes: rows.length, widgets: layout.length });
     await context.close();

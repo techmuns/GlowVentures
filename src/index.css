@@ -924,6 +924,9 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
     left: 0;
     z-index: 1;
   }
+  #root table:not([data-freeze-off]) > tbody > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
+    overflow: hidden;
+  }
   #root table:not([data-freeze-off]) > tfoot > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
     z-index: 2;
   }
@@ -951,6 +954,12 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
   #root table:not([data-freeze-off]) > tbody > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
     max-width: 10rem;
     overflow-wrap: anywhere;
+  }
+  #root table:not([data-freeze-off]):has(> tbody > tr > td[data-tree-depth]:first-child) > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]),
+  #root table[data-year-table]:not([data-freeze-off]) > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child:is(:not([colspan]), [colspan="1"]) {
+    width: 10rem;
+    min-width: 10rem;
+    max-width: 10rem;
   }
 }
 html #root table :is(th, td) {

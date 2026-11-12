@@ -137,6 +137,11 @@ jobs:
             if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
+          # Collect every browser result in this run; any failed check keeps
+          # the job red. EXIT still tears down the owned preview server.
+          browser_status=0
+          trap 'browser_status=1' ERR
+          set +e
           node scripts/dev/test-cio-report-period.mjs
           node scripts/dev/test-table-scroll.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-cio-report.mjs
@@ -163,6 +168,7 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-navigation-state.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-dashboard-navigation.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-etf-unit-continuity.mjs
+          exit "$browser_status"
 
       - name: Preserve Morning CIO report evidence
         if: always()

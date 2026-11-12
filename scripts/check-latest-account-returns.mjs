@@ -29,7 +29,14 @@ try {
   await page.goto(`${base}/cio?tiles=annualised,value`);
   const tile = page.locator('[data-tile-slot="annualised"]');
   await tile.locator('[data-return-info]').waitFor();
-  assert((await tile.innerText()).includes(faceDate));
+  // Available history can include newer same-unit NAV windows as well as
+  // manager return records. Its caption must name the measured closing date,
+  // while the account views below still retain each manager record's own date.
+  const measuredEnd = await tile.locator('[data-card-coverage]').getAttribute('data-card-to');
+  assert.match(measuredEnd, /^\d{4}-\d{2}-\d{2}$/);
+  assert(measuredEnd >= expectedEnd, 'available history includes the latest eligible account record');
+  const measuredFaceDate = new Date(`${measuredEnd}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  assert((await tile.innerText()).includes(measuredFaceDate));
   assert(Number(await tile.locator('[data-card-coverage]').getAttribute('data-card-accounts')) >= selected.length);
   assert.match(await tile.innerText(), /[\d,]+ of [\d,]+ holdings/); // the period cards' one-line caption (5 Nov 2026)
   const shown = Number((await tile.locator('[data-kpi-value]').innerText()).replace(/[^0-9.+-]/g, ''));
@@ -43,6 +50,7 @@ try {
   await dialog.locator('[data-attribution-included] summary').click();
   const included = await dialog.locator('[data-attribution-included]').innerText();
   assert.match(included, new RegExp(faceDate));
+  assert.match(included, new RegExp(measuredFaceDate));
   assert.match(included, /22 Sept|22 Sep|2026-09-22/);
   assert.equal(await page.locator('[data-tile-slot="mwr"]').count(), 0);
   await page.screenshot({ path: path.join(output, 'cio-latest-return.png') });

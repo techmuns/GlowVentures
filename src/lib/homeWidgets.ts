@@ -19,18 +19,29 @@ export const HOME_WIDGETS = [
   { id: 'sectors', name: 'Stock Sector Breakdown', category: 'Allocation', description: 'Your recorded company-share holdings grouped by their verified sectors.', kind: 'donut', size: 'half' },
 ] as const;
 export type HomeWidgetId = typeof HOME_WIDGETS[number]['id'];
-export type HomeWidgetSize = 'quarter' | 'half' | 'full';
+export type HomeWidgetSize = 'quarter' | 'half' | 'wide' | 'full';
 export type HomeWidgetEntry = { id: HomeWidgetId; size: HomeWidgetSize };
 export const DEFAULT_HOME_LAYOUT: HomeWidgetEntry[] = HOME_WIDGETS.filter(w => !['currency', 'concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors'].includes(w.id)).map(w => ({ id: w.id, size: w.size }));
-export const HOME_LAYOUT_KEY = 'glow:home:widgets:v1';
+export const HOME_LAYOUT_KEY = 'glow:home:widgets:v2';
+export const LEGACY_HOME_LAYOUT_KEY = 'glow:home:widgets:v1';
 export function readHomeLayout(raw: unknown): HomeWidgetEntry[] | null {
   if (!Array.isArray(raw)) return null;
   const seen = new Set<string>();
   return raw.flatMap(row => {
     if (!row || !HOME_WIDGETS.some(w => w.id === row.id) || seen.has(row.id)) return [];
     seen.add(row.id);
-    return [{ id: row.id as HomeWidgetId, size: ['quarter', 'half', 'full'].includes(row.size) ? row.size as HomeWidgetSize : HOME_WIDGETS.find(w => w.id === row.id)!.size }];
+    return [{ id: row.id as HomeWidgetId, size: ['quarter', 'half', 'wide', 'full'].includes(row.size) ? row.size as HomeWidgetSize : HOME_WIDGETS.find(w => w.id === row.id)!.size }];
   });
+}
+/** Preserve personal widget choices; rebalance a summary row the reader has simplified. */
+export function migrateHomeLayout(raw: unknown): HomeWidgetEntry[] | null {
+  const layout = readHomeLayout(raw);
+  if (!layout || layout.some(w => ['netWorth', 'assetsTotal', 'liabilities'].includes(w.id))) return layout;
+  const aum = layout.findIndex(w => w.id === 'aum');
+  if (aum >= 0 && layout[aum].size === 'full' && layout[aum + 1]?.id === 'cash' && layout[aum + 1].size === 'quarter') {
+    layout[aum] = { id: 'aum', size: 'wide' };
+  }
+  return layout;
 }
 export function moveHomeWidget(layout: HomeWidgetEntry[], id: HomeWidgetId, target: number): HomeWidgetEntry[] {
   const index = layout.findIndex(w => w.id === id);

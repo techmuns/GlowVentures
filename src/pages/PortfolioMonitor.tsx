@@ -79,7 +79,7 @@ import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta, r
 import { datedButUnvalued } from "@/lib/holdingFlows";
 import { useDatedCapital } from "@/lib/useDatedCapital";
 import { BenchLine, useBenchmarkLevels } from "@/components/HoldingBenchmark";
-import { closeLegsOn, indexCompound, indexMove, indexOnSameMoney, onePaymentLeg, pooledLegs, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
+import { closeLegsOn, indexCompound, indexMove, indexOnSameMoney, indexOverPeriod, onePaymentLeg, pooledLegs, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
 import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import type { IndexLevel } from "@/lib/periodReturns";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
@@ -99,7 +99,7 @@ import { notHeldNote } from "@/components/QuantityMovement";
 import { movementsFor } from "@/lib/shareMovements";
 import { allRecordedLines, recordedLabel, recordedLineFor, carriedBy } from "@/lib/recordedHoldings";
 import type { Position } from "@/lib/types";
-import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, fmtInvestedDate, type InvestedOn } from "@/lib/investedOn";
+import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, fmtInvestedDate, holdingPeriodStart, type InvestedOn } from "@/lib/investedOn";
 import { InvestedOnCell } from "@/components/InvestedOnCell";
 import { holdingPeriodOf, type HoldingPeriod } from "@/lib/holdingFlows";
 import { AbsentCell, NotApplicableCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
@@ -1201,6 +1201,22 @@ export function PortfolioMonitor() {
     }
     return null;
   };
+  /**
+   * A ROW WHOSE PURCHASES ARE NOT EACH DATED (Stage 10nt): each costed line's
+   * cost buys the index on its holding period's start (`holdingPeriodStart`)
+   * and closes on the line's own value date — null where a line has neither.
+   */
+  const periodLegsOf = (ps: readonly Position[] | undefined): CapitalLeg[] | null => {
+    const costed = (ps ?? []).filter((p) => p.costBasis != null && p.costBasis > 0 && p.marketValue != null);
+    if (!costed.length) return null;
+    const legs: CapitalLeg[] = [];
+    for (const p of costed) {
+      const start = holdingPeriodStart([p]), to = valueDate(p);
+      if (!start || !to || start.date > to) return null;
+      legs.push(onePaymentLeg(start.date, p.costBasis!, to, p.marketValue!));
+    }
+    return legs;
+  };
   const benchFigure = (hb: HoldingBenchmark, res: Extract<MeasuredReturn, { shown: true }>, input: ReturnInput, asOf: string,
     ps?: readonly Position[], legs?: readonly CapitalLeg[]): IndexFigure | null => {
     if (!hb.bench) return null;
@@ -1220,6 +1236,18 @@ export function PortfolioMonitor() {
       : res.tag === "CAGR" && heldSince && end ? (l) => indexCompound(heldSince, end, l)
       : one ? (l) => indexOnSameMoney(one, l, annual, null)
       : null;
+    // PURCHASES NOT EACH DATED (Stage 10nt): the index over the holding period —
+    // from its first investment, else its account's inception — to its value date.
+    // Lines valued on different dates: each line's cost buys the index on its own start, closed on its own value date.
+    const start = strike ? null : ps?.length && end ? holdingPeriodStart(ps) : null;
+    const perLine = strike || start || annual ? null : periodLegsOf(ps);
+    if ((start && end) || perLine) {
+      const lv = benchLevels(hb.bench.key);
+      if ("reason" in lv) return { shown: false, reason: lv.reason, feed: true };
+      if (start && end) return indexOverPeriod(start.date, end, lv.level, annual, start.basis);
+      const fig = indexOnSameMoney(perLine!, lv.level, false, null);
+      return fig.shown ? { ...fig, period: true, how: `${fig.how} Its purchases are not each dated, so each line's cost buys the index on its holding period's start (its first investment, else its account's inception), closed on that line's own value date.` } : fig;
+    }
     if (!strike) return { shown: false, reason: cap && !cap.dated ? cap.reason.replace(/\.$/, "") : undatedMoneyWhy(ps) };
     const lv = benchLevels(hb.bench.key);
     return "reason" in lv ? { shown: false, reason: lv.reason, feed: true } : strike(lv.level);
@@ -1233,22 +1261,38 @@ export function PortfolioMonitor() {
   const pooledBench = (rs: readonly Row[], asOf: string): { hb: HoldingBenchmark; fig: IndexFigure | null } | null => {
     const shown = rs.filter((r) => measuredReturn(r, "absolute", asOf).shown);
     if (!shown.length) return null;
-    const hbs = shown.map(benchOf);
-    const keys = new Set(hbs.map((h) => h.bench?.key ?? null));
+    // Rows no equity index measures (cash, debt, hybrid — Stage 10nt) stay out
+    // of the index pool and are named in its hover.
+    const priced = shown.filter((r) => benchOf(r).bench);
+    if (!priced.length) return { hb: benchOf(shown[0]), fig: null };
+    const left = shown.length - priced.length;
+    const leftOut = left ? ` ${left} of the ${shown.length} rows with a return here have no equity index (cash, debt or hybrid) and are left out of it: ${shown.filter((r) => !benchOf(r).bench).map((r) => r.security).slice(0, 6).join(", ")}${left > 6 ? " …" : ""}.` : "";
+    const hbs = priced.map(benchOf);
+    const keys = new Set(hbs.map((h) => h.bench!.key));
     const hb: HoldingBenchmark = keys.size === 1
-      ? (hbs[0].bench ? { bench: hbs[0].bench, source: "rule", why: `Every row here is compared with the ${hbs[0].bench.name}.` } : hbs[0])
-      : { bench: benchmarkByKey("nifty-500"), source: "rule", why: "The rows here are compared with different indices, so their total is compared with the broad Nifty 500." };
-    if (!hb.bench) return { hb, fig: null };
+      ? { bench: hbs[0].bench!, source: "rule", why: `Every row here is compared with the ${hbs[0].bench!.name}.${leftOut}` }
+      : { bench: benchmarkByKey("nifty-500"), source: "rule", why: `The rows here are compared with different indices, so their total is compared with the broad Nifty 500.${leftOut}` };
     // Duplicates are counted once in the total; their legs would count twice.
-    if (shown.some((r) => rowPositionsOf(r).some((p) => p.dedupeGroup))) {
+    if (priced.some((r) => rowPositionsOf(r).some((p) => p.dedupeGroup))) {
       return { hb, fig: { shown: false, reason: "a holding two members both report is behind these rows and is counted once in the total, so its dated money cannot be pooled without counting it twice" } };
     }
-    const pool = pooledLegs(shown.map((r) => ownLegs(r, asOf)));
+    // A row whose purchases are not each dated buys the index with its cost on
+    // its holding period's start (Stage 10nt), as its own line does.
+    let byPeriod = 0;
+    const pool = pooledLegs(priced.map((r) => {
+      const own = ownLegs(r, asOf);
+      if (own?.length) return own;
+      const legs = periodLegsOf(rowPositionsOf(r));
+      if (legs) byPeriod++;
+      return legs;
+    }));
     if ("undated" in pool) {
-      return { hb, fig: { shown: false, reason: `the index is bought with every row's own dated payments, and ${pool.undated} of the ${pool.of} rows with a return here are not dated in full — each row names its own cause` } };
+      return { hb, fig: { shown: false, reason: `the index is bought with every row's own money, and ${pool.undated} of the ${pool.of} rows with a return here have no start date or cost on record` } };
     }
     const lv = benchLevels(hb.bench.key);
-    return { hb, fig: "reason" in lv ? { shown: false, reason: lv.reason, feed: true } : indexOnSameMoney(pool.legs, lv.level, false, null) };
+    if ("reason" in lv) return { hb, fig: { shown: false, reason: lv.reason, feed: true } };
+    const fig = indexOnSameMoney(pool.legs, lv.level, false, null);
+    return { hb, fig: fig.shown && byPeriod ? { ...fig, period: true, how: `${fig.how} ${byPeriod} of the ${priced.length} rows are not dated payment by payment: each buys the index with its cost on its holding period's start (its first investment, else its account's inception).` } : fig };
   };
   const holdAccessors = useMemo(
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
