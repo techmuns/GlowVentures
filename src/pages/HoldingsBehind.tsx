@@ -208,13 +208,16 @@ const HB_COLS = ["unit", "heldIn", "invested", "value", "weight", "costShare", "
 export function HoldingsBehind() {
   const { portfolio, consolidated, statementPortfolio, fmtFromBase, scope: memberScope } = usePortfolio();
   const [params] = useSearchParams();
+  const homeCash = params.get('of') === 'home-cash';
   const [qFilter, setQ] = useNavigationState<string>("holdings-search", "");
   const q = useTableExportFilter(qFilter, "");
   /** Which grouped rows are expanded to their statement lines. */
   const [openState, setOpen] = useNavigationState("holdings-expanded", () => new Set<string>());
   const open = useTableExportExpansion(openState);
   // A HOOK, so it sits above this page's early returns.
-  const view = useTableView("holdings-behind", HB_COLS, { reviewKind: "holding" });
+  const view = useTableView("holdings-behind", HB_COLS, { reviewKind: "holding",
+    memoryKey: homeCash ? 'home-cash-holdings' : undefined, investmentDates: !homeCash,
+    optional: homeCash ? ['heldIn', 'invested', 'weight', 'costShare', 'pnl', 'return'] : undefined });
 
   const scope = useMemo(() => parseDrilldown(params), [params]);
   /* CURRENT HOLDINGS ONLY, AND THE FILTER IS INSIDE `resolveDrilldown` — see the
