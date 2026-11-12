@@ -50,7 +50,10 @@ export const BENCH_SHORT: Record<BenchmarkKey, string> = {
 };
 
 export type HoldingBenchmark =
-  | { bench: Benchmark; why: string }
+  // `source`: where the benchmark choice comes from — `document` when the
+  // manager's/scheme's own report names it, `rule` when we assign it by a
+  // classification rule (a best guess, to confirm with Yamini — Stage 10kd / task 370).
+  | { bench: Benchmark; why: string; source: "document" | "rule" }
   | { bench: null; why: string };
 
 // ── AMFI'S SIZE CLASS ───────────────────────────────────────────────────────
@@ -84,10 +87,10 @@ function isinOf(p: Position): string | null {
 function shareBenchmark(p: Position): HoldingBenchmark {
   const sym = symbolFor(p), isin = isinOf(p);
   const hit = (isin ? SIZE.get(isin) : undefined) ?? (sym ? SIZE.get(`NSE:${sym}`) : undefined);
-  if (hit?.cls === "large") return { bench: benchmarkByKey("nifty-50"), why: `Large cap: ranked ${ordinal(hit.rank)} on ${AMFI_LIST}, so it is compared with the Nifty 50.` };
-  if (hit?.cls === "mid") return { bench: benchmarkByKey("nifty-midcap-150"), why: `Mid cap: ranked ${ordinal(hit.rank)} on ${AMFI_LIST}, so it is compared with the Nifty Midcap 150.` };
+  if (hit?.cls === "large") return { bench: benchmarkByKey("nifty-50"), source: "rule", why: `Large cap: ranked ${ordinal(hit.rank)} on ${AMFI_LIST}, so it is compared with the Nifty 50.` };
+  if (hit?.cls === "mid") return { bench: benchmarkByKey("nifty-midcap-150"), source: "rule", why: `Mid cap: ranked ${ordinal(hit.rank)} on ${AMFI_LIST}, so it is compared with the Nifty Midcap 150.` };
   if ((isin && SMALL.has(isin)) || (sym && SMALL.has(`NSE:${sym}`))) {
-    return { bench: benchmarkByKey("nifty-smallcap-250"),
+    return { bench: benchmarkByKey("nifty-smallcap-250"), source: "rule",
       why: `Small cap: listed, but not among the 250 largest companies on ${AMFI_LIST}, so it is compared with the Nifty Smallcap 250.` };
   }
   // LISTED BUT NOT ON THE LIST. An SME-platform share (series SM / ST / M) is
@@ -98,7 +101,7 @@ function shareBenchmark(p: Position): HoldingBenchmark {
   const q = quoteSymbolFor(p);
   const series = q ? (UPSTOX_INSTRUMENTS as Record<string, { series?: string }>)[q]?.series : undefined;
   if (series && SME_SERIES.has(series)) {
-    return { bench: benchmarkByKey("nifty-smallcap-250"),
+    return { bench: benchmarkByKey("nifty-smallcap-250"), source: "rule",
       why: `Listed on an exchange's SME platform, which AMFI's list does not rank: small cap by the platform's own size rule, compared with the Nifty Smallcap 250.` };
   }
   const capCr = p.marketCap != null && p.marketCap > 0 ? p.marketCap / 1e7 : null;
@@ -106,10 +109,10 @@ function shareBenchmark(p: Position): HoldingBenchmark {
     const [key, cls, floor] = capCr >= AMFI.largeFloorCr ? ["nifty-50", "Large cap", `at least the ₹${AMFI.largeFloorCr.toLocaleString("en-IN")} Cr of the 100th company`] as const
       : capCr >= AMFI.midFloorCr ? ["nifty-midcap-150", "Mid cap", `at least the ₹${AMFI.midFloorCr.toLocaleString("en-IN")} Cr of the 250th company`] as const
       : ["nifty-smallcap-250", "Small cap", `below the ₹${AMFI.midFloorCr.toLocaleString("en-IN")} Cr of the 250th company`] as const;
-    return { bench: benchmarkByKey(key),
+    return { bench: benchmarkByKey(key), source: "rule",
       why: `${cls}: listed after ${AMFI_LIST}; its market value today, ₹${Math.round(capCr).toLocaleString("en-IN")} Cr, is ${floor} on that list. Compared with the ${benchmarkByKey(key).name}.` };
   }
-  return { bench: benchmarkByKey("nifty-500"),
+  return { bench: benchmarkByKey("nifty-500"), source: "rule",
     why: q ? `Not on ${AMFI_LIST} — listed after it — and no market value has arrived to rank it, so it is compared with the broad Nifty 500.`
       : `Not on ${AMFI_LIST} and not traded on an exchange, so its size is unranked: compared, as a public-market equivalent, with the broad Nifty 500.` };
 }
@@ -138,10 +141,10 @@ const FUND: [RegExp, BenchmarkKey, string][] = [
 function fundBenchmark(p: Position): HoldingBenchmark {
   const name = p.security ?? p.securityKey;
   for (const [re, why] of NONE) if (re.test(name)) return { bench: null, why };
-  for (const [re, key, why] of FUND) if (re.test(name)) return { bench: benchmarkByKey(key), why };
+  for (const [re, key, why] of FUND) if (re.test(name)) return { bench: benchmarkByKey(key), source: "rule", why };
   return p.marketSide === "private"
-    ? { bench: benchmarkByKey("nifty-500"), why: "A private fund: compared, as a public-market equivalent, with the broad Nifty 500." }
-    : { bench: benchmarkByKey("nifty-500"), why: "A diversified equity scheme, compared with the broad Nifty 500." };
+    ? { bench: benchmarkByKey("nifty-500"), source: "rule", why: "A private fund: compared, as a public-market equivalent, with the broad Nifty 500." }
+    : { bench: benchmarkByKey("nifty-500"), source: "rule", why: "A diversified equity scheme, compared with the broad Nifty 500." };
 }
 
 /** The index one statement line is compared with, and why. */
@@ -150,7 +153,7 @@ export function positionBenchmark(p: Position): HoldingBenchmark {
   if (p.assetClass === "Bond") return { bench: null, why: DEBT_WHY };
   if (p.assetClass === "Equity" && p.marketSide !== "private") return shareBenchmark(p);
   if (p.assetClass === "Unlisted" || p.assetClass === "Equity") {
-    return { bench: benchmarkByKey("nifty-500"), why: "Unlisted, so AMFI ranks no size for it: compared, as a public-market equivalent, with the broad Nifty 500." };
+    return { bench: benchmarkByKey("nifty-500"), source: "rule", why: "Unlisted, so AMFI ranks no size for it: compared, as a public-market equivalent, with the broad Nifty 500." };
   }
   return fundBenchmark(p);
 }
@@ -177,9 +180,9 @@ function mandateBenchmark(accountIds: readonly string[]): HoldingBenchmark {
   const keys = new Set(printed.map((x) => x?.key ?? null));
   if (keys.size === 1 && printed[0]) {
     const b = benchmarkByKey(printed[0].key);
-    return { bench: b, why: `The manager's own report compares this mandate with "${printed[0].printed}"; the ${b.name} price index stands for it here.` };
+    return { bench: b, source: "document", why: `The manager's own report compares this mandate with "${printed[0].printed}"; the ${b.name} price index stands for it here.` };
   }
-  return { bench: benchmarkByKey("nifty-500"),
+  return { bench: benchmarkByKey("nifty-500"), source: "rule",
     why: keys.size > 1 ? "Its managers' reports print different benchmarks, so the mandate is compared with the broad Nifty 500."
       : "Its manager's report prints no benchmark the feed carries, so the mandate is compared with the broad Nifty 500." };
 }
@@ -195,7 +198,9 @@ export function rowBenchmark(ps: readonly Position[], mandateAccountIds: readonl
   const keys = new Set(each.map((x) => x.b.bench?.key ?? null));
   if (keys.size === 1) return each[0].b;
   const top = [...each].sort((a, b) => (b.p.marketValue ?? 0) - (a.p.marketValue ?? 0))[0];
-  return { bench: top.b.bench, why: `${top.b.why} Its lines differ in kind; this is the largest line's.` } as HoldingBenchmark;
+  return top.b.bench
+    ? { bench: top.b.bench, source: top.b.source, why: `${top.b.why} Its lines differ in kind; this is the largest line's.` }
+    : { bench: null, why: `${top.b.why} Its lines differ in kind; this is the largest line's.` };
 }
 
 // ── THE INDEX ON THE SAME MONEY ─────────────────────────────────────────────
