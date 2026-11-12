@@ -516,25 +516,9 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                   })}
                 </div>
               )}
-              {indices && model.dayPct != null && indexSession(indices).date === model.session && (() => {
-                const n500 = indices.indices.find((x) => x.id === "nifty-500");
-                if (!n500 || n500.changePct == null || n500.sessionDate !== model.session) return null;
-                const gap = model.dayPct - n500.changePct;
-                return (
-                  /* "THE PRICED BOOK" WAS TRUE AND IS NOT ANY MORE. This figure
-                     is struck over the ACTIVE SCOPE, and a sentence that called
-                     it the book would be the caption-that-widens failure the
-                     Capital invested tile already cost this page once — so the
-                     subject is the scope's own, and it moves with the tab. */
-                  <p className="mt-3 border-t border-ink-700 pt-2 text-[11.5px] text-slate-400" data-testid="movers-vs-index"
-                    title={`Struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(portfolio.totalValue, { compact: true })} book. Both are one session, and neither is a return over any longer window. The gap is the difference between two percentages, so it is in percentage points rather than a percentage of anything.`}>
-                    {/* A GAP BETWEEN TWO PERCENTAGES IS IN POINTS (MNT-20), not a
-                        percentage of anything — "+11.00%" read as a return. */}
-                    {SCOPE.subject} {SCOPE.verb} <strong className={changeColor(gap)}>{`${gap > 0 ? "+" : gap < 0 ? "−" : ""}${fmtNum(Math.abs(gap), 2)} pts`}</strong> against the
-                    Nifty 500 · {sessionLabel}
-                  </p>
-                );
-              })()}
+              {/* THE "… pts against the Nifty 500" LINE IS GONE AT THE FAMILY'S
+                  REQUEST (Stage 10ng): the scope's move and the four indices'
+                  moves sit side by side on this card, so the gap restated them. */}
             </div>
           </div>
 
