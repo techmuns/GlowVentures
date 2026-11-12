@@ -130,6 +130,26 @@ jobs:
           node scripts/dev/test-pdf-preview-runtime.mjs
           node --test scripts/dev/test-statement-previews.mjs
 
+      - name: Home widget layout and interactions
+        run: |
+          mkdir -p .cache/home-dashboard/browser
+          npm run preview -- --host 127.0.0.1 --port 4173 > .cache/home-dashboard/browser/preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-home-overview.mjs
+
+      - name: Preserve Home widget browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: home-dashboard-browser
+          path: .cache/home-dashboard/browser/
+          if-no-files-found: ignore
+
       - name: Infinite scrolling and table request budgets
         run: |
           mkdir -p .cache/table-scroll-check
@@ -150,7 +170,6 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-cio-report.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-statement-drop.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
-          CHROME="$(command -v google-chrome)" node scripts/dev/check-home-overview.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-inr-twr.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-market-returns.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-assumed-holdings.mjs
