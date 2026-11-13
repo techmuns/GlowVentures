@@ -19,6 +19,7 @@ import { EditColumns } from "@/components/EditColumns";
 import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
 import { useViewParam } from "@/components/ViewToggle";
+import PrivateWatchlist from "@/components/PrivateWatchlist";
 import { AbsentCell, AbsentSection, AbsentValue, NotApplicableCell, DASH } from "@/components/Absent";
 import { CallCell, CallEditor } from "@/components/EnteredCalls";
 import { ProfileCellInput, profileTitle } from "@/components/EnteredProfiles";
@@ -289,6 +290,13 @@ const BOOK_VIEWS = [
     key: "history", label: "History",
     title: "One fund at a time: its dated capital calls and distributions over time, its valuation history, and its money-weighted return over a chosen window.",
     cardTitle: "Private market — fund history",
+  },
+  {
+    // Companies and funds the family is WATCHING, not holding (client #310):
+    // added by hand, saved for everyone, kept apart from the book.
+    key: "watchlist", label: "Watchlist",
+    title: "Companies and funds you are tracking but do not hold yet — added by hand and saved for everyone.",
+    cardTitle: "Private market — watchlist",
   },
 ] as const;
 
@@ -2567,8 +2575,8 @@ export function PrivateMarket() {
             {/* The History tab carries its own fund picker and date-range
                 controls, so the master table's column editor and search — which
                 act on the funds/brands/transactions tables — are not shown on it. */}
-            {view !== "history" && <EditColumns view={view === "transactions" ? callView : bookView} labels={view === "transactions" ? undefined : VALUATION_LABELS} />}
-            {view !== "history" && <SearchInput value={q} onChange={setQ}
+            {view !== "history" && view !== "watchlist" && <EditColumns view={view === "transactions" ? callView : bookView} labels={view === "transactions" ? undefined : VALUATION_LABELS} />}
+            {view !== "history" && view !== "watchlist" && <SearchInput value={q} onChange={setQ}
               placeholder={view === "transactions" ? "Search calls…" : view === "brands" ? "Search brands, funds or entities…" : "Search companies, funds or brands…"}
               className="w-56"
               suggestions={view === "transactions"
@@ -2759,6 +2767,11 @@ export function PrivateMarket() {
         {view === "history" && (
           <FundHistory funds={m.funds} fundDated={fundDated} schemes={m.schemes} money={money} moneyFull={moneyFull} />
         )}
+
+        {/* ── THE WATCHLIST TAB (client #310) ───────────────────────────────
+            Companies and funds added by hand and saved for everyone, kept
+            apart from the book — see `components/PrivateWatchlist.tsx`. */}
+        {view === "watchlist" && <PrivateWatchlist />}
 
         {/* THE DROP-DOWN "How the capital totals are worked out" AND THE LINE
             "This page is the private side of the book…" STOOD HERE, and both
