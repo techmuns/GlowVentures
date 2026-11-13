@@ -79,7 +79,7 @@ import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta, r
 import { datedButUnvalued } from "@/lib/holdingFlows";
 import { useDatedCapital } from "@/lib/useDatedCapital";
 import { BenchLine, useBenchmarkLevels } from "@/components/HoldingBenchmark";
-import { closeLegsOn, indexCompound, indexMove, indexOnSameMoney, indexOverPeriod, onePaymentLeg, pooledLegs, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
+import { BENCH_SHORT, closeLegsOn, indexCompound, indexMove, indexOnSameMoney, indexOverPeriod, onePaymentLeg, pooledLegs, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
 import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import type { IndexLevel } from "@/lib/periodReturns";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
@@ -584,7 +584,7 @@ const canLookThrough = (r: { assetClass: string; securityKey: string }) =>
  * `monitor-stock` key is read only where nothing is saved under `monitor`.
  */
 const MONITOR_COLS = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "mv",
-  "weight", "pnl", "realised", "return", "sector", "entity"] as const;
+  "weight", "pnl", "realised", "return", "benchmark", "sector", "entity"] as const;
 /**
  * THE MEASURED HALF, SPLIT BY WHO CHOSE THE SHARES. `Direct` and `PMS` stand
  * before their subtotal `Direct + PMS` (`mv`), which every cost, gain and
@@ -592,9 +592,9 @@ const MONITOR_COLS = ["security", "qty", "avgCost", "invested", "investedOn", "c
  * Direct + PMS, then + Via funds = Total exposure.
  */
 const MONITOR_STOCK_COLS = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "direct", "pms", "mv",
-  "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "sector", "entity"] as const;
+  "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "benchmark", "sector", "entity"] as const;
 const MONITOR_STOCK_COLS_OTHER = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "direct", "pms", "otherRoute", "mv",
-  "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "sector", "entity"] as const;
+  "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "benchmark", "sector", "entity"] as const;
 const MONITOR_LEGACY_KEYS = ["monitor-stock"] as const;
 /** Why a company's route cell is empty while a statement does report it — through another route. */
 const ROUTE_ABSENT_ROW: Record<keyof MeasuredSplit, string> = {
@@ -1298,8 +1298,8 @@ export function PortfolioMonitor() {
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
     // after one; these accessors are only ever called from `sortRows` under it,
     // so the fallback is unreachable rather than a default date standing in.
-    () => withReviewAccessors<Row>({ ...MONITOR_ACCESSORS, ...returnAccessorsFor<Row>(returnMeasures, (r, m) => measuredReturn(withYtd(r, rowPositionsOf(r), m), m, portfolio?.asOf ?? "")) }, monitorReviewScope, memberScope.owners !== null),
-    [returnMeasures, portfolio?.asOf, memberScope.owners, withYtd]);
+    () => withReviewAccessors<Row>({ ...MONITOR_ACCESSORS, benchmark: (r: Row) => { const hb = benchOf(r); return hb.bench ? BENCH_SHORT[hb.bench.key] : null; }, ...returnAccessorsFor<Row>(returnMeasures, (r, m) => measuredReturn(withYtd(r, rowPositionsOf(r), m), m, portfolio?.asOf ?? "")) }, monitorReviewScope, memberScope.owners !== null),
+    [returnMeasures, portfolio?.asOf, memberScope.owners, withYtd, benchOf]);
   // ORDER-INDEPENDENT BY CONSTRUCTION: a span struck on the view's own column
   // count cannot drift from the header when a reader moves a column, where the
   // literal it replaced had to be kept in step by hand.
@@ -3016,7 +3016,7 @@ export function PortfolioMonitor() {
   // row does. A blank here is "see the row above", never "zero" and never
   // "nobody measured it".
   type ChildCells = Partial<Record<"qty" | "avgCost" | "invested" | "investedOn" | "cmp" | "day" | "direct" | "pms" | "otherRoute" | "mv"
-    | "viaFunds" | "totalExposure" | "weight" | "pnl" | "realised" | "sector" | "entity", ReactNode>>
+    | "viaFunds" | "totalExposure" | "weight" | "pnl" | "realised" | "benchmark" | "sector" | "entity", ReactNode>>
     & { ret?: (measure: ReturnMeasure) => ReactNode; reviewScope?: ReviewScope; sourcePositions?: readonly Position[] };
   const CHILD_NUM = `${TREE_CELL_DENSE.child} text-right mono whitespace-nowrap text-slate-400`;
   /** A child's cells, in the table's DECLARED column order — which is what `<Tr>` permutes from. */
@@ -3043,6 +3043,9 @@ export function PortfolioMonitor() {
     ...returnMeasures.map((measure) => (
       <td key={`ret:${measure}`} className={CHILD_NUM} data-child-return={c.ret ? measure : undefined}>{c.ret?.(measure)}</td>
     )),
+    // The Benchmark column cell. An opened/aggregated row keeps its index inline
+    // under its own return (above), so this is empty unless a caller fills it.
+    <td key="benchmark" className={`${TREE_CELL_DENSE.child} text-left mono whitespace-nowrap text-slate-400`}>{c.benchmark}</td>,
     <td key="sector" className={`${TREE_CELL_DENSE.child} text-slate-500`}>{c.sector}</td>,
     <td key="entity" className={`${TREE_CELL_DENSE.child} text-slate-400`}>{c.entity}</td>,
   ];
@@ -4095,7 +4098,7 @@ export function PortfolioMonitor() {
           the account's real dated purchases and redemptions here.
         */}
         <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} source={returnSource} />
-        {view === "holdings" && <EditColumns view={holdView} />}
+        {view === "holdings" && <EditColumns view={holdView} labels={{ benchmark: { label: "Benchmark", detail: "Each holding's index and its holding-period return; * = best-guess size class, no * = the manager's printed benchmark." } }} />}
         {/* EXPAND ALL — the standard's one control for every row the table can
             open. Beside the return picker, with the other controls that arrange
             the table rather than narrow it; absent on the security axis, where
@@ -4340,6 +4343,15 @@ export function PortfolioMonitor() {
                       </SortHeader>
                     );
                   })}
+                  {/* ── THE BENCHMARK COLUMN ───────────────────────────────────
+                      *"you are mentioning benchmark column? where is it on
+                      portfolio monitor i cant see it?"* — the index was a small
+                      line under each return and never a column of its own. It is
+                      a column now: each holding's index and its return over the
+                      holding period, the `*` flagging a best-guess size-class
+                      index against the manager's own printed benchmark. */}
+                  <SortHeader col="benchmark" view={holdView} align="left" pad="px-2 py-1.5"
+                    title="Each holding's benchmark index and that index's return over the same holding-period money, so it reads against the HPR beside it. A * marks an index assigned by size-class rule (a best guess, to confirm with Yamini); no * means the manager's own report names it. Drag it or hide it from Edit Columns.">Benchmark</SortHeader>
                   {/* SECTOR AND ENTITY CLOSE THE TABLE — the family asked for
                       the money to read first, and these two are the only
                       columns on the row that are not money. They describe the
@@ -4799,6 +4811,9 @@ export function PortfolioMonitor() {
                               </td>
                             );
                           })}
+                          {/* Benchmark: a section keeps its pooled index inline
+                              under its own return above, so this cell is empty. */}
+                          <td className="px-2 py-1.5"></td>
                           {/* Sector and Entity describe a holding; a category has
                               no sum of words. Empty, exactly as in the footer. */}
                           <td className="px-2 py-1.5"></td>
@@ -5403,6 +5418,38 @@ export function PortfolioMonitor() {
                             </td>
                           );
                         })}
+                        {/* ── THE BENCHMARK COLUMN CELL ──────────────────────────
+                            The holding's index, named in full, and its return over
+                            the SAME holding-period money as HPR — the headline
+                            comparison — computed on "absolute" independently of
+                            which return columns are ticked, so the column stands
+                            on its own. The `*` flags a size-class best guess against
+                            the manager's printed benchmark. This is PLAIN markup, not
+                            `BenchLine`: it carries `data-bench-col`, not `data-bench`,
+                            so it reads as the column it is and does not count as one
+                            of the inline index lines the returns still carry. */}
+                        {(() => {
+                          const bHb = benchOf(r);
+                          if (!bHb.bench) return <td key="benchmark" className="px-2 py-1.5 text-left text-[11px] text-slate-500" title={bHb.why}>—</td>;
+                          const bInput = withYtd(r, rowPositionsOf(r), "absolute");
+                          const bRes = measuredReturn(bInput, "absolute", portfolio.asOf);
+                          const bFig = bRes.shown ? benchFigure(bHb, bRes, bInput, portfolio.asOf, rowPositionsOf(r)) : null;
+                          const guess = bHb.source === "rule";
+                          const gap = bFig?.shown && bRes.shown ? bRes.pct - bFig.pct : null;
+                          const title = [`${bHb.bench.name}. ${bHb.why}`,
+                            guess ? "Assigned by size-class rule — a best guess, to confirm with Yamini." : "The manager's own report names this benchmark.",
+                            bFig?.shown ? `Index ${fmtPct(bFig.pct, { sign: true, decimals: 1 })} over the holding period — a price index, so dividends are not in it.` : bFig ? `No index figure: ${bFig.reason}.` : null,
+                            gap != null ? `The holding ${gap >= 0 ? "is ahead of" : "trails"} it by ${Math.abs(gap).toFixed(1)} percentage points.` : null,
+                          ].filter(Boolean).join(" ");
+                          return (
+                            <td key="benchmark" className="px-2 py-1.5 text-left align-top whitespace-nowrap" title={title} data-bench-col={bHb.bench.key} data-bench-col-source={bHb.source}>
+                              <span className="text-[11px] text-slate-300">{bHb.bench.name}{guess && <sup className="text-amber-400/90">*</sup>}</span>
+                              {bFig?.shown
+                                ? <span className="ml-1.5 mono text-[11px] text-slate-400">{fmtPct(bFig.pct, { sign: true, decimals: 1 })}</span>
+                                : <span className="ml-1.5 text-[11px] text-slate-500">—</span>}
+                            </td>
+                          );
+                        })()}
                         {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG
                             WAY TO SAY SO. It reads as a sector the pipeline
                             failed to map — the same cell a directly-held share
@@ -5793,6 +5840,11 @@ export function PortfolioMonitor() {
                         </td>
                       )];
                     })),
+                    /* Benchmark: the book's pooled index shows inline under the
+                        total return above, so this column has nothing to add. */
+                    benchmark: (
+                    <td key="benchmark" className="px-2 py-1.5"></td>
+                    ),
                     /* Sector and Entity — descriptors, so the footer has nothing
                         to total under them. Empty rather than absent: a column
                         of words has no sum to be missing. */

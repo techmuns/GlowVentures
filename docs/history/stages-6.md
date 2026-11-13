@@ -1715,3 +1715,30 @@ Codex's review of #352, verified against the code and the book:
 
 - A post-merge browser run could report a pending download's cleanup rejection instead of the original failed export click. The helper now observes the click and download together; neither rejection can become an orphaned error that masks the cause.
 - Regression fixtures exercise both failure orders. The broad table check records the original error and a screenshot before closing the browser, and CI retains those diagnostics. Existing workbook-content assertions, timeouts and source figures are unchanged.
+
+### Stage 10oc — Portfolio Monitor: the benchmark as its own labelled column
+
+- *"you are mentioning benchmark column? where is it on portfolio monitor i cant
+  see it? is that a bug or what?"* — the family, 13 Nov 2026. The per-holding
+  index (Stage 10kd) was a small grey line INSIDE each return cell and never a
+  column of its own, so a reader scanning the headers for "Benchmark" found none.
+  It is a column now (`benchmark`, after the return columns, before Sector), added
+  to `MONITOR_COLS` / `MONITOR_STOCK_COLS` / `MONITOR_STOCK_COLS_OTHER`, so it
+  sorts, drags and hides from Edit Columns like every other column.
+- The cell names the index IN FULL (Nifty Smallcap 250, not S250), carries the
+  amber `*` that flags a size-class best guess against the manager's printed
+  benchmark, and prints that index's return over the SAME holding-period money as
+  HPR — computed on `"absolute"` independently of which return measures are
+  ticked, so the column stands on its own. It is plain markup carrying
+  `data-bench-col` (not `data-bench`), so it is NOT counted as one of the inline
+  index lines the returns still carry.
+- Nothing established was removed. Every return keeps its own inline index line
+  (`BenchLine`, Stage 10kd/10lc/10mr) — XIRR and YTD footnote the index over their
+  own windows, which the one holding-period column cannot — so the "every return
+  carries its index line" invariant stays green. Aggregate rows (section bands,
+  the footer) and opened child rows keep their inline index and leave the new
+  column empty, exactly as they leave Sector and Entities empty.
+- `check:pages`: the footer invariant now reads the return four cells from the
+  end (Benchmark, Sector, Entities all carry no total); the inline-index and
+  sector invariants are unchanged. No new finding on `monitor` (the pre-existing
+  category-axis sector failure is on `main` and untouched).

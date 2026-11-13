@@ -32473,14 +32473,16 @@ const INVARIANTS = {
       // figure (MH-04), which cuts that text line at the figure.
       const cells = ctx?.footerCells;
       if (!cells?.length) return false;
-      // …Realised, Return, Sector, Entities. The two descriptor columns stay
-      // empty; the last figure the footer carries is now the return, since the
-      // separate YTD column (and its absent total) is gone — YTD is a Return
-      // measure now.
-      return cells.length >= 3
+      // …Realised, Return, Benchmark, Sector, Entities. THREE trailing columns
+      // carry no total now — the Benchmark column (the book's pooled index shows
+      // inline under the total return, not here) and the two descriptors Sector
+      // and Entities — so the last figure the footer carries is the return, four
+      // from the end. YTD is a Return measure, not its own column.
+      return cells.length >= 4
         && cells[cells.length - 1].trim() === ""
         && cells[cells.length - 2].trim() === ""
-        && FOOT_RETURN_CELL.test(cells[cells.length - 3].trim());
+        && cells[cells.length - 3].trim() === ""
+        && FOOT_RETURN_CELL.test(cells[cells.length - 4].trim());
     }],
     /**
      * ── DENSITY, MEASURED RATHER THAN DESCRIBED ─────────────────────────────
