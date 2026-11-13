@@ -64,7 +64,7 @@ const PC_TABS = [
 ] as const;
 
 const POS_COLS = ["entity", "account", "invested", "units", "cost", "value", "asOf"] as const;
-const ROUND_COLS = ["date", "round", "raised", "pre", "post", "price", "stake", "investors", "allInvestors", "source"] as const;
+const ROUND_COLS = ["date", "round", "raised", "pre", "post", "price", "stake", "stakeValue", "investors", "allInvestors", "source"] as const;
 const NEWS_COLS = ["at", "headline", "publisher"] as const;
 
 const GRID_COLOR = "var(--chart-grid, #2b2668)";
@@ -187,6 +187,7 @@ function CompanyPage({ company }: { company: Company }) {
     raised: (r) => roundValues(r, cur).raised, pre: (r) => roundValues(r, cur).pre?.value ?? null,
     post: (r) => roundValues(r, cur).headline?.value ?? null, price: (r) => roundValues(r, cur).price,
     stake: (r) => stakes.at.get(r)?.pct ?? null,
+    stakeValue: (r) => stakes.at.get(r)?.value ?? null,
     investors: (r) => r.leadInvestors.join(", ") || null, allInvestors: (r) => r.investors?.length ?? null,
     source: (r) => r.sources[0]?.publisher ?? null,
   };
@@ -294,6 +295,7 @@ function CompanyPage({ company }: { company: Company }) {
         <Kpi label="Your stake"
           {...(latestStake
             ? { value: <span data-pc-stake={latestStake.stake.pct} title={latestStake.stake.note}>{fmtNum(latestStake.stake.pct, 3)}%</span>,
+                second: latestStake.stake.value != null ? <span data-pc-stake-value={latestStake.stake.value} title={latestStake.stake.valueNote ?? undefined}>{money(latestStake.stake.value)} at that valuation</span> : undefined,
                 sub: <span className="text-slate-500">after {latestStake.round.round}</span> }
             : { value: <AbsentValue />, sub: <span className="text-slate-500" title={stakeAbsent} data-pc-stake-absent>{shares == null ? "no share count on the statement" : "not struck — hover for why"}</span> })}
           icon={<Percent className="h-4 w-4" />} />
@@ -352,6 +354,7 @@ function CompanyPage({ company }: { company: Company }) {
                         <SortHeader col="post" view={roundView} title="Post-money valuation — as the source prints it, or pre-money + amount raised (marked d); a valuation the source gives no basis for is marked so">Post-money</SortHeader>
                         <SortHeader col="price" view={roundView}>Price / share</SortHeader>
                         <SortHeader col="stake" view={roundView} title="The family's shares × the round's price per share ÷ its post-money — only where the family's statement carries a share count">Your stake</SortHeader>
+                        <SortHeader col="stakeValue" view={roundView} title="The family's stake × this round's valuation — what the holding is worth at this round's price. Derived (marked d); the book still carries the holding at cost, and this is not a realisable amount">Stake value</SortHeader>
                         <SortHeader col="investors" view={roundView} align="left">Lead investors</SortHeader>
                         <SortHeader col="allInvestors" view={roundView} align="left" title="Every investor Inc42's weekly funding table lists for the round, as it prints them">Investors</SortHeader>
                         <SortHeader col="source" view={roundView} align="left">Source</SortHeader>
@@ -388,6 +391,10 @@ function CompanyPage({ company }: { company: Company }) {
                             <td className="tabular whitespace-nowrap px-3 py-2 text-right">
                               {stake ? <span title={stake.note} data-pc-round-stake={stake.pct}>{fmtNum(stake.pct, 3)}%</span>
                                 : <AbsentCell reason={stakes.why.get(r)} />}
+                            </td>
+                            <td className="tabular whitespace-nowrap px-3 py-2 text-right">
+                              {stake?.value != null ? <span title={stake.valueNote ?? undefined} data-pc-round-stake-value={stake.value}>{money(stake.value)}<sup className="ml-0.5 text-[9px] text-slate-500">d</sup></span>
+                                : <AbsentCell reason={stake ? "this round prints no valuation in one currency to value the stake at" : stakes.why.get(r)} />}
                             </td>
                             <td className="max-w-[16rem] px-3 py-2 text-left text-slate-400">{r.leadInvestors.length ? r.leadInvestors.join(", ") : <AbsentCell reason="the source names no lead investor" />}</td>
                             <td className="min-w-[14rem] max-w-[22rem] px-3 py-2 text-left text-slate-400" data-pc-investors={r.investors?.length ?? 0}>
