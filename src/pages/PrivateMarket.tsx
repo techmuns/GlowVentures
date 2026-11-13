@@ -972,11 +972,23 @@ export function PrivateMarket() {
    * the multiples and money-weighted return, and the counted-once capital tiles
    * for committed / called / undrawn. It cannot count anything a second way.
    */
-  const reportSnapshot = (period: ReportPeriod) => privateReportSnapshot({
-    funds: m.funds, fundDated,
-    totals: { committed: m.ct.committed, called: m.cc.called, undrawn: m.ct.undrawn },
-    scope: memberScope.label, currency: displayCurrency, convert: convertFromBase, period,
-  });
+  const reportInvestments = m.funds.map((f) => ({ key: f.securityKey, name: f.security, value: f.mv }));
+  const reportSnapshot = (period: ReportPeriod, keys: string[] | null) => {
+    const sel = keys ? new Set(keys) : null;
+    // The committed / called / undrawn tiles are WHOLE-BOOK figures that cannot be
+    // attributed to a subset, so a subset report leaves them blank (honest, not a
+    // whole-book number mislabelled); the per-fund multiples and paid-in/distributed
+    // are struck from each fund's own dated records, so they stay correct either way.
+    return privateReportSnapshot({
+      funds: sel ? m.funds.filter((f) => sel.has(f.securityKey)) : m.funds,
+      fundDated,
+      totals: sel
+        ? { committed: null, called: null, undrawn: null }
+        : { committed: m.ct.committed, called: m.cc.called, undrawn: m.ct.undrawn },
+      scope: sel ? `${memberScope.label} · selected investments` : memberScope.label,
+      currency: displayCurrency, convert: convertFromBase, period,
+    });
+  };
   /**
    * ── WHAT THE FUNDS PAID BACK, AND HOW IT MEETS THE XIRR (B-10) ───────────
    *
@@ -2589,7 +2601,7 @@ export function PrivateMarket() {
             {tabs}
             {/* Generate report (client #418): a branded PDF of the private book.
                 Not on the watchlist tab, which is companies watched, not held. */}
-            {view !== "watchlist" && <PrivateReportExport snapshot={reportSnapshot} />}
+            {view !== "watchlist" && <PrivateReportExport snapshot={reportSnapshot} investments={reportInvestments} />}
             {/* The History tab carries its own fund picker and date-range
                 controls, so the master table's column editor and search — which
                 act on the funds/brands/transactions tables — are not shown on it. */}
