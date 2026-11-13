@@ -41420,7 +41420,17 @@ for (const theme of THEMES) {
           if (!/[+\-−]\d[\d,.]*%/.test(face)) continue;
           out.figures++;
           const name = (td.closest("tr")?.cells[0]?.innerText ?? "").split("\n")[0].trim().slice(0, 60);
-          if (!b) { out.missing.push(`${name}: ${face}`); continue; }
+          if (!b) {
+            // THE HOLDING-PERIOD INDEX MOVED TO THE BENCHMARK COLUMN (Stage 10oc):
+            // the HPR/auto return cell on a holding row no longer footnotes its
+            // index inline — the row's own Benchmark column cell (`data-bench-col`)
+            // carries it. That is the index line for this figure, so it is not
+            // missing. XIRR/YTD still footnote inline and keep the `[data-bench]`
+            // path above.
+            const measure = td.getAttribute("data-return-cell");
+            if ((measure === "absolute" || measure === "auto") && td.closest("tr")?.querySelector("[data-bench-col]")) { out.lines++; continue; }
+            out.missing.push(`${name}: ${face}`); continue;
+          }
           out.lines++;
           // The feed's own state (closes loading, the service down) keeps the plain dash; a gap in the record never does.
           // Stage 10nt: no words on the face — a dash carries its reason as its hover.

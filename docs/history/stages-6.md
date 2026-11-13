@@ -1732,13 +1732,19 @@ Codex's review of #352, verified against the code and the book:
   ticked, so the column stands on its own. It is plain markup carrying
   `data-bench-col` (not `data-bench`), so it is NOT counted as one of the inline
   index lines the returns still carry.
-- Nothing established was removed. Every return keeps its own inline index line
-  (`BenchLine`, Stage 10kd/10lc/10mr) — XIRR and YTD footnote the index over their
-  own windows, which the one holding-period column cannot — so the "every return
-  carries its index line" invariant stays green. Aggregate rows (section bands,
-  the footer) and opened child rows keep their inline index and leave the new
-  column empty, exactly as they leave Sector and Entities empty.
-- `check:pages`: the footer invariant now reads the return four cells from the
-  end (Benchmark, Sector, Entities all carry no total); the inline-index and
-  sector invariants are unchanged. No new finding on `monitor` (the pre-existing
-  category-axis sector failure is on `main` and untouched).
+- The holding-period index shows in ONE place, not two. A holding row's HPR/auto
+  return cell no longer footnotes its index inline (that was a brief overlap on
+  the first cut, which the family flagged — *"remove the duplicate inline HPR
+  footnote"*): the Benchmark column carries it. XIRR and YTD keep their inline
+  footnote, because each is the index over its OWN window, which the one
+  holding-period column cannot show. Aggregate rows (section bands, the footer)
+  and opened child rows keep their inline index over their own return and leave
+  the new column empty, exactly as they leave Sector and Entities empty. No
+  figure, coverage or assumption is dropped — the HPR index moved, it did not go.
+- `check:pages`: the "every return carries its index line" invariant now accepts
+  the HPR/auto index in the Benchmark column cell (`data-bench-col` on the row)
+  as that figure's index line, so it stays green with the inline HPR footnote
+  removed; XIRR/YTD still satisfy it inline. The footer invariant reads the return
+  four cells from the end (Benchmark, Sector, Entities carry no total). No new
+  finding on `monitor` (the pre-existing category-axis sector failure is on
+  `main` and untouched).
