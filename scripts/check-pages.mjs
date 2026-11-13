@@ -18557,16 +18557,18 @@ const pmViewChecks = (expected) => [
    * "Transactions" are phrases this page's own prose uses, so a text match
    * cannot tell a rendered button from a sentence about one.
    */
-  [`the private book is one card with four tabs (fund, brand, transactions, history), no legal-entity or review tab, and this address opens on ${expected}`, (t, ctx) => {
+  [`the private book is one card with five tabs (fund, brand, transactions, history, watchlist), no legal-entity or review tab, and this address opens on ${expected}`, (t, ctx) => {
     const pv = ctx?.pmView;
     if (!pv) return { notChecked: "the private-view probe did not run" };
     const keys = pv.views.map((v) => v.key);
     // The History tab (client #414 / #415) is one fund's dated calls and
     // distributions over time, its valuation history and a money-weighted return
-    // over a chosen window — a fourth view of the SAME book, not the old
-    // legal-entity or review tab, whose absence is still asserted.
-    return keys.length === 4
-      && ["funds", "brands", "transactions", "history"].every((k) => keys.includes(k))
+    // over a chosen window; the Watchlist tab (client #310, Stage 10od) is the
+    // companies and funds the family is watching but does not hold, kept apart
+    // from the book and counted in no total — both are further views on the SAME
+    // card, not the old legal-entity or review tab, whose absence is still asserted.
+    return keys.length === 5
+      && ["funds", "brands", "transactions", "history", "watchlist"].every((k) => keys.includes(k))
       && !keys.includes("owners") && !keys.includes("folios") && !keys.includes("review")
       && pv.views.find((v) => v.active)?.key === expected;
   }],
