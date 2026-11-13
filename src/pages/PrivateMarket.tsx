@@ -20,6 +20,9 @@ import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
 import { useViewParam } from "@/components/ViewToggle";
 import PrivateWatchlist from "@/components/PrivateWatchlist";
+import { PrivateReportExport } from "@/components/PrivateReportExport";
+import { privateReportSnapshot } from "@/lib/privateReport";
+import type { ReportPeriod } from "@/lib/cioReportPeriod";
 import { AbsentCell, AbsentSection, AbsentValue, NotApplicableCell, DASH } from "@/components/Absent";
 import { CallCell, CallEditor } from "@/components/EnteredCalls";
 import { ProfileCellInput, profileTitle } from "@/components/EnteredProfiles";
@@ -553,7 +556,7 @@ export function PrivateMarket() {
    * at its current value, a live price where a quote has landed and each mutual
    * fund at its published NAV. One figure, one value, on one screen.
    */
-  const { enteredPortfolio: portfolio, portfolio: live, fmtFromBase, scope: memberScope } = usePortfolio();
+  const { enteredPortfolio: portfolio, portfolio: live, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope } = usePortfolio();
   const [q, setQ] = useNavigationState<string>("private-search", "");
   const exportingTable = useTableExporting();
   /**
@@ -962,6 +965,18 @@ export function PrivateMarket() {
   const moneyN = (n: number) => money(n);
   /** Per FUND, over the fund rows' own deduped positions — the record Stage 10bw built. */
   const fundDated = fundDatedRecords(m.scope.dedupedRows, m.commitments, BOOK_REVIEW_FLOWS, m.accIdx, moneyN, fmtDate);
+  /**
+   * ── GENERATE REPORT (client #418) ────────────────────────────────────────
+   * The private book's own report, built from the SAME fund rows and dated
+   * records this page draws: `m.funds` for value / cost / gain, `fundDated` for
+   * the multiples and money-weighted return, and the counted-once capital tiles
+   * for committed / called / undrawn. It cannot count anything a second way.
+   */
+  const reportSnapshot = (period: ReportPeriod) => privateReportSnapshot({
+    funds: m.funds, fundDated,
+    totals: { committed: m.ct.committed, called: m.cc.called, undrawn: m.ct.undrawn },
+    scope: memberScope.label, currency: displayCurrency, convert: convertFromBase, period,
+  });
   /**
    * ── WHAT THE FUNDS PAID BACK, AND HOW IT MEETS THE XIRR (B-10) ───────────
    *
@@ -2572,6 +2587,9 @@ export function PrivateMarket() {
         right={
           <div className="flex flex-wrap items-center justify-end gap-2">
             {tabs}
+            {/* Generate report (client #418): a branded PDF of the private book.
+                Not on the watchlist tab, which is companies watched, not held. */}
+            {view !== "watchlist" && <PrivateReportExport snapshot={reportSnapshot} />}
             {/* The History tab carries its own fund picker and date-range
                 controls, so the master table's column editor and search — which
                 act on the funds/brands/transactions tables — are not shown on it. */}
