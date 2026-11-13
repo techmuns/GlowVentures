@@ -119,6 +119,16 @@ const offBasis = stakeTrail(diluting, 1000, 31_810 * 1000, "2022-06-20", "INR");
 ok("no stake where the family's cost per share is not the entry round's price (a split, a secondary purchase)",
   offBasis.at.size === 0 && /another price or share basis/.test(offBasis.why.get(diluting.rounds[1]) ?? ""));
 ok("no stake without a share count", stakeTrail(diluting, null, 1e6, "2022-06-20", "INR").at.size === 0);
+// #434 — a count the family ENTERED (the statement carries none) strikes the same
+// stake, and every figure from it says on its hover that it is an entered count.
+const entered = stakeTrail(diluting, 1000, 1000 * 1000, "2022-06-20", "INR", "Entered from CAS.");
+ok("an entered share count strikes the stake and labels it on the hover",
+  entered.at.get(diluting.rounds[1])?.pct === atA && /^Entered from CAS\./.test(entered.at.get(diluting.rounds[1])?.note ?? ""));
+// …and a count present but no cost reports the REAL reason — the split guard needs
+// the cost to check the share basis — never the stale "no share count" message.
+const noCost = stakeTrail(diluting, 1000, null, "2022-06-20", "INR");
+ok("a share count with no cost says the cost is missing, not the count",
+  noCost.at.size === 0 && /no cost/.test(noCost.why.get(diluting.rounds[1]) ?? ""));
 
 // ── INC42'S FUNDING TABLE, FOLDED IN (Stage 10kt) ───────────────────────────
 // The rows behind Glow Central Research's News → Private Market tab, matched to
