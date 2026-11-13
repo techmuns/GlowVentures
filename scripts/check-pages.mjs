@@ -18563,7 +18563,7 @@ const pmViewChecks = (expected) => [
     const keys = pv.views.map((v) => v.key);
     // The History tab (client #414 / #415) is one fund's dated calls and
     // distributions over time, its valuation history and a money-weighted return
-    // over a chosen window; the Watchlist tab (client #310, Stage 10oc) is the
+    // over a chosen window; the Watchlist tab (client #310, Stage 10od) is the
     // companies and funds the family is watching but does not hold, kept apart
     // from the book and counted in no total — both are further views on the SAME
     // card, not the old legal-entity or review tab, whose absence is still asserted.
@@ -32475,14 +32475,16 @@ const INVARIANTS = {
       // figure (MH-04), which cuts that text line at the figure.
       const cells = ctx?.footerCells;
       if (!cells?.length) return false;
-      // …Realised, Return, Sector, Entities. The two descriptor columns stay
-      // empty; the last figure the footer carries is now the return, since the
-      // separate YTD column (and its absent total) is gone — YTD is a Return
-      // measure now.
-      return cells.length >= 3
+      // …Realised, Return, Benchmark, Sector, Entities. THREE trailing columns
+      // carry no total now — the Benchmark column (the book's pooled index shows
+      // inline under the total return, not here) and the two descriptors Sector
+      // and Entities — so the last figure the footer carries is the return, four
+      // from the end. YTD is a Return measure, not its own column.
+      return cells.length >= 4
         && cells[cells.length - 1].trim() === ""
         && cells[cells.length - 2].trim() === ""
-        && FOOT_RETURN_CELL.test(cells[cells.length - 3].trim());
+        && cells[cells.length - 3].trim() === ""
+        && FOOT_RETURN_CELL.test(cells[cells.length - 4].trim());
     }],
     /**
      * ── DENSITY, MEASURED RATHER THAN DESCRIBED ─────────────────────────────
@@ -41420,7 +41422,17 @@ for (const theme of THEMES) {
           if (!/[+\-−]\d[\d,.]*%/.test(face)) continue;
           out.figures++;
           const name = (td.closest("tr")?.cells[0]?.innerText ?? "").split("\n")[0].trim().slice(0, 60);
-          if (!b) { out.missing.push(`${name}: ${face}`); continue; }
+          if (!b) {
+            // THE HOLDING-PERIOD INDEX MOVED TO THE BENCHMARK COLUMN (Stage 10oc):
+            // the HPR/auto return cell on a holding row no longer footnotes its
+            // index inline — the row's own Benchmark column cell (`data-bench-col`)
+            // carries it. That is the index line for this figure, so it is not
+            // missing. XIRR/YTD still footnote inline and keep the `[data-bench]`
+            // path above.
+            const measure = td.getAttribute("data-return-cell");
+            if ((measure === "absolute" || measure === "auto") && td.closest("tr")?.querySelector("[data-bench-col]")) { out.lines++; continue; }
+            out.missing.push(`${name}: ${face}`); continue;
+          }
           out.lines++;
           // The feed's own state (closes loading, the service down) keeps the plain dash; a gap in the record never does.
           // Stage 10nt: no words on the face — a dash carries its reason as its hover.

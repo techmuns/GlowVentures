@@ -1716,17 +1716,57 @@ Codex's review of #352, verified against the code and the book:
 - A post-merge browser run could report a pending download's cleanup rejection instead of the original failed export click. The helper now observes the click and download together; neither rejection can become an orphaned error that masks the cause.
 - Regression fixtures exercise both failure orders. The broad table check records the original error and a screenshot before closing the browser, and CI retains those diagnostics. Existing workbook-content assertions, timeouts and source figures are unchanged.
 
-### Stage 10oc — Private Market: a watchlist of companies and funds added by hand
+### Stage 10oc — Portfolio Monitor: the benchmark as its own labelled column
+
+- *"you are mentioning benchmark column? where is it on portfolio monitor i cant
+  see it? is that a bug or what?"* — the family, 13 Nov 2026. The per-holding
+  index (Stage 10kd) was a small grey line INSIDE each return cell and never a
+  column of its own, so a reader scanning the headers for "Benchmark" found none.
+  It is a column now (`benchmark`, after the return columns, before Sector), added
+  to `MONITOR_COLS` / `MONITOR_STOCK_COLS` / `MONITOR_STOCK_COLS_OTHER`, so it
+  sorts, drags and hides from Edit Columns like every other column.
+- The cell names the index IN FULL (Nifty Smallcap 250, not S250), carries the
+  amber `*` that flags a size-class best guess against the manager's printed
+  benchmark, and prints that index's return over the SAME holding-period money as
+  HPR — computed on `"absolute"` independently of which return measures are
+  ticked, so the column stands on its own. It is plain markup carrying
+  `data-bench-col` (not `data-bench`), so it is NOT counted as one of the inline
+  index lines the returns still carry.
+- The holding-period index shows in ONE place, not two. A holding row's HPR/auto
+  return cell no longer footnotes its index inline (that was a brief overlap on
+  the first cut, which the family flagged — *"remove the duplicate inline HPR
+  footnote"*): the Benchmark column carries it. XIRR and YTD keep their inline
+  footnote, because each is the index over its OWN window, which the one
+  holding-period column cannot show. Aggregate rows (section bands, the footer)
+  and opened child rows keep their inline index over their own return and leave
+  the new column empty, exactly as they leave Sector and Entities empty. No
+  figure, coverage or assumption is dropped — the HPR index moved, it did not go.
+- `check:pages`: the "every return carries its index line" invariant now accepts
+  the HPR/auto index in the Benchmark column cell (`data-bench-col` on the row)
+  as that figure's index line, so it stays green with the inline HPR footnote
+  removed; XIRR/YTD still satisfy it inline. The footer invariant reads the return
+  four cells from the end (Benchmark, Sector, Entities carry no total). No new
+  finding on `monitor` (the pre-existing category-axis sector failure is on
+  `main` and untouched).
+- The Excel export carries the benchmark BASIS as readable text, not only as the
+  cell's hover-note — *"add the reason to the excel export"* so Yamini can review
+  every best guess at once rather than row by row. The Benchmark cell sets
+  `data-export-value` to `"<index> <return> — best guess, confirm with Yamini |
+  manager's own benchmark. <why>"` (the `why` is `holdingBenchmark`'s own
+  selection reason); `readTableExport` writes that string, so the exported column
+  reads and AutoFilters on "confirm with Yamini". The on-screen cell is unchanged.
+
+### Stage 10od — Private Market: a watchlist of companies and funds added by hand
 
 - Client #310 (Pratik, 22 Oct 2026): *"is there a tab for watch list over here? … Can you add it? … Manually [added companies]."* A fifth tab on the Private Market card, **Watchlist**: companies and funds the family is WATCHING, not holding — each with a name, kind (company/fund), brand/legal entity, sector, notes and who added it, with edit and remove.
 - It is the family's own judgement, kept apart from the book: nothing reaches `glowData.ts` and no entry is counted in Market value, Capital invested or any holding total. It is separate from Research Central's public watchlist.
 - Saved for EVERYONE in the dashboard's shared store (`shared/dashboardStore.mjs`), not per-browser, so a company added on one laptop is on every screen. `functions/api/private-watchlist.js` is the endpoint (one `pwatch:<id>` key per entry carried as metadata; the same cross-origin, JSON and size guards as the capital calls), `src/lib/privateWatchlist.ts` the read hook (reusing `enteredCalls`' four store causes, their words and the one-time `SWITCH_ON_STEPS`), and `src/components/PrivateWatchlist.tsx` the tab. Until the store's `GLOW_GITHUB_TOKEN` is set the tab names the cause and shows the set-up steps, never an empty list that would read as "nothing is being watched".
 - The tab carries no figure, so it is excluded from the master table's column editor, search, return picker and expand-all, exactly as History is. The smart news-alert flags over these watched companies (client #311–#317) are Glow Central Research work, tracked there.
 
-### Stage 10od — Private Market: Generate report
+### Stage 10oe — Private Market: Generate report
 
 - Client #418 (Gaurav, 5 Nov 2026): *"can I simply create a separate report … and generate a summary of progression or performance of investments over time, valuation, etc. … PDF … management-ready."* A **Generate report** button beside the Private Market tabs opens the same two-step flow as the Morning CIO report — pick a period, then preview-and-download — producing a branded, vector colour PDF of the private book.
 - The PDF covers the whole private book in the current member scope and display currency: a cover, contents, a **Private Market Overview** (narrative + a Capital & Multiples table + a largest-investments donut) and an **Investments** table of one row per investment — invested cost, current value, unrealised gain, capital paid in and distributed, TVPI and money-weighted IRR — then an allocation chart and report notes.
 - Every figure is a dated record the page already draws, read through the same model: `m.funds` for value / cost / gain, `fundDated` + `fundHistoryModel` / `periodFundXirr` for multiples and IRR, and the counted-once capital tiles for committed / called / undrawn. Nothing is fabricated — a missing figure is left blank, an at-cost holding shows no return, and a fund with one dated valuation shows only its inception→latest IRR (the History tab's own rule). The overview's invested and unrealised totals are the covered subset the page's tiles show (`sumOrNull`), named by count, not widened to the whole book.
 - `src/lib/privateReport.ts` (pure snapshot builder), `src/lib/exportPrivateReport.ts` (jsPDF renderer, its chart/table helpers kept isolated from `exportCioReport` so the established CIO report is untouched) and `src/components/PrivateReportExport.tsx` (the button + the shared `cio-report-*` dialogs). The button uses the dashboard's own champagne primary-CTA style, not the CIO report's fixed dark-teal button, which would read as an un-remapped dark fill on the light page.
-- `check:pages`' private-view probe now asserts the **five** tabs (funds, brands, transactions, history, watchlist) — reconciled with the Watchlist tab that Stage 10oc added while the probe still named four. Verified: `build`, `test:family`, and `ONLY=private-market check:pages` all green; the report's figures tie to the page's tiles (value ₹278.7 Cr, invested ₹262 Cr over 70 of 71, unrealised ₹12.6 Cr, undrawn ₹16 Cr). The canonical book, statement basis and existing views are untouched.
+- `check:pages`' private-view probe now asserts the **five** tabs (funds, brands, transactions, history, watchlist) — reconciled with the Watchlist tab that Stage 10od added while the probe still named four. Verified: `build`, `test:family`, and `ONLY=private-market check:pages` all green; the report's figures tie to the page's tiles (value ₹278.7 Cr, invested ₹262 Cr over 70 of 71, unrealised ₹12.6 Cr, undrawn ₹16 Cr). The canonical book, statement basis and existing views are untouched.
