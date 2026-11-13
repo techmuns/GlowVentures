@@ -1748,3 +1748,10 @@ Codex's review of #352, verified against the code and the book:
   four cells from the end (Benchmark, Sector, Entities carry no total). No new
   finding on `monitor` (the pre-existing category-axis sector failure is on
   `main` and untouched).
+- The Excel export carries the benchmark BASIS as readable text, not only as the
+  cell's hover-note — *"add the reason to the excel export"* so Yamini can review
+  every best guess at once rather than row by row. The Benchmark cell sets
+  `data-export-value` to `"<index> <return> — best guess, confirm with Yamini |
+  manager's own benchmark. <why>"` (the `why` is `holdingBenchmark`'s own
+  selection reason); `readTableExport` writes that string, so the exported column
+  reads and AutoFilters on "confirm with Yamini". The on-screen cell is unchanged.

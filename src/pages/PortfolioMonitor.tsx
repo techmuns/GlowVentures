@@ -5435,7 +5435,7 @@ export function PortfolioMonitor() {
                             of the inline index lines the returns still carry. */}
                         {(() => {
                           const bHb = benchOf(r);
-                          if (!bHb.bench) return <td key="benchmark" className="px-2 py-1.5 text-left text-[11px] text-slate-500" title={bHb.why} data-bench-col="none">—</td>;
+                          if (!bHb.bench) return <td key="benchmark" className="px-2 py-1.5 text-left text-[11px] text-slate-500" title={bHb.why} data-bench-col="none" data-export-value={`— no benchmark index. ${bHb.why}`}>—</td>;
                           const bInput = withYtd(r, rowPositionsOf(r), "absolute");
                           const bRes = measuredReturn(bInput, "absolute", portfolio.asOf);
                           const bFig = bRes.shown ? benchFigure(bHb, bRes, bInput, portfolio.asOf, rowPositionsOf(r)) : null;
@@ -5446,8 +5446,15 @@ export function PortfolioMonitor() {
                             bFig?.shown ? `Index ${fmtPct(bFig.pct, { sign: true, decimals: 1 })} over the holding period — a price index, so dividends are not in it.` : bFig ? `No index figure: ${bFig.reason}.` : null,
                             gap != null ? `The holding ${gap >= 0 ? "is ahead of" : "trails"} it by ${Math.abs(gap).toFixed(1)} percentage points.` : null,
                           ].filter(Boolean).join(" ");
+                          // THE EXCEL EXPORT CARRIES THE BASIS AS READABLE TEXT, not
+                          // only as the cell's hover-note, so the Benchmark column can
+                          // be read and AutoFiltered in one sheet (the family asked for
+                          // Yamini to review every best-guess at once, not row by row).
+                          // The on-screen cell is unchanged; this only sets what the
+                          // export writes for this cell (`data-export-value`).
+                          const exportValue = `${bHb.bench.name}${bFig?.shown ? ` ${fmtPct(bFig.pct, { sign: true, decimals: 1 })}` : ""} — ${guess ? "best guess, confirm with Yamini" : "manager's own benchmark"}. ${bHb.why}`;
                           return (
-                            <td key="benchmark" className="px-2 py-1.5 text-left align-top whitespace-nowrap" title={title} data-bench-col={bHb.bench.key} data-bench-col-source={bHb.source}>
+                            <td key="benchmark" className="px-2 py-1.5 text-left align-top whitespace-nowrap" title={title} data-bench-col={bHb.bench.key} data-bench-col-source={bHb.source} data-export-value={exportValue}>
                               <span className="text-[11px] text-slate-300">{bHb.bench.name}{guess && <sup className="text-amber-400/90">*</sup>}</span>
                               {bFig?.shown
                                 ? <span className="ml-1.5 mono text-[11px] text-slate-400">{fmtPct(bFig.pct, { sign: true, decimals: 1 })}</span>
