@@ -125,6 +125,9 @@ export function privateReportSnapshot({ funds, fundDated, totals, scope, currenc
   return {
     brand: PRIVATE_REPORT_BRAND, scope, currency, period, generatedAt: now.toISOString(), exportedOn: isoDate(now),
     date: period.to, money, percent, multiple,
+    // The display-currency converter, so the Excel export can carry real numbers
+    // (which Excel can sum and sort) rather than the formatted strings the PDF uses.
+    convert,
     rows, count: rows.length, investedOf, unrealisedOf,
     atCostCount: atCost.length, atCostValue: atCost.reduce((t, r) => t + r.value, 0),
     multiplesOf: withPaid.length,
