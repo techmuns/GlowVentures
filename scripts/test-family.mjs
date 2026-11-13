@@ -83,6 +83,8 @@ const SUITES = [
   ["capital calls", "src/lib/__tests__/capitalCalls.test.ts"],
   ["capital-call store", "src/lib/__tests__/enteredCalls.test.ts"],
   ["tile-layout store", "src/lib/__tests__/tileSets.test.ts"],
+  ["documents-folder link store", "src/lib/__tests__/holdingLinks.test.ts"],
+  ["private share-count store", "src/lib/__tests__/holdingShares.test.ts"],
   ["table arrangement & return pick", "src/lib/__tests__/tableView.test.ts"],
   ["transaction rollup", "src/lib/__tests__/txnRollup.test.ts"],
   ["dated record merge", "src/lib/__tests__/txnLedger.test.ts"],

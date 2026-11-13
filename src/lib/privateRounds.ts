@@ -23,7 +23,8 @@
  *   pre-money   = post-money − amount raised, where the source prints those two
  *   post-money  = pre-money + amount raised, where the source prints those two
  *   stake       = shares held × the round's price per share ÷ its post-money,
- *                 where the family's own statement carries the share count
+ *                 where the family's statement — or a share count entered on the
+ *                 dashboard (#434) — carries the share count
  *   change      = latest valuation ÷ the valuation at the family's entry
  * Each derived figure says so on its hover. Nothing here touches the book: a
  * company's valuation never values the family's holding, which stays at the
@@ -381,7 +382,7 @@ const ISSUES_SHARES = new Set(["primary", "preferential", "rights", "ipo"]);
  * round from it on is absent with that round named. Assumes the family bought
  * no more shares after entry, which the hover says.
  */
-export function stakeTrail(c: PrivateCompany, shares: number | null, cost: number | null, investedFrom: string | null, currency = seriesCurrency(c)): StakeTrail {
+export function stakeTrail(c: PrivateCompany, shares: number | null, cost: number | null, investedFrom: string | null, currency = seriesCurrency(c), sharesBasis: string | null = null): StakeTrail {
   const at = new Map<FundingRound, Stake>();
   const why = new Map<FundingRound, string>();
   // #416 — the RUPEE value of the family's stake at a round: its fraction of the
@@ -401,7 +402,8 @@ export function stakeTrail(c: PrivateCompany, shares: number | null, cost: numbe
   const entry = entryRound(c, investedFrom, currency);
   const before = (r: FundingRound) => !!investedFrom && dayOf(r.date) < dayOf(investedFrom) && r !== entry?.round;
   const fail = (reason: string) => { for (const r of rounds) why.set(r, before(r) ? "before the family's first investment — it held no shares then" : reason); return { at, why }; };
-  if (shares == null || shares <= 0 || cost == null) return fail("the family's statement for this holding carries no share count, so its fraction of the company cannot be struck");
+  if (shares == null || shares <= 0) return fail("the family's statement for this holding carries no share count, so its fraction of the company cannot be struck");
+  if (cost == null) return fail("the family's statement for this holding carries no cost, so the share basis cannot be checked to strike a stake");
   if (!entry) return fail("no priced round is dated at or before the family's investment to strike a stake on");
   const ev = roundValues(entry.round, currency);
   if (ev.price == null || !ev.post) return fail(`the entry round (${entry.round.round}) prints no ${ev.price == null ? "price per share" : "post-money valuation"} to strike a stake on`);
@@ -411,10 +413,14 @@ export function stakeTrail(c: PrivateCompany, shares: number | null, cost: numbe
   }
   let pct = (shares * ev.price / ev.post.value) * 100;
   let broken: string | null = null;
+  // #434 — where the share count is one the family entered (the statement carries
+  // none), every stake struck from it says so on its own hover, so no figure on
+  // the page reads as a statement number when it is not.
+  const basisPrefix = sharesBasis ? `${sharesBasis} ` : "";
   const trail: string[] = [`${shares.toLocaleString("en-IN")} shares × ${entry.round.round}'s price ÷ its post-money${ev.post.derived ? ` (${ev.post.derived})` : ""}`];
   for (const r of rounds) {
     if (before(r)) { why.set(r, "before the family's first investment — it held no shares then"); continue; }
-    if (r === entry.round) { at.set(r, { pct, note: `${trail[0]}. The family's cost per share is this round's price, so the share count is on its basis.`, ...valueOfStake(r, pct) }); continue; }
+    if (r === entry.round) { at.set(r, { pct, note: `${basisPrefix}${trail[0]}. The family's cost per share is this round's price, so the share count is on its basis.`, ...valueOfStake(r, pct) }); continue; }
     if (dayOf(r.date) < dayOf(entry.round.date)) { why.set(r, "before the round the family came in on"); continue; }
     if (broken) { why.set(r, broken); continue; }
     if (r.kind === "reported") {
@@ -427,7 +433,7 @@ export function stakeTrail(c: PrivateCompany, shares: number | null, cost: numbe
       pct *= v.pre.value / v.post.value;
       trail.push(`× ${r.round}'s pre ÷ post-money`);
     }
-    at.set(r, { pct, note: `${trail.join(" ")}. Assumes the family bought no shares after entry.`, ...valueOfStake(r, pct) });
+    at.set(r, { pct, note: `${basisPrefix}${trail.join(" ")}. Assumes the family bought no shares after entry.`, ...valueOfStake(r, pct) });
   }
   return { at, why };
 }
