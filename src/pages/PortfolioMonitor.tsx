@@ -5413,8 +5413,13 @@ export function PortfolioMonitor() {
                                 {res.shown && res.assumed && <AssumedMark note={res.note} />}
                                 {value}
                               </span>
-                              {/* THE ROW'S OWN INDEX, ON THE SAME MONEY AND MEASURE (Stage 10kd). */}
-                              {res.shown && <BenchLine hb={benchOf(r)} fig={benchFigure(benchOf(r), res, input, portfolio.asOf, rowPositionsOf(r))} holdingPct={res.pct} />}
+                              {/* THE ROW'S OWN INDEX, ON THE SAME MONEY AND MEASURE
+                                  (Stage 10kd), for the measures that have NO column of
+                                  their own: XIRR and YTD footnote the index over their
+                                  own window here. The holding-period (HPR/auto) index
+                                  moved to the Benchmark column (Stage 10oc), so it is
+                                  not drawn twice. */}
+                              {res.shown && measure !== "absolute" && measure !== "auto" && <BenchLine hb={benchOf(r)} fig={benchFigure(benchOf(r), res, input, portfolio.asOf, rowPositionsOf(r))} holdingPct={res.pct} />}
                             </td>
                           );
                         })}
@@ -5430,7 +5435,7 @@ export function PortfolioMonitor() {
                             of the inline index lines the returns still carry. */}
                         {(() => {
                           const bHb = benchOf(r);
-                          if (!bHb.bench) return <td key="benchmark" className="px-2 py-1.5 text-left text-[11px] text-slate-500" title={bHb.why}>—</td>;
+                          if (!bHb.bench) return <td key="benchmark" className="px-2 py-1.5 text-left text-[11px] text-slate-500" title={bHb.why} data-bench-col="none">—</td>;
                           const bInput = withYtd(r, rowPositionsOf(r), "absolute");
                           const bRes = measuredReturn(bInput, "absolute", portfolio.asOf);
                           const bFig = bRes.shown ? benchFigure(bHb, bRes, bInput, portfolio.asOf, rowPositionsOf(r)) : null;
