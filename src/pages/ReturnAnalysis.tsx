@@ -407,6 +407,21 @@ export function ReturnAnalysis() {
           <Pill tone="info">{m.priced.length} priced positions</Pill>
         </div>} />
 
+      {/* #411 — the one written statement of the return method the family asked
+          for. Everywhere else the convention is the hover on each figure; this
+          is the single visible note, so it carries data-prose-ok. */}
+      <p data-prose-ok="the family asked for one written statement of the return method (client #411)" data-return-standard
+        className="mb-4 mt-1 rounded-lg border border-ink-700 bg-ink-800/40 px-3 py-2 text-[12px] leading-relaxed text-slate-400">
+        <span className="font-medium text-slate-300">How these returns are measured.</span> A return counts everything the money
+        earned — unrealised plus realised gains plus dividends, over the capital deployed (the cost of units held plus the cost
+        of units already sold), never price change on cost alone. A holding-period return is cumulative; a period return with
+        money paid in or out over the window is money-weighted (Modified Dietz, or XIRR solved against the dated flows and the
+        closing value), so money added during a period is never counted as gain. CAGR is used only for a single purchase held a
+        year or more; any window under a year is shown as the absolute return, named as such. Figures are point-in-time on each
+        statement's own mark (and AMFI's published NAV where it prices a scheme), and anything no record can measure is shown as
+        “—” with its reason, never as a zero.
+      </p>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Return · FIFO, by holding"
           value={<span className={changeColor(m.embeddedRet ?? 0)}>{fmtPct(m.embeddedRet, { sign: true })}</span>}
