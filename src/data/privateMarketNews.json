@@ -3,17 +3,17 @@
  "funding": {
   "source": "https://inc42.com/tag/funding-galore/",
   "via": "https://glow-central-research.tech-441.workers.dev/data/private-market-news.json",
-  "sourceCheckedOn": "2026-11-13",
-  "capturedOn": "2026-11-13",
+  "sourceCheckedOn": "2026-11-14",
+  "capturedOn": "2026-11-14",
   "archive": {
    "complete": false,
-   "pagesRead": 33,
+   "pagesRead": 35,
    "pages": 49
   },
-  "roundups": 572,
-  "rowsRead": 3240,
+  "roundups": 573,
+  "rowsRead": 3249,
   "from": "2023-08-15",
-  "to": "2026-11-06",
+  "to": "2026-11-13",
   "rows": [
    {
     "id": "8224ccb0690e69718c6a9652",
@@ -1014,7 +1014,7 @@
  },
  "headlines": {
   "via": "https://glow-central-research.tech-441.workers.dev/data/private-company-news.json",
-  "capturedOn": "2026-11-13",
+  "capturedOn": "2026-11-14",
   "windowDays": 120,
   "rows": [
    {
@@ -1047,6 +1047,14 @@
     "title": "StayVista looks to acquire other businesses, expand into resorts and events",
     "summary": "Holiday-home operator StayVista is seeking to boost property use and revenue by managing resorts, offering rooms individually and hosting events.&nbsp;",
     "url": "https://www.livemint.com/companies/news/stayvista-acquisitions-expansion-resorts-events-weddings-11792327318349.html",
+    "publisher": "Mint"
+   },
+   {
+    "company": "zepto",
+    "at": "2026-11-14T03:30:06.000Z",
+    "title": "Swiggy, Zepto, Eternal rivals on same board: What govt's new gig worker welfare panel means",
+    "summary": "Madhav Kasturia highlights how Swiggy, Zepto and Eternal will come together on a government panel to recommend welfare measures for gig workers, including insurance and healthcare. The move could also add to aggregator costs under the Social Security Code.",
+    "url": "https://www.livemint.com/companies/news/swiggy-zepto-eternal-rivals-on-same-board-what-govts-new-gig-worker-welfare-panel-means-11794626752228.html",
     "publisher": "Mint"
    },
    {
