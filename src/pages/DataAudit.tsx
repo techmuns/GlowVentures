@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { ConsolidatedSheet } from "@/components/ConsolidatedSheet";
+import { ClassificationTieOut } from "@/components/ClassificationTieOut";
 import { decodeAuditSheet, type AuditCell as Cell, type AuditSheet as Sheet } from "@/lib/auditSheet";
 
 // The Data Audit archive lives in public/audit/ and is served at /audit/* in dev,
@@ -500,6 +501,7 @@ export function DataAudit() {
     <PageHeader eyebrow="Admin" title="Data Audit" subtitle="Glow Ventures consolidated sheet. Updated automatically as new statements are wired into the dashboard."
       right={<BasisPill statement liveText="Consolidated statement data" hint="The consolidated sheet uses the canonical statement and review book, with each account's own date. Live quotes do not change the audit record." />} />
     <ConsolidatedSheet onSources={() => setSourcesOpen(true)} onLoaded={setSourceCount} />
+    <ClassificationTieOut />
     <details ref={sourcesRef} open={sourcesOpen} onToggle={e => setSourcesOpen(e.currentTarget.open)} className="mt-8 border-t border-ink-700 pt-4" data-audit-sources="footnote" data-xa="audit-sources" data-open={String(sourcesOpen)}>
       <summary className="cursor-pointer text-sm font-medium text-slate-400">Sources{sourceCount != null ? ` · ${sourceCount} original documents` : ""}</summary>
       <p data-prose-ok="source footnote requested by the customer" className="my-3 text-xs text-slate-500">Original extracted tables support the consolidated sheet above. Open a document to inspect its statement rows.</p>
