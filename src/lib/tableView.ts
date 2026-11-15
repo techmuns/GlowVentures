@@ -275,7 +275,7 @@ export function nudgeColumn(stored: readonly string[], declared: readonly string
  * would make every address unreadable. Visibility and arrangement only change
  * presentation; the records, calculations and export data remain intact.
  */
-export function useTableView(storageKey: string, columns: readonly string[], opts?: { legacyKeys?: readonly string[]; memoryKey?: string; optional?: readonly string[]; manualEditor?: boolean; reviewKind?: ReviewKind; investmentDates?: boolean }): TableView {
+export function useTableView(storageKey: string, columns: readonly string[], opts?: { legacyKeys?: readonly string[]; memoryKey?: string; optional?: readonly string[]; manualEditor?: boolean; reviewKind?: ReviewKind; investmentDates?: boolean; defaultSort?: TableSort }): TableView {
   const memoryKey = opts?.memoryKey ?? storageKey;
   // Keyed on the CONTENT of the list, so a caller that rebuilds the same list
   // every render does not re-derive the arrangement every render.
@@ -294,6 +294,9 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
   const fixed = declared[0] ?? "";
   const legacy = opts?.legacyKeys ?? NO_LEGACY;
   const legacyKey = legacy.join("\u0001");
+  // A stable key for the declared default sort, so `toggleSort` can reconstruct
+  // it without closing over a fresh `opts` object every render.
+  const defaultSortKey = opts?.defaultSort ? `${opts.defaultSort.col}\u0001${opts.defaultSort.dir}` : "";
 
   const subscribe = useCallback((l: () => void) => subscribeMemory(KEY(memoryKey), l), [memoryKey]);
   const read = () => storedView(memoryKey, legacy);
@@ -306,7 +309,14 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
   const availableOrder = useMemo(() => visibleOrder(stored.order, layoutColumns), [stored.order, layoutColumns]);
   const order = availableOrder.filter((col) => drawn.includes(col));
   const hidden = declared.filter((col) => !drawn.includes(col));
-  const sort = visibleSort(stored.sort, drawn);
+  const storedSort = visibleSort(stored.sort, drawn);
+  // A table may declare a DEFAULT SORT — the meaningful order its own page puts
+  // the rows in (largest first, newest first). With no saved sort it stands in,
+  // so the header shows what the table is ordered by from the first paint, and a
+  // cleared sort returns to it rather than to an unlabelled order (#375). It only
+  // applies while its column is drawn; a hidden column leaves the page's order.
+  const declaredDefault: TableSort = opts?.defaultSort && drawn.includes(opts.defaultSort.col) ? opts.defaultSort : null;
+  const sort = storedSort ?? declaredDefault;
 
   // Every change reads what is saved NOW rather than what this render saw, so
   // two quick changes cannot write over each other.
@@ -318,18 +328,26 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
     const cur = current();
     const shown = selectedColumns(layoutColumns, cur.visibility, optional);
     if (!shown.includes(col)) return;
-    const eff = visibleSort(cur.sort, shown);
+    const dft: TableSort = defaultSortKey
+      ? (() => { const [c, d] = defaultSortKey.split("\u0001"); return { col: c, dir: d as SortDir }; })()
+      : null;
+    // The cycle turns on the sort the reader SEES — the declared default
+    // included — so clicking the default-sorted column FLIPS it rather than
+    // re-asserting the order it is already in.
+    const eff = visibleSort(cur.sort, shown) ?? (dft && shown.includes(dft.col) ? dft : null);
     /**
      * THREE STATES, NOT TWO, AND THE THIRD IS THE ONE THAT MATTERS. A third
      * click clears the sort and puts the table back in the order its own page
      * chose — which is routinely a meaningful order (largest first, newest
      * first, the statement's own) rather than an arbitrary one, so a reader
      * who sorted by a column must be able to get that back without reloading.
+     * Where the table declares that order as a default sort, clearing returns to
+     * it — now shown on the header — rather than to an unlabelled order.
      */
     const next: TableSort = eff?.col !== col ? { col, dir: "desc" }
       : eff.dir === "desc" ? { col, dir: "asc" } : null;
     save({ ...cur, sort: next });
-  }, [current, layoutColumns, optional, save]);
+  }, [current, layoutColumns, optional, save, defaultSortKey]);
 
   const move = useCallback((col: string, before: string | null) => {
     const cur = current();
@@ -352,7 +370,9 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
   const reset = useCallback(() => save({ order: [], sort: null }), [save]);
 
   const defaults = selectedColumns(layoutColumns, undefined, optional);
-  const isDefault = sort == null && order.length === defaults.length && order.every((c, i) => c === defaults[i]);
+  // The reader has customised nothing when they have SET no sort (a declared
+  // default standing in is still the default state) and the order is untouched.
+  const isDefault = storedSort == null && order.length === defaults.length && order.every((c, i) => c === defaults[i]);
 
   return { storageKey, availableOrder, hidden, setVisible, manualEditor: opts?.manualEditor ?? false,
     order, columns: declared, baseColumns, additionalColumns, sort, toggleSort, move, nudge, reset, isDefault, fixed };

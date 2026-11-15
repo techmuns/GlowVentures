@@ -110,7 +110,7 @@ import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
 import {
   TREE_ROW_DENSE, TREE_CELL_DENSE, rowToggle, TreeNameCell, TreeSectionCell, ExpandAllButton,
 } from "@/components/TreeTable";
-import { useTableView, sortRows, type TableView } from "@/lib/tableView";
+import { useTableView, sortRows, type TableView, type TableSort } from "@/lib/tableView";
 import { withReviewAccessors, type ReviewScope } from "@/lib/reviewColumns";
 import { EditColumns } from "@/components/EditColumns";
 import { useMarketHistories } from "@/lib/useMarketReturns";
@@ -1127,7 +1127,13 @@ export function PortfolioMonitor() {
   const holdCols = useMemo(
     () => withReturnCols(bySecurity ? (otherRouteHeld ? MONITOR_STOCK_COLS_OTHER : MONITOR_STOCK_COLS) : MONITOR_COLS, returnMeasures),
     [bySecurity, otherRouteHeld, returnMeasures]);
-  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS, reviewKind: "holding", manualEditor: true });
+  // The table opens on its own ranking — largest total exposure on the security
+  // axis, largest market value on the others (the `effSort` ordering below) — so
+  // the header shows which column that is from the first paint rather than
+  // leaving the reader to guess what it is sorted by (#375). The order itself is
+  // unchanged: both fields are always finite, so the sort reproduces the ranking.
+  const holdDefaultSort = useMemo<TableSort>(() => ({ col: bySecurity ? "totalExposure" : "mv", dir: "desc" }), [bySecurity]);
+  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS, reviewKind: "holding", manualEditor: true, defaultSort: holdDefaultSort });
   /**
    * AND THE ACCESSORS GAIN ONE PER MEASURE, so each return column sorts on the
    * figure it prints rather than on `returnPct` for all of them.
