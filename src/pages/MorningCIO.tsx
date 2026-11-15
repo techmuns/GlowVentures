@@ -57,7 +57,6 @@ import { INVESTOR_DEFAULT_TILES } from "@/lib/investorSummary";
 import { availableCardReturns, statementReturnInputs, type AvailableCardReturn, type GainCardReturn } from "@/lib/availableCardReturns";
 import { useMarketHistories } from "@/lib/useMarketReturns";
 import { assumedHoldingBook } from "@/lib/assumedHoldingBook";
-import { HoldingAssumptionInfo } from "@/components/HoldingAssumptionInfo";
 import { CioReportExport } from '@/components/CioReportExport';
 import { cioReportSnapshot } from '@/lib/cioReport';
 import { cioReportReturns } from '@/lib/cioReportReturns';
@@ -1086,13 +1085,6 @@ export function MorningCIO() {
     <CardBenchmarkInfo card={r} accounts={returnAccounts} money={money} />
     <AvailableReturnCoverage line={r.total} selection={r.selection} accounts={returnAccounts}
       money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} starts={r.starts} /></>;
-  const coveredCaption = (r: AvailableCardReturn) => <span data-card-coverage
-    data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
-    data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
-    data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
-    data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}>
-    {r.total.units.length ? 'Available data' : 'No usable return records'} · {r.coveredHoldings} of {r.totalHoldings} holdings<br />
-    {money(r.coveredValue)} covered · {r.coveredAccounts} {r.coveredAccounts === 1 ? 'account' : 'accounts'} <HoldingAssumptionInfo units={r.total.units} showLabel={tab !== 'returns'} /></span>;
   /**
    * THE THREE RETURN CARDS' CAPTION — ONE LINE (the family, 5 Nov 2026: "more
    * minimal … I rather see number of records covered over total records"). The
@@ -1282,7 +1274,7 @@ export function MorningCIO() {
       id: "return", label: "Consolidated return", icon: <Percent className="h-4 w-4" />,
       calculation: capitalCalculation, href: returnsHref('inception'),
       hrefTitle: 'Return on recorded capital since investment for the available data. The info button lists the holdings left out and the records they need. Open Return attribution for the same verified holdings.',
-      value: pct1(since.total.returnPct), second: benchLine(since), sub: coveredCaption(since),
+      value: pct1(since.total.returnPct), second: benchLine(since), sub: periodCaption(since),
     },
     /* Uncalled capital and Distributions are COMMITMENT facts. With no
        commitment in the book they have no denominator — "₹0 undrawn" would
