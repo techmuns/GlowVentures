@@ -1150,10 +1150,12 @@ export function PortfolioMonitor() {
    * Returns tab reads (`ytdAvailable.ts`). Loaded only while YTD is on screen.
    */
   const wantYtd = returnMeasures.includes("ytd");
+  const wantFytd = returnMeasures.includes("fytd");   // #369 — FY-to-date: the same engine, a 31 March anchor
+  const wantPeriod = wantYtd || wantFytd;              // the shared data both period books read
   // THE WHOLE FAMILY'S HOLDINGS, whatever the member selector shows: the Excel
   // snapshot is the whole family's, and its YTD must find their prices loaded.
-  const ytdHeld = useMemo(() => (wantYtd ? currentHoldings((wholePortfolio ?? portfolio)?.positions ?? EMPTY_POSITIONS) : EMPTY_POSITIONS),
-    [wantYtd, wholePortfolio, portfolio]);
+  const ytdHeld = useMemo(() => (wantPeriod ? currentHoldings((wholePortfolio ?? portfolio)?.positions ?? EMPTY_POSITIONS) : EMPTY_POSITIONS),
+    [wantPeriod, wholePortfolio, portfolio]);
   const ytdHistories = useMarketHistories(ytdHeld);
   /**
    * THE PRICES ARE READ ONCE EVERY HISTORY HAS ANSWERED, not as each arrives:
@@ -1168,8 +1170,8 @@ export function PortfolioMonitor() {
   const ytdPrices = useMemo(() => (ytdSettled ? ytdHistories.histories : null), [ytdSettled, ytdInstrumentKey]);
   const ytdInputs = useMemo(() => {
     const statement = statementPortfolio ?? portfolio;
-    return wantYtd && statement ? statementReturnInputs(statement) : [];
-  }, [wantYtd, statementPortfolio, portfolio]);
+    return wantPeriod && statement ? statementReturnInputs(statement) : [];
+  }, [wantPeriod, statementPortfolio, portfolio]);
   const ytdEnd = useMemo(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }, []);
   const ytd = useMemo(() => {
     if (!wantYtd || !portfolio) return null;
@@ -1179,14 +1181,34 @@ export function PortfolioMonitor() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wantYtd, portfolio, ytdInputs, ytdHeld, ytdEnd, corporateActions, ytdPrices, fmtFromBase]);
   /**
+   * #369 — THE FINANCIAL YEAR TO DATE. The Indian FY runs 1 April–31 March, so its
+   * opening anchor is the 31 March before `ytdEnd` (end in Apr–Dec → 31 March of
+   * end's year; Jan–Mar → the year before). The SAME `ytdBook` engine, opened on
+   * that date instead of 31 December — every figure computed identically, only the
+   * note wording changes (`openLabel`/`periodLabel`).
+   */
+  const fyStart = useMemo(() => {
+    const y = Number(ytdEnd.slice(0, 4)); const mo = Number(ytdEnd.slice(5, 7));
+    return `${mo >= 4 ? y : y - 1}-03-31`;
+  }, [ytdEnd]);
+  const fytd = useMemo(() => {
+    if (!wantFytd || !portfolio) return null;
+    return ytdBook({ inputs: ytdInputs, held: ytdHeld, accounts: portfolio.accounts, end: ytdEnd, open: fyStart,
+      periodLabel: "Financial year to date", openLabel: "1 April", yearWord: "financial year",
+      assumptions: ytdPrices ? assumedHoldingBook({ actions: corporateActions, instruments: ytdHistories.instruments, histories: ytdPrices }) : null,
+      money: (n) => fmtFromBase(n, { compact: true }) });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantFytd, portfolio, ytdInputs, ytdHeld, ytdEnd, fyStart, corporateActions, ytdPrices, fmtFromBase]);
+  /**
    * The row's input with what its own lines add: its YTD from the first date we
    * have, where the YTD measure asks, and — on CAGR and XIRR — whether its money
    * is all dated but only a live price or a NAV values it (Stage 10jm).
    */
   const withYtd = useCallback(<T extends ReturnInput>(input: T, ps: readonly Position[] | null | undefined, m: ReturnMeasure): T =>
     m === "ytd" && ytd && ps?.length ? { ...input, ytdFrom: ytd.of(ps) }
+    : m === "fytd" && fytd && ps?.length ? { ...input, ytdFrom: fytd.of(ps) }
     : (m === "cagr" || m === "xirr") && ps?.length && datedButUnvalued(ps) ? { ...input, needsStatementValue: true }
-    : input, [ytd]);
+    : input, [ytd, fytd]);
   /**
    * EACH ROW AGAINST ITS OWN INDEX (Stage 10kd): which index (a mandate by its
    * manager's report, a share by AMFI's size class, a fund by its category) and
@@ -4340,7 +4362,7 @@ export function PortfolioMonitor() {
                       // footer counts (Stage 10jf): a company reached only through a
                       // fund is no holding of the family's and can never have a return.
                       // YTD reads each row's first dated value this year (Stage 10jl).
-                      : returnColumnMeta(measure, returnCoverage(measure === "ytd" ? measuredRows.map((r) => withYtd(r, rowPositionsOf(r), measure)) : measuredRows, measure, portfolio.asOf), portfolio.asOf, rows.length - measuredRows.length);
+                      : returnColumnMeta(measure, returnCoverage(measure === "ytd" || measure === "fytd" ? measuredRows.map((r) => withYtd(r, rowPositionsOf(r), measure)) : measuredRows, measure, portfolio.asOf), portfolio.asOf, rows.length - measuredRows.length);
                     return (
                       <SortHeader key={measure} col={`ret:${measure}`} view={holdView} pad="px-2 py-1.5"
                         title={auto ? undefined : def.hint}
@@ -6360,6 +6382,7 @@ const TXN_MEASURE_HINT: Record<ReturnMeasure, string> = {
   cagr: "The capital paid in, compounded: ONE purchase annualised over the years since it was made, against what came back and what the account is worth. An account funded over several dates has no single start to compound from — its rate is the XIRR.",
   xirr: "A money-weighted rate on the capital paid in, solved over each dated purchase and redemption and the account's value on its own statement date.",
   ytd: "The return on the capital paid in since 1 January — measurable only where the first purchase is inside the current year, so there was nothing to value then.",
+  fytd: "The return on the capital paid in since 1 April, the start of the Indian financial year — struck on the same records as the year to date, opened on 31 March's value or the first dated value this financial year.",
 };
 
 /** The column note and hover for one return measure on this table — counted, never claimed. */

@@ -1657,7 +1657,7 @@ export function ytdCoverage(positions: Holdable[], asOf: string) {
 //    banned extrapolation — so everywhere else the XIRR measure names why it is
 //    absent rather than reaching for a figure.
 
-export type ReturnMeasure = "auto" | "absolute" | "cagr" | "xirr" | "ytd";
+export type ReturnMeasure = "auto" | "absolute" | "cagr" | "xirr" | "ytd" | "fytd";
 
 export type ReturnMeasureDef = {
   key: ReturnMeasure;
@@ -1694,6 +1694,8 @@ export const RETURN_MEASURES: ReturnMeasureDef[] = [
     hint: "A money-weighted return across every cash flow. It needs each payment's date and amount — which the statements carry for a whole account, and for a holding whose every unit its account's dated trades or lot register account for — so it shows on those rows, and is absent, with the reason, everywhere else. Under a year the holding-period return shows instead, never an annual rate (debt alone is annualised)." },
   { key: "ytd", label: "Year to date", tag: "YTD", heading: "YTD",
     hint: "The holding's own return since 1 January — measurable only where it was opened during the year, because otherwise its value on 1 January is missing." },
+  { key: "fytd", label: "Financial year to date", tag: "FYTD", heading: "FYTD",
+    hint: "The holding's own return since 1 April — the start of the Indian financial year — struck on the same records as the year to date, opened on 31 March's value (or its first dated value this financial year). Not annualised; where no 31 March value is on record it shows a dash naming the first dated value it does have." },
 ];
 
 const MEASURE_BY_KEY = new Map(RETURN_MEASURES.map((m) => [m.key, m]));
@@ -2087,6 +2089,16 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
     const a = p.ytdFrom;
     if (a?.shown) return { shown: true, pct: a.pct, tag: a.fullYear ? "YTD" : `from ${ytdTagDay(a.from)}`, note: a.note, from: a.from, ...(a.assumed ? { assumed: true } : {}) };
     return { shown: false, tag: "YTD", reason: a ? `${y.reason.replace(/\.?$/, ".")} On its dated record: ${a.reason}` : y.reason };
+  }
+
+  // #369 — FINANCIAL YEAR TO DATE. The FY-to-date book (`ytdBook` opened on 31 March)
+  // already handles a holding bought inside this financial year (its own `bought`
+  // branch opens it at nil), so there is no calendar-year `holdingYtd` shortcut here;
+  // the row's record IS the FY-to-date record carried in the same `ytdFrom` field.
+  if (measure === "fytd") {
+    const a = p.ytdFrom;
+    if (a?.shown) return { shown: true, pct: a.pct, tag: a.fullYear ? "FYTD" : `from ${ytdTagDay(a.from)}`, note: a.note, from: a.from, ...(a.assumed ? { assumed: true } : {}) };
+    return { shown: false, tag: "FYTD", reason: a ? a.reason : "No value on record for the start of the financial year (31 March)." };
   }
 
   if (measure === "xirr") {

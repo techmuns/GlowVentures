@@ -19,7 +19,7 @@ export const MEASURE_KEYS = RETURN_MEASURES.map((m) => m.key);
  * picks ONE of these per row, so ticking it beside all of them would show every
  * figure twice.
  */
-export const DEFAULT_RETURN_MEASURES: readonly ReturnMeasure[] = Object.freeze(MEASURE_KEYS.filter((k) => k !== "auto" && k !== "cagr"));
+export const DEFAULT_RETURN_MEASURES: readonly ReturnMeasure[] = Object.freeze(MEASURE_KEYS.filter((k) => k !== "auto" && k !== "cagr" && k !== "fytd"));
 
 /**
  * ── CAGR IS AN OPT-IN COLUMN AGAIN (Stage 10jo; reopened #402) ──────────────────────────────
