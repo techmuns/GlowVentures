@@ -166,7 +166,8 @@ function recordedYearWindow(p: Position, a: Account, openAt: string | null, end:
   return { owner: a.owner, recorded: true, window, unit };
 }
 
-export function ytdBook({ inputs, held, accounts, end, assumptions, money, open: openAt }: {
+export function ytdBook({ inputs, held, accounts, end, assumptions, money, open: openAt,
+  periodLabel = 'Year to date', openLabel = '1 January', yearWord = 'year' }: {
   inputs: readonly AccountInput[];
   /** The current holdings an account's rows are struck over — what makes a row the WHOLE account. */
   held: readonly Position[];
@@ -180,6 +181,13 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open:
    * financial year); `null`, each account and holding from its own first record.
    */
   open?: string | null;
+  /**
+   * The period's wording, so the SAME engine serves the year to date (the
+   * defaults) and the financial year to date (#369 — `open` a 31 March, these
+   * three set to "Financial year to date" / "1 April" / "financial year"). Only
+   * the note strings change; every figure is computed identically.
+   */
+  periodLabel?: string; openLabel?: string; yearWord?: string;
 }): YtdBook {
   const yearOpen = openAt === undefined ? `${Number(end.slice(0, 4)) - 1}-12-31` : openAt;
   const inputOf = new Map(inputs.map((i) => [i.accountId, i]));
@@ -317,8 +325,8 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open:
         const bought = fullYear && from > yearOpen! ? from : undefined;
         const assumed = owners.size > 0;
         out = { shown: true, pct: m.pct, from, to, fullYear, assumed, accounts: pooled, ...(bought ? { bought } : {}),
-          note: `${!fullYear ? `From ${longDay(from)}, the first date with a dated value,` : bought ? `Year to date — nothing was held on 1 January; its money was first at work on ${longDay(bought)} —` : 'Year to date'} to ${longDay(to)} — not annualised. ${m.worked ?? ''}`.trim()
-            + (fromRecord ? " The shares held on 1 January, and this year's purchases and sales, are from its reconciled purchase record." : '')
+          note: `${!fullYear ? `From ${longDay(from)}, the first date with a dated value,` : bought ? `${periodLabel} — nothing was held on ${openLabel}; its money was first at work on ${longDay(bought)} —` : periodLabel} to ${longDay(to)} — not annualised. ${m.worked ?? ''}`.trim()
+            + (fromRecord ? ` The shares held on ${openLabel}, and this ${yearWord}'s purchases and sales, are from its reconciled purchase record.` : '')
             + (assumed ? ` ${holdingAssumptionText([...owners].join(' and '))} Its units are valued at published closing prices from the statement's own date.` : '') };
       }
     }
