@@ -7,7 +7,7 @@ import { groupKeyFor, groupLabelFor } from './groupAxis';
 import { UNCLASSIFIED } from './familyTaxonomy';
 
 export const HOME_COLORS: Record<string, string> = {
-  Equity: '#378574', Debt: '#b29558', Alternate: '#8a78b5', 'Real Estate': '#759aba', Cash: '#97ab77',
+  Equity: '#378574', Debt: '#b29558', Alternate: '#8a78b5', Commodities: '#c3a24a', 'Real Estate': '#759aba', Cash: '#97ab77',
   'Mixed mandates': '#a2a8b5', [UNCLASSIFIED]: '#bac0c6',
 };
 export const homeColor = (key: string) => HOME_COLORS[key] ?? '#a2a8b5';
