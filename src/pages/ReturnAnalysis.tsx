@@ -423,13 +423,13 @@ export function ReturnAnalysis() {
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Return · FIFO, by holding"
+        <StatTile label="Return · FIFO, by holding" valueClassName="text-3xl"
           value={<span className={changeColor(m.embeddedRet ?? 0)}>{fmtPct(m.embeddedRet, { sign: true })}</span>}
           sub={<>{money(m.pnl, true)} unrealised + {money(m.realised, true)} realised + {money(m.income, true)} dividends on {money(m.deployed)} deployed</>}
           title={m.returnUnavailableReason ?? "Each holding's own FIFO figures, summed before they are divided: the unrealised gain on what is held plus the realised gain on units already sold plus the dividends each holding paid, over the cost of both. A whole mandate's fees and earlier sales belong to no single name and are not here — Morning CIO strikes a whole mandate on its capital."}
           icon={<Percent className="h-4 w-4" />} />
 
-        <StatTile label="Holdings showing a gain"
+        <StatTile label="Holdings showing a gain" valueClassName="text-3xl"
           {...(m.hitRate === null
             ? { value: <span className="text-slate-500">{DASH}</span>, sub: "no holding reports a cost to measure a gain against" }
             : {
@@ -452,7 +452,7 @@ export function ReturnAnalysis() {
             `isMandateHeld` accounts would be the other honest answer, and it is
             deliberately not taken: the widest dispersion in the book is a real
             finding, and narrowing it to the ten mandates would hide it. */}
-        <StatTile label="Spread between accounts"
+        <StatTile label="Spread between accounts" valueClassName="text-3xl"
           value={m.spread === null ? <span className="text-slate-500">{DASH}</span> : `${m.spread.toFixed(1)} pp`}
           sub={m.spread === null
             ? "needs two accounts with a cost basis"
@@ -462,7 +462,7 @@ export function ReturnAnalysis() {
           icon={<Scale className="h-4 w-4" />} />
 
         {dd ? (
-          <StatTile label="Maximum drawdown"
+          <StatTile label="Maximum drawdown" valueClassName="text-3xl"
             value={<span className={dd.pct < 0 ? "text-loss" : "text-slate-300"} data-xa="returns-drawdown"
                 data-value={dd.pct} data-peak={dd.peakDate ?? ""} data-trough={dd.troughDate ?? ""}
                 data-recovered={dd.recoveredOn ?? ""} data-points={dd.points}>

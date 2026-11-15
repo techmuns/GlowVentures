@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 
 function changeColor(n: number) { return n > 0 ? "text-gain" : n < 0 ? "text-loss" : "text-slate-400"; }
 
-export function StatTile({ label, value, sub, delta, icon, hint, action, title, className = "" }: {
+export function StatTile({ label, value, sub, delta, icon, hint, action, title, className = "", valueClassName = "" }: {
   /**
    * NORMALLY A STRING, and a node where the tile's own label is a CONTROL —
    * `SelectableTiles` renders its metric picker here, because the label is where a
@@ -37,6 +37,12 @@ export function StatTile({ label, value, sub, delta, icon, hint, action, title, 
    */
   title?: string;
   className?: string;
+  /**
+   * An override for the figure's size (#413, the Returns tab: "bigger numbers").
+   * Default keeps `text-2xl` everywhere; a page opts a larger size in per tile so
+   * no other page's tiles change.
+   */
+  valueClassName?: string;
 }) {
   return (
     <div className={`card p-5 ${className}`} title={[title, hint].filter((x) => x && x.trim()).join("\n\n") || undefined}>
@@ -57,7 +63,7 @@ export function StatTile({ label, value, sub, delta, icon, hint, action, title, 
           takes a short definition of the term under it, the second takes the
           REASON it is absent and the document that would fill it — which this
           book requires to be complete rather than brief. */}
-      <div data-stat-value className="mt-3 font-display text-2xl font-bold text-slate-100 tabular tracking-tight">{value}</div>
+      <div data-stat-value className={`mt-3 font-display text-2xl font-bold text-slate-100 tabular tracking-tight ${valueClassName}`}>{value}</div>
       <div className="mt-2 flex items-center gap-2 text-xs">
         {typeof delta === "number" && (
           <span className={`mono ${changeColor(delta)}`}>
