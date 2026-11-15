@@ -142,7 +142,7 @@ export type GroupAxis = (typeof GROUP_AXES)[number];
  */
 export const GROUP_VIEWS: readonly { key: GroupAxis; label: string; title: string }[] = [
   { key: "category", label: "Category", title: "What kind of thing this is and who chose it: direct equity, a PMS mandate, an AIF, a mutual fund, an ETF, real estate, cash." },
-  { key: "assetClass", label: "Asset class", title: "The family's own asset classes — Equity, Debt, Alternate, Real Estate, Cash — as their consolidated review and written instructions state them. Not the instrument type: a gold ETF is Alternate and a liquid fund is Cash." },
+  { key: "assetClass", label: "Asset class", title: "The family's own asset classes — Equity, Debt, Alternate, Commodities, Real Estate, Cash — as their consolidated review and written instructions state them. Not the instrument type: gold and silver ETFs are Commodities and a liquid fund is Cash." },
   { key: "basket", label: "Basket", title: "The family's four baskets: Stable Growth, Entrepreneurial Growth, Thematic & Tactical, Liquidity." },
 ];
 

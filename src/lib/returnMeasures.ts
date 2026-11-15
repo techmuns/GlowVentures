@@ -22,16 +22,18 @@ export const MEASURE_KEYS = RETURN_MEASURES.map((m) => m.key);
 export const DEFAULT_RETURN_MEASURES: readonly ReturnMeasure[] = Object.freeze(MEASURE_KEYS.filter((k) => k !== "auto" && k !== "cagr"));
 
 /**
- * ── CAGR IS NOT A COLUMN ANY MORE (Stage 10jo) ──────────────────────────────
+ * ── CAGR IS AN OPT-IN COLUMN AGAIN (Stage 10jo; reopened #402) ──────────────────────────────
  *
  * *"ok i agree to what you recomend"* — the family, 30 Oct 2026, on dropping
  * the CAGR column because XIRR covers it: for one purchase and no sale the two
- * are the same rate, and for anything else CAGR is the wrong tool. The picker
- * no longer offers it and a saved pick drops it. The methodology column still
+ * are the same rate, and for anything else CAGR is the wrong tool. Yamini asked
+ * for it again (#402, 5 Nov 2026), so the picker offers it once more and a saved
+ * pick keeps it — though it is NOT a default column, so the table a reader opens
+ * is unchanged until they tick it. The methodology column still
  * resolves a single purchase to CAGR, and a `?ret=cagr` link still opens the
  * guard's own column for the checks that hold it.
  */
-export const PICKER_KEYS: readonly ReturnMeasure[] = Object.freeze(MEASURE_KEYS.filter((k) => k !== "cagr"));
+export const PICKER_KEYS: readonly ReturnMeasure[] = Object.freeze([...MEASURE_KEYS]);
 
 /**
  * A list of measures in the picker's order: the concrete ones win over `auto`,
@@ -80,4 +82,4 @@ export const returnMeasuresKey = (page: string) => `glow:returnMeasures:${page}:
 
 /** Read a saved pick, from any build: anything that is not a list of measures is nothing saved. */
 export const parseSavedMeasures = (raw: unknown): ReturnMeasure[] | null =>
-  Array.isArray(raw) ? normaliseMeasures(raw.filter((k) => k !== "cagr")) : null;
+  Array.isArray(raw) ? normaliseMeasures(raw) : null;
