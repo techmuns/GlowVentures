@@ -199,9 +199,9 @@ const oldRule = (stored: string[], declared: string[]) => {
   ok("an address naming nothing falls back to the saved pick", same(resolveReturnMeasures("garbage", ["ytd"]).measures, ["ytd"]));
   ok("a concrete measure beats auto in one list", same(normaliseMeasures(["auto", "ytd", "absolute"]) ?? [], ["absolute", "ytd"]));
   ok("an empty list is no pick", normaliseMeasures([]) === null && parseSavedMeasures({ measures: ["cagr"] }) === null);
-  ok("a saved CAGR column is dropped (Stage 10jo)", same(parseSavedMeasures(["absolute", "cagr", "xirr"]) ?? [], ["absolute", "xirr"])
-    && parseSavedMeasures(["cagr"]) === null);
-  ok("the picker no longer offers CAGR", !PICKER_KEYS.includes("cagr") && PICKER_KEYS.includes("auto") && PICKER_KEYS.includes("xirr"));
+  ok("a saved CAGR column is kept now it is offered again (#402)", same(parseSavedMeasures(["absolute", "cagr", "xirr"]) ?? [], ["absolute", "cagr", "xirr"])
+    && same(parseSavedMeasures(["cagr"]) ?? [], ["cagr"]));
+  ok("the picker offers CAGR again (#402)", PICKER_KEYS.includes("cagr") && PICKER_KEYS.includes("auto") && PICKER_KEYS.includes("xirr"));
   ok("each page saves its own pick", returnMeasuresKey("monitor") !== returnMeasuresKey("private-market"));
 }
 

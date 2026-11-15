@@ -34124,7 +34124,7 @@ const INVARIANTS = {
   // The totals row renders on every axis, so its claims are checked on every
   // axis: the sections it totals are the family's own here, and a partition that
   // adds up on the category axis can still miss on one the family defined.
-  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Real Estate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
+  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Commodities", "Real Estate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
     ...CASH_ON_AXIS("assetClass"), ...CASH_RULE_HEADINGS("assetClass"), ...CASH_HEADING_COUNTS, ...NO_PHANTOM_DUPLICATE,
     ...footBasisChecks("all"), ...SECTION_REALISED],
   "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
