@@ -27,6 +27,10 @@
 
 - *"And why is gold sitting in alternate actually?"* — Yamini, 29 Oct 2026. The review workbook files the two bullion ETFs (DSP Gold, DSP Silver) on its Alternate sheet, and the taxonomy map keeps that citation so `familyTaxonomy.test.ts` still ties it to the workbook row. The family's own word is that gold and silver are their own commodity exposure, so — exactly as arbitrage funds are ruled Cash over the review's Debt (`cashByInstruction`) — these two are ruled Commodities over the review's Alternate, applied before the review hit. Only the asset class moves; their basket stays the review's Thematic & Tactical. A new `Commodities` member on `FamilyAssetClass` / `FAMILY_CLASS_ORDER`; named holdings, never inferred. `src/lib/familyTaxonomy.ts`, `src/lib/groupAxis.ts`.
 
+### Stage 10on — Portfolio Monitor: no "Numbers unavailable · Retry" in the table toolbar
+
+- *"what the hell is Numbers unavailable · Retry please remove"* — the family, 16 Nov 2026. The red line sat in the shared Export Excel toolbar (`ExportableTable`) whenever the background read of `/api/table-inputs` failed, including a refresh on window focus after the numbers had already loaded. It is gone. The index strip's saved-numbers notice (`EnteredNumbersNotice`) still reports a failed load and keeps its Retry; Edit numbers and Upload Excel, dimmed while the numbers load or after a failed read, carry the reason as their hover. `src/components/ExportableTable.tsx`.
+
 ### Stage 10oo — Morning CIO return cards: the ⓘ is short
 
 - *"These (i) explanations are way to long and verbose make it simplest crisp short … everything below it is verbose"* — the family, 16 Nov 2026, of the calendar-year card. The summary (Period, Gain, Benchmark, Holdings, Value, Private) and Against the benchmarks stay as they were.
