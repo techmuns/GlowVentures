@@ -581,15 +581,22 @@ export type Position = {
    * (Stage 10ms) — the review's block for this owner, product and custodian,
    * to its own Closing, carried through the account's own later trades to
    * exactly the units held, with the broker's long-term quantity and cost
-   * agreeing. `reason` alone where an aliased holding fails a step. A source
-   * for the Invested on column ONLY: the statement's cost and value stand.
-   * Built by `scripts/lib/reviewPurchaseDates.mjs`.
+   * agreeing. `reason` alone where an aliased holding fails a step. The
+   * statement's cost and value stand; since Stage 10ot the same rows' dated
+   * money (`cashRecord`, `unitRecord`) is what XIRR and the YTD read, as a
+   * reconciled purchase record's is. Built by `scripts/lib/reviewPurchaseDates.mjs`.
    */
   reviewPurchases?: {
     reason?: string;
     first?: string; last?: string; lots?: number; units?: number;
     closing?: { date: string; units: number }; through?: string; sales?: number;
     longTermUnits?: number; lotCost?: number;
+    /** Every purchase and sale at its own amount, and the review's receipts, oldest first. */
+    cashRecord?: { date: string; side: "buy" | "sell" | "income"; amount: number }[];
+    /** The units held after each dated row: what 31 December held. */
+    unitRecord?: { date: string; units: number }[];
+    /** The last day the review's own receipts cover (its Closing); absent where it prints none. */
+    incomeThrough?: string;
     evidence?: { path: string; sheet: string; rows: number[] }; reviewAsOf?: string;
   };
   /**

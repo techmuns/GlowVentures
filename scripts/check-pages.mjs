@@ -5301,7 +5301,11 @@ const HOLDING_FLOWS_BOOK = (() => {
       }
       const r = p.tradeRecord;
       const inc = income[k] ?? [];
-      if (r && r.unaccounted === 0) {
+      // A split or bonus moves units and no money (Stage 10ot): the replayed
+      // trades are every rupee; a demerger's money was paid for its parent.
+      const acts = p.actionRecord?.actions ?? [];
+      const splitOnly = acts.length > 0 && acts.every((a) => a.kind === "split" || a.kind === "bonus");
+      if (r && (r.unaccounted === 0 || (r.unaccounted !== null && splitOnly))) {
         const ts = (trades[k] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
         if (!ts.length) return null;
         if (ts.some((t) => t.amount === null) || inc.some((x) => !x.date)) return "short";
@@ -5335,6 +5339,20 @@ const HOLDING_FLOWS_BOOK = (() => {
         if (mc === false) return null;
         return {
           flows: rec.cashRecord.map((x) => ({ t: Date.parse(x.date), a: x.side === "buy" ? -x.amount : x.amount })),
+          since: Date.parse(moved.find((x) => x.side === "buy")?.date ?? moved[0].date),
+          close: mc ?? (p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null), payments: moved.length,
+        };
+      }
+      // THE REVIEW'S DATED PURCHASES CARRIED THROUGH THE ACCOUNT'S TRADES (Stage
+      // 10ot): every row at its own amount, ending on exactly the units held.
+      const rv = p.reviewPurchases;
+      if (end && rv && !rv.reason && rv.cashRecord?.length && rv.unitRecord?.length && !p.rolledForward
+        && Math.abs(rv.units - p.quantity) <= .0005 && Math.abs(rv.unitRecord.at(-1).units - p.quantity) <= .0005) {
+        const moved = rv.cashRecord.filter((x) => x.side !== "income");
+        const mc = closeOf(m, end);
+        if (mc === false) return null;
+        return {
+          flows: rv.cashRecord.map((x) => ({ t: Date.parse(x.date), a: x.side === "buy" ? -x.amount : x.amount })),
           since: Date.parse(moved.find((x) => x.side === "buy")?.date ?? moved[0].date),
           close: mc ?? (p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null), payments: moved.length,
         };
@@ -21574,19 +21592,21 @@ const RETURN_COLUMNS = [
       return cells.every((c) => (c.tag ? new RegExp(`\\b${c.tag}\\b`).test(c.text) : true));
     }],
     /**
-     * ── A BLANK RETURN CELL SAYS WHY ON ITS FACE (Stage 10jm) ───────────────
+     * ── A BLANK RETURN CELL IS A BARE DASH, ITS CAUSE THE HOVER (Stage 10ot) ─
      *
-     *   *"in the blank you can simple write - No buy/sell date"*
+     *   *"why are you still showing things like No buy/sell dates — No 1 Jan
+     *    value didnt we decide the full logic"* — the family, 16 Nov 2026.
      *
-     * A bare dash read as a broken feed. Every holding's blank return cell
-     * names its cause in a few words beside the dash; the full reason stays
-     * its hover. Struck on the cell's own handle, never on the wording.
+     * Stage 10jm's few words beside the dash went the way of the index line's
+     * (Stage 10nt, *"remove all fluff"*): no gap words on the face, and every
+     * dash still carries its full reason as the hover. Struck on the cell's own
+     * handles, never on the wording.
      */
-    ["every blank return cell names its cause in a few words beside the dash", (t, ctx) => {
+    ["every blank return cell is a bare dash whose hover names its cause", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
       const blank = cells.filter((c) => /^—/.test(c.text) && !/is a category, not a holding/.test(c.reason ?? ""));
-      return blank.every((c) => !!c.absentLabel && c.absentLabel.split(/\s+/).length <= 5 && !!c.reason);
+      return blank.every((c) => !c.absentLabel && !!c.reason);
     }],
     /**
      * ── ONE COLUMN PER PICKED RETURN, ADDED AND REMOVED WITH THE SELECTION ──
