@@ -34,5 +34,13 @@
 ### Stage 10op — Merge on green: a labelled PR merges itself when CI passes
 
 - *"Automatically merge once done always"* — the family, 16 Nov 2026. `main` has no required checks, so GitHub's auto-merge refuses ("unstable status": nothing to wait for). The sessions can't watch CI, so finished PRs waited on a button.
-- `.github/workflows/merge-on-green.yml` runs when CI completes and when a PR is labelled. A PR labelled `automerge` is squash-merged (`--match-head-commit`) once CI on its exact head has passed. It skips a PR without the label, a draft, a fork, a head that moved or a conflict. It comments instead of merging if any other check hasn't passed, if `main` changed a file the PR also changes, or if `main` already has the PR's stage letter. All the rules are in `.github/scripts/merge-on-green.sh`, which runs dry locally with `DRY_RUN=1`. It runs from main's checkout and never runs PR code.
-- A GITHUB_TOKEN merge starts no workflow, so CI does not re-run on `main` afterwards, as with the bots' pushes. The Cloudflare Pages deploy follows the push webhook, so it still runs. The `How to ship` section of CLAUDE.md now says to label every PR.
+- Any open PR into `main` labelled **`automerge`** is squash-merged (`--match-head-commit`) once CI on its exact head has passed. Two callers run one sweep (`.github/scripts/merge-on-green.sh`, dry locally with `DRY_RUN=1`):
+  - CI's last job, `merge-on-green`, which `needs` every other job;
+  - `.github/workflows/merge-on-green.yml`, run from main when CI completes or a PR is labelled. That covers branches cut before the job existed and a label added late.
+- The sweep skips drafts, forks, PRs whose CI hasn't passed, and conflicts (Auto-fix wakes the owner for those). The PR whose CI just finished gets a comment instead of a merge if:
+  - another check hasn't passed;
+  - `main` changed a **generated** file it also changes (glowData, reports, `public/audit/`, `check-pages.mjs`);
+  - `main` already has its stage letter, read from GitHub.
+- Ordinary files and the stage notes every PR appends are not "overlap". A rule on them would hold every PR after any merge.
+- CI's merge job has no concurrency group: GitHub cancels a pending job in a group, and that would turn the CI run red. Racing sweeps are safe.
+- A GITHUB_TOKEN merge starts no workflow, so CI does not re-run on `main` afterwards, as with the bots' pushes. The Cloudflare Pages deploy follows the push webhook, so it still runs.
