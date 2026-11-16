@@ -7802,7 +7802,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                       : listsEveryAccount
                         ? `${totals.accounts} of this book's ${accountsReg.length} accounts are in view under the entity or section filter.`
                         /* A NARROWED COUNT IS NOT A FACT ABOUT THE BOOK (MT-16). */
-                        : `${totals.accounts} of this book's ${accountsReg.length} accounts have a dated record in view under the filters set; an account with no dated record is listed only without a date window, a Buys/Sells side, a sector or a picked holding — clear them to see every account. Across the whole record, ${fundedInBook} publish a dated capital record or a fund's dated capital calls.`,
+                        : `${totals.accounts} of this book's ${accountsReg.length} accounts have a dated record in view under the filters set; an account with no dated record is listed only without a date window, a Buys/Sells side, a sector or a picked holding — clear them to see every account. Across the whole record, ${fundedInBook} of this book's ${accountsReg.length} accounts publish a dated capital record or a fund's dated capital calls.`,
                     `Of the ${totals.accounts} here, ${totals.capitalAccounts} publish a dated capital record or a fund's dated capital calls`
                       + (totals.tradeOnlyAccounts ? `, ${totals.tradeOnlyAccounts} report only the trades inside them` : "")
                       + (totals.undatedAccounts ? `, and ${totals.undatedAccounts} report neither, so their rows carry only what each is worth today` : "") + ".",
@@ -7823,8 +7823,13 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           : money(totals.committed)}
                       </td>
                     ),
+                    /* THE PURCHASE TOTAL NAMES ITS OWN COVERAGE. The label counts every
+                       account drawn; this sum is over the ones that date what was paid in. */
                     in: (
-                      <td key="in" data-foot-cell="in" className="px-3 py-2.5 text-right mono font-medium text-slate-100 whitespace-nowrap">
+                      <td key="in" data-foot-cell="in" className="px-3 py-2.5 text-right mono font-medium text-slate-100 whitespace-nowrap"
+                        data-foot-in-of={totals.capitalAccounts}
+                        title={totals.contributions === 0 ? undefined
+                          : `Summed over the ${totals.capitalAccounts} of the ${totals.accounts} ${totals.accounts === 1 ? "account" : "accounts"} here that publish a dated capital record or a fund's dated capital calls. The others were funded as well, but no statement dates what was paid in, so they add nothing rather than ₹0.`}>
                         {totals.contributions === 0
                           ? <AbsentCell reason={side === "out" ? "no purchase is in view under this side filter" : windowed ? "no purchase falls inside the date window" : "no row in view carries a dated purchase"} />
                           : money(totals.paidIn)}

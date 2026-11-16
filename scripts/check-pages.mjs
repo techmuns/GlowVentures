@@ -15587,7 +15587,9 @@ const txnMergedChecks = () => [
     const r = ctx?.txnMerged;
     if (!r) return { notChecked: "the transactions card was not on screen on this run" };
     if (!r.rows) return { notChecked: "no dated record matched the filters on this run" };
-    return r.capital > 0 && r.trades > 0 && r.capital + r.trades > r.rows;
+    // A row LISTED with no dated record carries neither half by construction
+    // (16 Nov 2026), and is counted apart — it is not a half silently lost.
+    return r.capital > 0 && r.trades > 0 && r.capital + r.trades > r.rows - (r.listed ?? 0);
   }],
   ["…and an account publishing both is ONE row, not two", (t, ctx) => {
     const r = ctx?.txnMerged;
@@ -15599,7 +15601,7 @@ const txnMergedChecks = () => [
      * IS the number carrying both. A merge that keyed the two halves apart
      * makes that zero while every figure on the page stays right.
      */
-    return r.both > 0 && r.both === r.capital + r.trades - r.rows;
+    return r.both > 0 && r.both === r.capital + r.trades - (r.rows - (r.listed ?? 0));
   }],
 ];
 
@@ -23924,7 +23926,9 @@ const INVARIANTS = {
         && same(c.paid, sum(c.rows.map((m) => m.paid)))
         && same(c.value, sum(c.rows.map((m) => m.value)))
         && same(c.bought, sum(c.rows.map((m) => m.bought)))
-        && c.last === c.rows.map((m) => m.last).filter(Boolean).sort().at(-1));
+        // A line of accounts LISTED with no dated record (16 Nov 2026) has no
+        // dated span, and neither has any of its members: both are "".
+        && c.last === (c.rows.map((m) => m.last).filter(Boolean).sort().at(-1) ?? ""));
     }],
     ["the order is a control, and it opens on recent first", (t, ctx) => {
       const s = ctx.txnSort;
@@ -24015,14 +24019,20 @@ const INVARIANTS = {
         // (38); and the PAYMENTS are those accounts' purchases (116). Rows and
         // accounts coincided until Stage 10dh, when a review holder bucket
         // began drawing one row per LINE.
-        const m = /Total · ([\d,]+) rows? · (\d+) of (\d+) accounts\t(\d+) payments/.exec(t);
+        //
+        // Since 16 Nov 2026 the ACCOUNTS are every account the rows draw ("all
+        // 95 accounts"), and the accounts the payments come from are the Purchase
+        // cell's own coverage handle (`data-foot-in-of`).
+        const m = /Total · ([\d,]+) rows? · (?:all (\d+)|(\d+) of \d+) accounts\t(\d+) payments/.exec(t);
         if (!m) return false;
         const drawn = ctx.datedTable?.rows?.length;
         if (drawn == null) return false;
         const payments = ctx.mineRows.reduce((a, r) => a + r.contributions, 0);
-        const accounts = new Set(ctx.mineRows.map((r) => r.accountId).filter(Boolean)).size;
+        const accounts = new Set(ctx.datedTable.rows.flatMap((r) => r.accountIds)).size;
+        const funded = new Set(ctx.mineRows.map((r) => r.accountId).filter(Boolean)).size;
         return Number(m[1].replace(/,/g, "")) === drawn
-          && Number(m[2]) === accounts
+          && Number(m[2] ?? m[3]) === accounts
+          && ctx.datedTable.footData?.inOf === funded
           && Number(m[4]) === payments;
       }],
 
@@ -24042,14 +24052,21 @@ const INVARIANTS = {
         // accounts figure against the rows carrying a capital record, which
         // coincided until Stage 10dh gave a review holder bucket one row per
         // LINE — 39 such rows over 38 accounts, on a footer that was right.
-        const m = /Total · ([\d,]+) rows? · (\d+) of (\d+) accounts/.exec(t);
+        //
+        // Since 16 Nov 2026 every account is drawn and the label reads "all N
+        // accounts"; the share the PURCHASE total covers moved onto that cell,
+        // which must name it against the accounts drawn.
+        const m = /Total · ([\d,]+) rows? · (?:all (\d+)|(\d+) of (\d+)) accounts/.exec(t);
         if (!m) return false;
         const drawn = ctx.datedTable?.rows?.length;
         if (drawn == null) return false;
-        const accounts = new Set(ctx.mineRows.map((r) => r.accountId).filter(Boolean)).size;
+        const accounts = new Set(ctx.datedTable.rows.flatMap((r) => r.accountIds)).size;
+        const funded = new Set(ctx.mineRows.map((r) => r.accountId).filter(Boolean)).size;
+        const inTitle = ctx.datedTable.footData?.inTitle ?? "";
         return Number(m[1].replace(/,/g, "")) === drawn
-          && Number(m[2]) === accounts
-          && Number(m[3]) === BOOK_ACCOUNT_COUNT;
+          && Number(m[2] ?? m[3]) === accounts
+          && Number(m[2] ?? m[4]) === BOOK_ACCOUNT_COUNT
+          && new RegExp(`\\b${funded} of the ${accounts} accounts here\\b`).test(inTitle);
       }],
 
     /**
@@ -42206,6 +42223,9 @@ for (const theme of THEMES) {
             realisedOf: Number(foot.getAttribute("data-foot-realised-of")),
             realised: foot.hasAttribute("data-foot-realised") ? Number(foot.getAttribute("data-foot-realised")) : null,
             bought: foot.hasAttribute("data-foot-bought") ? Number(foot.getAttribute("data-foot-bought")) : null,
+            /** The accounts the Purchase total is summed over, and the cell's own hover naming them. */
+            inOf: (() => { const c = foot.querySelector('[data-foot-cell="in"]'); return c?.hasAttribute("data-foot-in-of") ? Number(c.getAttribute("data-foot-in-of")) : null; })(),
+            inTitle: foot.querySelector('[data-foot-cell="in"]')?.getAttribute("title") ?? "",
             /** The capital-gain lots no trade on the tape settles, as the realised cell names them (A-08). */
             ...(() => {
               const c = foot.querySelector('[data-foot-cell="realised"]');
@@ -42965,6 +42985,8 @@ for (const theme of THEMES) {
           capital: rows.filter((r) => r.hasAttribute("data-mine-row")).length,
           trades: rows.filter((r) => r.hasAttribute("data-trades")).length,
           both: rows.filter((r) => r.hasAttribute("data-mine-row") && r.hasAttribute("data-trades")).length,
+          // AN ACCOUNT LISTED WITH NO DATED RECORD carries neither half (16 Nov 2026).
+          listed: rows.filter((r) => r.hasAttribute("data-dated-listed")).length,
           kinds: rows.map((r) => r.getAttribute("data-dated-kind")),
           title: (document.querySelector("main .h-section")?.innerText ?? "").replace(/\s+/g, " ").trim(),
         };
