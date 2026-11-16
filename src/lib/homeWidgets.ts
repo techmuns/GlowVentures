@@ -4,7 +4,7 @@ export const HOME_WIDGETS = [
   { id: 'assetsTotal', name: 'Total Assets', category: 'Overview', description: 'Positive valued investment assets in the selected book.', kind: 'number', size: 'quarter' },
   { id: 'liabilities', name: 'Total Liabilities', category: 'Overview', description: 'The firm’s consolidated borrowing and liability position.', kind: 'number', size: 'quarter' },
   { id: 'cash', name: 'Total Cash', category: 'Overview', description: 'Separately valued cash in the investment book.', kind: 'number', size: 'quarter' },
-  { id: 'equity', name: 'Total Equity', category: 'Overview', description: 'The family’s Equity asset class: the same figure as its row in the asset allocation.', kind: 'number', size: 'quarter' },
+  { id: 'equity', name: 'Total Equity', category: 'Overview', description: 'Equity value: the family’s Equity asset class, the same figure as its row in the asset allocation.', kind: 'number', size: 'quarter' },
   { id: 'fixedIncome', name: 'Total Fixed Income', category: 'Overview', description: 'The family’s Debt asset class, as fixed income: the same figure as the Debt row in the asset allocation.', kind: 'number', size: 'quarter' },
   { id: 'alternate', name: 'Total Alternates', category: 'Overview', description: 'The family’s Alternate asset class: the same figure as its row in the asset allocation.', kind: 'number', size: 'quarter' },
   { id: 'realEstate', name: 'Total Real Estate', category: 'Overview', description: 'Investment-book holdings filed as Real Estate: the same figure as its row in the asset allocation.', kind: 'number', size: 'quarter' },
@@ -20,16 +20,19 @@ export const HOME_WIDGETS = [
   { id: 'concentration', name: 'Issuer Concentration', category: 'Risk', description: 'The largest named issuer and fund exposures, joining share classes and duplicate identities.', kind: 'table', size: 'half' },
   { id: 'ytd', name: 'Year to Date Return', category: 'Performance', description: 'The portfolio’s return this calendar year: the same figure as Morning CIO’s YTD card.', kind: 'number', size: 'quarter' },
   { id: 'inception', name: 'Since Inception Return', category: 'Performance', description: 'Return on capital since investment: the same figure as Morning CIO’s consolidated return.', kind: 'number', size: 'quarter' },
+  { id: 'equityTwr', name: 'Equity TWR', category: 'Performance', description: 'Time-weighted return of the Equity asset class this calendar year, in INR: the Returns table’s Adjusted TWR (YTD).', kind: 'number', size: 'quarter' },
+  { id: 'gains', name: 'Gains Breakdown – YTD', category: 'Performance', description: 'This calendar year’s gain as bars, by member or by asset class: the records behind the YTD return.', kind: 'bars', size: 'half' },
   { id: 'movements', name: 'Large Performance Movements', category: 'Performance', description: 'Measured holding returns beyond +10% or −10% over the selected period.', kind: 'table', size: 'half' },
   { id: 'monthly', name: 'Month by Month Discrete Performance', category: 'Performance', description: 'Separate monthly portfolio returns over the selected range, using available dated records.', kind: 'table', size: 'full' },
   { id: 'vintage', name: 'Performance by Vintage', category: 'Performance', description: 'Private-equity fund performance grouped by a verified fund vintage and fund-level IRR.', kind: 'bars', size: 'half' },
   { id: 'volatility', name: 'Top Securities by Volatility', category: 'Risk', description: 'The ten most volatile public investments, ranked by daily return volatility in the selected period.', kind: 'bars', size: 'half' },
+  { id: 'sectorBars', name: 'Value by Sector', category: 'Allocation', description: 'Company-share holdings’ value by sector as a bar chart, in INR (or USD when selected).', kind: 'bars', size: 'full' },
   { id: 'sectors', name: 'Stock Sector Breakdown', category: 'Allocation', description: 'Your recorded company-share holdings grouped by their verified sectors.', kind: 'donut', size: 'half' },
 ] as const;
 export type HomeWidgetId = typeof HOME_WIDGETS[number]['id'];
 export type HomeWidgetSize = 'quarter' | 'half' | 'wide' | 'full';
 export type HomeWidgetEntry = { id: HomeWidgetId; size: HomeWidgetSize };
-export const DEFAULT_HOME_LAYOUT: HomeWidgetEntry[] = HOME_WIDGETS.filter(w => !['baskets', 'ytd', 'inception', 'equity', 'fixedIncome', 'alternate', 'realEstate', 'commodities', 'currency', 'concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors'].includes(w.id)).map(w => ({ id: w.id, size: w.size }));
+export const DEFAULT_HOME_LAYOUT: HomeWidgetEntry[] = HOME_WIDGETS.filter(w => !['baskets', 'ytd', 'inception', 'equityTwr', 'gains', 'sectorBars', 'equity', 'fixedIncome', 'alternate', 'realEstate', 'commodities', 'currency', 'concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors'].includes(w.id)).map(w => ({ id: w.id, size: w.size }));
 export const HOME_LAYOUT_KEY = 'glow:home:widgets:v2';
 export const LEGACY_HOME_LAYOUT_KEY = 'glow:home:widgets:v1';
 export function readHomeLayout(raw: unknown): HomeWidgetEntry[] | null {

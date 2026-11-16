@@ -1,7 +1,7 @@
 import { Fragment, lazy, Suspense, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Area, AreaChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ArrowDownLeft, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronRight, Globe2, Info, Wallet } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronRight, Globe2, Wallet } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { PageHeader } from '@/components/PageHeader';
 import { AbsentCell, AbsentSection } from '@/components/Absent';
@@ -21,14 +21,16 @@ import { chartTooltipStyle, chartTooltipItemStyle, chartTooltipLabelStyle } from
 import { fmtDate, fmtPct } from '@/lib/format';
 import { useHomeCardReturns } from '@/lib/useHomeCardReturns';
 import { HomeWidgetActions, HomeWidgetBoard, useHomeWidgets } from '@/components/HomeWidgetBoard';
-import { HomeConcentration, HomeMovements, HomeMonthly, HomeVolatility, HomeSectors, HomeUnavailable } from '@/components/HomeExtraWidgets';
+import { HomeConcentration, HomeMovements, HomeMonthly, HomeVolatility, HomeSectors, HomeSectorBars, HomeGainsBreakdown, HomeEquityTwr, HomeUnavailable } from '@/components/HomeExtraWidgets';
 import type { HomeWidgetId } from '@/lib/homeWidgets';
 import { HomeReturnCoverage } from '@/components/HomeReturnCoverage';
+import { Hint, Metric } from '@/components/HomeMetric';
 import { ExportableTable } from '@/components/ExportableTable';
 import './Home.css';
 
 const PortfolioReportExport = lazy(() => import('./MorningCIO').then(m => ({ default: m.PortfolioReportExport })));
 
+const NET_WORTH_GAP = 'A complete family balance sheet, including all assets and liabilities, is needed. Investment AUM excludes the ring-fenced Polycab holding and separately managed property records.';
 const pct = (n: number | null | undefined) => n == null ? '—' : `${n > 0 ? '+' : ''}${n.toFixed(2)}%`;
 const weightLabel = (n: number) => n > 0 && n < 0.1 ? '<0.1%' : `${n.toFixed(1)}%`;
 const dayLabel = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-IN', { month: 'short', year: '2-digit', timeZone: 'UTC' });
@@ -36,9 +38,6 @@ const nowInIndia = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolk
 
 function Panel({ title, label, right, children, className = '' }: { title: string; label?: string; right?: ReactNode; children: ReactNode; className?: string }) {
   return <section className={`home-panel ${className}`}><div className="home-panel-heading"><div>{label && <span className="home-eyebrow">{label}</span>}<h2>{title}</h2></div>{right}</div>{children}</section>;
-}
-function Hint({ text }: { text: string }) {
-  return <span className="home-hint" tabIndex={0} title={text} aria-label={text}><Info size={13} /></span>;
 }
 
 // Each rendered chart measures its own card, including the widget preview.
@@ -59,7 +58,7 @@ export function Home() {
   useEffect(() => { setDraftFrom(from); setDraftTo(to); }, [from, to]);
   const widgetState = useHomeWidgets();
   // Morning CIO's return cards, computed only while a return tile is on Home or in the library.
-  const cards = useHomeCardReturns(widgetState.open || widgetState.layout.some(w => w.id === 'ytd' || w.id === 'inception'));
+  const cards = useHomeCardReturns(widgetState.open || widgetState.layout.some(w => w.id === 'ytd' || w.id === 'inception' || w.id === 'gains'));
   const applyDates = (start: string, end: string) => {
     if (!validHomeDate(start) || !validHomeDate(end) || start >= end || end > today || start < '2000-01-01') { setDateError('Choose a start before the end, between 2000 and today.'); return; }
     const next = new URLSearchParams(params); next.set('homeFrom', start); next.set('homeTo', end); setParams(next, { replace: true }); setDateError('');
@@ -94,6 +93,7 @@ export function Home() {
   const totalFlows = flows.length ? flows.reduce((s, f) => s + f.value, 0) : null;
   const sortBy = (key: 'value' | 'label') => { setSort(key); setAscending(sort === key ? !ascending : key === 'label'); };
   const setExpandedKey = (key: string) => setExpanded(expanded.includes(key) ? expanded.filter(k => k !== key) : [...expanded, key]);
+  const liabilityGap = `The book does not carry a complete borrowing and liability register. Negative investment cash balances alone cannot establish total liabilities.${knownNegative > 0 ? ` The book carries ${money(knownNegative)} of negative balances.` : ''}`;
   // One tile per asset allocation row: the row's own figure, weight and holdings.
   const classTile = (t: typeof HOME_CLASS_TILES[number]) => {
     const row = historical ? null : model.assets.find(a => a.key === t.key) ?? null, noun = t.name.slice('Total '.length);
@@ -108,7 +108,8 @@ export function Home() {
   // Year to date and since inception: Morning CIO's own cards, measured to the latest statements.
   const returnTile = (id: 'ytd' | 'inception') => {
     const label = id === 'ytd' ? 'Year to date' : 'Since inception', r = cards ? (id === 'ytd' ? cards.ytd : cards.gain) : null;
-    if (historical || !r) return <Metric label={label} attrs={{ 'data-home-return-tile': id, 'data-value': '' }} value={<AbsentCell reason={historical ? `Measured to the latest statements, not to ${fmtDate(to)}. Choose today as the end date to see it.` : 'Return records are still loading.'} />} />;
+    if (historical || !r) { const why = historical ? `Measured to the latest statements, not to ${fmtDate(to)}. Choose today as the end date to see it.` : 'Return records are still loading.';
+      return <Metric label={label} hint={why} attrs={{ 'data-home-return-tile': id, 'data-value': '' }} value={<AbsentCell reason={why} />} />; }
     const value = r.total.returnPct, c = r.coverage, assumed = r.total.units.filter(u => u.assumption).length;
     const covered = `Covers ${c.measuredPublicHoldings + c.heldPublicHoldings + c.privateCoveredHoldings} of ${c.publicHoldings + c.privateHoldings} holdings${r.to ? `, to ${fmtDate(r.to)}` : ''}.${assumed ? ` ${assumed} use assumed continued ownership.` : ''}`;
     const hint = id === 'ytd'
@@ -126,9 +127,9 @@ export function Home() {
       <div className="home-hero-main"><div className="home-hero-label"><span>{historical ? 'Recorded AUM' : 'Investment AUM'}</span><Hint text={sourceNote} /></div><div className="home-aum-value">{money(model.total)}</div><div className="home-hero-meta"><span className="home-status-dot" />{scope.label}{historical && <><span>·</span><span>As of {fmtDate(to)}</span></>}</div></div>
       <div className="home-hero-side"><span className="home-eyebrow">INVESTMENT BOOK</span><div><strong>{new Set(values.filter(v => v.value !== 0).map(v => v.accountId)).size}</strong> accounts <span className="home-hero-rule" /><strong>{historical ? values.filter(v => v.value !== 0).length : currentHoldings(dedupedPositions(portfolio.positions)).length}</strong> {historical ? 'valuation records' : 'holdings'}</div><Link to="/monitor">Explore portfolio <ArrowUpRight size={14} /></Link></div>
     </section>),
-    netWorth: (<Metric label="Total net worth" value={<AbsentCell reason="A complete family balance sheet, including all assets and liabilities, is needed. Investment AUM excludes the ring-fenced Polycab holding and separately managed property records." />} />),
+    netWorth: (<Metric label="Total net worth" hint={NET_WORTH_GAP} value={<AbsentCell reason={NET_WORTH_GAP} />} />),
     assetsTotal: (<Metric label="Total assets" value={money(model.positiveAssets)} hint="Positive valued investment positions in this book. This is not the family's complete household asset register." />),
-    liabilities: (<Metric label="Total liabilities" value={<AbsentCell reason={`The book does not carry a complete borrowing and liability register. Negative investment cash balances alone cannot establish total liabilities.${knownNegative > 0 ? ` The book carries ${money(knownNegative)} of negative balances.` : ''}`} />} />),
+    liabilities: (<Metric label="Total liabilities" hint={liabilityGap} value={<AbsentCell reason={liabilityGap} />} />),
     ...classTiles,
     ytd: returnTile('ytd'),
     inception: returnTile('inception'),
@@ -157,6 +158,9 @@ export function Home() {
     vintage: (<HomeUnavailable title="Performance by vintage" category="PRIVATE EQUITY" reason="Verified fund vintages and fund-level performance histories are not recorded. An account opening date does not establish a fund vintage." />),
     volatility: (<HomeVolatility from={from} to={to} />),
     sectors: (<HomeSectors historical={historical} />),
+    sectorBars: (<HomeSectorBars historical={historical} />),
+    gains: (<HomeGainsBreakdown ytd={cards?.ytd ?? null} historical={historical} />),
+    equityTwr: (<HomeEquityTwr to={to} />),
   };
   return <div className="home-dashboard" data-home-overview data-home-total={model.total ?? ''}>
     <PageHeader title="Home" right={<div className="flex flex-wrap items-center gap-2"><Suspense fallback={null}><PortfolioReportExport /></Suspense><HomeWidgetActions state={widgetState} /></div>} />
@@ -169,9 +173,6 @@ export function Home() {
   </div>;
 }
 
-function Metric({ label, value, note, hint, link, attrs }: { label: string; value: ReactNode; note?: string; hint?: string; link?: { to: string; label: string; name?: string }; attrs?: Record<`data-${string}`, string | number> }) {
-  return <div className="home-metric" {...attrs}><span>{label}{hint && <Hint text={hint} />}</span><strong>{value}</strong>{note && <small>{note}</small>}{link && <Link className="home-metric-link" to={link.to} aria-label={link.name}>{link.label}<ArrowUpRight size={12} /></Link>}</div>;
-}
 
 // One donut for both of the family's own axes. Each keeps its own data handles, so a check summing
 // the asset class rows never counts the basket rows as well.
