@@ -56,6 +56,9 @@ try {
   assert.equal(await card.locator('[data-return-info]').count(), 1);
   await card.locator('[data-return-info]').click();
   const popup = page.getByRole('dialog'); await popup.waitFor();
+  // The working is kept whole behind one closed Details fold (the family, 16 Nov 2026: "simplest crisp short").
+  assert.equal(await popup.locator('[data-card-details]').getAttribute('open'), null);
+  await popup.locator('[data-card-details] > summary').click();
   assert.match(await popup.innerText(), /Based on the available records/);
   // What left a return card's face is at the top of its info: the index on the same money among it (5 Nov 2026).
   if (id !== 'gain') { assert.equal(await popup.locator('[data-card-summary] [data-card-bench="nifty-500"]').count(), 1); assert.match(await popup.innerText(), /Private/); }
@@ -68,7 +71,7 @@ try {
   assert.ok(await popup.locator('[data-return-gap]').count() > 0);
   assert.equal(await popup.locator('[data-attribution-method]').getAttribute('open'), null);
   const firstGap = popup.locator('[data-return-gap]').first();
-  assert.ok(await firstGap.locator('[data-return-gap-reason]').isVisible(), 'missing inputs are shown immediately');
+  assert.ok(await firstGap.locator('[data-return-gap-reason]').isVisible(), 'missing inputs are shown as soon as Details opens');
   await firstGap.locator('summary').click();
   assert.match(await firstGap.innerText(), /account .*statement/i);
   await firstGap.locator('summary').click();
@@ -97,6 +100,7 @@ try {
   const data = card.locator('[data-card-coverage]'); await data.waitFor();
   assert.notEqual(await data.getAttribute('data-card-return'), '');
   await card.locator('[data-return-info]').click();
+  await page.getByRole('dialog').locator('[data-card-details] > summary').click(); // the working sits behind one fold (16 Nov 2026)
   assert.match(await page.getByRole('dialog').innerText(), /What is missing/);
   await page.keyboard.press('Escape');
  }

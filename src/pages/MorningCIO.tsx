@@ -1,6 +1,6 @@
 import { ExportableTable } from "@/components/ExportableTable";
 import { type ReactNode, useEffect, useMemo } from "react";
-import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote, CalendarDays } from "lucide-react";
+import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote, CalendarDays, ChevronDown } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { AllocationChart } from "@/components/AllocationViews";
@@ -1081,10 +1081,30 @@ export function MorningCIO() {
   const NAMES_WHAT = `Open every holding in the book. ${fmtNum(m.distinctNames)} is the count of distinct securities across every account; the page lists them grouped one row per name and per mandate, so a mandate's names are one row there.`;
   const returnAccounts = (statementPortfolio ?? portfolio).accounts;
   const benchLine = (r: AvailableCardReturn) => <CardBenchmarkLine card={r} accounts={returnAccounts} money={money} />;
-  const coverageInfo = (r: AvailableCardReturn, field: 'gain' | 'return') => <>
-    <CardBenchmarkInfo card={r} accounts={returnAccounts} money={money} />
-    <AvailableReturnCoverage line={r.total} selection={r.selection} accounts={returnAccounts}
-      money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} starts={r.starts} /></>;
+  /**
+   * THE CARDS' ⓘ, SHORT (the family, 16 Nov 2026: "These (i) explanations are way
+   * to long … make it simplest crisp short"). The summary and the benchmarks stay
+   * open; the assumption is one line; the working, the held and missing records and
+   * the included accounts are kept whole behind one closed Details fold.
+   */
+  const coverageInfo = (r: AvailableCardReturn, field: 'gain' | 'return') => {
+    const assumed = r.total.units.filter((u) => u.assumption);
+    const owners = [...new Set(assumed.map((u) => u.assumption!.owner))];
+    return <>
+      <CardBenchmarkInfo card={r} accounts={returnAccounts} money={money} />
+      {assumed.length > 0 && <p data-return-assumption-line data-assumed-count={assumed.length} className="text-xs text-slate-400">
+        Assumed still held{owners.length === 1 ? ` by ${owners[0]}` : ''}: <span className="tabular">{fmtNum(assumed.length)}</span> {assumed.length === 1 ? 'holding' : 'holdings'} with no sale on record.</p>}
+      <details data-card-details className="card-details">
+        <summary className="card-details-toggle ring-focus inline-flex cursor-pointer items-center gap-1 rounded py-1 text-slate-300">
+          Details<ChevronDown className="card-details-chevron h-4 w-4" aria-hidden="true" />
+        </summary>
+        <div className="mt-3">
+          <AvailableReturnCoverage line={r.total} selection={r.selection} accounts={returnAccounts} showAssumption={false}
+            money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} starts={r.starts} />
+        </div>
+      </details>
+    </>;
+  };
   /**
    * THE THREE RETURN CARDS' CAPTION — ONE LINE (the family, 5 Nov 2026: "more
    * minimal … I rather see number of records covered over total records"). The
