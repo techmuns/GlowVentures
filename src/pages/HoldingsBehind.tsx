@@ -208,7 +208,8 @@ const HB_COLS = ["unit", "heldIn", "invested", "value", "weight", "costShare", "
 export function HoldingsBehind() {
   const { portfolio, consolidated, statementPortfolio, fmtFromBase, scope: memberScope } = usePortfolio();
   const [params] = useSearchParams();
-  const homeCash = params.get('of') === 'home-cash';
+  // Home's class tiles (cash and every other asset class) open a plain holdings list that returns to Home.
+  const homeCash = params.get('of') === 'home-cash' || params.get('of') === 'home-class';
   const [qFilter, setQ] = useNavigationState<string>("holdings-search", "");
   const q = useTableExportFilter(qFilter, "");
   /** Which grouped rows are expanded to their statement lines. */
@@ -599,7 +600,7 @@ export function HoldingsBehind() {
     ? d.facets.find((f) => f.key === d.activeFacet)
     : null;
   const crumbTrail = [
-    d.id === "home-cash" ? { label: "Home", to: "/home" } : { label: "Morning CIO", to: "/cio" },
+    d.id === "home-cash" || d.id === "home-class" ? { label: "Home", to: "/home" } : { label: "Morning CIO", to: "/cio" },
     facet ? { label: d.crumb, to: drilldownHref(d.id, d.key || undefined) } : { label: d.crumb },
     ...(facet ? [{ label: facet.label }] : []),
   ];
