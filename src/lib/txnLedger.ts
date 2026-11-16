@@ -100,7 +100,9 @@ export type DatedRow = {
    */
   accountId: string | null;
   /**
-   * THE TWO HALVES, KEPT APART. Either may be null and at least one is not.
+   * THE TWO HALVES, KEPT APART. Either may be null; both are only on an account
+   * no statement dates anything on, listed so every account has a row
+   * (`withEveryAccount`) and carrying only its value today.
    * Every money column reads exactly one of them, which is what stops a reader
    * — or a future edit — adding a contribution to a trade.
    */
@@ -229,13 +231,70 @@ export function mergeDatedRecords(
    * every tie the same way on every run rather than however the Map happened to
    * be filled — the rule `capitalRollup` already follows one level down.
    */
-  const out = [...byKey.values()].sort((a, b) => a.key.localeCompare(b.key));
+  return orderDated([...byKey.values()], sort);
+}
+
+/** The table's one order — by key, then the mode — so every caller ranks rows alike. */
+function orderDated(rows: DatedRow[], sort: TxnSort): DatedRow[] {
+  const out = [...rows].sort((a, b) => a.key.localeCompare(b.key));
   return sortRows(out, sort, (r) => {
     const paidIn = r.capital && r.capital.contributions > 0 ? r.capital.paidIn : null;
     const dealt = r.trades && (r.trades.bought != null || r.trades.sold != null)
       ? (r.trades.bought ?? 0) + (r.trades.sold ?? 0) : null;
     return paidIn == null && dealt == null ? null : Math.max(paidIn ?? 0, dealt ?? 0);
   });
+}
+
+/** What `withEveryAccount` reads off a registry entry. */
+export type ListedAccount = { accountId: string; provider: string; accountNo: string; strategy: string | null; owner: string };
+
+/**
+ * ── EVERY ACCOUNT HAS A ROW (16 November 2026) ──────────────────────────────
+ *
+ *   *"why is transaction only showing … 68 of 95 accounts — it should show all"*
+ *
+ * The table drew an account only where a statement DATED something on it — the
+ * family's own purchases, or the trades inside it — so the depository and
+ * broking accounts, the folios whose statements print a balance and no
+ * movement, the income-only folios and the review buckets with no dated
+ * payment had no row at all, and an own broking account appeared only through
+ * the securities it dealt. Each now has a row of its own: what it is worth
+ * today, and both dated halves ABSENT with their reason, never a zero — an
+ * account with no dated record is not an account into which nothing was paid.
+ *
+ * Only accounts with no account row get one, so nothing is listed twice and no
+ * dated figure changes. A row carrying only value is filed where that value
+ * sits (`partsOf`, `TxnSections.partsOfAccount`), so a demat holding shares and
+ * an ETF draws a row under each heading; the parts partition the account's
+ * value, so the Value footer counts each rupee once.
+ */
+export function withEveryAccount(
+  rows: DatedRow[],
+  accounts: readonly ListedAccount[],
+  partsOf: (accountId: string) => { section: string; value: number | null }[],
+  sort: TxnSort = "recent",
+): DatedRow[] {
+  const drawn = new Set(rows.filter((r) => r.kind === "account" && r.accountId).map((r) => r.accountId as string));
+  const keys = new Set(rows.map((r) => r.key));
+  const added: DatedRow[] = [];
+  for (const a of accounts) {
+    if (drawn.has(a.accountId)) continue;
+    const label = a.strategy || a.provider;
+    const sublabel = [a.owner, label === a.provider ? null : a.provider, a.accountNo].filter(Boolean).join(" · ") || null;
+    for (const p of partsOf(a.accountId)) {
+      // The account id rides on the key: the family's review buckets share one
+      // provider and number ("Consolidated review (MOPWM)", "MOPWM") across
+      // members, and keyed on those alone two of them were one row.
+      const key = `${p.section}\u0000acct:${acctKey(a.provider, a.accountNo)}\u0000id:${a.accountId}`;
+      if (keys.has(key)) continue;
+      keys.add(key);
+      added.push({
+        key, section: p.section, kind: "account", label, sublabel, accountId: a.accountId,
+        capital: null, trades: null, value: p.value, first: "", last: "",
+      });
+    }
+  }
+  return added.length ? orderDated([...rows, ...added], sort) : rows;
 }
 
 /**
@@ -264,9 +323,29 @@ export function datedTotals(rows: DatedRow[]) {
    */
   const c = capitalTotals(cap);
   const t = rollupTotals(trd);
+  /**
+   * THE ACCOUNTS THE ROWS DRAW, not the accounts that publish a capital record.
+   * The footer printed the second as "68 of 95 accounts" over a table that also
+   * drew trade-only mandates and own broking accounts, so the count read as if
+   * those were missing. An account is drawn by its own row or by the trades a
+   * security row carries for it, and counted once however many rows it is on.
+   */
+  const drawn = new Set<string>();
+  const traded = new Set<string>();
+  for (const r of rows) {
+    if (r.kind === "account" && r.accountId) drawn.add(r.accountId);
+    for (const id of r.trades?.accountIds ?? []) { drawn.add(id); traded.add(id); }
+  }
+  const funded = new Set(cap.map((g) => g.accountId));
   return {
     rows: rows.length,
-    accounts: c.accounts,
+    accounts: drawn.size,
+    /** Of those, the accounts that publish a dated capital record or a fund's dated calls. */
+    capitalAccounts: c.accounts,
+    /** …the ones that report only the trades inside them… */
+    tradeOnlyAccounts: [...traded].filter((id) => !funded.has(id)).length,
+    /** …and the ones listed with neither, carrying only what each is worth today. */
+    undatedAccounts: [...drawn].filter((id) => !funded.has(id) && !traded.has(id)).length,
     contributions: c.contributions,
     withdrawals: c.withdrawals,
     paidIn: c.paidIn,
@@ -386,10 +465,19 @@ export function clubDatedRows(
   sort: TxnSort,
   splitClass: (s: string) => { fund: string } | null,
 ): DatedUnit[] {
+  /**
+   * A ROW LISTED WITH NO DATED RECORD CLUBS ONLY WITH ITS OWN KIND
+   * (`withEveryAccount`). Joined to a dated line, it would blank that line's
+   * return — a club strikes one only where every member carries a capital
+   * record — and change a figure the family already reads. Listed rows of one
+   * name still draw one line between them.
+   */
+  const clubKey = (r: DatedRow) =>
+    `${r.section}|${r.capital || r.trades ? "" : "listed:"}${clubBase(r.label, splitClass)}`;
   const by = new Map<string, DatedRow[]>();
   for (const r of rows) {
     if (r.kind !== "account") continue;
-    const k = `${r.section}|${clubBase(r.label, splitClass)}`;
+    const k = clubKey(r);
     (by.get(k) ?? by.set(k, []).get(k)!).push(r);
   }
   const units: (DatedUnit & { sortLast: string; size: number | null })[] = [];
@@ -399,7 +487,7 @@ export function clubDatedRows(
     return paid == null && dealt == null ? null : Math.max(paid ?? -Infinity, dealt ?? -Infinity);
   };
   for (const r of rows) {
-    const k = r.kind === "account" ? `${r.section}|${clubBase(r.label, splitClass)}` : null;
+    const k = r.kind === "account" ? clubKey(r) : null;
     const members = k ? by.get(k)! : null;
     if (!k || !members || members.length < 2) {
       const paid = r.capital && r.capital.contributions > 0 ? r.capital.paidIn : null;

@@ -864,6 +864,22 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
   max-height: 36rem;
   overflow-y: auto;
 }
+/* THE POSITION-BY-ACCOUNT TABLE SNAPS ITS ROWS (16 Nov 2026). On the stock
+   page's Position tab this table shrinks into a short panel (StockInfo, 28 Oct
+   2026) between a sticky header and its pinned totals. A holding held inside the
+   funds is a TWO-LINE derived row, so a free scroll could leave one resting with
+   its first line hidden under the opaque header — an orphaned "0.83% of the
+   fund" floating below it with empty cells. Snap each row's top to just below
+   the header so a row never stops half-covered. The sticky totals are untouched,
+   staying pinned to the box; `scroll-padding-top` matches the one-line header's
+   own height (~2.6rem in the table's zoomed space, measured 16 Nov 2026). */
+#root [data-navigation-scroll="stockinfo-2"] {
+  scroll-snap-type: y mandatory;
+  scroll-padding-top: 2.6rem;
+}
+#root [data-navigation-scroll="stockinfo-2"] > table > tbody > tr {
+  scroll-snap-align: start;
+}
 /* Portfolio Monitor keeps the Security labels beside horizontally scrolled
    figures as well as keeping its heading row above vertically scrolled rows.
    Section bands and expanded detail cells span columns and must scroll whole. */
@@ -1193,3 +1209,11 @@ html:not(.dark) .move-menu-item:focus { background-color: rgba(234, 228, 213, 0.
   .move-menu-item:active, .move-toast-undo:active { transform: none; }
 }
 @keyframes move-fade { from { opacity: 0; } }
+
+/* A SPREADSHEET STATEMENT'S CITED CELL (Stage 10oo). The PDF view marks the
+   figure a link cites with a yellow highlighter (`PdfPreview`); a CSV or
+   workbook marks the same figure in its grid, so both read as one thing. The
+   row keeps its champagne tint; the cell is the highlighter over it. Static —
+   the jump to it is the feedback, and nothing here is clicked twice a day. */
+#root td[data-source-cell="true"] { background-color: rgba(255, 230, 0, 0.24); box-shadow: inset 0 0 0 1px #d9ac00; }
+html:not(.dark) #root td[data-source-cell="true"] { background-color: rgba(255, 230, 0, 0.5); }

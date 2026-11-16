@@ -5949,5 +5949,93 @@
     "screenerIndustry": "Pharmaceuticals",
     "joinedBy": "nse-symbol",
     "page": "Zydus Lifesciences Ltd"
+  },
+  "gspl-india-transco": {
+    "gics": "Utilities",
+    "gicsFrom": "reviewed",
+    "screenerBroadSector": null,
+    "screenerSector": "Gas",
+    "screenerSectorCode": null,
+    "screenerBroadIndustry": "Gas",
+    "screenerIndustry": null,
+    "joinedBy": "reviewed",
+    "page": "reviewed by hand — screener.in carries no classification for this company"
+  },
+  "gujarat-gas": {
+    "gics": "Utilities",
+    "gicsFrom": "reviewed",
+    "screenerBroadSector": null,
+    "screenerSector": "Gas",
+    "screenerSectorCode": null,
+    "screenerBroadIndustry": "Gas",
+    "screenerIndustry": null,
+    "joinedBy": "reviewed",
+    "page": "reviewed by hand — screener.in carries no classification for this company"
+  },
+  "heg-graphite": {
+    "gics": "Industrials",
+    "gicsFrom": "reviewed",
+    "screenerBroadSector": null,
+    "screenerSector": "Industrial Products",
+    "screenerSectorCode": null,
+    "screenerBroadIndustry": "Industrial Products",
+    "screenerIndustry": null,
+    "joinedBy": "reviewed",
+    "page": "reviewed by hand — screener.in carries no classification for this company"
+  },
+  "nicco": {
+    "gics": "Industrials",
+    "gicsFrom": "reviewed",
+    "screenerBroadSector": null,
+    "screenerSector": "Industrial Products",
+    "screenerSectorCode": null,
+    "screenerBroadIndustry": "Industrial Products",
+    "screenerIndustry": null,
+    "joinedBy": "reviewed",
+    "page": "reviewed by hand — screener.in carries no classification for this company"
+  },
+  "sterlite-electric": {
+    "gics": "Utilities",
+    "gicsFrom": "reviewed",
+    "screenerBroadSector": null,
+    "screenerSector": "Power",
+    "screenerSectorCode": null,
+    "screenerBroadIndustry": "Power",
+    "screenerIndustry": null,
+    "joinedBy": "reviewed",
+    "page": "reviewed by hand — screener.in carries no classification for this company"
+  },
+  "sterlite-grid": {
+    "gics": "Utilities",
+    "gicsFrom": "reviewed",
+    "screenerBroadSector": null,
+    "screenerSector": "Power",
+    "screenerSectorCode": null,
+    "screenerBroadIndustry": "Power",
+    "screenerIndustry": null,
+    "joinedBy": "reviewed",
+    "page": "reviewed by hand — screener.in carries no classification for this company"
+  },
+  "sterlite-grid-5": {
+    "gics": "Utilities",
+    "gicsFrom": "reviewed",
+    "screenerBroadSector": null,
+    "screenerSector": "Power",
+    "screenerSectorCode": null,
+    "screenerBroadIndustry": "Power",
+    "screenerIndustry": null,
+    "joinedBy": "reviewed",
+    "page": "reviewed by hand — screener.in carries no classification for this company"
+  },
+  "talwandi-sabo-power": {
+    "gics": "Utilities",
+    "gicsFrom": "reviewed",
+    "screenerBroadSector": null,
+    "screenerSector": "Power",
+    "screenerSectorCode": null,
+    "screenerBroadIndustry": "Power",
+    "screenerIndustry": null,
+    "joinedBy": "reviewed",
+    "page": "reviewed by hand — screener.in carries no classification for this company"
   }
 }

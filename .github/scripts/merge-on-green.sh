@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# MERGE ON GREEN (Stage 10op). The family, 16 Nov 2026: "Automatically merge once
+# MERGE ON GREEN (Stage 10ou). The family, 16 Nov 2026: "Automatically merge once
 # done always". Every open pull request into main labelled `automerge` is
 # squash-merged once CI on its exact head has passed, on GitHub, so no one has to
 # watch CI. Called from two places:

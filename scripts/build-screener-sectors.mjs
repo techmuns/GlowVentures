@@ -110,6 +110,30 @@ const LISTED_AS = {
   "altius-telecom-infrastructure-trust": "543225",  // BSE only
 };
 
+/**
+ * REVIEWED BROAD INDUSTRY — for the companies screener.in's page carries no
+ * classification for (family instruction, 16 Nov 2026: "there should be none
+ * unclassified"). Each label is the company's own NSE broad-industry group,
+ * checked by hand against its business AND against the GICS its listed peers
+ * already carry in THIS book, and resolved to GICS through the SAME
+ * `shared/sectors.mjs` map every other row uses — never a hand-set GICS and
+ * never a guess. A key absent from the universe is dropped, not asserted.
+ *
+ *   gas distribution / transmission → "Gas"   → Utilities (with GAIL, IGL, Petronet)
+ *   power generation / transmission → "Power" → Utilities (with NTPC, Power Grid)
+ *   graphite electrodes, wires & cables → "Industrial Products" → Industrials (with KEI, Finolex, Universal Cables)
+ */
+const REVIEWED_BROAD_INDUSTRY = {
+  "gujarat-gas": "Gas",                  // city gas distribution (CGD), a regulated distributor like Indraprastha Gas
+  "gspl-india-transco": "Gas",           // natural-gas transmission infrastructure (the GSPL transco demerger)
+  "talwandi-sabo-power": "Power",        // 1,980 MW thermal power generation (Vedanta)
+  "heg-graphite": "Industrial Products", // graphite electrodes (Electrodes & Refractories), like the HEG parent
+  "nicco": "Industrial Products",        // Nicco Corporation — wires & cables, like Finolex / KEI / Universal Cables
+  "sterlite-electric": "Power",          // Sterlite Power — electricity transmission
+  "sterlite-grid": "Power",              // Sterlite Power — electricity transmission grid
+  "sterlite-grid-5": "Power",            // Sterlite Power — electricity transmission grid (SPV 5)
+};
+
 // ── NSE's own masters (cached beside `build-symbols`' copies, gitignored) ───
 const MASTERS = [
   { url: "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv", cache: "scripts/.nse-equity-master.csv",
@@ -282,17 +306,38 @@ for (const j of ids) {
   await sleep(DELAY_MS);
 }
 
-// SORTED, so both files regenerate byte-identically when nothing moved.
-const sorted = (o) => Object.fromEntries(Object.keys(o).sort().map((k) => [k, o[k]]));
-writeFileSync(OUT, JSON.stringify(sorted(store), null, 2) + "\n");
 const keyMap = {};
 // Every listing joined, a page that gave no sector included — so the app can
 // say "screener gives no sector for it" rather than "nothing keys the lookup".
 for (const j of joins) if (j.id && j.joinedBy !== "app-symbol") keyMap[j.key] = j.id;
+
+// REVIEWED GICS for the handful screener.in carries no classification for, so
+// the Sector Composition page leaves none Unclassified (family instruction,
+// 16 Nov 2026). The reviewed broad-industry label resolves through the SAME
+// `gicsOf` map every other row uses; screener keeps precedence wherever it DID
+// classify a company, and a reviewed key not in the universe is skipped.
+for (const [key, broad] of Object.entries(REVIEWED_BROAD_INDUSTRY)) {
+  const j = joins.find((x) => x.key === key);
+  if (!j) { console.log(`  reviewed key not in the universe, skipped: ${key}`); continue; }
+  const curId = keyMap[key] ?? j.id;
+  if (curId && store[curId] && store[curId].gics !== UNCLASSIFIED) continue; // screener already placed it
+  const { gics, level } = gicsOf({ broadIndustry: { label: broad } });
+  if (!level) { console.log(`  reviewed broad industry "${broad}" has no entry in shared/sectors.mjs`); continue; }
+  store[key] = { gics, gicsFrom: "reviewed", screenerBroadSector: null, screenerSector: broad,
+    screenerSectorCode: null, screenerBroadIndustry: broad, screenerIndustry: null,
+    joinedBy: "reviewed", page: "reviewed by hand — screener.in carries no classification for this company" };
+  keyMap[key] = key;
+  j.joinedBy = "reviewed";
+}
+
+// SORTED, so both files regenerate byte-identically when nothing moved.
+const sorted = (o) => Object.fromEntries(Object.keys(o).sort().map((k) => [k, o[k]]));
+writeFileSync(OUT, JSON.stringify(sorted(store), null, 2) + "\n");
 writeFileSync(KEYS_OUT, JSON.stringify(sorted(keyMap), null, 2) + "\n");
 
 const cr = (v) => `₹${(v / 1e7).toFixed(2)} Cr`;
-const placed = joins.filter((j) => j.id && store[j.id] && store[j.id].gics !== UNCLASSIFIED);
+const idFor = (j) => keyMap[j.key] ?? j.id;
+const placed = joins.filter((j) => idFor(j) && store[idFor(j)] && store[idFor(j)].gics !== UNCLASSIFIED);
 const notPlaced = joins.filter((j) => !placed.includes(j));
 const tally = {};
 for (const j of placed) tally[j.joinedBy] = (tally[j.joinedBy] ?? 0) + 1;
@@ -318,9 +363,21 @@ writeFileSync(DOC, [
   "",
   "## Not placed by screener.in",
   "",
-  "| Company | Value | Why |", "| --- | ---: | --- |",
-  ...notPlaced.map((j) => `| ${j.name} | ${cr(j.value)} | ${!j.id ? "no NSE or BSE listing bridges to it"
-    : skipped.find((s) => s.id === j.id)?.why ?? `screener's "${store[j.id]?.screenerBroadIndustry}" has no entry in the map`} |`),
+  notPlaced.length ? "" : "_None — every company a sector table can draw now carries a GICS sector._",
+  ...(notPlaced.length ? ["| Company | Value | Why |", "| --- | ---: | --- |",
+    ...notPlaced.map((j) => `| ${j.name} | ${cr(j.value)} | ${!j.id ? "no NSE or BSE listing bridges to it"
+      : skipped.find((s) => s.id === j.id)?.why ?? `screener's "${store[j.id]?.screenerBroadIndustry}" has no entry in the map`} |`)] : []),
+  "",
+  "## Placed by hand review",
+  "",
+  "Companies screener.in's page carries no classification for. Each is given its",
+  "own NSE broad-industry group — checked against the company's business and the",
+  "GICS its listed peers already carry in this book — and resolved to GICS through",
+  "the same `shared/sectors.mjs` map every other row uses. Reviewed 16 Nov 2026.",
+  "",
+  "| Company | Broad industry (reviewed) | GICS |", "| --- | --- | --- |",
+  ...joins.filter((j) => j.joinedBy === "reviewed")
+    .map((j) => `| ${j.name} | ${store[j.key].screenerBroadIndustry} | ${store[j.key].gics} |`),
   "",
   "## Joined by name or by the reviewed table",
   "",

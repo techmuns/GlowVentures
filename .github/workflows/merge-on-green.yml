@@ -5,7 +5,7 @@ name: Merge on green
 # last job merges a labelled PR once its jobs all pass (ci.yml › merge-on-green).
 # This workflow runs the same sweep from main whenever CI completes or a PR is
 # labelled. That covers branches cut before that job existed and a label added
-# after CI passed. .github/scripts/merge-on-green.sh holds every rule (Stage 10op).
+# after CI passed. .github/scripts/merge-on-green.sh holds every rule (Stage 10ou).
 #
 # Both triggers run main's copy of this file with main's checkout. Neither checks
 # out nor runs the pull request's code. A merge made with GITHUB_TOKEN starts no

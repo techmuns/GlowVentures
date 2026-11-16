@@ -18,7 +18,7 @@ unless something is pushed … i want things pushed"* — the family, 24 Sep 202
   16 Nov 2026: "Automatically merge once done always"). CI's last job squash-merges
   it into `main` once every job passes, so no one waits on CI. If another check
   fails, `main` changed a generated file it also changes, or `main` already has its
-  stage letter, it comments instead (`.github/scripts/merge-on-green.sh`, Stage 10op).
+  stage letter, it comments instead (`.github/scripts/merge-on-green.sh`, Stage 10ou).
 - **Be quick.** Run the checks that cover the change: `build`, the relevant
   suite, and `ONLY=<routes>` for the pages you touched. A full `check:pages`
   sweep is not needed before every merge.
