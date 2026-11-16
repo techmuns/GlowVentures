@@ -29,6 +29,7 @@ const SUITES = [
   ["ETF unit continuity", "src/lib/__tests__/fundUnitActions.test.ts"],
   ["statement source tracing", "src/lib/__tests__/sourceTrace.test.ts"],
   ["PDF source highlights", "src/lib/__tests__/pdfSourceHighlight.test.ts"],
+  ["spreadsheet source cells", "src/lib/__tests__/sheetSourceCell.test.ts"],
   ["assumed holding returns", "src/lib/__tests__/assumedHoldingReturns.test.ts"],
   ["invested this year", "src/lib/__tests__/investedThisYear.test.ts"],
   ["market return coverage labels", "src/lib/__tests__/marketReturnCoverage.test.ts"],

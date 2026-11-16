@@ -19,7 +19,8 @@ import {
 } from "@/lib/statementPreview";
 import { usePreviewDialog } from '@/lib/usePreviewDialog';
 import { isinBeforePage } from '@/lib/pdfSourceHighlight';
-import { sourcePage } from '@/lib/sourceTrace';
+import { sourcePage, sourceRecordAt } from '@/lib/sourceTrace';
+import { sheetSourceCell, sheetSourceTarget, type SheetSourceCell, type SheetSourceTarget } from '@/lib/sheetSourceCell';
 import { loadPdfPreview, preloadPdfPreview } from '@/lib/pdfPreviewLoader';
 
 const BASE = import.meta.env.BASE_URL;
@@ -94,6 +95,28 @@ function usePages(docKey: string): Loaded {
   }, [docKey]);
   return state;
 }
+
+/** The statement record a link cites (`?record=` pointer), read from the
+ *  file's own archive record. Only a spreadsheet needs it: the grid finds the
+ *  record's row by what the record says it printed (Stage 10oo). */
+type Cited = { status: "none" } | { status: "loading" } | { status: "ready"; record: unknown };
+function useCitedRecord(docKey: string, pointer: string | null): Cited {
+  const [state, setState] = useState<Cited>(pointer ? { status: "loading" } : { status: "none" });
+  useEffect(() => {
+    if (!pointer) { setState({ status: "none" }); return; }
+    let alive = true;
+    setState({ status: "loading" });
+    getJson(`${statementAsset(`audit/${encodeURIComponent(docKey)}`)}/document.json`)
+      .then((doc): Cited => ({ status: "ready", record: sourceRecordAt(doc, pointer) }))
+      .catch((): Cited => ({ status: "ready", record: undefined }))
+      .then((s) => { if (alive) setState(s); });
+    return () => { alive = false; };
+  }, [docKey, pointer]);
+  return state;
+}
+
+/** A cited record, for a sheet view: still loading, or what to find. */
+type Citation = { pending: boolean; target: SheetSourceTarget | null };
 
 // ── THE ORIGINAL FILE ────────────────────────────────────────────────────────
 
@@ -230,9 +253,9 @@ function useWorkbook(url: string, format: string): Workbook {
   return state;
 }
 
-function OriginalSheets({ url, format }: { url: string; format: string }) {
+function OriginalSheets({ url, format, cite }: { url: string; format: string; cite?: Citation }) {
   const wb = useWorkbook(url, format);
-  if (wb.status === "loading") return <Opening what="Opening the workbook…" />;
+  if (wb.status === "loading" || cite?.pending) return <Opening what="Opening the workbook…" />;
   if (wb.status === "failed") {
     return (
       <AbsentSection what="This workbook did not open here" needs={wb.reason}>
@@ -240,7 +263,7 @@ function OriginalSheets({ url, format }: { url: string; format: string }) {
       </AbsentSection>
     );
   }
-  return <SheetTabs sheets={wb.sheets} sourceLocation />;
+  return <SheetTabs sheets={wb.sheets} sourceLocation cite={cite} />;
 }
 
 function Opening({ what }: { what: string }) {
@@ -276,16 +299,28 @@ const EMPTY_CELL: GridCell = { text: "", full: "", numeric: false };
 
 /** One sheet as a grid: column letters across, row numbers down, merged blocks
  *  drawn as one cell. */
-function SheetGrid({ grid, sourceSelected, sheetKey }: { grid: Grid; sourceSelected?: boolean; sheetKey: string }) {
+function SheetGrid({ grid, sourceSelected, sheetKey, cited }: { grid: Grid; sourceSelected?: boolean; sheetKey: string; cited?: SheetSourceCell }) {
   const { rows, cols, merges } = grid;
   const [params] = useSearchParams();
   const [shown, setShown, restored] = useNavigationValue(`preview-rows:${params.get("file")}:${sheetKey}`, ROW_STEP, numberNavigation);
-  const selectedRows = useMemo(() => new Set(sourceSelected ? (params.get('rows') ?? '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0 && n <= rows.length) : []), [params, rows.length, sourceSelected]);
+  // Rows a link lists (the review workbook's citations) come first; a cited
+  // statement record marks the row it was found on (Stage 10oo).
+  const selectedRows = useMemo(() => {
+    const listed = sourceSelected ? (params.get('rows') ?? '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0 && n <= rows.length) : [];
+    return new Set(listed.length ? listed : cited ? [cited.row + 1] : []);
+  }, [params, rows.length, sourceSelected, cited]);
+  const citedCell = !params.get('rows') && cited?.col != null ? cited : undefined;
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (restored || !selectedRows.size) return;
     setShown(n => Math.max(n, ...selectedRows));
-    const frame = requestAnimationFrame(() => host.current?.querySelector('[data-source-row="true"]')?.scrollIntoView({ block: 'center' }));
+    const frame = requestAnimationFrame(() => {
+      const cell = host.current?.querySelector('[data-source-cell="true"]');
+      // Sideways only as far as the cell needs: the row's own name, in its
+      // first columns, stays beside the figure wherever both fit.
+      if (cell) cell.scrollIntoView({ block: 'center', inline: 'nearest' });
+      else host.current?.querySelector('[data-source-row="true"]')?.scrollIntoView({ block: 'center' });
+    });
     return () => cancelAnimationFrame(frame);
   }, [grid, selectedRows, restored]);
   if (!rows.length) return <AbsentSection what="This sheet is empty" needs="The file carries this sheet with no cells in it." />;
@@ -299,8 +334,10 @@ function SheetGrid({ grid, sourceSelected, sheetKey }: { grid: Grid; sourceSelec
           if (covered.has(`${i}:${c}`)) return null;
           const cell = r[c] ?? EMPTY_CELL;
           const span = spans.get(`${i}:${c}`);
+          const marked = citedCell?.row === i && citedCell.col === c;
           return (
             <td key={c} rowSpan={span?.rowSpan} colSpan={span?.colSpan} title={cell.full !== cell.text ? cell.full : undefined}
+              data-source-cell={marked ? 'true' : undefined} aria-label={marked ? `Source value ${cell.text}` : undefined}
               className={`whitespace-nowrap px-3 py-1 text-slate-200 ${cell.numeric ? "mono text-right" : ""}`}>
               {cell.text}
             </td>
@@ -339,17 +376,23 @@ function SheetGrid({ grid, sourceSelected, sheetKey }: { grid: Grid; sourceSelec
 }
 
 /** A workbook's sheets, one tab each — a CSV is a workbook of one. */
-function SheetTabs({ sheets, sourceLocation = false }: { sheets: SheetView[]; sourceLocation?: boolean }) {
+function SheetTabs({ sheets, sourceLocation = false, cite }: { sheets: SheetView[]; sourceLocation?: boolean; cite?: Citation }) {
   const [params] = useSearchParams();
   const requested = params.get('sheet');
   const requestedAt = sourceLocation ? sourceSheetIndex(sheets.map(s => s.key), requested) : null;
-  const [sheetKey, setSheetKey] = useNavigationState<string>(`preview-sheet:${params.get("file")}:${sourceLocation}`, () => sheets[requestedAt ?? 0]?.key ?? "", sheets.map(s => s.key));
+  const target = cite?.target;
+  const located = useMemo(() => target ? sheetSourceCell(sheets.map(s => s.grid.rows), target) : undefined, [sheets, target]);
+  const [sheetKey, setSheetKey] = useNavigationState<string>(`preview-sheet:${params.get("file")}:${sourceLocation}`, () => sheets[requestedAt ?? located?.sheet ?? 0]?.key ?? "", sheets.map(s => s.key));
   const at = Math.max(0, sheets.findIndex(s => s.key === sheetKey));
   if (!sheets.length) return <AbsentSection what="This workbook has no sheets" needs="The file carries no worksheet to show." />;
   const sheet = sheets[Math.min(at, sheets.length - 1)];
   return (
     <div>
       {sourceLocation && requested && requestedAt === null && <p role="alert" className="mb-2 text-xs text-slate-400" data-prose-ok="unresolved worksheet citation">The cited worksheet could not be uniquely identified. Select a sheet below to inspect the original.</p>}
+      {cite && located?.col == null && <p role="status" className="mb-2 text-xs text-slate-400" data-source-located={located ? "row" : "none"}
+        data-prose-ok="the cited figure could not be marked in this file">
+        {located ? "Row marked; its exact number could not be uniquely highlighted in this file." : "Exact number could not be uniquely highlighted in this file."}
+      </p>}
       {sheets.length > 1 && (
         <div className="mb-3 flex flex-wrap gap-1.5" role="tablist" aria-label="Sheets in this file">
           {sheets.map((s, i) => (
@@ -363,15 +406,17 @@ function SheetTabs({ sheets, sourceLocation = false }: { sheets: SheetView[]; so
           ))}
         </div>
       )}
-      <SheetGrid key={sheet.key} sheetKey={sheet.key} grid={sheet.grid} sourceSelected={at === requestedAt} />
+      <SheetGrid key={sheet.key} sheetKey={sheet.key} grid={sheet.grid} sourceSelected={at === requestedAt}
+        cited={located && located.sheet === Math.min(at, sheets.length - 1) ? located : undefined} />
     </div>
   );
 }
 
 /** The text as read of a spreadsheet: its sheets, numbered as the reader wrote them. */
-function TextSheets({ pages }: { pages: PageText[] }) {
+function TextSheets({ pages, cite }: { pages: PageText[]; cite?: Citation }) {
   const sheets = useMemo(() => pages.map((p) => ({ key: String(p.page), label: `Sheet ${p.page}`, grid: textGrid(p.text) })), [pages]);
-  return <SheetTabs sheets={sheets} />;
+  if (cite?.pending) return <Opening what="Opening the file…" />;
+  return <SheetTabs sheets={sheets} cite={cite} />;
 }
 
 type View = "original" | "text";
@@ -409,6 +454,14 @@ export function StatementPreview({ doc, onClose, backLabel }: { doc: LibraryDoc;
   const location = useLocation();
   useNavigationScroll(dialogRef, location, `preview-scroll:${doc.fileKey}`);
   const sheet = isSheetFormat(doc.format);
+  // A spreadsheet has no page to open on; it marks the cited record's row and figure.
+  const pointer = sheet ? params.get('record') : null;
+  const cited = useCitedRecord(doc.fileKey, pointer);
+  const sourceValue = params.get('sourceValue'), field = params.get('field');
+  const cite = useMemo((): Citation | undefined => !pointer ? undefined : {
+    pending: cited.status === 'loading',
+    target: cited.status === 'ready' ? sheetSourceTarget(cited.record, sourceValue, field) : null,
+  }, [pointer, cited, sourceValue, field]);
   // The PDF viewer takes the whole window and scrolls itself.
   const fills = view === "original" && !!published && !sheet;
 
@@ -497,7 +550,7 @@ export function StatementPreview({ doc, onClose, backLabel }: { doc: LibraryDoc;
             </AbsentSection>
           )}
           {view === "original" && published && (sheet
-            ? <OriginalSheets url={published.url} format={doc.format} />
+            ? <OriginalSheets url={published.url} format={doc.format} cite={cite} />
             : <Suspense fallback={<Opening what="Opening PDF…" />}>
                 <OriginalPdf key={published.previewUrl} url={published.previewUrl} file={published.file} initialPage={selectedPage}
                   sourceTarget={loaded.status !== 'loading' && params.get('sourceValue') && params.get('isin') ? {
@@ -513,7 +566,7 @@ export function StatementPreview({ doc, onClose, backLabel }: { doc: LibraryDoc;
               <p className="max-w-xl text-xs text-slate-500" data-prose-ok="why this file has no contents to show">{loaded.reason}</p>
             </AbsentSection>
           )}
-          {view === "text" && loaded.status === "ready" && (sheet ? <TextSheets pages={loaded.pages} /> : <PageList pages={loaded.pages} />)}
+          {view === "text" && loaded.status === "ready" && (sheet ? <TextSheets pages={loaded.pages} cite={cite} /> : <PageList pages={loaded.pages} />)}
         </div>
       </div>
     </div>,
