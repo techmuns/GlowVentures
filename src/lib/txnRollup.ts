@@ -145,6 +145,13 @@ export type GroupRow = {
    * book's ten.
    */
   accountId: string | null;
+  /**
+   * EVERY BOOK ACCOUNT WHOSE TRADES THIS ROW DRAWS — one on a mandate row, as
+   * many as dealt the name on a security row. The Transactions footer counts the
+   * accounts it draws off these, so an own broking account whose trades sit
+   * under each security it dealt is counted as drawn, and counted once.
+   */
+  accountIds: string[];
   label: string;
   /** The second line: whose money, or how the account is run. */
   sublabel: string | null;
@@ -334,7 +341,7 @@ export function rollup(
   sectionOf: (t: Txn) => string = () => "",
 ): GroupRow[] {
   const acctByKey = new Map(accounts.map((a) => [acctKey(a.provider, a.accountNo), a]));
-  const groups = new Map<string, { section: string; accountId: string | null; label: string; sublabel: string | null; rows: Map<string, TrancheRow[]> }>();
+  const groups = new Map<string, { section: string; accountId: string | null; accountIds: Set<string>; label: string; sublabel: string | null; rows: Map<string, TrancheRow[]> }>();
 
   for (const t of txns) {
     const acc = acctByKey.get(acctKey(t.provider, t.accountNo));
@@ -347,7 +354,8 @@ export function rollup(
     // would double-count it in whichever footer read the sections.
     const key = `${section}\u0000${g.key}`;
     const entry = groups.get(key)
-      ?? { section, accountId: g.accountId, label: g.label, sublabel: g.sublabel, rows: new Map<string, TrancheRow[]>() };
+      ?? { section, accountId: g.accountId, accountIds: new Set<string>(), label: g.label, sublabel: g.sublabel, rows: new Map<string, TrancheRow[]>() };
+    if (acc) entry.accountIds.add(acc.accountId);
     // Grouped by instrument, the second level would be one row per group — so
     // it splits by SIDE instead, which is the useful cut there: "everything I
     // bought of this name" beside "everything I sold".
@@ -375,6 +383,7 @@ export function rollup(
       key,
       section: g.section,
       accountId: g.accountId,
+      accountIds: [...g.accountIds].sort(),
       label: g.label,
       sublabel: g.sublabel,
       trades: all.length,

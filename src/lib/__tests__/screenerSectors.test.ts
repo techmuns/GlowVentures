@@ -55,26 +55,38 @@ const eq = (name: string, got: unknown, want: unknown) => {
 type Vendor = {
   gics: string;
   screenerSector: string;
-  screenerSectorCode: string;
-  screenerBroadSector: string;
+  // null on the hand-reviewed tier, which has no screener page to quote.
+  screenerSectorCode: string | null;
+  screenerBroadSector: string | null;
   screenerBroadIndustry: string | null;
-  screenerIndustry: string;
-  gicsFrom: "broadIndustry" | "sector";
+  screenerIndustry: string | null;
+  gicsFrom: "broadIndustry" | "sector" | "reviewed";
   joinedBy: string;
+  page?: string;
 };
 const MAP = screenerSectors as Record<string, Vendor>;
 const KEY_TO_SYMBOL = nseSymbols as Record<string, string>;
 const entries = Object.entries(MAP);
+// THE HAND-REVIEWED TIER (Stage, 16 Nov 2026). screener.in carries no
+// classification for a handful of companies, so `build-sectors` places each from
+// a reviewed NSE broad-industry group — keyed by the book's own security key, not
+// a screener symbol, and STILL resolved to GICS through the one committed map.
+// It is held to its own invariants below, never exempted from them.
+const reviewed = entries.filter(([, v]) => v.joinedBy === "reviewed");
+const screener = entries.filter(([, v]) => v.joinedBy !== "reviewed");
 
 console.log("\n── the store is well formed, and every field is populated ──");
 ok("the store is not empty", entries.length > 0, `${entries.length} symbols`);
-ok("every key is an NSE trading symbol, or a BSE scrip code where NSE lists none",
-  entries.every(([s]) => /^[A-Z0-9&*\-]+$/.test(s)),
-  entries.filter(([s]) => !/^[A-Z0-9&*\-]+$/.test(s)).map(([s]) => s).join(", ") || "all");
+ok("every screener key is an NSE trading symbol, or a BSE scrip code where NSE lists none",
+  screener.every(([s]) => /^[A-Z0-9&*\-]+$/.test(s)),
+  screener.filter(([s]) => !/^[A-Z0-9&*\-]+$/.test(s)).map(([s]) => s).join(", ") || "all");
+ok("every hand-reviewed key is a book security key, and the entry says it was reviewed",
+  reviewed.every(([s, v]) => /^[a-z0-9][a-z0-9-]*$/.test(s) && /reviewed/i.test(v.page ?? "")),
+  reviewed.map(([s]) => s).join(", ") || "none");
 ok("every entry carries a GICS sector, and none is the absent one",
   entries.every(([, v]) => typeof v.gics === "string" && v.gics.length > 0 && v.gics !== UNCLASSIFIED));
-ok("every entry keeps screener's own words beside the GICS one",
-  entries.every(([, v]) => !!v.screenerSector && !!v.screenerIndustry && !!v.screenerSectorCode),
+ok("every screener entry keeps screener's own words beside the GICS one",
+  screener.every(([, v]) => !!v.screenerSector && !!v.screenerIndustry && !!v.screenerSectorCode),
   "so a mapping decision can be re-argued from what the page actually said");
 
 /*
@@ -89,8 +101,8 @@ ok("every entry keeps screener's own words beside the GICS one",
  */
 console.log("\n── every page was proved to be the company it was asked for ──");
 const joins = new Set(entries.map(([, v]) => v.joinedBy));
-ok("no entry was accepted without a round-trip guard",
-  [...joins].every((j) => j === "nse-symbol" || j === "bse-code" || j === "name"),
+ok("no entry was accepted without a round-trip guard, or a hand review",
+  [...joins].every((j) => j === "nse-symbol" || j === "bse-code" || j === "name" || j === "reviewed"),
   [...joins].join(", "));
 const bySymbol = entries.filter(([, v]) => v.joinedBy === "nse-symbol" || v.joinedBy === "bse-code").length;
 ok("and the identifier guard carries the great majority",
@@ -115,7 +127,12 @@ const viaMap = (v: Vendor) => {
   const bi = v.screenerBroadIndustry ? resolveSector(v.screenerBroadIndustry) : null;
   return bi?.matchedBy ? { gics: bi.sector, from: "broadIndustry" } : { gics: resolveSector(v.screenerSector).sector, from: "sector" };
 };
-const mismatched = entries.filter(([, v]) => viaMap(v).gics !== v.gics || viaMap(v).from !== v.gicsFrom);
+// A reviewed entry's GICS must STILL be the committed map's answer for its
+// reviewed broad industry — the review chooses the NSE group, never the GICS —
+// but it carries gicsFrom "reviewed" rather than "broadIndustry".
+const mismatched = entries.filter(([, v]) => v.joinedBy === "reviewed"
+  ? viaMap(v).gics !== v.gics
+  : viaMap(v).gics !== v.gics || viaMap(v).from !== v.gicsFrom);
 eq("every stored GICS is the committed map's answer for the stored Broad Industry, else the Sector", mismatched.map(([s]) => s), []);
 
 /*
