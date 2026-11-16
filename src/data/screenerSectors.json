@@ -1726,6 +1726,17 @@
     "joinedBy": "nse-symbol",
     "page": "Elecon Engineering Company Ltd"
   },
+  "ELGIEQUIP": {
+    "gics": "Industrials",
+    "gicsFrom": "broadIndustry",
+    "screenerBroadSector": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadIndustry": "Industrial Products",
+    "screenerIndustry": "Compressors, Pumps & Diesel Engines",
+    "joinedBy": "nse-symbol",
+    "page": "Elgi Equipments Ltd"
+  },
   "EMAPARTNER": {
     "gics": "Industrials",
     "gicsFrom": "broadIndustry",
@@ -2330,6 +2341,17 @@
     "screenerIndustry": "Life Insurance",
     "joinedBy": "nse-symbol",
     "page": "HDFC Life Insurance Company Ltd"
+  },
+  "HEGAM": {
+    "gics": "Industrials",
+    "gicsFrom": "broadIndustry",
+    "screenerBroadSector": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadIndustry": "Industrial Products",
+    "screenerIndustry": "Electrodes & Refractories",
+    "joinedBy": "nse-symbol",
+    "page": "HEG Advanced Materials Ltd"
   },
   "HEROMOTOCO": {
     "gics": "Consumer Discretionary",
