@@ -55,10 +55,11 @@ const eq = (name: string, got: unknown, want: unknown) => {
 type Vendor = {
   gics: string;
   screenerSector: string;
-  screenerSectorCode: string;
-  screenerBroadSector: string;
+  // null on the hand-reviewed tier, which has no screener page to quote.
+  screenerSectorCode: string | null;
+  screenerBroadSector: string | null;
   screenerBroadIndustry: string | null;
-  screenerIndustry: string;
+  screenerIndustry: string | null;
   gicsFrom: "broadIndustry" | "sector" | "reviewed";
   joinedBy: string;
   page?: string;
