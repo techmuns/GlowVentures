@@ -380,12 +380,30 @@ const sPms = PMS_NEED.map((m, i) => `<tr><td>${i + 1}. ${esc(m.manager)}</td><td
 // §2 AIF & funds — named, statements + full history each
 const sFund = FUND_NEED.map((f, i) => `<tr><td>${i + 1}. ${esc(f.fund)}</td><td>${acctList(f.accounts)}</td><td>${f.note ? `${esc(f.note)} ` : ""}${FUND_ASK}</td></tr>`).join("\n");
 
-// §3 direct holdings — the specific, detailed records that are genuinely needed
+// §1 direct accounts. The family asked (16 Nov 2026) to drop the per-stock
+// detail — "just complete transaction records will solve, keep it small": one
+// complete transaction report per account answers every cost, every purchase
+// date and the start-of-year holdings at once. The specific per-stock items are
+// still validated against the book above (so nothing stale is implied); here
+// they are grouped by account into one short "send the transaction records" list.
 const directItems = ITEMS.filter((it) => !it.move);
-const s3 = directItems.map((it, i) => {
-  const units = it.unitsText ? `<br>Recorded shares / units: ${esc(it.unitsText)}` : it.units != null ? `<br>Recorded shares / units: ${fmt(it.units)}${it.unitsNote ? ` (${esc(it.unitsNote)})` : ""}` : "";
-  return `<tr><td>${esc(it.holder)}<br>${esc(it.account)}</td><td>${i + 1}. ${esc(it.what)}${units}</td><td>${esc(it.send)}</td><td>${esc(it.from)}</td></tr>`;
-}).join("\n");
+const DIRECT_GROUPS = [
+  { label: "ICICI demat 49794950", test: (a) => /^ICICI NSDL/.test(a) },
+  { label: "HDFC NSDL demat 22025655", test: (a) => /^HDFC NSDL/.test(a) },
+  { label: "HDFC Securities 3110320", test: (a) => /^HDFC Securities/.test(a) },
+  { label: "Motilal demats (five accounts)", test: (a) => /^Motilal \d/.test(a) },
+  { label: "Kotak, ABSL and Mirae mutual-fund folios", test: (a) => /folio/i.test(a) },
+  { label: "LKP account", test: (a) => /^LKP/.test(a) },
+];
+const directRows = [];
+for (const g of DIRECT_GROUPS) {
+  const its = directItems.filter((it) => g.test(it.account));
+  if (its.length) directRows.push({ label: g.label, holders: [...new Set(its.map((it) => it.holder))] });
+}
+// Nothing silently dropped: an item matching no group becomes its own row.
+const grouped = new Set(directItems.filter((it) => DIRECT_GROUPS.some((g) => g.test(it.account))));
+for (const it of directItems) if (!grouped.has(it)) directRows.push({ label: `${it.account} — ${it.what}`, holders: [it.holder] });
+const sDirect = directRows.map((r, i) => `<tr><td>${i + 1}. ${esc(r.label)}</td><td>${r.holders.map(esc).join(", ")}</td></tr>`).join("\n");
 
 // RESOLVED is still validated above (so a request already answered can never be
 // printed), but the family asked (16 Nov 2026) to drop the "no longer needed"
@@ -406,19 +424,19 @@ th { background: #26364a; color: #fff; text-align: left; font-weight: bold; padd
 td { padding: 2.6mm 3mm; vertical-align: top; border-bottom: 0.3mm solid #dbe2ea; line-height: 1.35; }
 tbody tr:nth-child(even) td { background: #f1f5f9; }
 .names col.c1 { width: 28%; } .names col.c2 { width: 22%; } .names col.c3 { width: 50%; }
+.names2 col.c1 { width: 58%; } .names2 col.c2 { width: 42%; }
 .s1 col.c1 { width: 19%; } .s1 col.c2 { width: 24%; } .s1 col.c3 { width: 44%; } .s1 col.c4 { width: 13%; }
 .s4 col.c1 { width: 25%; } .s4 col.c2 { width: 25%; } .s4 col.c3 { width: 50%; }
 .newpage { break-before: page; }
 </style></head><body>
 <h1>Records still needed from the client — short list</h1>
 <p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This is the short cleanup list, in the order to work through it: the family's own direct holdings first (section 1), then the PMS mandates (section 2), then the AIF and other funds (section 3). For the PMS mandates and the funds there is no stock-by-stock list to go through — one complete set of records for each named manager or fund answers everything we need.</p>
-<h2>1. Direct holdings — the specific records still needed</h2>
-<p class="lead">These are the few specific records on the family's own demat, broking and fund-folio accounts. Each row names exactly what is unclear and exactly what to send.</p>
-<table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
-<thead><tr><th>Holder and account</th><th>Stock, fund or file</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
-${s3}
+<h2>1. Direct holdings — send the complete transaction records</h2>
+<p class="lead">For each of the family's own accounts below, send the complete transaction records — every purchase, sale, transfer, bonus and split since the account opened, with dates and amounts. One export per account is all that is needed: it answers the purchase costs, the purchase dates and the holdings on any date (so the start-of-year holdings for the return need no separate statement).</p>
+<table class="names2"><colgroup><col class="c1"><col class="c2"></colgroup>
+<thead><tr><th>Account</th><th>Owner</th></tr></thead><tbody>
+${sDirect}
 </tbody></table>
-<p class="note"><b>Start-of-year holdings for these accounts.</b> To measure this year's return from its start, we also need the holdings on <b>31 December 2025</b> and <b>31 March 2026</b> — the number of every share and fund held (we value them ourselves, so no manager valuation is needed): the holding statements for <b>ICICI demat 49794950</b>, <b>HDFC Securities 3110320</b> and the <b>five Motilal demats</b>, and one <b>consolidated account statement (CAS)</b> for 1 January to 31 March 2026 for the mutual-fund folios opened before 2026.</p>
 <h2 class="newpage">2. PMS mandates — send the complete records for each</h2>
 <p class="lead">Ask each manager below for one complete set of records (the ask is the same for all). This single report replaces any stock-by-stock list: it answers the purchase dates, the current holdings and the start-of-year value together.</p>
 <table class="names"><colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
@@ -451,4 +469,4 @@ await page.pdf({
 });
 await browser.close();
 if (process.env.HTML_OUT) writeFileSync(process.env.HTML_OUT, html);
-console.log(`${OUT.replace(ROOT + "\\", "").replace(ROOT + "/", "")}: ${PMS_NEED.length} PMS mandates, ${FUND_NEED.length} AIF/funds, ${directItems.length} direct-holding records, ${privateHolders} private companies folded into one note, ${RESOLVED.length} resolved. (${OPENINGS.length} start-of-year gaps still validated against the book.)`);
+console.log(`${OUT.replace(ROOT + "\\", "").replace(ROOT + "/", "")}: ${directRows.length} direct accounts (from ${directItems.length} validated records), ${PMS_NEED.length} PMS mandates, ${FUND_NEED.length} AIF/funds, ${privateHolders} private companies folded into one note. (${RESOLVED.length} resolved and ${OPENINGS.length} start-of-year gaps still validated against the book.)`);
