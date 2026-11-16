@@ -9,7 +9,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { holdingBucket, currentHoldings, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
-import { fetchIndices, STRIP_INDEX_IDS, type IndexFeed } from "@/lib/indices";
+import { fetchIndices, FAMILY_INDEX_IDS, type IndexFeed } from "@/lib/indices";
 import { indexSession, istDate } from "@/components/IndexStrip";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
 import { dailyMovers, type DailyMover } from "@/lib/dailyMovers";
@@ -475,7 +475,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                 </p>
               ) : (
                 <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
-                  {STRIP_INDEX_IDS.map((id) => {
+                  {FAMILY_INDEX_IDS.map((id) => {
                     const q = indices.indices.find((x) => x.id === id);
                     if (!q) return null;
                     return (

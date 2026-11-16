@@ -30,3 +30,18 @@
 ### Stage 10on — Portfolio Monitor: no "Numbers unavailable · Retry" in the table toolbar
 
 - *"what the hell is Numbers unavailable · Retry please remove"* — the family, 16 Nov 2026. The red line sat in the shared Export Excel toolbar (`ExportableTable`) whenever the background read of `/api/table-inputs` failed, including a refresh on window focus after the numbers had already loaded. It is gone. The index strip's saved-numbers notice (`EnteredNumbersNotice`) still reports a failed load and keeps its Retry; Edit numbers and Upload Excel, dimmed while the numbers load or after a failed read, carry the reason as their hover. `src/components/ExportableTable.tsx`.
+
+### Stage 10oo — The index strip runs every benchmark as a TV-style ticker
+
+- *"Add all benchmarks here and make it moving strip like they have in TV"* (16 Nov 2026). The strip now carries all seven
+  benchmarks in `BENCHMARKS`: the family's four first, as they named them, then Nifty Next 50, Sensex and BSE 500
+  (`TICKER_INDEX_IDS` in `IndexStrip.tsx`). The movers card's index tile keeps the four (`FAMILY_INDEX_IDS`).
+- `/api/indices` reads the three new indices, each held to the name its upstream reports (measured 16 Nov 2026:
+  "NIFTY NEXT 50", "S&P BSE SENSEX", "S&P BSE 500 INDEX"); edge cache key moved to v2. `indicesFunction.test.ts` holds
+  the feed's list to `BENCHMARKS` on key, symbol and accepted names.
+- The ticker is CSS (`.index-ticker` in `index.css`): two identical runs, each at least the strip's width, sliding by
+  their own width, transform-only, linear, ~45 px/s (6 s per cell, never re-timed by a poll). Pauses under a fine
+  pointer; stands still, one run, for reduced motion. The repeat run is `aria-hidden`. The saved-numbers notice takes at
+  most 40% of the strip.
+- `check:pages` (cio-live): every benchmark once, in order, each with a level; a hidden repeat run of the same width,
+  both scrolling. Proved by cutting the ticker back to four.

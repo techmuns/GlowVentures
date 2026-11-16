@@ -1,5 +1,6 @@
 // Client for `/api/indices` — the live level and the day's move for the four
-// Indian equity indices the family asked to see at all times.
+// Indian equity indices the family asked to see at all times, and every other
+// benchmark in `benchmarks.ts` (the strip runs all of them as a ticker).
 //
 // THIS IS NOT THE HARVEST STORE, AND THE DIFFERENCE IS THE POINT. `public/series/`
 // carries `nifty-50` and `sensex` as settled DAILY CLOSES, harvested nightly —
@@ -65,8 +66,12 @@ export type IndexFeed = {
 export const NIFTY_500_SYMBOL = "^CRSLDX";
 export const NIFTY_500_LABEL = "Nifty 500";
 
-/** The four the family named, in the order they named them. */
-export const STRIP_INDEX_IDS = ["nifty-50", "nifty-500", "nifty-midcap-150", "nifty-smallcap-250"] as const;
+/**
+ * The four the family named, in the order they named them. The movers card's
+ * index tile shows these; the strip's ticker opens on them and then runs every
+ * other benchmark (`TICKER_INDEX_IDS` in `IndexStrip.tsx`).
+ */
+export const FAMILY_INDEX_IDS = ["nifty-50", "nifty-500", "nifty-midcap-150", "nifty-smallcap-250"] as const;
 
 export async function fetchIndices(opts?: { refresh?: boolean }): Promise<IndexFeed | null> {
   try {

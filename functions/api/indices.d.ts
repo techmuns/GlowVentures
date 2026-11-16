@@ -10,3 +10,9 @@ export type IndicesContext = {
 };
 
 export function onRequest(context: IndicesContext): Promise<Response>;
+
+/** One index the feed reads: its key (a `BenchmarkKey`), symbol and accepted names. */
+export type IndexSpec = { id: string; label: string; symbol: string; expect: string[] };
+
+/** Every index the feed reads — held to `BENCHMARKS` by `indicesFunction.test.ts`. */
+export const INDICES: IndexSpec[];

@@ -1193,3 +1193,39 @@ html:not(.dark) .move-menu-item:focus { background-color: rgba(234, 228, 213, 0.
   .move-menu-item:active, .move-toast-undo:active { transform: none; }
 }
 @keyframes move-fade { from { opacity: 0; } }
+
+/* ---------------------------------------------------------------------------
+   THE INDEX TICKER (`IndexStrip.tsx`) — every benchmark, moving like a TV
+   ticker. Two identical runs, each at least the strip's width, each sliding
+   left by exactly its own width, so the second lands where the first began and
+   the loop has no seam. Constant motion is linear; only `transform` moves, and
+   the edge fade is a mask (alpha only), so both themes take it unchanged. It
+   pauses under a fine pointer so a cell's hover can be read, and stands still,
+   one run, scrollable by hand, for a reader who asked for reduced motion.
+   ------------------------------------------------------------------------- */
+.index-ticker {
+  display: flex;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+          mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+  animation: index-ticker-in 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.index-ticker-run {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-around;
+  min-width: 100%;
+  animation: index-ticker-run var(--ticker-duration, 42s) linear infinite;
+  will-change: transform;
+}
+@keyframes index-ticker-run { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-100%, 0, 0); } }
+@keyframes index-ticker-in { from { opacity: 0; } }
+@media (hover: hover) and (pointer: fine) {
+  .index-ticker:hover .index-ticker-run { animation-play-state: paused; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .index-ticker { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+  .index-ticker-run { animation: none; justify-content: flex-start; will-change: auto; }
+  .index-ticker-run[aria-hidden="true"] { display: none; }
+}

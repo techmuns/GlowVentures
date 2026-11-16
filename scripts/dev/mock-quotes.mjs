@@ -120,11 +120,14 @@ const server = http.createServer(async (req, res) => {
       ["nifty-500", "Nifty 500", "^CRSLDX", "NIFTY 500", 23000],
       ["nifty-midcap-150", "Nifty Midcap 150", "NIFTYMIDCAP150.NS", "NIFTY MIDCAP 150", 22000],
       ["nifty-smallcap-250", "Nifty Smallcap 250", "NIFTYSMLCAP250.NS", "NIFTY SMLCAP 250", 18000],
+      ["nifty-next-50", "Nifty Next 50", "^NSMIDCP", "NIFTY NEXT 50", 70000],
+      ["sensex", "Sensex", "^BSESN", "S&P BSE SENSEX", 82000],
+      ["bse-500", "BSE 500", "BSE-500.BO", "S&P BSE 500 INDEX", 37000],
     ];
     const indices = LEVELS.map(([id, label, symbol, name, prev]) => {
       const level = Math.round(prev * INDEX_FACTOR * 100) / 100;
       return {
-        id, label, symbol, ok: true, reason: null, name, currency: "INR", exchange: "NSE",
+        id, label, symbol, ok: true, reason: null, name, currency: "INR", exchange: /(^\^BSE|\.BO$)/.test(symbol) ? "BSE" : "NSE",
         level, prevClose: prev, prevCloseDate: "2026-08-12",
         change: Math.round((level - prev) * 100) / 100,
         changePct: (INDEX_FACTOR - 1) * 100,

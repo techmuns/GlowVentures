@@ -1,6 +1,10 @@
 // Cloudflare Pages Function — LIVE LEVELS for the four Indian equity indices the
-// family asked to see at all times: Nifty 50, Nifty 500, Nifty Midcap 150 and
-// Nifty Smallcap 250.
+// family asked to see at all times (Nifty 50, Nifty 500, Nifty Midcap 150 and
+// Nifty Smallcap 250) and, since the strip became a ticker, every other
+// benchmark the NAV card can be set against (Nifty Next 50, Sensex, BSE 500 —
+// `src/lib/benchmarks.ts`). The ticker carries "all benchmarks", so the two
+// lists are held together by `indicesFunction.test.ts`: same key, same symbol,
+// same expected names.
 //
 // WHY NOT THE QUOTE FEED, AND WHY NOT THE HARVEST STORE
 // ─────────────────────────────────────────────────────
@@ -74,7 +78,8 @@ const TIMEOUT_MS = 12000;
 const CACHE_TTL_S = 60;
 
 /**
- * The four indices, each with the name its upstream must report.
+ * The indices, each with the name its upstream must report. Exported for the
+ * test that holds this list to the benchmark catalogue.
  *
  * `expect` is matched case-insensitively against `meta.longName` and
  * `meta.shortName` after stripping non-alphanumerics, because Yahoo prints
@@ -82,11 +87,18 @@ const CACHE_TTL_S = 60;
  * the source's own spelling of the same index and is not a different instrument.
  * What it must NOT tolerate is a different index or an unnamed one.
  */
-const INDICES = [
+export const INDICES = [
   { id: "nifty-50", label: "Nifty 50", symbol: "^NSEI", expect: ["nifty50"] },
   { id: "nifty-500", label: "Nifty 500", symbol: "^CRSLDX", expect: ["nifty500"] },
   { id: "nifty-midcap-150", label: "Nifty Midcap 150", symbol: "NIFTYMIDCAP150.NS", expect: ["niftymidcap150"] },
   { id: "nifty-smallcap-250", label: "Nifty Smallcap 250", symbol: "NIFTYSMLCAP250.NS", expect: ["niftysmlcap250", "niftysmallcap250"] },
+  // The rest of the benchmark catalogue. Each name MEASURED on the live upstream
+  // on 2026-11-16 (`longName`, `fullExchangeName`): "NIFTY NEXT 50" on NSE,
+  // "S&P BSE SENSEX" and "S&P BSE 500 INDEX" on BSE. `^NSMIDCP` reads like a
+  // midcap index and is the Next 50 — trap 2 — which is why its name is checked.
+  { id: "nifty-next-50", label: "Nifty Next 50", symbol: "^NSMIDCP", expect: ["niftynext50"] },
+  { id: "sensex", label: "Sensex", symbol: "^BSESN", expect: ["spbsesensex", "bsesensex"] },
+  { id: "bse-500", label: "BSE 500", symbol: "BSE-500.BO", expect: ["spbse500index", "spbse500", "bse500"] },
 ];
 
 const norm = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -197,7 +209,9 @@ export async function onRequest(context) {
   const refresh = url.searchParams.get("refresh") === "1";
 
   const cache = caches.default;
-  const key = new Request(`${url.origin}/__cache/indices/v1/nse-four`);
+  // v2: the response grew from four indices to the whole benchmark catalogue; a
+  // v1 entry would hand the ticker the old four for up to a minute after deploy.
+  const key = new Request(`${url.origin}/__cache/indices/v2/benchmarks`);
   if (!refresh) {
     const hit = await cache.match(key);
     if (hit) return hit;
@@ -213,7 +227,7 @@ export async function onRequest(context) {
   }
 
   // ok:false ONLY when nothing resolved. One index the upstream could not price
-  // must not blank the other three — the strip renders each on its own state.
+  // must not blank the others — the strip renders each on its own state.
   const okCount = rows.filter((r) => r.ok).length;
   const body = {
     ok: okCount > 0,

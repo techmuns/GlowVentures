@@ -61,7 +61,7 @@ import { splitFundClass } from "../../shared/securityKey.mjs";
 // not marked daily at all, so a "scope vs index" line would set a figure struck
 // over a part-derived set against a market index and invite a reader to read it
 // as performance. `NavMovers` left it out for its own reason (a published NAV is
-// not a session) and `IndexStrip` renders the four levels at the top of every
+// not a session) and `IndexStrip` runs every benchmark's level at the top of every
 // route regardless, so nothing is lost by not drawing them twice.
 // ─────────────────────────────────────────────────────────────────────────────
 
