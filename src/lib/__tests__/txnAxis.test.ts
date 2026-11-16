@@ -146,5 +146,28 @@ if (zeroBesideValued.length === 0) {
     mixedIfCounted.length > 0, `${mixedIfCounted.join(", ")} of ${zeroBesideValued.join(", ")}`);
 }
 
+// ── AN ACCOUNT LISTED WITH ONLY ITS VALUE IS FILED WHERE THAT VALUE SITS ────
+// (`partsOfAccount`, 16 Nov 2026). Its parts PARTITION the account: on every
+// axis and every book account they add back to its whole value, each part
+// under the heading its holdings sit under; an account with no position is one
+// part valued null, never ₹0.
+{
+  const s = sectionsFor(BOOK_ACCOUNTS as Account[], BOOK_POSITIONS as Position[]);
+  const idx = accountIndex(BOOK_ACCOUNTS as Account[]);
+  const off: string[] = [];
+  for (const axis of GROUP_AXES) for (const a of BOOK_ACCOUNTS) {
+    const own = BOOK_POSITIONS.filter((p) => p.accountId === a.accountId);
+    const parts = s.partsOfAccount(axis, a.accountId);
+    const whole = own.length ? own.reduce((n, p) => n + p.marketValue, 0) : null;
+    const sum = parts.some((p) => p.value == null) ? null : parts.reduce((n, p) => n + (p.value ?? 0), 0);
+    const filed = parts.every((p) => p.section === TXN_UNSECTIONED || own.length === 0
+      || own.some((q) => q.marketValue !== 0 && groupKeyFor(axis, idx, q as Position) === p.section)
+      || own.every((q) => q.marketValue === 0));
+    if ((whole == null) !== (sum == null) || (whole != null && Math.abs(whole - (sum ?? 0)) > 0.01) || !filed
+      || new Set(parts.map((p) => p.section)).size !== parts.length) off.push(`${axis}:${a.accountId}`);
+  }
+  ok("an account's listed parts add back to its whole value, each under its holdings' own heading", off.length === 0, off.slice(0, 5).join(", ") || "all");
+}
+
 console.log(fails ? `\n${fails} check(s) FAILED` : "\nall txnAxis checks passed");
 process.exit(fails ? 1 : 0);

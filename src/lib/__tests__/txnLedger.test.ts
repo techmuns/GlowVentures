@@ -25,7 +25,7 @@
 // `capitalRollup`'s own account value and the merge's `valueOfAccount` agree —
 // two paths to one number, so a second drifting definition of "what this account
 // holds" fails here rather than on screen.
-import { mergeDatedRecords, datedTotals, datedSectionRollup, clubDatedRows } from "@/lib/txnLedger";
+import { mergeDatedRecords, withEveryAccount, datedTotals, datedSectionRollup, clubDatedRows } from "@/lib/txnLedger";
 import { rollup, acctKey } from "@/lib/txnRollup";
 import { capitalRollup, capitalTotals } from "@/lib/tranches";
 import type { Txn } from "@/lib/ledger";
@@ -323,6 +323,70 @@ const valueOf = (id: string) => (id === "gl" ? 114_000_000 : 0);
   const byClass = (s: string) => { const m = / - Class \w+$/.exec(s); return m ? { fund: s.slice(0, m.index) } : null; };
   ok("two unit classes of one fund club on the fund's own name",
     clubDatedRows(cls, "recent", byClass).filter((u) => u.kind === "club").length === 1);
+}
+
+// ── EVERY ACCOUNT HAS A ROW (16 November 2026) ──────────────────────────────
+//
+//   *"why is transaction only showing … 68 of 95 accounts — it should show all"*
+//
+// An account no statement dates anything on is LISTED: its value today, both
+// dated halves null. What must hold: nothing already drawn is drawn twice, no
+// dated figure moves, a listed row never joins a dated club line (which would
+// blank its return), and the footer counts the ACCOUNTS drawn — an own broking
+// account through its security rows included — once each.
+{
+  const a1 = acct({});
+  const a2 = acct({ accountId: "gl2", accountNo: "510854", owner: "Ankita Jaisinghani", ownerId: "ankita" });
+  const own = acct({ accountId: "own", provider: "Own Broker", accountNo: "x", engagement: "Direct", strategy: null });
+  const demat = acct({ accountId: "dm", provider: "Depository", accountNo: "d1", engagement: "Direct", strategy: null });
+  // Two review buckets: one provider and number across members.
+  const rv1 = acct({ accountId: "rv1", provider: "Review", accountNo: "R", owner: "Trust 2", strategy: null });
+  const rv2 = acct({ accountId: "rv2", provider: "Review", accountNo: "R", owner: "Trust 3", strategy: null });
+  const twin = acct({ accountId: "gl3", accountNo: "510999", owner: "Bharat Jaisinghani", ownerId: "bharat" });
+  const accounts = [a1, a2, own, demat, rv1, rv2, twin];
+  const values: Record<string, number> = { gl: 114_000_000, gl2: 60_000_000 };
+  const cap = capitalRollup([move({}), move({ accountId: "gl2", amount: 50_000_000 })], accounts,
+    [pos({}), pos({ accountId: "gl2", marketValue: 60_000_000 })], {}, "all", "recent");
+  const trd = rollup([txn({ securityKey: "beta", security: "Beta Ltd", provider: "Own Broker", accountNo: "x", amount: 5_000 })],
+    accounts, "auto", "recent", () => SECTION);
+  const merged = mergeDatedRecords(cap, trd, sectionOf, (id) => values[id] ?? null);
+  const parts: Record<string, { section: string; value: number | null }[]> = {
+    own: [{ section: "Direct Equity", value: 40_000_000 }, { section: "ETF", value: 2_000_000 }],
+    dm: [{ section: SECTION, value: null }],
+    rv1: [{ section: SECTION, value: 13_500_000 }], rv2: [{ section: SECTION, value: 13_500_000 }],
+    gl3: [{ section: SECTION, value: 1_000 }],
+  };
+  const rows = withEveryAccount(merged, accounts, (id) => parts[id] ?? [], "recent");
+  const listed = rows.filter((r) => !r.capital && !r.trades);
+  ok("every account the table did not draw is listed — the two dated ones are not listed again",
+    new Set(listed.map((r) => r.accountId)).size === 5 && !listed.some((r) => r.accountId === "gl" || r.accountId === "gl2"),
+    listed.map((r) => r.accountId).join(","));
+  ok("...one row per section its value sits in, so a demat holding shares and an ETF is two",
+    listed.filter((r) => r.accountId === "own").map((r) => r.section).sort().join(",") === "Direct Equity,ETF");
+  ok("...two review buckets sharing a provider and number are two rows, not one",
+    listed.filter((r) => r.accountId === "rv1" || r.accountId === "rv2").length === 2);
+  ok("...an account no statement values is listed with its value ABSENT, never ₹0",
+    listed.find((r) => r.accountId === "dm")?.value === null);
+  ok("...and every dated row is untouched",
+    merged.every((m) => rows.includes(m)) && rows.length === merged.length + listed.length);
+  const t0 = datedTotals(merged), t = datedTotals(rows);
+  ok("no dated figure moves", t.paidIn === t0.paidIn && t.trades === t0.trades && t.bought === t0.bought && t.contributions === t0.contributions);
+  near("...and the Value total adds each listed part once", t.value, (t0.value ?? 0) + 42_000_000 + 27_000_000 + 1_000);
+  ok("the footer counts ACCOUNTS drawn, once each, however many rows they are on",
+    t.accounts === accounts.length && t.rows === rows.length && t.rows > t.accounts, `${t.accounts} accounts over ${t.rows} rows`);
+  ok("...split by what each publishes",
+    t.capitalAccounts === 2 && t.tradeOnlyAccounts === 1 && t.undatedAccounts === 4,
+    `${t.capitalAccounts} capital · ${t.tradeOnlyAccounts} trades only · ${t.undatedAccounts} neither`);
+  ok("an own broking account is drawn by its security rows even before it is listed",
+    t0.accounts === 3 && t0.capitalAccounts === 2, `${t0.accounts} drawn, ${t0.capitalAccounts} with capital`);
+  // gl3 shares gl/gl2's strategy: listed, it must NOT join their dated club line.
+  const units = clubDatedRows(rows, "recent", () => null);
+  const dated = units.find((u) => u.kind === "club" && u.members.some((m) => m.accountId === "gl"));
+  ok("a listed row never joins a dated club line, so that line keeps its return",
+    dated?.kind === "club" && dated.members.length === 2 && dated.members.every((m) => !!m.capital));
+  const reviewClub = units.find((u) => u.kind === "club" && u.members.some((m) => m.accountId === "rv1"));
+  ok("...while listed rows of one name still draw one line between them",
+    reviewClub?.kind === "club" && reviewClub.members.length === 2);
 }
 
 // ── ANCHORED ON THE GENERATED BOOK: one definition of what an account holds ──
