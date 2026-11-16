@@ -109,7 +109,7 @@ const ITEMS = [
   { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "City Union Bank", units: 104400, from: "ICICI and the broker or account the shares came from",
     send: "The ICICI order book shows 79,283 shares bought on 2 July 2026; the 31 October statement shows 104,400. Send the purchase or transfer record for the other 25,117 shares, with date, shares and amount paid.",
     check: () => noCost(ICICI, "city-union", 104400) && tradesOf(ICICI, "city-union").reduce((n, t) => n + (t.side === "buy" ? t.quantity : -t.quantity), 0) === 79283 },
-  { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "Vantage Oak Fund I, Class A2", units: 2275000, from: "Vantage Oak / fund manager",
+  { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "Vantage Oak Fund I, Class A2", units: 2275000, from: "Vantage Oak / fund manager", move: true,
     send: "Send the subscription or drawdown record (dates and amounts paid), the latest fund statement showing the NAV and its date, and the fund's SEBI AIF category. Ankita's Motilal demat 1201090012838316 also shows 1,225,000 units of this class; include her records too.",
     check: () => noCost(ICICI, "vof-i-class-a2", 2275000) && !!unvalued(MO_ANKITA, "vof-i-class-a2") },
   // Man Industries, Deepak Fertilisers and Kingfa: dated off the 30 June review's
@@ -147,7 +147,7 @@ const ITEMS = [
   { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "Grand Continent Hotels", units: 262125, from: "Client accounts team",
     send: "Confirm whether any extra money was paid on the 26 September 2024 bonus or split entry. If yes, send payment proof. The same amount appears again on that entry, so we need to confirm it was not a second payment.",
     check: () => !!pos(ICICI, "grand-continent-hotels") && near(pos(ICICI, "grand-continent-hotels").quantity, 262125) },
-  { holder: "Ajay Jaisinghani", account: "Franklin India Credit AIF folio 10387", what: "Franklin India Credit AIF - Scheme I, Class DB2", units: 201254.604, from: "Franklin Templeton / fund manager",
+  { holder: "Ajay Jaisinghani", account: "Franklin India Credit AIF folio 10387", what: "Franklin India Credit AIF - Scheme I, Class DB2", units: 201254.604, from: "Franklin Templeton / fund manager", move: true,
     send: "Send a fund valuation or NAV dated after the investment on 22 October 2026, plus any later payments or payouts. The only statement on file is dated 22 October, the day of the investment. Purchase amount and date are already available.",
     check: () => asOf("franklin-india-credit-aif-10387") === "2026-10-22" },
   ...[["Ajay Jaisinghani", "Motilal 1201090012539150", MO_AJAY], ["Ankita Jaisinghani", "Motilal 1201090012838316", MO_ANKITA],
@@ -162,7 +162,7 @@ const ITEMS = [
     send: "Include this small balance in the same full fund transaction export, showing purchase dates, units and amounts. No separate document is needed.",
     check: () => bareUnits(MO_BHARAT, "icici-nft-nx-50-r-gr", 0.629) },
   ...[["Ankita Jaisinghani", "marathon-trends-advisory-pvt-ltd-5110758"], ["Ajay Jaisinghani", "marathon-trends-advisory-pvt-ltd-5110837"]].map(([holder, id]) => ({
-    holder, account: `Marathon Trends ${ACC.get(id)?.accountNo ?? id}`, what: "Holding statement", from: "Marathon Trends Advisory",
+    holder, account: `Marathon Trends ${ACC.get(id)?.accountNo ?? id}`, what: "Holding statement", from: "Marathon Trends Advisory", move: true,
     send: `Send the latest dated holding statement for this account, or confirm in writing that it is closed. The statements received (capital gains, dividends, income and expenses, transactions, up to ${DATE(asOf(id))}) do not state what the account holds.`,
     check: () => !F.positions.some((p) => p.accountId === id) && !!ACC.get(id) })),
   { holder: "Bharat Jaisinghani", account: "LKP account on the original report", what: "Files 519_06102026124925.xls and 666125807_06102026125819.xls", from: "LKP or the person who received the email",
@@ -285,6 +285,53 @@ if (openingsFailed.length) {
   process.exit(1);
 }
 
+// ── Sections 1 & 2: PMS mandates and AIF funds, NAMED (not stock-by-stock) ───
+// The family asked (16 November 2026, via the adviser): do not send a per-stock
+// list — just name the PMS mandates and AIF funds whose records are still
+// missing, and the manager sends the complete transaction report. Each name
+// carries its own `check` against the book, exactly as every other section does,
+// so a mandate whose gap has closed STOPS the build rather than being asked for.
+const undatedCount = (id) => pmsGroups.get(id)?.length ?? 0;
+const PMS_NEED = [
+  { manager: "Carnelian Asset Management and Advisors", accounts: [["3517383", "Ajay Jaisinghani"]],
+    check: () => undatedCount("carnelian-asset-management-and-advisors-pvt-ltd-3517383") > 0 || noDecValue("carnelian-asset-management-and-advisors-pvt-ltd-3517383") },
+  { manager: "Goldstandard Wealth", accounts: [["100023", "Ajay Jaisinghani"], ["100022", "Ankita Jaisinghani"]],
+    check: () => ["goldstandard-wealth-private-limited-100023", "goldstandard-wealth-private-limited-100022"].some((id) => undatedCount(id) > 0) },
+  { manager: "V.E.C Assago Capital Management", accounts: [["128005", "Ajay Jaisinghani"], ["128004", "Ankita Jaisinghani"]],
+    check: () => undatedCount("v-e-c-assago-capital-management-llp-128005") > 0 || noDecValue("v-e-c-assago-capital-management-llp-128004") },
+  { manager: "Green Lantern Capital", accounts: [["510861", "Ajay Jaisinghani"], ["510854", "Ankita Jaisinghani"]],
+    check: () => ["green-lantern-capital-llp-510861", "green-lantern-capital-llp-510854"].some((id) => noDecValue(id)) },
+  { manager: "Marathon Trends Advisory", accounts: [["5110837", "Ajay Jaisinghani"], ["5110758", "Ankita Jaisinghani"]], note: "No holding statement has been received. Send the latest dated holding statement, or confirm in writing that the account is closed.",
+    check: () => ["marathon-trends-advisory-pvt-ltd-5110837", "marathon-trends-advisory-pvt-ltd-5110758"].every((id) => !!ACC.get(id) && !F.positions.some((p) => p.accountId === id)) },
+];
+const FUND_NEED = [
+  { fund: "Sanshi Fund-I (Class A2 and Class E)", accounts: sanshi.map(([h, n]) => [n, `${h} Jaisinghani`]),
+    check: () => sanshi.map(([, n]) => `sanshi-fund-${n}`).some((id) => noMarValue(id)) },
+  { fund: "Buoyant Opportunities Strategy", accounts: [["103473", "Ajay Jaisinghani"], ["103472", "Ankita Jaisinghani"]],
+    check: () => ["buoyant-capital-103473", "buoyant-capital-103472"].some((id) => noMarValue(id)) },
+  { fund: "Motilal Oswal Founders Fund Series II", accounts: [["90410016104", "Ajay Jaisinghani"], ["90410016093", "Ankita Jaisinghani"]],
+    check: () => ["motilal-oswal-founders-fund-90410016104", "motilal-oswal-founders-fund-90410016093"].some((id) => noMarValue(id)) },
+  { fund: "Carnelian Bharat Amritkaal Fund", accounts: [["4551", "Ankita Jaisinghani"]],
+    check: () => noMarValue("carnelian-bharat-amritkaal-fund-4551") },
+  { fund: "Motilal Oswal Active Momentum Fund", accounts: [["904168868444", "Ankita Jaisinghani"]],
+    check: () => noMarValue("motilal-oswal-active-momentum-fund-904168868444") },
+  { fund: "Franklin India Credit AIF — Scheme I, Class DB2", accounts: [["10387", "Ajay Jaisinghani"]], note: "Only a statement dated the day of investment (22 October 2026) is on file; a later NAV is needed to measure any return.",
+    check: () => asOf("franklin-india-credit-aif-10387") === "2026-10-22" },
+  { fund: "Sky Capital Rising Titans Fund I", accounts: [["SKY003", "Bharat Jaisinghani"], ["SKY022", "Ajay Jaisinghani"], ["SKY023", "Bharat Jaisinghani Family Trust 2"], ["SKY024", "Bharat Jaisinghani Family Trust 3"]], note: "Carried at cost; a fund statement with a NAV is needed to show its value.",
+    check: () => privateRows.some((r) => /sky capital/i.test(r.name)) },
+  { fund: "Vantage Oak Fund I, Class A2", accounts: [["ICICI demat 49794950", "Ajay Jaisinghani"], ["Motilal demat 1201090012838316", "Ankita Jaisinghani"]], note: "Held inside the demats with no value on the statement; send the subscription record, the latest NAV and the SEBI AIF category.",
+    check: () => noCost(ICICI, "vof-i-class-a2", 2275000) && !!unvalued(MO_ANKITA, "vof-i-class-a2") },
+];
+const needFailed = [...PMS_NEED, ...FUND_NEED].filter((x) => !x.check());
+if (needFailed.length) {
+  console.error("These 'records needed' names are no longer borne out by the book — update or remove them:");
+  for (const x of needFailed) console.error(`  • ${x.manager ?? x.fund}`);
+  process.exit(1);
+}
+/** The private companies the review carries at cost — folded into one line, not listed. */
+const privateCompanies = privateRows.filter((r) => !/sky capital/i.test(r.name));
+const privateHolders = new Set(privateCompanies.map((r) => investmentOf(r.name))).size;
+
 // ── Resolved since 27 October (written by hand; each checked) ────────────────
 const RESOLVED = [
   ["Ajay and Bharat Jaisinghani | SVAN 8710067 and 8710090", "Portfolio values on 31 December 2025 and 31 March 2026", "Worked out from SVAN's own records: every trade since inception, its bank book and each day's exchange closes. The same calculation reproduces SVAN's printed totals within 0.02% on 31 May, 30 June and 31 July 2026.",
@@ -323,77 +370,77 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const rs = (n) => `Rs ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const checkedLong = DATE(CHECKED);
 
-const s1 = ITEMS.map((it, i) => {
+const acctList = (accounts) => accounts.map(([no, owner]) => `${esc(no)} — ${esc(owner)}`).join("<br>");
+const PMS_ASK = "The complete from-inception transaction report — every purchase, sale, transfer, bonus and split, with dates and amounts — the latest holding statement, and the holdings and cash on 31 December 2025 and 31 March 2026.";
+const FUND_ASK = "The latest fund statement (units, NAV, value and date), the full subscription, drawdown, distribution and redemption history, and — where the fund was held before 1 April 2026 — the value on 31 December 2025 and 31 March 2026.";
+
+// §1 PMS mandates — named, one complete report each
+const sPms = PMS_NEED.map((m, i) => `<tr><td>${i + 1}. ${esc(m.manager)}</td><td>${acctList(m.accounts)}</td><td>${m.note ? esc(m.note) : PMS_ASK}</td></tr>`).join("\n");
+
+// §2 AIF & funds — named, statements + full history each
+const sFund = FUND_NEED.map((f, i) => `<tr><td>${i + 1}. ${esc(f.fund)}</td><td>${acctList(f.accounts)}</td><td>${f.note ? `${esc(f.note)} ` : ""}${FUND_ASK}</td></tr>`).join("\n");
+
+// §1 direct holdings, per STOCK (the family's instruction, 16 Nov 2026: "where
+// are the stock names? … stock ke transaction statement chahiye … dont change
+// this"). Each row names the holding and what to send for it; the family needs
+// to see which stocks' transaction statements to pull, not just an account list.
+const directItems = ITEMS.filter((it) => !it.move);
+// The family asked (16 Nov 2026) to keep the stock names but make the "what to
+// send" column just "transaction records" — not the per-stock explanations.
+// The specific note on each holding is still held in the book (it.send) and is
+// what the check() above validates; it is simply not printed here.
+const DIRECT_SEND = "Complete transaction statement — every purchase, sale and transfer, with dates and amounts.";
+const s1 = directItems.map((it, i) => {
   const units = it.unitsText ? `<br>Recorded shares / units: ${esc(it.unitsText)}` : it.units != null ? `<br>Recorded shares / units: ${fmt(it.units)}${it.unitsNote ? ` (${esc(it.unitsNote)})` : ""}` : "";
-  return `<tr><td>${esc(it.holder)}<br>${esc(it.account)}</td><td>${i + 1}. ${esc(it.what)}${units}</td><td>${esc(it.send)}</td><td>${esc(it.from)}</td></tr>`;
+  return `<tr><td>${esc(it.holder)}<br>${esc(it.account)}</td><td>${i + 1}. ${esc(it.what)}${units}</td><td>${DIRECT_SEND}</td><td>${esc(it.from)}</td></tr>`;
 }).join("\n");
 
-const s2 = pms.map(({ a, rows }) => `
-<table class="grp"><thead>
-<tr class="band"><th colspan="2">${esc(a.owner)} | ${esc(a.provider)}<br>Account ${esc(a.accountNo)} | Holding statement: ${DATE(a.asOf)} | ${rows.length} ${rows.length === 1 ? "stock needs" : "stocks need"} purchase dates</th></tr>
-<tr class="cols"><th>Stock needing original purchase history</th><th class="num">Recorded shares</th></tr></thead><tbody>
-${rows.map((r) => `<tr><td>${esc(r.name)}${r.earlier ? `<br>Dates missing for ${fmt(r.earlier)} earlier shares.` : ""}</td><td class="num">${fmt(r.units)}</td></tr>`).join("\n")}
-</tbody></table>`).join("\n");
+// RESOLVED is still validated above (so a request already answered can never be
+// printed), but the family asked (16 Nov 2026) to drop the "no longer needed"
+// table from the client's copy — it is housekeeping, not something to act on.
 
-const s3 = privateRows.map((r, i) => {
-  const ask = ["Value and its date; later payments / payouts."];
-  if (r.units == null) ask.push("Shares / units, if applicable.");
-  if (r.owner === OWNER_LAST) ask.push("Confirm the legal holder's name.");
-  return `<tr><td>${esc(r.owner)}<br>${esc(r.account)}</td><td>${i + 1}. ${esc(r.name)}${r.units != null ? `<br>Recorded shares / units: ${fmt(r.units)}` : ""}</td><td>${rs(r.cost)}</td><td>${ask.join(" ")}</td></tr>`;
-}).join("\n");
-
-const sOpen = OPENINGS.map((it, i) => `<tr><td>${esc(it.holder)}<br>${esc(it.account)}</td><td>${i + 1}. ${esc(it.what)}<br>${esc(it.onFile)}</td><td>${esc(it.send)}</td><td>${esc(it.from)}</td></tr>`).join("\n");
-const s4 = RESOLVED.map(([who, what, why]) => `<tr><td>${esc(who).replace(" | ", "<br>")}</td><td>${esc(what)}</td><td>${esc(why)}</td></tr>`).join("\n");
-const pmsStocks = pms.reduce((n, g) => n + g.rows.length, 0);
-
-const html = `<!doctype html><html><head><meta charset="utf-8"><title>Glow Ventures — All client records needed</title><style>
+const html = `<!doctype html><html><head><meta charset="utf-8"><title>Glow Ventures — records still needed (short list)</title><style>
 @page { size: A4 landscape; margin: 16mm 12mm 16mm 12mm; }
 * { box-sizing: border-box; }
 body { font-family: Arial, Helvetica, sans-serif; color: #1e293b; font-size: 9.5pt; margin: 0; }
 h1 { font-size: 19pt; margin: 4mm 0 2mm; color: #1e293b; }
-h2 { font-size: 16pt; margin: 6mm 0 2mm; color: #1e293b; break-after: avoid; }
-p.lead { color: #475569; font-size: 9pt; margin: 0 0 4mm; line-height: 1.35; }
+h2 { font-size: 15pt; margin: 6mm 0 2mm; color: #1e293b; break-after: avoid; }
+p.lead { color: #475569; font-size: 9pt; margin: 0 0 4mm; line-height: 1.4; }
+p.note { color: #334155; font-size: 9pt; margin: 0 0 5mm; line-height: 1.4; background: #f8fafc; border-left: 1mm solid #94a3b8; padding: 2.5mm 3.5mm; }
 table { width: 100%; border-collapse: collapse; margin: 0 0 5mm; }
 thead { display: table-header-group; }
 tr { break-inside: avoid; }
 th { background: #26364a; color: #fff; text-align: left; font-weight: bold; padding: 2.6mm 3mm; font-size: 9pt; }
 td { padding: 2.6mm 3mm; vertical-align: top; border-bottom: 0.3mm solid #dbe2ea; line-height: 1.35; }
 tbody tr:nth-child(even) td { background: #f1f5f9; }
-.s1 col.c1 { width: 19%; } .s1 col.c2 { width: 21%; } .s1 col.c3 { width: 47%; } .s1 col.c4 { width: 13%; }
-.s3 col.c1 { width: 17%; } .s3 col.c2 { width: 37%; } .s3 col.c3 { width: 13%; } .s3 col.c4 { width: 33%; }
+.names col.c1 { width: 28%; } .names col.c2 { width: 22%; } .names col.c3 { width: 50%; }
+.names2 col.c1 { width: 58%; } .names2 col.c2 { width: 42%; }
+.s1 col.c1 { width: 19%; } .s1 col.c2 { width: 24%; } .s1 col.c3 { width: 44%; } .s1 col.c4 { width: 13%; }
 .s4 col.c1 { width: 25%; } .s4 col.c2 { width: 25%; } .s4 col.c3 { width: 50%; }
-table.grp col.c1 { width: 75%; }
-tr.band th { background: #e2e8f0; color: #1e293b; padding: 3mm; }
-td.num, th.num { width: 25%; }
 .newpage { break-before: page; }
 </style></head><body>
-<h1>All records still needed from the client</h1>
-<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This list replaces the earlier lists (checked 27 October and 11 November 2026): records received since then are no longer requested and are listed in section 5, as are values we can now work out ourselves, and the newer statements raised the new items below. Section 4 is new: the valuations at the start of the year that this year&#8217;s returns need. Includes all client requests: purchase and balance records, PMS stock history, and private investment valuations. One complete broker or fund export can answer several rows.</p>
-<h2>1. Purchase, date, balance and other records</h2>
+<h1>Records still needed from the client — short list</h1>
+<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This is the short cleanup list, in the order to work through it: the family's own direct holdings first (section 1), then the PMS mandates (section 2), then the AIF and other funds (section 3). For the PMS mandates and the funds there is no stock-by-stock list to go through — one complete set of records for each named manager or fund answers everything we need.</p>
+<h2>1. Direct holdings — the stock transaction statements still needed</h2>
+<p class="lead">For each holding below, send that stock or fund's complete transaction statement — every purchase, sale, transfer, bonus and split, with dates and amounts. That one statement answers its cost and its purchase dates; nothing more is needed per holding.</p>
 <table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
 <thead><tr><th>Holder and account</th><th>Stock, fund or file</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
 ${s1}
 </tbody></table>
-<h2 class="newpage">2. PMS: stock purchase dates still needed</h2>
-<p class="lead">For every stock listed below, ask the named PMS manager for the full original purchase and transfer history through the holding statement date. Include dates, shares, amounts paid, earlier shares brought into the account, sales, transfers, bonus shares and splits. Purchase costs are already recorded; the missing information is the original purchase dates. ${pmsStocks} stocks across ${pms.length} accounts.</p>
-${s2.replace(/<table class="grp">/g, '<table class="grp"><colgroup><col class="c1"><col></colgroup>')}
-<h2 class="newpage">3. Private investments: valuations still needed</h2>
-<p class="lead">The list below covers ${distinctInvestments} investments held across ${privateRows.length} holder/account records. Purchase amounts and investment dates are already available. For each row, send the latest company or fund statement showing the investment value and its date, plus any later payments or payouts. Where units are missing, provide the shares or units if applicable; otherwise explain what the balance represents. This is needed to work out the return.</p>
-<table class="s3"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
-<thead><tr><th>Holder and account</th><th>Investment</th><th>Amount already recorded</th><th>Exactly what to send</th></tr></thead><tbody>
-${s3}
+<p class="note"><b>Start-of-year holdings for these accounts.</b> To measure this year's return from its start, we also need the holdings on <b>31 December 2025</b> and <b>31 March 2026</b> — the number of every share and fund held (we value them ourselves, so no manager valuation is needed): the holding statements for <b>ICICI demat 49794950</b>, <b>HDFC Securities 3110320</b> and the <b>five Motilal demats</b>, and one <b>consolidated account statement (CAS)</b> for 1 January to 31 March 2026 for the mutual-fund folios opened before 2026.</p>
+<h2 class="newpage">2. PMS mandates — send the complete records for each</h2>
+<p class="lead">Ask each manager below for one complete set of records (the ask is the same for all). This single report replaces any stock-by-stock list: it answers the purchase dates, the current holdings and the start-of-year value together.</p>
+<table class="names"><colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
+<thead><tr><th>PMS manager</th><th>Account — owner</th><th>What to send</th></tr></thead><tbody>
+${sPms}
 </tbody></table>
-<h2 class="newpage">4. Valuations at the start of the year</h2>
-<p class="lead">The financial-year return is measured from 31 March 2026 and the calendar-year return from 31 December 2025. Each needs every account's value on that date and the money paid in or out after it. For the accounts below, the earliest valuation on file is later, so their return for the year can only start from that later date. In particular, the January to March 2026 market fall is not captured for most of the book. A statement dated within a few days of 31 December 2025 or 31 March 2026 is enough. For listed shares and mutual funds we only need the number of shares or units held on those dates: we value them ourselves at that day's exchange close or published NAV. A value is asked for only where no price is published (AIFs and PMS strategies valued by their manager).</p>
-<table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
-<thead><tr><th>Holder and account</th><th>Investment</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
-${sOpen}
+<h2>3. AIF and other funds — send the statement and full history for each</h2>
+<p class="lead">Ask each fund below for its statements and full transaction history. One export per fund answers the current value, the transactions and the start-of-year position together.</p>
+<table class="names"><colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
+<thead><tr><th>Fund</th><th>Folio / account — owner</th><th>What to send</th></tr></thead><tbody>
+${sFund}
 </tbody></table>
-<h2>5. No longer needed: received or worked out since 27 October</h2>
-<table class="s4"><colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
-<thead><tr><th>Holder and account</th><th>Item on an earlier list</th><th>What answered it</th></tr></thead><tbody>
-${s4}
-</tbody></table>
+<p class="note"><b>Private companies (unlisted stakes) — nothing needed for now.</b> The family also holds ${privateHolders} private companies (the unlisted stakes shown in the consolidated review, such as Blue Ashva, Everest Fleet and the AngelList deals). The dashboard carries these at the review's own cost values (MOPWM, as at 30 June 2026), with no gain shown — they are not required for the current book. If a more recent valuation, funding round, statement or exit exists for any of them, send it and we will update that value.</p>
 </body></html>`;
 
 const CANDIDATES = [process.env.CHROME, "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Google/Chrome/Application/chrome.exe",
@@ -407,10 +454,10 @@ const band = (side, inner) => `<div style="font-family:Arial,Helvetica,sans-seri
 await page.pdf({
   path: OUT, format: "A4", landscape: true, printBackground: true, displayHeaderFooter: true,
   margin: { top: "16mm", bottom: "16mm", left: "12mm", right: "12mm" },
-  headerTemplate: band("border-bottom:0.3mm solid #dbe2ea;padding-bottom:2mm;", `Glow Ventures | All client records needed | Checked ${checkedLong}`),
+  headerTemplate: band("border-bottom:0.3mm solid #dbe2ea;padding-bottom:2mm;", `Glow Ventures | Records still needed (short list) | Checked ${checkedLong}`),
   footerTemplate: band("border-top:0.3mm solid #dbe2ea;padding-top:2mm;display:flex;justify-content:space-between;",
     `<span>Quantities refer to the named saved records; later transactions may change them.</span><span>Page <span class="pageNumber"></span></span>`),
 });
 await browser.close();
 if (process.env.HTML_OUT) writeFileSync(process.env.HTML_OUT, html);
-console.log(`${OUT.replace(ROOT + "\\", "").replace(ROOT + "/", "")}: ${ITEMS.length} named records, ${pmsStocks} PMS stocks in ${pms.length} accounts, ${privateRows.length} private records (${distinctInvestments} investments), ${OPENINGS.length} start-of-year valuations, ${RESOLVED.length} resolved.`);
+console.log(`${OUT.replace(ROOT + "\\", "").replace(ROOT + "/", "")}: ${directItems.length} direct-holding records, ${PMS_NEED.length} PMS mandates, ${FUND_NEED.length} AIF/funds, ${privateHolders} private companies folded into one note. (${RESOLVED.length} resolved and ${OPENINGS.length} start-of-year gaps still validated against the book.)`);
