@@ -64,3 +64,17 @@
 - **The face words go** (Stage 10jm's "No buy/sell dates", "No 1 Jan value", "Date range only"): the 12 Nov "remove all fluff" rule (Stage 10nt) applied to the index line only. A blank return cell is now `—` with the full reason as its hover, and a YTD dash gives the YTD record's reason alone, not `holdingYtd`'s older sentence. `returnGapLabel` is retired.
 - **Still a dash, on purpose:** 55 XIRR rows nothing dates (PMS shares bought before each manager's tape begins, ICICI demat lines); demerged lines (Shankara Buildpro, HEG Graphite, VAML), whose money was paid for the parent; NSE and Manorama, dated only by the review's span; YTD on holdings bought before a 1 April tape opened (Gland Pharma, Kalyan, Cyient…), whose 31 December balance is not on record.
 - Checks: `holdingFlows.test.ts` (Man Industries' review money and 31 Dec units, the split and demerger cases, the window's first day, rolled lines). `portfolioExcel.test.ts` and `check:pages`' holding re-solver restate the review and split records. The `monitor` invariant now asks for a bare dash with a hover.
+
+### Stage 10ou — Merge on green: a labelled PR merges itself when CI passes
+
+- *"Automatically merge once done always"* — the family, 16 Nov 2026. `main` has no required checks, so GitHub's auto-merge refuses ("unstable status": nothing to wait for). The sessions can't watch CI, so finished PRs waited on a button.
+- Any open PR into `main` labelled **`automerge`** is squash-merged (`--match-head-commit`) once CI on its exact head has passed. Two callers run one sweep (`.github/scripts/merge-on-green.sh`, dry locally with `DRY_RUN=1`):
+  - CI's last job, `merge-on-green`, which `needs` every other job;
+  - `.github/workflows/merge-on-green.yml`, run from main when CI completes or a PR is labelled. That covers branches cut before the job existed and a label added late.
+- The sweep skips drafts, forks, PRs whose CI hasn't passed, and conflicts (Auto-fix wakes the owner for those). The PR whose CI just finished gets a comment instead of a merge if:
+  - another check hasn't passed;
+  - `main` changed a **generated** file it also changes (glowData, reports, `public/audit/`, `check-pages.mjs`);
+  - `main` already has its stage letter, read from GitHub.
+- Ordinary files and the stage notes every PR appends are not "overlap". A rule on them would hold every PR after any merge.
+- CI's merge job has no concurrency group: GitHub cancels a pending job in a group, and that would turn the CI run red. Racing sweeps are safe.
+- A GITHUB_TOKEN merge starts no workflow, so CI does not re-run on `main` afterwards, as with the bots' pushes. The Cloudflare Pages deploy follows the push webhook, so it still runs.
