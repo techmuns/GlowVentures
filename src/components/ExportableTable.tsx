@@ -114,6 +114,10 @@ export function ExportableTable({ children, exportName, controlsHost, editable =
   };
   // In a host toolbar the buttons take that row's height, never more (Stage 10jb).
   const pad = controlsHost === undefined ? "py-1.5" : "py-1";
+  // Why Edit numbers / Upload Excel are dimmed is their hover, not a red line in
+  // the toolbar: the index strip's saved-numbers notice already reports a failed
+  // load and offers Retry (Stage 10on).
+  const inputsWhy = inputState.status === "loading" ? "Loading saved numbers…" : inputState.status === "error" ? inputState.error : undefined;
   const controls = <>
     <button type="button" onClick={() => { void download(); }} disabled={busy || (editable && inputState.status === "loading")}
       data-export-excel data-export-for={exportId} aria-describedby={error ? errorId : undefined}
@@ -122,7 +126,7 @@ export function ExportableTable({ children, exportName, controlsHost, editable =
       <FileSpreadsheet className="h-3.5 w-3.5" />{busy ? "Please wait…" : "Export Excel"}
     </button>
     {editable && <>
-    <button type="button" onClick={() => setEditing(value => !value)} disabled={busy || inputState.status !== "ready"} aria-pressed={editing}
+    <button type="button" onClick={() => setEditing(value => !value)} disabled={busy || inputState.status !== "ready"} aria-pressed={editing} title={inputsWhy}
       className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-ink-600 px-2.5 ${pad} text-xs ring-focus disabled:opacity-50`} data-edit-numbers>
       <Pencil className="h-3.5 w-3.5" />{editing ? "Done editing" : "Edit numbers"}
     </button>
@@ -131,13 +135,12 @@ export function ExportableTable({ children, exportName, controlsHost, editable =
         the face (Conventions: no explainer lines) — the line widened every
         table's toolbar past the row it shares on the Portfolio Monitor. */}
     <button type="button" onClick={() => upload.current?.click()} disabled={busy || inputState.status !== "ready"}
-      title="Upload the exported Excel after correcting it. Keep the Excel format; change numbers only."
+      title={inputsWhy ?? "Upload the exported Excel after correcting it. Keep the Excel format; change numbers only."}
       className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-ink-600 px-2.5 ${pad} text-xs ring-focus disabled:opacity-50`} data-upload-excel>
       <Upload className="h-3.5 w-3.5" />Upload Excel
     </button>
     <input ref={upload} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Upload corrected Excel" className="hidden" onChange={e => { void importFile(e.target.files?.[0]); }} />
     {editing && <span className="text-xs text-slate-500">Edit detail rows in INR. For other inputs, use All inputs. Totals update automatically.</span>}
-    {inputState.status === "error" && <button type="button" onClick={() => { void refreshTableInputs(); }} className="rounded text-xs text-loss ring-focus" title={inputState.error}>Numbers unavailable · Retry</button>}
     </>}
     {message && <span role="status" className="text-xs text-emerald-600">{message}</span>}
     {error && <span id={errorId} role="alert" className="text-xs text-loss">{error}</span>}
