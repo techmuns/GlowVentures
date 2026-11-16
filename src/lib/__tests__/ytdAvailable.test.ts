@@ -54,7 +54,8 @@ assert.ok(opened.shown && opened.tag === 'YTD' && opened.pct === 12.5);
 const part = ytdBook({ inputs: [input], held: [...held, pos({ securityKey: 'z', security: 'Share Z' })], accounts, end: '2026-10-30', assumptions: null, money }).of([held[0]]);
 assert.ok(!part.shown && /prices are still loading/i.test(part.reason) && part.pending === true);
 const dash = measuredReturn({ returnPct: 32, heldSince: null, assetClass: 'Equity', ytdFrom: part }, 'ytd', '2026-09-30');
-assert.ok(!dash.shown && /1 January/.test(dash.reason) && /On its dated record/.test(dash.reason));
+// The row's own record gives the reason alone (Stage 10ot).
+assert.ok(!dash.shown && dash.reason === part.reason);
 
 // A VALUE ON 31 DECEMBER IS A FULL YEAR TO DATE, and is tagged as one.
 const full = ytdBook({ inputs: [{ ...input, valuations: [{ date: '2025-12-31', value: 90 }, ...input.valuations], knownFrom: '2025-06-30' }],

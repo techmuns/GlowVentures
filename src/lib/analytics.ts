@@ -1843,7 +1843,7 @@ export type RowCapital =
        * (`holdingFlows.ts`), and this counts how many of its lines each kind of
        * record dates. `accounts` is then the number of lines pooled.
        */
-      holdings?: { trades: number; lots: number; recovered?: number };
+      holdings?: { trades: number; lots: number; recovered?: number; review?: number };
       /**
        * SET WHERE A LINE CLOSES ON ITS MARKET PRICE (Stage 10jo): no statement
        * values its units, so the rate ends on that price's date and the units
@@ -1977,9 +1977,10 @@ function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>
     const many = cap.accounts > 1;
     const by = [cap.holdings.trades ? (many ? "their accounts' dated trades" : "its account's dated trades") : null,
       cap.holdings.lots ? (many ? "their lot registers" : "its lot register") : null,
-      cap.holdings.recovered ? (many ? "their reconciled purchase records" : "its reconciled purchase record") : null].filter(Boolean).join(" and ");
+      cap.holdings.recovered ? (many ? "their reconciled purchase records" : "its reconciled purchase record") : null,
+      cap.holdings.review ? "the family review's dated purchases, carried through the account's own trades," : null].filter(Boolean).join(" and ");
     return { shown: true, pct: cap.annualPct, tag: "XIRR", ...(cap.assumed ? { assumed: true } : {}),
-      note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "purchase" : "purchases and sales"}${cap.holdings.trades + cap.holdings.lots > 0 ? " and the dividends paid on them" : " and any income its record dates"}, as ${by} ${many || cap.holdings.trades > 0 || / and /.test(by) ? "date" : "dates"} them`
+      note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "purchase" : "purchases and sales"}${cap.holdings.trades + cap.holdings.lots > 0 ? " and the dividends paid on them" : " and any income its record dates"}, as ${by} ${many || cap.holdings.trades > 0 || (cap.holdings.review ?? 0) > 0 || / and /.test(by) ? "date" : "dates"} them`
         + (cap.assumed
           ? (cap.accounts > 1 ? `, across ${cap.accounts} holdings each closing on its own value and date` : "") + `, closing at the market price on ${cap.to}`
           : cap.accounts > 1 ? `, across ${cap.accounts} holdings each closing on its own statement's value and date` : ", and the value on the statement's own date")
@@ -2088,7 +2089,11 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
      */
     const a = p.ytdFrom;
     if (a?.shown) return { shown: true, pct: a.pct, tag: a.fullYear ? "YTD" : `from ${ytdTagDay(a.from)}`, note: a.note, from: a.from, ...(a.assumed ? { assumed: true } : {}) };
-    return { shown: false, tag: "YTD", reason: a ? `${y.reason.replace(/\.?$/, ".")} On its dated record: ${a.reason}` : y.reason };
+    // THE ROW'S OWN RECORD SAYS WHY (Stage 10ot): `holdingYtd`'s sentence is the
+    // older engine's ("no statement is dated before the year began"), which the
+    // book no longer bears out, so a row with a year-to-date record reads that
+    // record's reason alone.
+    return { shown: false, tag: "YTD", reason: a ? a.reason : y.reason };
   }
 
   // #369 — FINANCIAL YEAR TO DATE. The FY-to-date book (`ytdBook` opened on 31 March)
