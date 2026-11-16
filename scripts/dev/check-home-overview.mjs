@@ -151,7 +151,7 @@ try {
     }
     await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
     const dialog = page.getByRole('dialog');
-    assert.equal(await dialog.locator('[data-widget-catalog]').count(), 18, 'all personal-choice widgets remain available');
+    assert.equal(await dialog.locator('[data-widget-catalog]').count(), 26, 'all personal-choice widgets remain available');
     await page.getByRole('searchbox', { name: 'Search widgets' }).fill('currency');
     assert.equal(await dialog.locator('[data-widget-catalog]').count(), 1);
     await dialog.locator('[data-widget-catalog="currency"]').hover();
@@ -175,13 +175,20 @@ try {
     assert.equal(await page.locator('[data-home-widget="currency"]').count(), 0);
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     // Add every additional reference widget through its actual popup.
-    for (const id of ['concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors']) {
+    for (const id of ['concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors', 'baskets', 'equity', 'fixedIncome', 'alternate', 'realEstate', 'commodities', 'ytd', 'inception']) {
       await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
       await page.getByRole('searchbox', { name: 'Search widgets' }).fill('');
       await dialog.locator(`[data-widget-catalog="${id}"]`).click();
       await dialog.getByRole('button', { name: 'Add to Home', exact: true }).click();
       await page.locator(`[data-home-widget="${id}"]`).waitFor();
     }
+    // Each asset class tile is its own allocation row; the basket donut splits the same AUM.
+    const ties = await page.evaluate(() => [...document.querySelectorAll('[data-home-class-total]')].map(el => ({ key: el.dataset.homeClassTotal, tile: el.dataset.value,
+      row: document.querySelector(`[data-home-class="${CSS.escape(el.dataset.homeClassTotal)}"]`)?.dataset.value ?? '' })));
+    assert.equal(ties.length, 6, 'one tile per family asset class');
+    for (const t of ties) assert.equal(t.tile, t.row, `${t.key} tile equals its allocation row`);
+    const basketRows = await page.locator('[data-home-basket-row]').evaluateAll(els => els.map(el => Number(el.dataset.value)));
+    assert.ok(basketRows.length > 1 && Math.abs(basketRows.reduce((sum, n) => sum + n, 0) - expected) < .01, 'basket rows sum to Investment AUM');
     await page.getByLabel('Home start date', { exact: true }).fill('2026-03-31');
     await page.getByLabel('Home end date', { exact: true }).fill('2026-06-30');
     await page.getByRole('button', { name: 'Apply Home dates', exact: true }).click();

@@ -4,14 +4,22 @@ export const HOME_WIDGETS = [
   { id: 'assetsTotal', name: 'Total Assets', category: 'Overview', description: 'Positive valued investment assets in the selected book.', kind: 'number', size: 'quarter' },
   { id: 'liabilities', name: 'Total Liabilities', category: 'Overview', description: 'The firm’s consolidated borrowing and liability position.', kind: 'number', size: 'quarter' },
   { id: 'cash', name: 'Total Cash', category: 'Overview', description: 'Separately valued cash in the investment book.', kind: 'number', size: 'quarter' },
+  { id: 'equity', name: 'Total Equity', category: 'Overview', description: 'The family’s Equity asset class: the same figure as its row in the asset allocation.', kind: 'number', size: 'quarter' },
+  { id: 'fixedIncome', name: 'Total Fixed Income', category: 'Overview', description: 'The family’s Debt asset class, as fixed income: the same figure as the Debt row in the asset allocation.', kind: 'number', size: 'quarter' },
+  { id: 'alternate', name: 'Total Alternates', category: 'Overview', description: 'The family’s Alternate asset class: the same figure as its row in the asset allocation.', kind: 'number', size: 'quarter' },
+  { id: 'realEstate', name: 'Total Real Estate', category: 'Overview', description: 'Investment-book holdings filed as Real Estate: the same figure as its row in the asset allocation.', kind: 'number', size: 'quarter' },
+  { id: 'commodities', name: 'Total Commodities', category: 'Overview', description: 'The family’s Commodities asset class, such as gold and silver ETFs: the same figure as its row in the asset allocation.', kind: 'number', size: 'quarter' },
   { id: 'performance', name: 'Portfolio Performance', category: 'Performance', description: 'Cumulative portfolio return against a selectable Indian benchmark, on the same dated capital.', kind: 'line', size: 'full' },
   { id: 'allocation', name: 'Asset Class Breakdown', category: 'Allocation', description: 'A donut chart showing the portfolio’s asset allocation, values and weights.', kind: 'donut', size: 'half' },
+  { id: 'baskets', name: 'Basket Breakdown', category: 'Allocation', description: 'A donut chart of the family’s baskets — Stable Growth, Entrepreneurial Growth, Thematic & Tactical and Liquidity — with values and weights.', kind: 'donut', size: 'half' },
   { id: 'geography', name: 'Geographic Exposure', category: 'Allocation', description: 'Country and regional investment exposure, where verified allocations are recorded.', kind: 'donut', size: 'half' },
   { id: 'currency', name: 'Currency Exposure', category: 'Allocation', description: 'Underlying investment currency exposure. Display currency alone does not establish exposure.', kind: 'donut', size: 'half' },
   { id: 'history', name: 'Asset Class Progression Over Time', category: 'Allocation', description: 'The evolution of recorded investment values and allocation through the selected period.', kind: 'area', size: 'full' },
   { id: 'flows', name: 'Net & Projected Cash Flows', category: 'Cash flows', description: 'Recorded external cash movements by asset class, with one- and two-year projections when schedules exist.', kind: 'table', size: 'full' },
   { id: 'assets', name: 'Asset Table', category: 'Overview', description: 'Sortable asset values and weights, expandable into their underlying records.', kind: 'table', size: 'full' },
   { id: 'concentration', name: 'Issuer Concentration', category: 'Risk', description: 'The largest named issuer and fund exposures, joining share classes and duplicate identities.', kind: 'table', size: 'half' },
+  { id: 'ytd', name: 'Year to Date Return', category: 'Performance', description: 'The portfolio’s return this calendar year: the same figure as Morning CIO’s YTD card.', kind: 'number', size: 'quarter' },
+  { id: 'inception', name: 'Since Inception Return', category: 'Performance', description: 'Return on capital since investment: the same figure as Morning CIO’s consolidated return.', kind: 'number', size: 'quarter' },
   { id: 'movements', name: 'Large Performance Movements', category: 'Performance', description: 'Measured holding returns beyond +10% or −10% over the selected period.', kind: 'table', size: 'half' },
   { id: 'monthly', name: 'Month by Month Discrete Performance', category: 'Performance', description: 'Separate monthly portfolio returns over the selected range, using available dated records.', kind: 'table', size: 'full' },
   { id: 'vintage', name: 'Performance by Vintage', category: 'Performance', description: 'Private-equity fund performance grouped by a verified fund vintage and fund-level IRR.', kind: 'bars', size: 'half' },
@@ -21,7 +29,7 @@ export const HOME_WIDGETS = [
 export type HomeWidgetId = typeof HOME_WIDGETS[number]['id'];
 export type HomeWidgetSize = 'quarter' | 'half' | 'wide' | 'full';
 export type HomeWidgetEntry = { id: HomeWidgetId; size: HomeWidgetSize };
-export const DEFAULT_HOME_LAYOUT: HomeWidgetEntry[] = HOME_WIDGETS.filter(w => !['currency', 'concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors'].includes(w.id)).map(w => ({ id: w.id, size: w.size }));
+export const DEFAULT_HOME_LAYOUT: HomeWidgetEntry[] = HOME_WIDGETS.filter(w => !['baskets', 'ytd', 'inception', 'equity', 'fixedIncome', 'alternate', 'realEstate', 'commodities', 'currency', 'concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors'].includes(w.id)).map(w => ({ id: w.id, size: w.size }));
 export const HOME_LAYOUT_KEY = 'glow:home:widgets:v2';
 export const LEGACY_HOME_LAYOUT_KEY = 'glow:home:widgets:v1';
 export function readHomeLayout(raw: unknown): HomeWidgetEntry[] | null {

@@ -75,7 +75,6 @@ html.dark .home-hero { background: linear-gradient(110deg, #203c35, #252c37 70%,
 .home-performance-stats > div { display: flex; flex-direction: column; gap: 7px; }
 .home-performance-stats span { display: flex; align-items: center; gap: 6px; font-size: var(--home-font-body); color: var(--home-muted); }
 .home-performance-stats strong { font-size: 32px; font-weight: 450; line-height: 1.2; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
-.home-performance-stats small { font-size: var(--home-font-caption); color: var(--home-muted); }
 .home-performance-stats > .home-excess { margin-left: auto; text-align: right; }
 .home-excess > span { justify-content: flex-end; }
 .home-positive { color: #378574; }
@@ -89,7 +88,6 @@ html.dark .home-hero { background: linear-gradient(110deg, #203c35, #252c37 70%,
 .home-flow-summary > div { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
 .home-flow-summary > div > span { font-size: var(--home-font-body); color: var(--home-muted); }
 .home-flow-summary strong { font-size: 24px; font-weight: 500; margin-left: 12px; }
-.home-flow-summary > .home-muted { display: flex; align-items: center; gap: 7px; font-size: var(--home-font-caption); }
 .home-table-scroll { overflow-x: auto; width: 100%; }
 .home-table { border-collapse: collapse; width: 100%; white-space: nowrap; font-size: var(--home-font-body); }
 .home-table th { font-size: var(--home-font-secondary); font-weight: 500; color: var(--home-muted); padding: 12px 12px; border-bottom: 1px solid var(--home-border); text-align: right; }
@@ -234,12 +232,9 @@ html #root .home-table tfoot td { border-bottom: 0; }
 .home-geography-icon { display: grid; place-items: center; flex-shrink: 0; width: 43px; height: 43px; border-radius: 50%; color: var(--home-accent); background: var(--home-surface); }
 .home-geography-heading strong { display: block; font-size: 16px; font-weight: 550; line-height: 1.5; }
 .home-geography-heading div > span { display: block; margin-top: 3px; color: var(--home-muted); font-size: var(--home-font-secondary); }
-.home-geography p { max-width: 46ch; font-size: var(--home-font-body); line-height: 1.8; color: var(--home-muted); }
 .home-geography-coverage { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 9px; padding-top: 17px; border-top: 1px solid var(--home-border); }
 .home-geography-coverage > span { font-size: var(--home-font-secondary); color: var(--home-muted); }
 .home-geography-coverage strong { font-size: 22px; font-weight: 500; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
-.home-geography-status { display: flex; align-items: center; gap: 6px; font-size: var(--home-font-secondary); color: var(--home-muted); }
-.home-geography-status > i { width: 4px; height: 4px; border-radius: 50%; background: var(--home-muted); }
 .home-widget > .home-panel { transition: border-color .18s, box-shadow .18s; }
 .home-widget > .home-panel:hover { border-color: #b7cfc2; box-shadow: 0 4px 16px #263f3505; }
 html.dark .home-widget > .home-panel:hover { border-color: #52695f; }
