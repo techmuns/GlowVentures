@@ -8,7 +8,7 @@ of screener.in, which publishes NSE's industry classification. Its **Broad
 Industry** level (the AMFI industry list funds file under) is resolved to GICS
 through `shared/sectors.mjs`, and that answer wins wherever there is one.
 
-- **550 of 550 companies placed** (listed-as 22 · app-symbol 207 · isin 277 · reviewed 8 · name 36).
+- **552 of 552 companies placed** (listed-as 22 · app-symbol 209 · isin 277 · reviewed 8 · name 36).
 - 0 not placed by screener.in; the app places these from their funds' filing, then their statement, and names any it cannot.
 
 ## Not placed by screener.in

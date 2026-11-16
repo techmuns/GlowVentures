@@ -408,3 +408,37 @@ jobs:
             .cache/build-copies/statement-upload-e2e/.cache/statement-upload-e2e/*.png
             .cache/build-copies/statement-upload-e2e/.cache/investment-date-check/
           if-no-files-found: ignore
+
+  # MERGE ON GREEN (Stage 10ou; the family, 16 Nov 2026: "Automatically merge once
+  # done always"). Once every job above has passed on a pull request labelled
+  # `automerge`, squash-merge it, then any other labelled PR that is already green.
+  # .github/scripts/merge-on-green.sh holds every rule. merge-on-green.yml runs the
+  # same sweep from main for branches cut before this job existed.
+  merge-on-green:
+    needs: [rapid-statements, build, statements, upload-e2e]
+    if: >-
+      github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork
+      && contains(github.event.pull_request.labels.*.name, 'automerge')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: read
+      checks: read
+      statuses: read
+    # No concurrency group: GitHub cancels a pending job in a group when a newer one
+    # queues, and a cancelled job here would turn this CI run red. Two sweeps that
+    # race are safe: the second finds the PR merged, or GitHub refuses it.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+      - name: Squash-merge every labelled pull request whose checks have passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          CI_RUN_ID: ${{ github.run_id }}
+        run: bash .github/scripts/merge-on-green.sh
