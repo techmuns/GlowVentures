@@ -22,7 +22,7 @@ const audit = (docKey: string, file: string) => JSON.parse(fs.readFileSync(`publ
 // ── 1. THE CLICK THAT RAISED IT: Ajay's VAML in HDFC Securities 3110320 ─────
 const HDFC = 'hdfc-securities-3110320-2026-11-02-holdings';
 const doc = audit(HDFC, 'document.json');
-const sheet = audit(HDFC, 'pages.json').pages.map((p: { text: string }) => grid(p.text));
+const sheet: SheetCell[][][] = audit(HDFC, 'pages.json').pages.map((p: { text: string }) => grid(p.text));
 const vaml = sourceRecordAt(doc, '/holdings/4') as { printedSecurity: string; quantity: number };
 assert.equal(vaml.printedSecurity, 'VAML');
 assert.equal(vaml.quantity, 177000);
