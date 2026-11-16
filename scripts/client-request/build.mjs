@@ -387,8 +387,9 @@ const s3 = directItems.map((it, i) => {
   return `<tr><td>${esc(it.holder)}<br>${esc(it.account)}</td><td>${i + 1}. ${esc(it.what)}${units}</td><td>${esc(it.send)}</td><td>${esc(it.from)}</td></tr>`;
 }).join("\n");
 
-// §5 received or worked out since 27 October
-const sResolved = RESOLVED.map(([who, what, why]) => `<tr><td>${esc(who).replace(" | ", "<br>")}</td><td>${esc(what)}</td><td>${esc(why)}</td></tr>`).join("\n");
+// RESOLVED is still validated above (so a request already answered can never be
+// printed), but the family asked (16 Nov 2026) to drop the "no longer needed"
+// table from the client's copy — it is housekeeping, not something to act on.
 
 const html = `<!doctype html><html><head><meta charset="utf-8"><title>Glow Ventures — records still needed (short list)</title><style>
 @page { size: A4 landscape; margin: 16mm 12mm 16mm 12mm; }
@@ -410,33 +411,27 @@ tbody tr:nth-child(even) td { background: #f1f5f9; }
 .newpage { break-before: page; }
 </style></head><body>
 <h1>Records still needed from the client — short list</h1>
-<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This is the short cleanup list. For the PMS mandates (section 1) and the AIF and other funds (section 2) there is no stock-by-stock list to go through — one complete set of records for each named manager or fund answers everything we need. For the family's own direct holdings (section 3), only the few specific records below are still needed. Section 4 is the start-of-year holdings this year's return is measured from. Section 5 is what has already been received or worked out, so nothing here repeats it.</p>
-<h2>1. PMS mandates — send the complete records for each</h2>
-<p class="lead">Ask each manager below for one complete set of records (the ask is the same for all). This single report replaces the earlier stock-by-stock list: it answers the purchase dates, the current holdings and the start-of-year value together.</p>
+<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This is the short cleanup list, in the order to work through it: the family's own direct holdings first (section 1), then the PMS mandates (section 2), then the AIF and other funds (section 3). For the PMS mandates and the funds there is no stock-by-stock list to go through — one complete set of records for each named manager or fund answers everything we need.</p>
+<h2>1. Direct holdings — the specific records still needed</h2>
+<p class="lead">These are the few specific records on the family's own demat, broking and fund-folio accounts. Each row names exactly what is unclear and exactly what to send.</p>
+<table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
+<thead><tr><th>Holder and account</th><th>Stock, fund or file</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
+${s3}
+</tbody></table>
+<p class="note"><b>Start-of-year holdings for these accounts.</b> To measure this year's return from its start, we also need the holdings on <b>31 December 2025</b> and <b>31 March 2026</b> — the number of every share and fund held (we value them ourselves, so no manager valuation is needed): the holding statements for <b>ICICI demat 49794950</b>, <b>HDFC Securities 3110320</b> and the <b>five Motilal demats</b>, and one <b>consolidated account statement (CAS)</b> for 1 January to 31 March 2026 for the mutual-fund folios opened before 2026.</p>
+<h2 class="newpage">2. PMS mandates — send the complete records for each</h2>
+<p class="lead">Ask each manager below for one complete set of records (the ask is the same for all). This single report replaces any stock-by-stock list: it answers the purchase dates, the current holdings and the start-of-year value together.</p>
 <table class="names"><colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
 <thead><tr><th>PMS manager</th><th>Account — owner</th><th>What to send</th></tr></thead><tbody>
 ${sPms}
 </tbody></table>
-<h2>2. AIF and other funds — send the statement and full history for each</h2>
+<h2>3. AIF and other funds — send the statement and full history for each</h2>
 <p class="lead">Ask each fund below for its statements and full transaction history. One export per fund answers the current value, the transactions and the start-of-year position together.</p>
 <table class="names"><colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
 <thead><tr><th>Fund</th><th>Folio / account — owner</th><th>What to send</th></tr></thead><tbody>
 ${sFund}
 </tbody></table>
 <p class="note"><b>Private companies (unlisted stakes) — nothing needed for now.</b> The family also holds ${privateHolders} private companies (the unlisted stakes shown in the consolidated review, such as Blue Ashva, Everest Fleet and the AngelList deals). The dashboard carries these at the review's own cost values (MOPWM, as at 30 June 2026), with no gain shown — they are not required for the current book. If a more recent valuation, funding round, statement or exit exists for any of them, send it and we will update that value.</p>
-<h2 class="newpage">3. Direct holdings — the specific records still needed</h2>
-<p class="lead">These are the few specific records on the family's own demat, broking and fund-folio accounts. Each row names exactly what is unclear and exactly what to send — this is the "only what is really required" for the direct holdings.</p>
-<table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
-<thead><tr><th>Holder and account</th><th>Stock, fund or file</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
-${s3}
-</tbody></table>
-<h2 class="newpage">4. Start-of-year holdings — for this year's return</h2>
-<p class="lead">To measure this year's return from its start, we need each account's holdings at the start of the year — the number of every share and fund held on <b>31 December 2025</b> and <b>31 March 2026</b> (we value them ourselves at that day's close or NAV, so no manager valuation is needed for listed shares and mutual funds). The PMS and AIF start-of-year values are already covered by sections 1 and 2 above. For the family's own accounts this means: the holding statements for <b>ICICI demat 49794950</b>, <b>HDFC Securities 3110320</b> and the <b>five Motilal demats</b> as at 31 December 2025 and 31 March 2026; and, for the mutual-fund folios opened before 2026, one <b>consolidated account statement (CAS)</b> for 1 January to 31 March 2026, which covers them all. Without these, the January–March 2026 market fall is missed and the year's return starts late for most of the book.</p>
-<h2>5. No longer needed: received or worked out since 27 October</h2>
-<table class="s4"><colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
-<thead><tr><th>Holder and account</th><th>Item on an earlier list</th><th>What answered it</th></tr></thead><tbody>
-${sResolved}
-</tbody></table>
 </body></html>`;
 
 const CANDIDATES = [process.env.CHROME, "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Google/Chrome/Application/chrome.exe",
