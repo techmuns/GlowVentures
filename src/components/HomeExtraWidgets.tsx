@@ -1,14 +1,14 @@
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Globe2, Info } from 'lucide-react';
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { ArrowUpRight, Globe2 } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { ExportableTable } from '@/components/ExportableTable';
-import { AbsentSection } from '@/components/Absent';
+import { AbsentCell, AbsentSection } from '@/components/Absent';
 import { concentrationNames } from '@/lib/concentration';
 import { currentHoldings, dedupedPositions } from '@/lib/analytics';
 import { useReturnSelection, returnSelectionFor } from '@/lib/useReturnSelection';
-import { selectedSegmentReturns } from '@/lib/selectedSegmentReturns';
+import { selectedSegmentReturns, UNSPLIT_RETURNS } from '@/lib/selectedSegmentReturns';
 import { exitedRows } from '@/lib/drilldown';
 import { useMarketHistories } from '@/lib/useMarketReturns';
 import { assumedHoldingBook } from '@/lib/assumedHoldingBook';
@@ -18,10 +18,14 @@ import { accountIndex } from '@/lib/accounts';
 import { CHART_COLORS, chartTooltipStyle } from '@/lib/chartTheme';
 import { homeExportNumber, homeVolatility } from '@/lib/homeDashboard';
 import { fmtDate } from '@/lib/format';
+import { Hint, Metric } from '@/components/HomeMetric';
+import { fmtPct } from '@/lib/format';
+import { useAdjustedTwrColumns } from '@/lib/useAdjustedTwrColumns';
+import type { AvailableCardReturn } from '@/lib/availableCardReturns';
 
 const pct = (n: number | null) => n == null ? '—' : `${n > 0 ? '+' : ''}${n.toFixed(2)}%`;
-function ExtraPanel({ title, label, hint, children }: { title: string; label: string; hint?: string; children: ReactNode }) {
-  return <section className="home-panel"><div className="home-panel-heading"><div><span className="home-eyebrow">{label}</span><h2>{title}</h2></div>{hint && <span className="home-hint" tabIndex={0} title={hint} aria-label={hint}><Info size={13} /></span>}</div>{children}</section>;
+function ExtraPanel({ title, label, hint, right, children }: { title: string; label: string; hint?: string; right?: ReactNode; children: ReactNode }) {
+  return <section className="home-panel"><div className="home-panel-heading"><div><span className="home-eyebrow">{label}</span><h2>{title}</h2></div>{(right || hint) && <div className="home-panel-tools">{right}{hint && <Hint text={hint} />}</div>}</div>{children}</section>;
 }
 export function HomeUnavailable({ title, category, reason }: { title: string; category: string; reason: string }) {
   return <ExtraPanel title={title} label={category}><div className="home-unavailable-widget" tabIndex={0} title="Not relevant for firm"><Globe2 size={36} strokeWidth={.8} /><span>—</span><small className="sr-only">{reason}</small><span className="home-relevance-tooltip">Not relevant for firm</span></div></ExtraPanel>;
@@ -44,7 +48,7 @@ export function HomeMovements({ from, to }: { from: string; to: string }) {
   const measured = result?.rows.filter(row => row.periodPct != null) ?? [];
   const rows = measured.filter(row => Math.abs(row.periodPct!) > 10).sort((a, b) => Math.abs(b.periodPct!) - Math.abs(a.periodPct!));
   return <ExtraPanel title="Large performance movements" label="BEYOND ±10%" hint="Cumulative holding returns in the selected range, using the same available-record and assumed-ownership rules as Morning CIO. Whole-account returns without a security split are excluded. A fund's own return includes its realised results and income when recorded.">
-    <div className="home-table-scroll home-widget-table-limit"><ExportableTable className="home-table"><thead><tr><th>Investment</th><th>Period return</th></tr></thead><tbody>{rows.map(row => <tr key={row.key}><td>{row.label}</td><td {...homeExportNumber(row.periodPct == null ? null : row.periodPct / 100, '0.00%')} className={row.periodPct! < 0 ? 'home-negative' : 'home-positive'}>{pct(row.periodPct)}</td></tr>)}{!rows.length && <tr><td colSpan={2} className="home-empty">{measured.length ? 'No measured holding return beyond ±10%' : 'No holding-level return history for this period'}</td></tr>}</tbody></ExportableTable></div><div className="home-performance-foot"><span>{measured.length} available investment returns</span><span>{fmtDate(from)} – {fmtDate(to)}</span></div>
+    <div className="home-table-scroll home-widget-table-limit"><ExportableTable className="home-table"><thead><tr><th>Investment</th><th>Period return</th></tr></thead><tbody>{rows.map(row => <tr key={row.key}><td>{row.label}</td><td {...homeExportNumber(row.periodPct == null ? null : row.periodPct / 100, '0.00%')} className={row.periodPct! < 0 ? 'home-negative' : 'home-positive'}>{pct(row.periodPct)}</td></tr>)}{!rows.length && <tr><td colSpan={2} className="home-empty">{measured.length ? 'No measured holding return beyond ±10%' : 'No holding-level return history for this period'}</td></tr>}</tbody></ExportableTable></div><div className="home-performance-foot"><span>{fmtDate(from)} – {fmtDate(to)}</span></div>
   </ExtraPanel>;
 }
 export function HomeMonthly({ from, to }: { from: string; to: string }) {
@@ -77,8 +81,8 @@ export function HomeMonthly({ from, to }: { from: string; to: string }) {
       return { ...month, pct: result?.periodPct ?? null, records: result?.units.length ?? 0, held: result?.units.filter(u => u.held).length ?? 0, partial };
     });
   }, [months, current, portfolio, statementPortfolio, assumptions]);
-  return <ExtraPanel title="Month by month performance" label="DISCRETE RETURNS" hint="At most the latest 12 months inside the selected range. Each row independently measures that month's available records; monthly cohorts can differ and must not be compounded into a whole-book annual return. Partial history and carried values are labelled.">
-    <div className="home-table-scroll"><ExportableTable className="home-table"><thead><tr><th>Month</th><th>Return</th><th>Records</th><th>Basis</th></tr></thead><tbody>{results.map(row => <tr key={row.month}><td>{new Date(`${row.month}-01T00:00:00Z`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' })}</td><td {...homeExportNumber(row.pct == null ? null : row.pct / 100, '0.00%')} className={row.pct != null && row.pct < 0 ? 'home-negative' : 'home-positive'} title={row.pct == null ? 'No usable dated return record in this month.' : `${fmtDate(row.from)} – ${fmtDate(row.to)}`}>{pct(row.pct)}</td><td {...homeExportNumber(row.records, '0')}>{row.records}</td><td>{row.partial ? 'Partial history' : 'Available data'}{row.held ? ' · carried values' : ''}</td></tr>)}</tbody></ExportableTable></div>
+  return <ExtraPanel title="Month by month performance" label="DISCRETE RETURNS" hint="At most the latest 12 months inside the selected range. Each row independently measures that month's available records; monthly cohorts can differ and must not be compounded into a whole-book annual return. Hover a return for its dates and coverage.">
+    <div className="home-table-scroll"><ExportableTable className="home-table"><thead><tr><th>Month</th><th>Return</th></tr></thead><tbody>{results.map(row => <tr key={row.month}><td>{new Date(`${row.month}-01T00:00:00Z`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' })}</td><td {...homeExportNumber(row.pct == null ? null : row.pct / 100, '0.00%')} className={row.pct != null && row.pct < 0 ? 'home-negative' : 'home-positive'} title={row.pct == null ? 'No usable dated return record in this month.' : [`${fmtDate(row.from)} – ${fmtDate(row.to)}`, `${row.records} ${row.records === 1 ? 'record' : 'records'}`, row.partial ? 'partial history' : '', row.held ? 'carried values' : ''].filter(Boolean).join(' · ')}>{pct(row.pct)}</td></tr>)}</tbody></ExportableTable></div>
   </ExtraPanel>;
 }
 export function HomeVolatility({ from, to }: { from: string; to: string }) {
@@ -99,15 +103,106 @@ export function HomeVolatility({ from, to }: { from: string; to: string }) {
     <div className="home-table-scroll home-widget-table-limit"><ExportableTable className="home-table"><thead><tr><th>Investment</th><th>Daily volatility</th><th>Observations</th></tr></thead><tbody>{rows.map(row => <tr key={row.key}><td><Link to={`/stock/${encodeURIComponent(row.key)}`}>{row.label}</Link></td><td {...homeExportNumber(row.pct / 100, '0.00%')}>{row.pct.toFixed(2)}%</td><td {...homeExportNumber(row.observations, '0')} title={`${fmtDate(row.from)} – ${fmtDate(row.to)}`}>{row.observations}</td></tr>)}{!rows.length && <tr><td colSpan={3} className="home-empty">At least 20 daily returns are needed</td></tr>}</tbody></ExportableTable></div>
   </ExtraPanel>;
 }
-export function HomeSectors({ historical }: { historical: boolean }) {
-  const { consolidated, portfolio, fmtFromBase } = usePortfolio();
+/** Company shares by verified sector: Sector Composition's own rows, for the donut and the bar chart. */
+function useSectorRows(historical: boolean) {
+  const { consolidated, portfolio } = usePortfolio();
   const exposure = useStockExposure(consolidated, !historical);
-  const rows = useMemo(() => {
+  return useMemo(() => {
     if (!portfolio || historical) return [];
     const sets = sectorSets(consolidated, accountIndex(portfolio.accounts), exposure);
     return rollSectors(sets.consEntries.filter(e => e.positions.length), e => e.measured, true);
   }, [consolidated, portfolio, exposure, historical]);
-  return <ExtraPanel title="Stock sector breakdown" label="COMPANY-SHARE EXPOSURE" hint="Recorded company shares across own and PMS accounts, using the same verified sector classification as Sector Composition. Fund look-through, debt, cash and non-equity securities are excluded. Weights are within this company-share sleeve.">
+}
+const SECTOR_HINT = 'Recorded company shares across own and PMS accounts, using the same verified sector classification as Sector Composition. Fund look-through, debt, cash and non-equity securities are excluded. Weights are within this company-share sleeve.';
+export function HomeSectors({ historical }: { historical: boolean }) {
+  const { fmtFromBase } = usePortfolio();
+  const rows = useSectorRows(historical);
+  return <ExtraPanel title="Stock sector breakdown" label="COMPANY-SHARE EXPOSURE" hint={SECTOR_HINT}>
     {historical ? <AbsentSection what="Sector history unavailable" needs="Dated security-level holdings and sector classifications are required to split historical account NAV." /> : rows.length ? <><div className="home-sector-donut"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={rows} dataKey="mv" nameKey="key" innerRadius="65%" outerRadius="90%" paddingAngle={1.5} stroke="none" isAnimationActive={false}>{rows.map((row, i) => <Cell key={row.key} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}</Pie><Tooltip formatter={(v: number) => fmtFromBase(v, { compact: true })} wrapperStyle={{ maxWidth: '100%' }} contentStyle={{ ...chartTooltipStyle, fontSize: 14, whiteSpace: 'normal', overflowWrap: 'anywhere' }} /></PieChart></ResponsiveContainer></div><ul className="home-sector-legend">{rows.map((row, i) => <li key={row.key}><i className="home-swatch" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} /><span>{row.key}</span><strong>{(row.weight * 100).toFixed(1)}%</strong></li>)}</ul></> : <AbsentSection what="No company-share sector data" needs="Valued company shares and verified sector classifications are required." />}
   </ExtraPanel>;
+}
+
+const shortLabel = (s: string) => s.length > 16 ? `${s.slice(0, 15)}…` : s;
+/** The sector rows as columns, largest first; a long list scrolls inside its own card. */
+export function HomeSectorBars({ historical }: { historical: boolean }) {
+  const { fmtFromBase, displayCurrency } = usePortfolio();
+  const rows = useSectorRows(historical);
+  const data = useMemo(() => [...rows].sort((a, b) => b.mv - a.mv), [rows]);
+  return <ExtraPanel title="Value by sector" label="COMPANY SHARES" hint={SECTOR_HINT} right={<span className="home-tag">{displayCurrency}</span>}>
+    {historical ? <AbsentSection what="Sector history unavailable" needs="Dated security-level holdings and sector classifications are required to split historical account NAV." />
+      : data.length ? <div className="home-sector-bars" data-home-sector-bars><div style={{ minWidth: Math.max(480, data.length * 46), height: '100%' }}><ResponsiveContainer width="100%" height="100%"><BarChart data={data} margin={{ top: 12, right: 8, bottom: 8, left: 8 }}>
+        <CartesianGrid vertical={false} stroke="var(--chart-grid)" strokeDasharray="3 6" />
+        <XAxis dataKey="key" interval={0} angle={-40} textAnchor="end" height={92} tickFormatter={shortLabel} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
+        <YAxis tickFormatter={n => fmtFromBase(n, { compact: true })} width={84} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)', fontSize: 12 }} />
+        <Tooltip cursor={{ fill: 'var(--home-tint)' }} formatter={(v: number, _k, item) => [`${fmtFromBase(v, { compact: true })} · ${((item?.payload?.weight ?? 0) * 100).toFixed(1)}%`, 'Value']} wrapperStyle={{ maxWidth: '100%' }} contentStyle={{ ...chartTooltipStyle, fontSize: 14, whiteSpace: 'normal' }} />
+        <Bar dataKey="mv" radius={[4, 4, 0, 0]} isAnimationActive={false}>{data.map((row, i) => <Cell key={row.key} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}</Bar>
+      </BarChart></ResponsiveContainer></div></div>
+      : <AbsentSection what="No company-share sector data" needs="Valued company shares and verified sector classifications are required." />}
+  </ExtraPanel>;
+}
+
+/**
+ * THIS CALENDAR YEAR'S GAIN, BROKEN DOWN: the records behind the Year to date
+ * tile (Morning CIO's YTD card), grouped by member — each account's owner — or by
+ * the family's asset class. Grouping never re-measures, so the bars add up to the
+ * card's gain; a whole-account return spanning classes keeps a row of its own.
+ */
+export function HomeGainsBreakdown({ ytd, historical }: { ytd: AvailableCardReturn | null; historical: boolean }) {
+  const { portfolio, statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
+  const [by, setBy] = useState<'member' | 'assetClass'>('member');
+  const rows = useMemo(() => {
+    const statement = statementPortfolio ?? portfolio;
+    if (!ytd || !statement) return [];
+    if (by === 'member') {
+      const owner = new Map(statement.accounts.map(a => [a.accountId, a.owner || 'Not attributed to a member']));
+      const sums = new Map<string, number>();
+      for (const u of ytd.total.units) { const k = owner.get(u.accountId) ?? 'Not attributed to a member'; sums.set(k, (sums.get(k) ?? 0) + u.gain); }
+      return [...sums].map(([key, gain]) => ({ key, label: key, gain }));
+    }
+    const recorded = dedupedPositions(statement.positions);
+    const split = selectedSegmentReturns(currentHoldings(consolidated), exitedRows(recorded), statement.accounts, 'assetClass', ytd.selection, () => null, currentHoldings(recorded));
+    return split.rows.flatMap(r => r.gain == null ? [] : [{ key: r.key, label: r.key === UNSPLIT_RETURNS ? 'Not split by class' : r.label, gain: r.gain }]);
+  }, [ytd, by, statementPortfolio, portfolio, consolidated]);
+  const sorted = [...rows].filter(r => Math.abs(r.gain) >= 0.5).sort((a, b) => b.gain - a.gain);
+  const total = ytd?.total.gain ?? null;
+  const lo = Math.min(0, ...sorted.map(r => r.gain)), hi = Math.max(0, ...sorted.map(r => r.gain)), span = hi - lo || 1, zero = -lo / span * 100;
+  const c = ytd?.coverage;
+  const hint = `This calendar year's gain: the same records as the Year to date tile and Morning CIO's YTD card, grouped by ${by === 'member' ? "each account's owner" : "the family's asset class; an account return whose holdings span classes keeps its own row"}. Grouping never re-measures, so the bars add up to the total.${c ? ` Covers ${c.measuredPublicHoldings + c.heldPublicHoldings + c.privateCoveredHoldings} of ${c.publicHoldings + c.privateHoldings} holdings${ytd?.to ? `, to ${fmtDate(ytd.to)}` : ''}.` : ''}`;
+  const toggle = <div className="home-periods home-gains-toggle" role="group" aria-label="Group gains by">{(['member', 'assetClass'] as const).map(k => <button type="button" key={k} aria-pressed={by === k} onClick={() => setBy(k)}>{k === 'member' ? 'Members' : 'Asset classes'}</button>)}</div>;
+  return <ExtraPanel title="Gains breakdown · YTD" label="THIS CALENDAR YEAR" hint={hint} right={toggle}>
+    {historical ? <AbsentSection what="Measured to the latest statements" needs="Choose today as the end date to see this year's gain." />
+      : total == null || !sorted.length ? <AbsentSection what="No gain on record this year" needs="Dated valuations and capital movements this calendar year are needed." />
+      : <div data-home-gains data-home-gains-total={total}><div className="home-gains-total"><span>Total gain</span><strong className={total < 0 ? 'home-negative' : 'home-positive'}>{fmtFromBase(total, { compact: true, sign: true })}</strong>{ytd?.total.returnPct != null && <small>{fmtPct(ytd.total.returnPct, { sign: true, decimals: 1 })}</small>}</div>
+        <ul className="home-gain-bars">{sorted.map(r => <li key={r.key} data-home-gain-row={r.key} data-value={r.gain}><span className="home-gain-label" title={r.label}>{r.label}</span>
+          <span className="home-gain-track" style={{ ['--zero' as string]: `${zero}%` }}><i className={r.gain < 0 ? 'home-gain-neg' : 'home-gain-pos'} style={{ left: `${r.gain < 0 ? zero - -r.gain / span * 100 : zero}%`, width: `${Math.abs(r.gain) / span * 100}%` }} /></span>
+          <strong className={r.gain < 0 ? 'home-negative' : undefined}>{fmtFromBase(r.gain, { compact: true, sign: true })}</strong></li>)}</ul></div>}
+  </ExtraPanel>;
+}
+
+/**
+ * EQUITY TWR: the Returns table's Adjusted TWR (YTD, INR) on its Equity row, by
+ * asset class — `useAdjustedTwrColumns` on the same inputs, ending on Home's end date.
+ */
+export function HomeEquityTwr({ to }: { to: string }) {
+  const { statementPortfolio, consolidated } = usePortfolio();
+  const current = useMemo(() => currentHoldings(consolidated), [consolidated]);
+  const recorded = useMemo(() => dedupedPositions(statementPortfolio?.positions ?? []), [statementPortfolio]);
+  const exited = useMemo(() => exitedRows(recorded), [recorded]);
+  const calculationCurrent = useMemo(() => currentHoldings(recorded), [recorded]);
+  // Rows only: the TWR columns measure their own fixed horizons from these keys.
+  const rowsOnly = useMemo(() => statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, 'assetClass',
+    { inception: false, type: 'xirr', start: null, end: to, windows: [], inceptionRows: [], excluded: [] }, () => null, calculationCurrent) : null,
+  [statementPortfolio, current, exited, calculationCurrent, to]);
+  const { model, of, pending } = useAdjustedTwrColumns({ model: rowsOnly, current, exited, calculationCurrent, axis: 'assetClass', end: to });
+  const row = model?.rows.find(r => r.key === 'Equity');
+  const twr = row ? of(row).twrYtd : null;
+  const gaps = twr?.gaps ?? [];
+  const absentWhy = pending ? 'Price histories are still loading.' : twr?.gaps[0]?.reason ?? 'No dated equity valuations this calendar year.';
+  const hint = twr?.pct == null ? absentWhy : twr ? [`Time-weighted return of the family's Equity asset class this calendar year, in INR, linked across every valuation and money movement: the same figure as the Equity row's Adjusted TWR (YTD, INR) in Morning CIO's Returns table by asset class. Not annualised.`,
+    `${twr.records} records${twr.from && twr.to ? `, ${fmtDate(twr.from)} to ${fmtDate(twr.to)}` : ''}.${twr.assumed ? ' Includes assumed continued ownership.' : ''}`,
+    gaps.length ? `Not included (${gaps.length}):\n${gaps.slice(0, 12).map(g => `${g.label}: ${g.reason}`).join('\n')}${gaps.length > 12 ? `\n…and ${gaps.length - 12} more` : ''}` : ''].filter(Boolean).join('\n\n') : undefined;
+  return <Metric label="Equity TWR" hint={hint} attrs={{ 'data-home-equity-twr': twr?.pct ?? '' }}
+    value={twr?.pct == null ? <AbsentCell reason={absentWhy} /> : <span className={twr.pct > 0 ? 'home-positive' : twr.pct < 0 ? 'home-negative' : undefined}>{fmtPct(twr.pct, { sign: true, decimals: 1 })}</span>}
+    note={twr?.to ? `YTD · to ${fmtDate(twr.to)}` : 'YTD'}
+    link={{ to: '/cio?tab=returns&rp=ytd&rtype=xirr&seg=assetClass', label: 'View returns' }} />;
 }
