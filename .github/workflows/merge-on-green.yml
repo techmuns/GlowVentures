@@ -1,0 +1,56 @@
+name: Merge on green
+
+# The family, 16 Nov 2026: "Automatically merge once done always". main has no
+# required checks, so GitHub's own auto-merge has nothing to wait for. This does
+# the waiting instead. A pull request labelled `automerge` is squash-merged into
+# main when its CI run passes, or when the label is added after CI has already
+# passed. .github/scripts/merge-on-green.sh holds every rule (Stage 10op).
+#
+# Both triggers run main's copy of this file with main's checkout. Neither checks
+# out nor runs the pull request's code. A merge made with GITHUB_TOKEN starts no
+# workflow, so CI does not re-run on main afterwards (the bots' pushes already
+# work that way). The Cloudflare Pages deploy runs off GitHub's push webhook, so
+# it still follows every merge.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  pull_request_target:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+  checks: read
+  statuses: read
+
+concurrency:
+  group: merge-on-green
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request'
+        && github.event.workflow_run.conclusion == 'success')
+      || (github.event_name == 'pull_request_target' && github.event.label.name == 'automerge')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: |
+            .github/scripts
+            docs/history
+            CLAUDE.md
+          sparse-checkout-cone-mode: false
+      - name: Squash-merge the pull request if every rule holds
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha }}
+          PR: ${{ github.event.pull_request.number }}
+        run: bash .github/scripts/merge-on-green.sh

@@ -14,6 +14,11 @@ unless something is pushed … i want things pushed"* — the family, 24 Sep 202
   `build` and the checks for what you changed are green. Do not leave a fix
   waiting on a PR. Hold a PR open only when the user says so in that request
   (for example "do not merge until I tell you").
+- **Label every PR `automerge`** unless the user says to hold it (the family,
+  16 Nov 2026: "Automatically merge once done always"). `merge-on-green.yml`
+  squash-merges it into `main` when its CI run passes, so no one waits on CI. If
+  a check fails, `main` changed the same files, or `main` already has its stage
+  letter, it comments instead (`.github/scripts/merge-on-green.sh`, Stage 10op).
 - **Be quick.** Run the checks that cover the change: `build`, the relevant
   suite, and `ONLY=<routes>` for the pages you touched. A full `check:pages`
   sweep is not needed before every merge.
