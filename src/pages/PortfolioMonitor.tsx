@@ -47,7 +47,7 @@ import {
 } from "@/lib/tranches";
 // THE TWO DATED RECORDS, MERGED INTO ONE ROW SET — and the two money blocks
 // that must never be added. See its header for what that was measured at.
-import { mergeDatedRecords, datedTotals, datedSectionRollup, clubDatedRows, type DatedRow, type DatedUnit, type DatedSectionRows } from "@/lib/txnLedger";
+import { mergeDatedRecords, withEveryAccount, datedTotals, datedSectionRollup, clubDatedRows, type DatedRow, type DatedUnit, type DatedSectionRows } from "@/lib/txnLedger";
 import { TXN_SORTS, type TxnSort } from "@/lib/txnSort";
 import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_GAINS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
@@ -6440,6 +6440,12 @@ const NO_TRADES_WHY =
 const OWN_TRADE_CAPITAL_WHY =
   "this row is a security bought and sold in the family's own broking account — the Capital columns are an account's "
   + "own dated purchases and redemptions, and a broking account issues none; what was paid for this security is its Bought column";
+/** …and the same account's own row, listed so every account in the book has one (16 Nov 2026). */
+const OWN_ACCOUNT_CAPITAL_WHY =
+  "this is the family's own broking or depository account — it issues no dated record of money paid in; what was paid "
+  + "for each security dealt here is that security's own row, under its Bought column";
+const OWN_DEALT_BY_SECURITY_WHY =
+  "this account's own trades are drawn by security — each name it bought or sold is a row of its own in this table";
 
 /**
  * ── WHAT THE MANAGER DEALT INSIDE ONE ROW ──────────────────────────────────
@@ -6863,9 +6869,33 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   const tradeGroups = useMemo(
     () => rollup(filtered, accountsReg, "auto", sort, (t) => sections.forTxn(axis, t)),
     [filtered, accountsReg, sort, sections, axis]);
-  const rows = useMemo(
-    () => mergeDatedRecords(mineGroups, tradeGroups, (id, sk) => sections.forAccount(axis, id, sk), valueOfAccount, sort),
-    [mineGroups, tradeGroups, sections, axis, valueOfAccount, sort]);
+  /**
+   * ── EVERY ACCOUNT IN THE BOOK HAS A ROW (16 November 2026) ──────────────────
+   *
+   *   *"why is transaction only showing … 68 of 95 accounts — it should show all"*
+   *
+   * An account no statement dates anything on is listed with what it is worth
+   * today (`withEveryAccount`) — narrowed by the entity, the section and the
+   * member scope, which say WHICH accounts, and not drawn under a date window,
+   * a side, a sector or a picked holding, which ask what MOVED: such a row has
+   * nothing to show there.
+   */
+  const listsEveryAccount = !(from || to) && side === "all" && sector === "All" && selected.size === 0;
+  const rows = useMemo(() => {
+    const merged = mergeDatedRecords(mineGroups, tradeGroups, (id, sk) => sections.forAccount(axis, id, sk), valueOfAccount, sort);
+    if (!listsEveryAccount) return merged;
+    const listed = accountsReg.filter((a) => inScopeAccount(memberScope.accountIds, a.accountId)
+      && (entity === "All" || ownerDisplayName(a.ownerId) === entity));
+    return withEveryAccount(merged, listed,
+      (id) => sections.partsOfAccount(axis, id).filter((p) => section === "All" || p.section === section), sort);
+  }, [mineGroups, tradeGroups, sections, axis, valueOfAccount, sort, listsEveryAccount, accountsReg, memberScope.accountIds, entity, section]);
+  /**
+   * The own broking accounts whose trades are drawn under each security they
+   * dealt — their account row's Trades cells point there rather than say no
+   * transaction statement covers them.
+   */
+  const dealtBySecurity = useMemo(
+    () => new Set(rows.filter((r) => r.kind === "security").flatMap((r) => r.trades?.accountIds ?? [])), [rows]);
   const secs = useMemo(
     () => datedSectionRollup(rows, (keys) => orderSections(axis, keys)), [rows, axis]);
   const totals = useMemo(() => datedTotals(rows), [rows]);
@@ -6957,14 +6987,17 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   const tapeWhy = tapePeriod.from && tapePeriod.to
     ? `no transaction statement covers this date window — the statements this table reads run ${fmtDate(tapePeriod.from)} → ${fmtDate(tapePeriod.to)}`
     : "no transaction statement covers this date window";
-  const capitalNarrowed = windowed || side !== "all" || entity !== "All" || section !== "All";
   /** Why a row carries no capital record — an own-account security is not a mandate (MT-15). */
   const noCapitalWhy = (r: DatedRow): string => {
+    if (r.kind === "account" && r.accountId && dealtBySecurity.has(r.accountId)) return OWN_ACCOUNT_CAPITAL_WHY;
     if (r.kind === "account" || !r.trades) return NO_CAPITAL_WHY;
     const tr = r.trades.instruments.flatMap((i) => i.tranches);
     const own = tr.length > 0 && tr.every((t) => holdingRoute(accByPA.get(acctKey(t.provider, t.accountNo))?.engagement ?? null) === "own");
     return own ? OWN_TRADE_CAPITAL_WHY : NO_CAPITAL_WHY;
   };
+  /** Why a row carries no trades — an own broking account's are drawn under each security it dealt. */
+  const noTradesWhy = (r: DatedRow): string =>
+    r.kind === "account" && r.accountId && dealtBySecurity.has(r.accountId) ? OWN_DEALT_BY_SECURITY_WHY : NO_TRADES_WHY;
   /** Why no purchase is in view: the side filter or the date window, never assumed (MT-16). */
   const noPurchaseWhy = side === "out"
     ? "no purchase is in view — the movements are filtered to what came back out, and this account's purchase amount is not struck over that"
@@ -7336,9 +7369,12 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                     }])),
                     entity: (r) => entitiesOf(r)[0] ?? null,
                   }, (r: DatedRow, clubOf?: string) => {
-                    const isOpen = openRow.has(r.key);
                     const cap = r.capital;
                     const trd = r.trades;
+                    // A row listed with no dated record has nothing to open into,
+                    // so it offers no affordance (`withEveryAccount`).
+                    const opens = !!(cap || trd);
+                    const isOpen = opens && openRow.has(r.key);
                     const ents = entitiesOf(r);
                     return (
                       <Fragment key={r.key}>
@@ -7355,6 +7391,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                         <Tr view={dv} data-dated-row={r.key} data-dated-kind={r.kind}
                           data-dated-section={sec.key} data-dated-label={r.label}
                           data-dated-account={r.accountId ?? undefined}
+                          data-dated-account-ids={[...new Set([...(r.accountId ? [r.accountId] : []), ...(trd?.accountIds ?? [])])].join(";") || undefined}
+                          data-dated-listed={opens ? undefined : ""}
                           data-dated-accounts={trd ? [...new Set(trd.instruments.flatMap((i) => i.tranches.map((t) => acctKey(t.provider, t.accountNo))))].join(";") : undefined}
                           data-dated-first={r.first} data-dated-last={r.last}
                           data-dated-club-member={clubOf}
@@ -7395,7 +7433,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           data-group-section={trd ? sec.key : undefined}
                           data-group-kind={trd ? (r.kind === "account" ? "mandate" : "security") : undefined}
                           data-group-label={trd ? r.label : undefined}
-                          className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(setOpenRow, r.key)}>
+                          className={opens ? "cursor-pointer hover:bg-ink-700/40" : undefined}
+                          onClick={opens ? () => toggle(setOpenRow, r.key) : undefined}>
                           <td className={clubOf ? "py-2.5 pl-8 pr-3" : "px-3 py-2.5"}>
                             {/*
                               ONE AFFORDANCE, AND THE ROW IS IT.
@@ -7412,7 +7451,9 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                               and it is simply not reached from here.
                             */}
                             <div className="flex items-center gap-1.5">
-                              <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                              {opens
+                                ? <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                                : <span aria-hidden className="h-3.5 w-3.5 shrink-0" />}
                               <div>
                                 <div data-mine-name={r.accountId ?? undefined} className="font-medium text-slate-100">{r.label}</div>
                                 {r.sublabel && <div className="text-[10.5px] text-slate-500">{r.sublabel}</div>}
@@ -7584,29 +7625,29 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           </td>
                           {/* ── TRADES ────────────────────────────────────── */}
                           <td className="px-3 py-2.5 text-right mono text-slate-300 whitespace-nowrap">
-                            {!trd ? <AbsentCell reason={NO_TRADES_WHY} />
+                            {!trd ? <AbsentCell reason={noTradesWhy(r)} />
                               : <>{fmtNum(trd.trades)}<span className="ml-1 text-[10.5px] text-slate-500">{trd.buys}B/{trd.sells}S</span></>}
                           </td>
                           <td className="px-3 py-2.5 text-right mono text-slate-300 whitespace-nowrap">
-                            {!trd ? <AbsentCell reason={NO_TRADES_WHY} />
+                            {!trd ? <AbsentCell reason={noTradesWhy(r)} />
                               : trd.buys === 0 ? <AbsentCell reason="nothing was bought in this row over the window" />
                               : trd.bought == null ? <AbsentCell reason="no buy row in this group reports a settled amount on its statement" />
                               : money(trd.bought)}
                           </td>
                           <td className="px-3 py-2.5 text-right mono text-slate-300 whitespace-nowrap">
-                            {!trd ? <AbsentCell reason={NO_TRADES_WHY} />
+                            {!trd ? <AbsentCell reason={noTradesWhy(r)} />
                               : trd.sells === 0 ? <AbsentCell reason="nothing was sold in this row over the window" />
                               : trd.sold == null ? <AbsentCell reason="no sell row in this group reports a settled amount on its statement" />
                               : money(trd.sold)}
                           </td>
                           <td className={`px-3 py-2.5 text-right mono whitespace-nowrap ${trd?.realized == null ? "text-slate-600" : changeColor(trd.realized)}`}>
-                            {!trd ? <AbsentCell reason={NO_TRADES_WHY} />
+                            {!trd ? <AbsentCell reason={noTradesWhy(r)} />
                               : trd.realized == null
                                 ? <AbsentCell reason={trd.sells === 0 ? "nothing was sold in this row over the window" : realisedAbsence(sellsOf(trd))} />
                                 : <>{fmtFromBase(trd.realized, { compact: true, sign: true })}{trd.realizedOf < trd.sells && <span className="ml-1 text-[10.5px] text-slate-500" data-realised-of={`${trd.realizedOf}/${trd.sells}`} title={realisedCoverageNote(sellsOf(trd))}>{trd.realizedOf}/{trd.sells}</span>}</>}
                           </td>
                           <td className="px-3 py-2.5 whitespace-nowrap mono text-[11px] text-slate-400">
-                            {!trd ? <AbsentCell reason={NO_TRADES_WHY} /> : period(trd.first, trd.last)}
+                            {!trd ? <AbsentCell reason={noTradesWhy(r)} /> : period(trd.first, trd.last)}
                           </td>
                           <td className="px-3 py-2.5 text-[12px] text-slate-400 whitespace-nowrap">
                             {ents.length === 0 ? <AbsentCell reason="no statement behind this row names a holder this book can resolve to a family member" />
@@ -7755,13 +7796,19 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                   data-foot-realised={totals.realized ?? undefined}
                   data-foot-bought={totals.bought ?? undefined}
                   className="px-3 py-2.5 text-slate-200"
-                  labelTitle={capitalNarrowed
-                    /* A NARROWED COUNT IS NOT A FACT ABOUT THE BOOK (MT-16). Under
-                       a window "5 of this book's 51 accounts publish a dated
-                       capital record" was only the accounts with a movement in it. */
-                    ? `${totals.accounts} ${totals.accounts === 1 ? "account has" : "accounts have"} a dated purchase or redemption in view under the filters set. Across the whole record, ${fundedInBook} of this book's ${accountsReg.length} accounts publish a dated capital record or a fund's dated capital calls — clear the filters to see them all. The others were funded as well — the managed mandates issue a capital-account ledger rather than dated allotments, and a depository records what is held and never what was paid for it — so the Purchase total is not the whole of what the family has paid in.`
-                    : `${totals.accounts} of this book's ${accountsReg.length} accounts publish a dated capital record or a fund's dated capital calls. The other ${accountsReg.length - totals.accounts} were funded as well — the managed mandates issue a capital-account ledger rather than dated allotments, and a depository records what is held and never what was paid for it — so the Purchase total is not the whole of what the family has paid in.`}
-                  label={<>Total · {fmtNum(totals.rows)} {totals.rows === 1 ? "row" : "rows"} · {totals.accounts} of {accountsReg.length} accounts{capitalNarrowed ? " in view" : ""}</>}
+                  labelTitle={[
+                    totals.accounts === accountsReg.length
+                      ? `Every one of this book's ${accountsReg.length} accounts is in this table.`
+                      : listsEveryAccount
+                        ? `${totals.accounts} of this book's ${accountsReg.length} accounts are in view under the entity or section filter.`
+                        /* A NARROWED COUNT IS NOT A FACT ABOUT THE BOOK (MT-16). */
+                        : `${totals.accounts} of this book's ${accountsReg.length} accounts have a dated record in view under the filters set; an account with no dated record is listed only without a date window, a Buys/Sells side, a sector or a picked holding — clear them to see every account. Across the whole record, ${fundedInBook} publish a dated capital record or a fund's dated capital calls.`,
+                    `Of the ${totals.accounts} here, ${totals.capitalAccounts} publish a dated capital record or a fund's dated capital calls`
+                      + (totals.tradeOnlyAccounts ? `, ${totals.tradeOnlyAccounts} report only the trades inside them` : "")
+                      + (totals.undatedAccounts ? `, and ${totals.undatedAccounts} report neither, so their rows carry only what each is worth today` : "") + ".",
+                    "Those without a capital record were funded as well — the managed mandates issue a capital-account ledger rather than dated allotments, and a depository records what is held and never what was paid for it — so the Purchase total is not the whole of what the family has paid in.",
+                  ].join(" ")}
+                  label={<>Total · {fmtNum(totals.rows)} {totals.rows === 1 ? "row" : "rows"} · {totals.accounts === accountsReg.length ? `all ${totals.accounts} accounts` : `${totals.accounts} of ${accountsReg.length} accounts in view`}</>}
                   cells={{
                     how: (
                       <td key="how" data-foot-cell="how" className="px-3 py-2.5 text-right text-[12px] text-slate-400 whitespace-nowrap">

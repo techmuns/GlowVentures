@@ -4984,6 +4984,13 @@ const UNVALUED_ACCOUNTS = (() => {
 })();
 
 const FUNDED_ACCOUNTS = CAPITAL_RECORD_BOOK ? new Set(CAPITAL_RECORD_BOOK.moves.map((m) => m.accountId)).size : null;
+/** Every account id in the book — the Transactions table draws each (16 Nov 2026). */
+const BOOK_ACCOUNT_IDS = (() => {
+  try {
+    const accounts = bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_ACCOUNTS");
+    return accounts ? accounts.map((a) => a.accountId) : null;
+  } catch { return null; }
+})();
 
 /**
  * ── ONE ENTRY PER ROW THE TRANSACTIONS CARD DRAWS (Stage 10dh) ──────────────
@@ -23593,16 +23600,20 @@ const INVARIANTS = {
        * row per LINE: summed as the ROW count the label read "39 of 64
        * accounts" over a record 38 accounts publish. It is struck twice, on
        * the handle and on the rendered label, against the accounts the rows
-       * themselves name (`data-mine-row`), so a footer back on the row count
-       * fails by name.
+       * themselves name, so a footer back on the row count fails by name.
+       *
+       * THE ACCOUNTS THE ROWS DRAW (16 Nov 2026), off `data-dated-account-ids`
+       * — not the accounts that publish a capital record (`data-mine-row`).
+       * Counted on those, the label read "68 of 95 accounts" over a table that
+       * also drew trade-only mandates and own broking accounts.
        */
-      const accClaimed = /\b([\d,]+) of ([\d,]+) accounts/.exec(tbl.foot[0] ?? "");
+      const accClaimed = /\b(?:all ([\d,]+)|([\d,]+) of [\d,]+) accounts/.exec(tbl.foot[0] ?? "");
       if (!accClaimed) return false;
-      const drawnAccounts = new Set(tbl.rows.map((r) => r.accountId).filter(Boolean)).size;
+      const drawnAccounts = new Set(tbl.rows.flatMap((r) => r.accountIds)).size;
       return Number(rowsClaimed.replace(/,/g, "")) === tbl.rows.length
         && d.rows === tbl.rows.length && trades === d.trades
         && d.accounts === drawnAccounts
-        && Number(accClaimed[1].replace(/,/g, "")) === drawnAccounts;
+        && Number((accClaimed[1] ?? accClaimed[2]).replace(/,/g, "")) === drawnAccounts;
     }],
     /**
      * ── THE REALISED TOTAL IS THE STATEMENTS' OWN (A-08) ──────────────────────
@@ -23953,6 +23964,27 @@ const INVARIANTS = {
       return ctx.mineRows.length === CAPITAL_GROUPS.rows
         && new Set(ctx.mineRows.map((r) => r.accountId)).size === FUNDED_ACCOUNTS
         && CAPITAL_GROUPS.accounts === FUNDED_ACCOUNTS;
+    }],
+    /**
+     * ...AND EVERY ACCOUNT IN THE BOOK IS IN THE TABLE (16 November 2026).
+     *
+     *   *"why is transaction only showing … 68 of 95 accounts — it should show all"*
+     *
+     * Struck against the book's own account ids, read off `glowData.ts`, so a
+     * table that quietly dropped one cannot agree with its own footer. A listed
+     * row carries no dated half (neither handle) and every dash on it a reason;
+     * the footer says "all N accounts" and its handle counts every one.
+     */
+    ["every account in the book is in the table, listed where nothing is dated", (t, ctx) => {
+      const tbl = ctx.datedTable;
+      if (!BOOK_ACCOUNT_IDS) return { notChecked: "the book's accounts could not be read" };
+      if (!tbl?.rows?.length || !tbl.footData) return false;
+      const drawn = new Set(tbl.rows.flatMap((r) => r.accountIds));
+      const listed = tbl.rows.filter((r) => r.listed);
+      return BOOK_ACCOUNT_IDS.every((id) => drawn.has(id)) && drawn.size === BOOK_ACCOUNT_IDS.length
+        && tbl.footData.accounts === BOOK_ACCOUNT_IDS.length
+        && new RegExp(`\\ball ${BOOK_ACCOUNT_IDS.length} accounts\\b`).test(tbl.foot[0] ?? "")
+        && listed.length > 0 && listed.every((r) => !r.capital && !r.trades && r.accountIds.length === 1);
     }],
 
     /**
@@ -42092,6 +42124,11 @@ for (const theme of THEMES) {
             last: tr.getAttribute("data-dated-last") ?? "",
             capital: tr.hasAttribute("data-mine-row"),
             accountId: tr.getAttribute("data-mine-row"),
+            // EVERY BOOK ACCOUNT THE ROW DRAWS — its own, or those whose trades
+            // a security row carries — and whether it is LISTED with no dated
+            // record at all (16 Nov 2026: every account has a row).
+            accountIds: (tr.getAttribute("data-dated-account-ids") ?? "").split(";").filter(Boolean),
+            listed: tr.hasAttribute("data-dated-listed"),
             trades: tr.hasAttribute("data-trades"),
             windowed: tr.hasAttribute("data-mine-windowed"),
             // The ONE LINE this row is drawn under, where two or more accounts
