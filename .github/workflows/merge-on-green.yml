@@ -1,0 +1,51 @@
+name: Merge on green
+
+# The family, 16 Nov 2026: "Automatically merge once done always". main has no
+# required checks, so GitHub's own auto-merge has nothing to wait for. CI's own
+# last job merges a labelled PR once its jobs all pass (ci.yml › merge-on-green).
+# This workflow runs the same sweep from main whenever CI completes or a PR is
+# labelled. That covers branches cut before that job existed and a label added
+# after CI passed. .github/scripts/merge-on-green.sh holds every rule (Stage 10ou).
+#
+# Both triggers run main's copy of this file with main's checkout. Neither checks
+# out nor runs the pull request's code. A merge made with GITHUB_TOKEN starts no
+# workflow, so CI does not re-run on main afterwards (the bots' pushes already
+# work that way). The Cloudflare Pages deploy runs off GitHub's push webhook, so
+# it still follows every merge.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  pull_request_target:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+  checks: read
+  statuses: read
+
+concurrency:
+  group: merge-on-green-sweep
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')
+      || (github.event_name == 'pull_request_target' && github.event.label.name == 'automerge')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: .github/scripts
+      - name: Squash-merge every labelled pull request whose checks have passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha }}
+        run: bash .github/scripts/merge-on-green.sh

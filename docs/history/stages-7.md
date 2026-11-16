@@ -54,7 +54,21 @@
 - *"These i buttons are not working please fix i dont see a popup on how this was calculated"* — Home's ⓘ was a `title` attribute: no click, a slow native hover. It is now `Hint` in `src/components/HomeMetric.tsx` (with `Metric`): a button that opens a popover on click or tap, and on a mouse hover after 150 ms; Escape, an outside click or a scroll closes it (Escape closes it before the widget library's dialog). It uses the Popover API's top layer, so neither a card's `overflow` nor the library dialog clips it, and it stays in Home's DOM for its colours. A tile showing — puts its reason behind its ⓘ too.
 - *"Also need the gains breakdown widget … these two widgets … this widget also in the library but inr"* — Gains Breakdown – YTD (`HomeGainsBreakdown`): the YTD card's own records grouped by member or by asset class, so the bars add up to its gain (checked in `check-home-overview.mjs`); Equity TWR (`HomeEquityTwr`): the Equity row's Adjusted TWR (YTD, INR) from `useAdjustedTwrColumns` on the asset class axis, ending on Home's end date; Value by Sector (`HomeSectorBars`): Stock Sector Breakdown's rows as columns. Equity Value is Total Equity (its description now says so); no change-since-date line, because history does not split mixed accounts by class.
 
-### Stage 10ou — Export report: a Summary report or a Detailed report
+### Stage 10ou — Merge on green: a labelled PR merges itself when CI passes
+
+- *"Automatically merge once done always"* — the family, 16 Nov 2026. `main` has no required checks, so GitHub's auto-merge refuses ("unstable status": nothing to wait for). The sessions can't watch CI, so finished PRs waited on a button.
+- Any open PR into `main` labelled **`automerge`** is squash-merged (`--match-head-commit`) once CI on its exact head has passed. Two callers run one sweep (`.github/scripts/merge-on-green.sh`, dry locally with `DRY_RUN=1`):
+  - CI's last job, `merge-on-green`, which `needs` every other job;
+  - `.github/workflows/merge-on-green.yml`, run from main when CI completes or a PR is labelled. That covers branches cut before the job existed and a label added late.
+- The sweep skips drafts, forks, PRs whose CI hasn't passed, and conflicts (Auto-fix wakes the owner for those). The PR whose CI just finished gets a comment instead of a merge if:
+  - another check hasn't passed;
+  - `main` changed a **generated** file it also changes (glowData, reports, `public/audit/`, `check-pages.mjs`);
+  - `main` already has its stage letter, read from GitHub.
+- Ordinary files and the stage notes every PR appends are not "overlap". A rule on them would hold every PR after any merge.
+- CI's merge job has no concurrency group: GitHub cancels a pending job in a group, and that would turn the CI run red. Racing sweeps are safe.
+- A GITHUB_TOKEN merge starts no workflow, so CI does not re-run on `main` afterwards, as with the bots' pushes. The Cloudflare Pages deploy follows the push webhook, so it still runs.
+
+### Stage 10ov — Export report: a Summary report or a Detailed report
 
 - *"Give the option to have a Summary Report or a Detailed Report … in Summary Report everything will be same as the Detailed Report but none of the detailed tables will be there"* — the family, 16 Nov 2026. The Export report modal (Home and Morning CIO) now opens with a Report type choice: two radio cards, Summary and Detailed, above the period. Detailed stays the default and the last choice is kept for the session. Focus opens on the chosen card. Before this, `showModal()` sent focus to the close button, so the period select's `autoFocus` never took effect.
 - `exportCioReport(snapshot, edition)` draws the same pages and figures for both. Summary leaves out only the holding-by-holding tables: Equity Holdings, each category's holdings page, Private Investments – Holdings, Private Investments – Activity Overview, the Cash Holdings table (its chart stays) and Cash Flows – Selected Period. It keeps Portfolio Overview, Asset Table, Performance by Asset Class & Mandate, the benchmark page, the Equity and Private Equity charts with Capital Deployment, Returns & Coverage and Report Notes. The cover, every page header, the preview toolbar, the PDF title and the filename name the edition. Measured on the whole family, QTD: Summary 11 pages, Detailed 34.
