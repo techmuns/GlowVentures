@@ -31,7 +31,7 @@
 
 - *"what the hell is Numbers unavailable · Retry please remove"* — the family, 16 Nov 2026. The red line sat in the shared Export Excel toolbar (`ExportableTable`) whenever the background read of `/api/table-inputs` failed, including a refresh on window focus after the numbers had already loaded. It is gone. The index strip's saved-numbers notice (`EnteredNumbersNotice`) still reports a failed load and keeps its Retry; Edit numbers and Upload Excel, dimmed while the numbers load or after a failed read, carry the reason as their hover. `src/components/ExportableTable.tsx`.
 
-### Stage 10oo — The index strip runs every benchmark as a TV-style ticker
+### Stage 10oq — The index strip runs every benchmark as a TV-style ticker
 
 - *"Add all benchmarks here and make it moving strip like they have in TV"* (16 Nov 2026). The strip now carries all seven
   benchmarks in `BENCHMARKS`: the family's four first, as they named them, then Nifty Next 50, Sensex and BSE 500
