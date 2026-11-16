@@ -113,6 +113,16 @@ export type TxnSections = {
    * the line's, never the bucket's mix.
    */
   forAccount: (axis: GroupAxis, accountId: string, securityKey?: string | null) => string;
+  /**
+   * WHERE AN ACCOUNT'S VALUE SITS, SECTION BY SECTION — for an account the
+   * Transactions table lists with no dated record, whose row carries only what
+   * it is worth today (`withEveryAccount`). Value is a fact about each HOLDING,
+   * so it is filed the way the Holdings table files it: a demat holding listed
+   * shares and an ETF is one part under each heading, never one row under "not
+   * classified". An account with no position is one part, valued null, filed by
+   * `forAccount`.
+   */
+  partsOfAccount: (axis: GroupAxis, accountId: string) => { section: string; value: number | null }[];
 };
 
 /**
@@ -244,7 +254,23 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
     return keys.size === 1 ? [...keys][0] : TXN_UNSECTIONED;
   };
 
-  return { forTxn, forAccount };
+  const partsOfAccount = (axis: GroupAxis, accountId: string): { section: string; value: number | null }[] => {
+    const all = byAccount.get(accountId) ?? [];
+    if (!all.length) return [{ section: forAccount(axis, accountId), value: null }];
+    // A ₹0 line beside held ones decides no section, as in `forAccount`; an
+    // account holding only ₹0 lines is ONE row, its measured zero, filed where
+    // `forAccount` files it — not a ₹0 under every heading it once held.
+    const held = all.filter((p) => p.marketValue !== 0);
+    if (!held.length) return [{ section: forAccount(axis, accountId), value: 0 }];
+    const by = new Map<string, number>();
+    for (const p of held) {
+      const k = groupKeyFor(axis, idx, p);
+      by.set(k, (by.get(k) ?? 0) + p.marketValue);
+    }
+    return [...by].map(([section, value]) => ({ section, value }));
+  };
+
+  return { forTxn, forAccount, partsOfAccount };
 }
 
 /**
