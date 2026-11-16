@@ -22,6 +22,8 @@ export type ReportHolding = { name: string; category: string; sector: string; va
   cost: number | null; unrealised: number | null; pct: number | null; weight: number;
   accounts: number; atCost: boolean; dates: string; assetClasses: string[]; private: boolean };
 export type CioReportSnapshot = ReturnType<typeof cioReportSnapshot>;
+/** Summary carries every figure, chart and summary table; Detailed adds the holding-by-holding tables. */
+export type ReportEdition = 'summary' | 'detailed';
 
 /** All inputs come from the selected Morning CIO model. No sample figures or DOM scraping. */
 export function cioReportSnapshot({ portfolio, positions, summary, scope, currency, convert, period, selected, now = new Date() }: {

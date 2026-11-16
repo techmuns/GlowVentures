@@ -1,29 +1,44 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Download, FileDown, Loader2, X } from 'lucide-react';
-import type { CioReportSnapshot } from '@/lib/cioReport';
+import type { CioReportSnapshot, ReportEdition } from '@/lib/cioReport';
 import { REPORT_PERIODS, reportPeriod, reportToday, type ReportPeriod } from '@/lib/cioReportPeriod';
 
 const PdfPreview = lazy(() => import('./PdfPreview'));
 type Result = { url: string; filename: string; pages: number; bytes: number };
+const EDITIONS: [ReportEdition, string, string][] = [
+  ['summary', 'Summary report', 'Charts and summary tables'],
+  ['detailed', 'Detailed report', 'Adds holding-by-holding tables'],
+];
+const editionLabel = (e: ReportEdition) => EDITIONS.find(([v]) => v === e)![1];
 
-function ReportOptions({ initial, preview, close }: { initial: ReportPeriod; preview: (period: ReportPeriod) => void; close: () => void }) {
+function ReportOptions({ initial, initialEdition, preview, close }: { initial: ReportPeriod; initialEdition: ReportEdition;
+  preview: (period: ReportPeriod, edition: ReportEdition) => void; close: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const today = reportToday();
+  const [edition, setEdition] = useState(initialEdition);
   const [key, setKey] = useState(initial.key);
   const [year, setYear] = useState(Number(initial.from?.slice(0, 4) ?? today.slice(0, 4)));
   const [quarter, setQuarter] = useState(Math.ceil(Number(initial.from?.slice(5, 7) ?? today.slice(5, 7)) / 3));
   const [from, setFrom] = useState(initial.from ?? '');
   const [to, setTo] = useState(initial.to);
   const [failure, setFailure] = useState('');
-  useEffect(() => { dialog.current?.showModal(); }, []);
+  // showModal() moves focus to the first control (the close button), so focus the chosen report type after it.
+  useEffect(() => { dialog.current?.showModal(); dialog.current?.querySelector<HTMLInputElement>('input[name="cio-report-edition"]:checked')?.focus(); }, []);
   let chosen: ReportPeriod | undefined, error = '';
   try { chosen = reportPeriod(key, { today, year, quarter, from, to }); } catch (e) { error = (e as Error).message; }
-  return createPortal(<dialog ref={dialog} onCancel={close} aria-label="Choose report period" className="cio-report-options" data-cio-report-options>
-    <form onSubmit={e => { e.preventDefault(); if (chosen) { try { preview(chosen); } catch { setFailure('The selected records could not be prepared. Please retry.'); } } }}>
-      <div className="cio-report-options-heading"><div><strong>Export report</strong><p>Choose the period for your family office review.</p></div>
+  return createPortal(<dialog ref={dialog} onCancel={close} aria-label="Choose report type and period" className="cio-report-options" data-cio-report-options>
+    <form onSubmit={e => { e.preventDefault(); if (chosen) { try { preview(chosen, edition); } catch { setFailure('The selected records could not be prepared. Please retry.'); } } }}>
+      <div className="cio-report-options-heading"><div><strong>Export report</strong><p>Choose the report and period for your family office review.</p></div>
         <button type="button" onClick={close} aria-label="Close report options"><X size={20} /></button></div>
-      <label>Reporting period<select autoFocus value={key} onChange={e => {
+      <fieldset className="cio-report-edition" data-cio-report-edition={edition}>
+        <legend>Report type</legend>
+        <div className="cio-report-edition-options">{EDITIONS.map(([value, label, hint]) =>
+          <label key={value}><input type="radio" name="cio-report-edition" value={value} checked={edition === value}
+            onChange={() => setEdition(value)} data-cio-report-edition-option={value} />
+            <span className="cio-report-edition-dot" aria-hidden /><span><strong>{label}</strong><small>{hint}</small></span></label>)}</div>
+      </fieldset>
+      <label>Reporting period<select value={key} onChange={e => {
         const next = e.target.value; setKey(next); setFailure('');
         if (next === 'fy') setYear(Number(today.slice(0, 4)) - (Number(today.slice(5, 7)) < 4 ? 1 : 0));
         else if (next === 'quarter' || next === 'year') setYear(Number(today.slice(0, 4)));
@@ -45,7 +60,7 @@ function ReportOptions({ initial, preview, close }: { initial: ReportPeriod; pre
   </dialog>, document.body);
 }
 
-function ReportDialog({ snapshot, close, change }: { snapshot: CioReportSnapshot; close: () => void; change: () => void }) {
+function ReportDialog({ snapshot, edition, close, change }: { snapshot: CioReportSnapshot; edition: ReportEdition; close: () => void; change: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [result, setResult] = useState<Result>();
   const [error, setError] = useState('');
@@ -54,20 +69,20 @@ function ReportDialog({ snapshot, close, change }: { snapshot: CioReportSnapshot
   useEffect(() => {
     let active = true, url: string | undefined;
     setResult(undefined); setError('');
-    void import('@/lib/exportCioReport').then(m => m.exportCioReport(snapshot)).then(r => {
+    void import('@/lib/exportCioReport').then(m => m.exportCioReport(snapshot, edition)).then(r => {
       if (!active) return;
       url = URL.createObjectURL(r.blob);
       setResult({ url, filename: r.filename, pages: r.pages, bytes: r.blob.size });
     }).catch(() => { if (active) setError('The report could not be prepared. Please retry.'); });
     return () => { active = false; if (url) URL.revokeObjectURL(url); };
-  }, [snapshot, attempt]);
+  }, [snapshot, edition, attempt]);
   return createPortal(<dialog ref={dialog} onCancel={close} aria-label="Family office report preview"
     className="cio-report-dialog" data-cio-report-preview>
     <div className="cio-report-toolbar">
       <div><strong>{snapshot.brand.name} · {snapshot.period.title}</strong>
-        <small>{snapshot.period.label} · {snapshot.scope} · {snapshot.currency} · Prepared by {snapshot.brand.provider}{result ? ` · ${result.pages} pages` : ''}</small></div>
+        <small>{editionLabel(edition)} · {snapshot.period.label} · {snapshot.scope} · {snapshot.currency} · Prepared by {snapshot.brand.provider}{result ? ` · ${result.pages} pages` : ''}</small></div>
       <div className="cio-report-actions">
-        <button type="button" onClick={change}>Change period</button>
+        <button type="button" onClick={change}>Change options</button>
         {result && <a href={result.url} download={result.filename} className="cio-report-download"><Download size={15} /> Download PDF</a>}
         <button type="button" onClick={close} aria-label="Close report preview"><X size={20} /></button>
       </div>
@@ -87,6 +102,7 @@ export function CioReportExport({ snapshot }: { snapshot: (period: ReportPeriod)
   const button = useRef<HTMLButtonElement>(null);
   const [options, setOptions] = useState(false);
   const [period, setPeriod] = useState(() => reportPeriod('qtd'));
+  const [edition, setEdition] = useState<ReportEdition>('detailed');
   const [captured, setCaptured] = useState<CioReportSnapshot>();
   const close = () => { setOptions(false); setCaptured(undefined); requestAnimationFrame(() => button.current?.focus()); };
   return <>
@@ -94,7 +110,8 @@ export function CioReportExport({ snapshot }: { snapshot: (period: ReportPeriod)
       title="Preview and download a colour PDF with your family's current figures" data-cio-export-report>
       <FileDown size={15} /> Export report
     </button>
-    {options && <ReportOptions initial={period} close={close} preview={p => { const value = snapshot(p); setPeriod(p); setOptions(false); setCaptured(value); }} />}
-    {captured && <ReportDialog snapshot={captured} close={close} change={() => { setCaptured(undefined); setOptions(true); }} />}
+    {options && <ReportOptions initial={period} initialEdition={edition} close={close}
+      preview={(p, e) => { const value = snapshot(p); setPeriod(p); setEdition(e); setOptions(false); setCaptured(value); }} />}
+    {captured && <ReportDialog snapshot={captured} edition={edition} close={close} change={() => { setCaptured(undefined); setOptions(true); }} />}
   </>;
 }
