@@ -75,7 +75,7 @@ import { SourceValue } from '@/components/SourceTrace';
 // Market fund table now. Everything that used to be defined here moved verbatim;
 // this page supplies only how one of ITS rows resolves a measure.
 import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasureSelect";
-import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta, returnGapLabel } from "@/lib/returnColumns";
+import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta } from "@/lib/returnColumns";
 import { datedButUnvalued } from "@/lib/holdingFlows";
 import { useDatedCapital } from "@/lib/useDatedCapital";
 import { BenchLine, useBenchmarkLevels } from "@/components/HoldingBenchmark";
@@ -3103,7 +3103,7 @@ export function PortfolioMonitor() {
           {res.shown && res.assumed && <AssumedMark note={res.note} />}
           {res.shown
             ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
-            : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />}
+            : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} />}
         </span>
         {res.shown && hb && <BenchLine hb={hb} fig={benchFigure(hb, res, inp, portfolio.asOf, ps, bench?.legs)} holdingPct={res.pct} />}
       </span>
@@ -5387,7 +5387,7 @@ export function PortfolioMonitor() {
                           // Tag "HPR" is always the raw return on cost (res.pct === returnPct),
                           // so its audit popover ties to the workbook; CAGR/other are derived.
                           const value = !res.shown
-                            ? res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />
+                            ? res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} />
                             : res.tag === "HPR" && !r.live
                               ? <Auditable formula={returnFormula(pnlValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed, income: r.fifo.income,
                                   capital: m && r.fifo.wholeMandates.length ? { value: r.fifo.marketValue, contributed: r.fifo.wholeContributed, withdrawn: r.fifo.wholeWithdrawn } : null } : undefined)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>

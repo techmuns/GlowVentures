@@ -46,7 +46,7 @@ import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 import type { Position, RecoveredHoldingCost } from "./types";
 import { bonusPurchaseDates } from "./investedOn";
 
-export type HoldingFlowBasis = "trades" | "lots" | "recovered";
+export type HoldingFlowBasis = "trades" | "lots" | "recovered" | "review";
 
 export type HoldingFlows =
   | {
@@ -129,8 +129,15 @@ export function holdingFlowsOf(p: Position, asOf: string | null): HoldingFlows |
    * adds units and no money — so the buys ARE every rupee that went in, exactly
    * as `bonusPurchaseDates` already reconciles them for Invested on (ZF Commercial,
    * Sharda Motor, Time Technoplast). The dividends are the window's, as below.
+   *
+   * …OR A SPLIT (Stage 10ot). `actionRecord` replays the same trades through
+   * the NSE capture's splits and bonuses to exactly the units held (Stage 10ly),
+   * and a split, like a bonus, moves units and no money: V2 Retail, Nuvama. A
+   * DEMERGER stays out — the money a demerged unit stands for was paid for its
+   * parent, so the child's own trades are not every rupee behind it.
    */
-  const bonused = r && r.unaccounted !== 0 && bonusPurchaseDates(p) !== null;
+  const splitOnly = !!p.actionRecord?.actions.length && p.actionRecord.actions.every((a) => a.kind === "split" || a.kind === "bonus");
+  const bonused = r && r.unaccounted !== 0 && (bonusPurchaseDates(p) !== null || (splitOnly && r.unaccounted !== null));
   if (r && (r.unaccounted === 0 || bonused)) {
     const trades = (BOOK_HOLDING_TRADES[key] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
     if (!trades.length) return null;
@@ -179,6 +186,114 @@ export function holdingFlowsOf(p: Position, asOf: string | null): HoldingFlows |
       since: trades.find((x) => x.side === "buy")?.date ?? trades[0].date,
       ...end,
     };
+  }
+  /**
+   * …OR THE REVIEW'S DATED PURCHASES, CARRIED THROUGH THE ACCOUNT'S OWN TRADES
+   * (Stage 10ot). Stage 10ms proved these rows are exactly the units held, and
+   * they print what was paid and received on each day — Man Industries, Deepak
+   * Fertilisers, Kingfa, Vedanta at HDFC Securities. The statement's cost still
+   * strikes the HPR.
+   */
+  const review = reviewRecordOf(p);
+  if (review && asOf) {
+    const end = closeAt(asOf, review.at(-1)!.date);
+    if (!end) return null;
+    const trades = review.filter((x) => x.side !== "income");
+    return {
+      dated: true, basis: "review",
+      flows: review.map((x) => ({ date: x.date, amount: x.side === "buy" ? -x.amount : x.amount })),
+      payments: trades.length,
+      since: trades.find((x) => x.side === "buy")?.date ?? trades[0].date,
+      ...end,
+    };
+  }
+  return null;
+}
+
+/** The review's dated money for this line, where Stage 10ms proved it is exactly the units held. */
+function reviewRecordOf(p: Position): NonNullable<NonNullable<Position["reviewPurchases"]>["cashRecord"]> | null {
+  const r = p.reviewPurchases;
+  if (!r || r.reason || !r.cashRecord?.length || !r.unitRecord?.length || p.rolledForward || p.quantity == null) return null;
+  if (Math.abs((r.units ?? NaN) - p.quantity) > .0005 || Math.abs(r.unitRecord.at(-1)!.units - p.quantity) > .0005) return null;
+  return r.cashRecord;
+}
+
+/**
+ * ── EVERY UNIT AND EVERY RUPEE OF A LINE, ON ONE RECORD (Stage 10ot) ────────
+ *
+ *   *"why are you still showing things like No buy/sell dates — No 1 Jan value,
+ *    didnt we decide the full logic"* — the family, 16 Nov 2026.
+ *
+ * We did (Stage 10jo, 30 Oct): a listed share or fund whose every purchase and
+ * sale is dated — by its account's TRADES, its LOT REGISTER or a reconciled
+ * PURCHASE RECORD — opens its YTD on the units the record shows on 1 January at
+ * 31 December's close. Only the purchase record was ever wired to the YTD. This
+ * is the one answer for all of them (and for the review's rows, Stage 10ot):
+ * the units held after each dated row, the money of each row, from the day the
+ * record proves the holding held nothing (`knownFrom`) to the statement it ties
+ * to (`asOf`, `quantity`). `incomeThrough` is the last day the record's own
+ * dividends cover; after it — or throughout, where null — a reader asks the
+ * action feed. Null wherever the record does not date every unit and rupee:
+ * the same gates `holdingFlowsOf` strikes an XIRR on.
+ */
+export type DatedUnitRecord = {
+  basis: HoldingFlowBasis;
+  asOf: string; quantity: number;
+  /** Nothing was held before this day (the record's own proof); a record from inception carries the earliest day. */
+  knownFrom: string;
+  unitRecord: { date: string; units: number }[];
+  cashRecord: { date: string; side: "buy" | "sell" | "income"; amount: number }[];
+  incomeThrough: string | null;
+};
+
+const FROM_INCEPTION = "0001-01-01";
+const unitsAfter = (rows: readonly { date: string; delta: number }[]) => {
+  const steps = new Map<string, number>();
+  let held = 0;
+  for (const r of rows) { held = Math.round((held + r.delta) * 1e6) / 1e6; steps.set(r.date, held); }
+  return [...steps.entries()].map(([date, units]) => ({ date, units }));
+};
+
+export function datedUnitRecordOf(p: Position, asOf: string | null): DatedUnitRecord | null {
+  if (p.quantity == null || !(p.quantity > 0) || p.rolledForward) return null;
+  const quantity = p.quantity;
+  // A RECONCILED PURCHASE RECORD (Stage 10jf/10jo) — first, so the YTDs it has
+  // struck since 30 Oct stand exactly as they were.
+  const rec = recordedHoldingOf(p);
+  if (rec?.unitRecord?.length && rec.cashRecord?.length) {
+    return { basis: "recovered", asOf: rec.asOf, quantity: rec.quantity, knownFrom: FROM_INCEPTION, unitRecord: rec.unitRecord, cashRecord: rec.cashRecord,
+      incomeThrough: rec.cashRecord.some((x) => x.side === "income") ? rec.asOf : null };
+  }
+  const key = keyOf(p);
+  const income = BOOK_HOLDING_INCOME[key] ?? [];
+  if (income.some((x) => !x.date)) return null;
+  // ITS ACCOUNT'S TRADES, WHERE THEY HOLD EVERY UNIT: the window opened at nil
+  // (`unaccounted === 0` is that arithmetic, Stage 10fm), so it is known from its first day.
+  const r = p.tradeRecord;
+  if (r && r.unaccounted === 0) {
+    const trades = (BOOK_HOLDING_TRADES[key] ?? []).filter((t) => t.date >= r.from && t.date <= r.to).sort((a, b) => a.date.localeCompare(b.date));
+    if (!trades.length || trades.some((t) => t.amount === null || t.quantity === null)) return null;
+    const own = income.filter((x) => x.date! >= r.from && x.date! <= r.to).map((x) => ({ date: x.date!, side: "income" as const, amount: x.amount }));
+    return { basis: "trades", asOf: r.to, quantity, knownFrom: r.from,
+      unitRecord: unitsAfter(trades.map((t) => ({ date: t.date, delta: (t.side === "buy" ? 1 : -1) * t.quantity! }))),
+      cashRecord: [...trades.map((t) => ({ date: t.date, side: t.side, amount: t.amount! })), ...own].sort((a, b) => a.date.localeCompare(b.date)),
+      incomeThrough: own.length ? r.to : null };
+  }
+  // ITS LOT REGISTER, WHERE NO UNIT WAS SOLD — the gate the lots XIRR stands on.
+  const lots = BOOK_HOLDING_LOTS[key];
+  if (p.heldSince && lots?.length && asOf && !((p.costOfUnitsSold ?? 0) > 0)) {
+    if (lots.some((l) => l.quantity == null) || Math.abs(lots.reduce((n, l) => n + l.quantity!, 0) - quantity) > .0005) return null;
+    const own = income.filter((x) => x.date! >= lots[0].date && x.date! <= asOf).map((x) => ({ date: x.date!, side: "income" as const, amount: x.amount }));
+    return { basis: "lots", asOf, quantity, knownFrom: FROM_INCEPTION,
+      unitRecord: unitsAfter(lots.map((l) => ({ date: l.date, delta: l.quantity! }))),
+      cashRecord: [...lots.map((l) => ({ date: l.date, side: "buy" as const, amount: l.cost })), ...own].sort((a, b) => a.date.localeCompare(b.date)),
+      incomeThrough: own.length ? asOf : null };
+  }
+  // THE REVIEW'S ROWS (Stage 10ot), closing on the holding statement they tie to.
+  const review = reviewRecordOf(p);
+  if (review && asOf) {
+    return { basis: "review", asOf, quantity, knownFrom: FROM_INCEPTION, unitRecord: p.reviewPurchases!.unitRecord!, cashRecord: review,
+      incomeThrough: p.reviewPurchases!.incomeThrough ?? null };
   }
   return null;
 }

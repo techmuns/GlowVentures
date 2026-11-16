@@ -89,37 +89,17 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
 };
 
 /**
- * ── WHY A RETURN CELL IS BLANK, IN A FEW WORDS (Stage 10jm) ─────────────────
+ * ── A BLANK RETURN CELL IS A BARE DASH, ITS CAUSE IN THE HOVER (Stage 10ot) ──
  *
- *   *"in the blank you can simple write - No buy/sell date"* — the family.
+ *   *"why are you still showing things like No buy/sell dates — No 1 Jan value
+ *    didnt we decide the full logic"* — the family, 16 Nov 2026.
  *
- * A dash alone read as a broken feed. The cell now names its cause in a few
- * words; the full reason stays its hover. Read off the reason `measuredReturn`
- * gives, most specific cause first.
+ * Stage 10jm put a few words beside each dash ("No buy/sell dates", "No 1 Jan
+ * value"). On 12 Nov the family asked for the index line's gap words to go
+ * (*"remove all fluff"*, Stage 10nt) and the return cells kept theirs; the two
+ * now follow the one rule — the dash alone, the full reason as its hover
+ * (`AbsentCell`'s `title`), exactly as `data-bench-reason` does for the index.
  */
-const GAP_LABELS: [RegExp, string][] = [
-  [/prices are still loading/i, "Loading prices"],
-  // The review dates the money by month only (Stage 10mp) — the row's Invested on shows that span.
-  [/only as a span/i, "Date range only"],
-  [/only as a month/i, "Month only"],
-  [/sale proceeds|sale amount|proceeds are unverified/i, "Sale amount missing"],
-  [/no statement values the units it holds now/i, "No dated price"],
-  [/sale after its statement|newer holding statement|later sales/i, "Needs newer statement"],
-  [/different dates/i, "Valued on different dates"],
-  // YTD's own cause leads its cells: the value it would start from is missing.
-  [/1 January/i, "No 1 Jan value"],
-  [/held at cost|only the purchase cost|dated valuation from the company or fund|no statement values (this|it)/i, "No valuation"],
-  [/no statement in this book reports a cost|purchase cost is missing|no cost/i, "No cost"],
-  [/only through funds|derived/i, "Held via funds"],
-  [/holds nothing|nil balance/i, "Holds nothing"],
-  [/total loss/i, "Total loss"],
-  [/several dates|several purchases|bought on several dates|partly sold|money-weighted rate for this row is XIRR/i, "Several buys — see XIRR"],
-  [/do not solve|do not yield/i, "No solution"],
-  [/later trades|does not reach|reaches inception|record ends|before the .* statement|understated|settled amount|carries no date/i, "Dates incomplete"],
-  [/purchase date|when this holding was bought|no dated|every cash flow|dated payments|dated record|dated trades|capital is known only as a total/i, "No buy/sell dates"],
-];
-export const returnGapLabel = (reason: string | null | undefined): string =>
-  GAP_LABELS.find(([re]) => re.test(reason ?? ""))?.[1] ?? "Not available";
 
 /**
  * ── WHAT A RETURN COLUMN COVERS, AND WHY IT COVERS NO MORE ────────────────

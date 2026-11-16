@@ -184,13 +184,54 @@ export function reviewPurchaseDates({ accountId, ownerId, holding, asOf, window,
   }
 
   const dates = lots.map((l) => l.date).sort();
+  const record = datedMoneyOf({ events, later, income: rows.filter((r) => r.txn === "Div / Int"), closing });
   return {
     first: dates[0], last: dates.at(-1), lots: lots.length, units,
     closing: { date: closing.date, units: closing.qty }, through,
     sales: later.filter((t) => t.side === "sell").length,
     longTermUnits,
     lotCost: Math.round(lotCost * 100) / 100,
+    ...record,
     evidence: { path: workbook, sheet: "Transactions since inception", rows: [...events.map((r) => r.row), closing.row].sort((a, b) => a - b) },
     reviewAsOf: REVIEW_AS_OF,
+  };
+}
+
+/**
+ * ── THE SAME ROWS AS DATED MONEY (Stage 10ot) ───────────────────────────────
+ *
+ *   *"not accounting for those in our calculations, even though we already
+ *    have them in the files"* — the family, 12 Nov 2026 (Stage 10mx); and on
+ *   16 Nov, of Man Industries' XIRR and YTD: *"didnt we decide the full logic"*.
+ *
+ * The rows that prove the units also say what was paid and received on each
+ * day: the review's purchases and sales to its Closing at their own amounts,
+ * its "Div / Int" receipts, and the account's own trades after it. That is the
+ * record a money-weighted return and a year to date read (`holdingFlows.ts`,
+ * `ytdAvailable.ts`), exactly as a reconciled purchase record is (Stage 10jf).
+ * The statement's cost, value and date still stand for every other figure.
+ *
+ * `incomeThrough` is the last day the review's own receipts cover — its
+ * Closing — set only where it prints any; after it, a reader asks the action
+ * feed. Withheld (dates only) where a later sale prints no amount: its money
+ * would be a placeholder.
+ */
+function datedMoneyOf({ events, later, income, closing }) {
+  if (later.some((t) => !isNum(t.amount) || !(t.amount > 0))) return {};
+  if (income.some((r) => !r.date || r.date > closing.date || !isNum(r.value) || r.value < 0)) return {};
+  const rows = [
+    ...events.map((r) => ({ date: r.date, side: r.txn === "Purchase" ? "buy" : "sell", amount: Math.abs(r.value), units: r.qty, order: r.row })),
+    ...later.map((t, i) => ({ date: t.date, side: t.side, amount: t.amount, units: t.quantity, order: 1e9 + i })),
+  ].sort((a, b) => a.date.localeCompare(b.date) || a.order - b.order);
+  const receipts = income.filter((r) => r.value > 0).map((r) => ({ date: r.date, side: "income", amount: r.value }));
+  let held = 0;
+  const steps = new Map();
+  for (const r of rows) { held = r6(held + (r.side === "buy" ? r.units : -r.units)); steps.set(r.date, held); }
+  const r2 = (n) => Math.round(n * 100) / 100;
+  return {
+    cashRecord: [...rows.map(({ date, side, amount }) => ({ date, side, amount: r2(amount) })), ...receipts.map((x) => ({ ...x, amount: r2(x.amount) }))]
+      .sort((a, b) => a.date.localeCompare(b.date)),
+    unitRecord: [...steps.entries()].map(([date, units]) => ({ date, units })),
+    ...(receipts.length || income.length ? { incomeThrough: closing.date } : {}),
   };
 }

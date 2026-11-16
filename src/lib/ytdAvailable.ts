@@ -37,7 +37,7 @@ import type { ReturnGap, ReturnSelection, ReturnUnit } from './selectedSegmentRe
 import { ytdTagDay } from './analytics';
 import { OPENING_MARK_TOLERANCE_DAYS, measureWindow, windowReturns, type AccountInput, type AccountWindow } from './periodReturns';
 import { assumedHolding, assumedHoldingReturns, closeMarks, holdingAssumptionAnchor, holdingAssumptionText, publishedClose, type AssumedReturnBook } from './assumedHoldingReturns';
-import { recordedHoldingOf } from './holdingFlows';
+import { datedUnitRecordOf, type HoldingFlowBasis } from './holdingFlows';
 import { projectActions } from './corporateActions';
 import { earlierBalanceOptions, statementNavWindow, tradedWindow } from './periodRules';
 
@@ -64,7 +64,9 @@ export type YtdFrom =
  * statement the book holds outside every return); `unit` is a holding's window
  * as the pooled surfaces carry it, with the assumption it rests on.
  */
-export type YtdFound = { window: AccountWindow; owner?: string; recorded?: boolean; unit?: ReturnUnit }
+export type YtdFound = { window: AccountWindow; owner?: string;
+    /** The record that dates the units held on the opening day (Stage 10jo, 10ot). */
+    recorded?: HoldingFlowBasis; unit?: ReturnUnit }
   | { reason: string; pending?: boolean; outside?: boolean;
     /** The price source's own answer, where its history did not load (Stage 10lg). */
     detail?: string };
@@ -80,8 +82,16 @@ export type YtdBook = {
   holding: (p: Position) => YtdFound;
 };
 
+/** Whose record dates the units held on the opening day — named in the cell's hover. */
+const RECORD_WORDS: Record<HoldingFlowBasis, string> = {
+  recovered: 'its reconciled purchase record',
+  trades: "its account's dated trades",
+  lots: 'its lot register',
+  review: "the family review's dated purchases and the account's own trades",
+};
 const longDay = (d: string) => `${ytdTagDay(d)} ${d.slice(0, 4)}`;
 const dayBefore = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) - 864e5).toISOString().slice(0, 10);
+const dayAfter = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) + 864e5).toISOString().slice(0, 10);
 /** How far apart a row's parts may be last valued and still be pooled — `OPENING_MARK_TOLERANCE_DAYS`' week. */
 const CLOSE_SPAN_DAYS = OPENING_MARK_TOLERANCE_DAYS;
 const sentence = (s: string) => { const t = s.trim(); return t ? `${t[0].toUpperCase()}${t.slice(1)}${/[.!?]$/.test(t) ? '' : '.'}` : t; };
@@ -94,7 +104,7 @@ type Found = YtdFound;
  *   *"ok i agree to what you recomend"* — the family, 30 Oct 2026: YTD for a
  *   listed holding from the shares held on 1 January at 31 December's close.
  *
- * A reconciled purchase record (`recordedHoldingOf`) dates every purchase and
+ * A reconciled purchase record (`datedUnitRecordOf`) dates every purchase and
  * sale of the units its statement holds, and its `unitRecord` says what was
  * held on 1 January. So the year opens on those units at the published close
  * on or before 31 December; this year's purchases and sales are money in and
@@ -110,10 +120,16 @@ type Found = YtdFound;
  * so every purchase and sale on it is money in and out.
  */
 function recordedYearWindow(p: Position, a: Account, openAt: string | null, end: string, b: AssumedReturnBook): Found | null {
-  const r = recordedHoldingOf(p);
-  if (!r?.unitRecord?.length || !r.cashRecord?.length) return null;
+  // EVERY RECORD THAT DATES EVERY UNIT AND RUPEE (Stage 10ot): the account's
+  // trades, a lot register and the review's rows open the year exactly as a
+  // reconciled purchase record has since Stage 10jo — the family's own rule.
+  const r = datedUnitRecordOf(p, a.asOf ?? null);
+  if (!r?.unitRecord.length || !r.cashRecord.length) return null;
   const yearOpen = openAt ?? dayBefore([...r.unitRecord, ...r.cashRecord].map((x) => x.date).sort()[0]);
   if (r.asOf <= yearOpen) return null;
+  // What 31 December held is on the record only from the day it proves nil:
+  // a trade window opening on 1 April cannot say (Gland Pharma's PMS tape).
+  if (r.knownFrom > dayAfter(yearOpen)) return null;
   const carried = assumedHolding(p, a, null, end, b);
   if ('gap' in carried) return carried.gap.pending ? { reason: carried.gap.reason, pending: true } : null;
   const { anchor, history: h, closing, incomeDates } = carried;
@@ -132,8 +148,11 @@ function recordedYearWindow(p: Position, a: Account, openAt: string | null, end:
   // THE DIVIDENDS THE RECORD DOES NOT DATE: each span of unchanged units asks
   // the action feed, as the carried part does. Anything it cannot vouch for
   // leaves the row on the caller's path rather than a return short of income.
-  if (h.basis !== 'nav' && !r.cashRecord.some((x) => x.side === 'income')) {
-    const cuts = [yearOpen, ...new Set(inYear.map((x) => x.date)), r.asOf].sort();
+  // A record whose own receipts run to `incomeThrough` asks only after it.
+  const covered = r.incomeThrough;
+  if (h.basis !== 'nav' && !(covered && covered >= r.asOf)) {
+    const from = covered && covered > yearOpen ? covered : yearOpen;
+    const cuts = [...new Set([from, ...inYear.map((x) => x.date).filter((d) => d > from), r.asOf])].sort();
     for (let i = 0; i + 1 < cuts.length; i++) {
       const units = heldOn(cuts[i]);
       if (!(units > 0) || cuts[i + 1] <= cuts[i]) continue;
@@ -163,7 +182,7 @@ function recordedYearWindow(p: Position, a: Account, openAt: string | null, end:
     assumption: { owner: a.owner, statementDate: anchor.date, quantity: anchor.quantity, source: h.source,
       opening: openValue, closing: closeValue, income: income.reduce((t, f) => t + f.amount, 0),
       incomeDates: income.map((f) => ({ date: f.date, amount: f.amount })) } };
-  return { owner: a.owner, recorded: true, window, unit };
+  return { owner: a.owner, recorded: r.basis, window, unit };
 }
 
 export function ytdBook({ inputs, held, accounts, end, assumptions, money, open: openAt,
@@ -270,7 +289,7 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open:
     const hit = rowMemo.get(ps);
     if (hit) return hit;
     const windows: AccountWindow[] = [], pooled: string[] = [], owners = new Set<string>();
-    let fromRecord = false;
+    const fromRecord = new Set<HoldingFlowBasis>();
     let refused: YtdFrom | null = null;
     const byAccount = new Map<string, Position[]>();
     for (const p of ps) (byAccount.get(p.accountId) ?? byAccount.set(p.accountId, []).get(p.accountId)!).push(p);
@@ -290,7 +309,7 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open:
         if (!(p.marketValue > 0) && !((p.quantity ?? 0) > 0)) continue;
         const hf = holdingWindow(p);
         const hw: Found = 'window' in hf && !fromYearOpen(hf.window) ? { reason: noYearOpen(hf.window) } : hf;
-        if ('window' in hw) { windows.push(hw.window); if (hw.owner) owners.add(hw.owner); if (hw.recorded) fromRecord = true; continue; }
+        if ('window' in hw) { windows.push(hw.window); if (hw.owner) owners.add(hw.owner); if (hw.recorded) fromRecord.add(hw.recorded); continue; }
         const lead = ps.length > 1 ? `${p.security}: ` : '';
         // Both open after 31 December: the holding's own first value says it once.
         const accountWhy = aw && 'reason' in aw && aw.reason && !(found && 'window' in found && 'window' in hf) ? aw.reason : '';
@@ -326,7 +345,7 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open:
         const assumed = owners.size > 0;
         out = { shown: true, pct: m.pct, from, to, fullYear, assumed, accounts: pooled, ...(bought ? { bought } : {}),
           note: `${!fullYear ? `From ${longDay(from)}, the first date with a dated value,` : bought ? `${periodLabel} — nothing was held on ${openLabel}; its money was first at work on ${longDay(bought)} —` : periodLabel} to ${longDay(to)} — not annualised. ${m.worked ?? ''}`.trim()
-            + (fromRecord ? ` The shares held on ${openLabel}, and this ${yearWord}'s purchases and sales, are from its reconciled purchase record.` : '')
+            + (fromRecord.size ? ` The shares held on ${openLabel}, and this ${yearWord}'s purchases and sales, are from ${[...fromRecord].map((b) => RECORD_WORDS[b]).join(' and ')}.` : '')
             + (assumed ? ` ${holdingAssumptionText([...owners].join(' and '))} Its units are valued at published closing prices from the statement's own date.` : '') };
       }
     }

@@ -272,6 +272,22 @@ const bonusMadeTheRest = (p: Position): boolean => {
   const bought = ts.reduce((n, t) => n + t.quantity!, 0);
   return Math.abs(bought * bonus.reduce((f, a) => f * a.factor!, 1) - p.quantity!) <= 0.0005;
 };
+/**
+ * …OR A SPLIT, LIKE A BONUS, MOVES UNITS AND NO MONEY (Stage 10ot): where the
+ * build's replay of the line's trades through its actions holds every unit and
+ * every action is a split or bonus, the trades are every rupee. A demerger's
+ * money was paid for its parent, so it never dates the child's.
+ */
+const splitMadeTheRest = (p: Position): boolean => {
+  const acts = p.actionRecord?.actions ?? [];
+  return acts.length > 0 && acts.every((a) => a.kind === "split" || a.kind === "bonus") && p.tradeRecord?.unaccounted != null;
+};
+/** The review's own rows carried through the account's trades to exactly the units held (Stage 10ms, 10ot). */
+const reviewMoneyOf = (p: Position) => {
+  const rv = p.reviewPurchases;
+  return rv && !rv.reason && rv.cashRecord?.length && rv.unitRecord?.length && !p.rolledForward && p.quantity != null
+    && Math.abs((rv.units ?? NaN) - p.quantity) <= .0005 && Math.abs(rv.unitRecord.at(-1)!.units - p.quantity) <= .0005 ? rv.cashRecord : null;
+};
 function holdingRate(ps: readonly Position[]): { annual: number | null; days: number; payments: number } | null | "short" {
   const flows: { t: number; amount: number }[] = [];
   let since = Infinity, to = -Infinity, payments = 0;
@@ -285,7 +301,7 @@ function holdingRate(ps: readonly Position[]): { annual: number | null; days: nu
     const lots = BOOK_HOLDING_LOTS[k];
     const rec = p.recoveredCost;
     let close: string, from: string;
-    if (r && (r.unaccounted === 0 || bonusMadeTheRest(p))) {
+    if (r && (r.unaccounted === 0 || bonusMadeTheRest(p) || splitMadeTheRest(p))) {
       const ts = (BOOK_HOLDING_TRADES[k] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
       if (!ts.length) return null;
       if (ts.some((t) => t.amount === null) || inc.some((i) => !i.date)) return "short";
@@ -303,6 +319,12 @@ function holdingRate(ps: readonly Position[]): { annual: number | null; days: nu
       const trades = rec.cashRecord.filter((x) => x.side !== "income");
       since = Math.min(since, Date.parse(trades.find((x) => x.side === "buy")?.date ?? trades[0].date));
       payments += trades.length; from = rec.cashRecord[0].date; close = ACC.get(p.accountId)!.asOf; inc = [];
+    } else if (reviewMoneyOf(p)) {
+      const cash = reviewMoneyOf(p)!;
+      for (const x of cash) flows.push({ t: Date.parse(x.date), amount: x.side === "buy" ? -x.amount : x.amount });
+      const trades = cash.filter((x) => x.side !== "income");
+      since = Math.min(since, Date.parse(trades.find((x) => x.side === "buy")?.date ?? trades[0].date));
+      payments += trades.length; from = cash[0].date; close = ACC.get(p.accountId)!.asOf; inc = [];
     } else return null;
     for (const i of inc) if (i.date! >= from && i.date! <= close) flows.push({ t: Date.parse(i.date!), amount: i.amount });
     // A LINE THE PAGE PRICES AT A NAV closes on the NAV's own date (Stage 10jo),
