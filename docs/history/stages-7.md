@@ -67,3 +67,9 @@
 - Ordinary files and the stage notes every PR appends are not "overlap". A rule on them would hold every PR after any merge.
 - CI's merge job has no concurrency group: GitHub cancels a pending job in a group, and that would turn the CI run red. Racing sweeps are safe.
 - A GITHUB_TOKEN merge starts no workflow, so CI does not re-run on `main` afterwards, as with the bots' pushes. The Cloudflare Pages deploy follows the push webhook, so it still runs.
+
+### Stage 10os — Morning CIO return cards: the ⓘ is short
+
+- *"These (i) explanations are way to long and verbose make it simplest crisp short … everything below it is verbose"* — the family, 16 Nov 2026, of the calendar-year card. The summary (Period, Gain, Benchmark, Holdings, Value, Private) and Against the benchmarks stay as they were.
+- Below them: one line for the assumption (`data-return-assumption-line`: how many holdings are assumed still held, the owner named when there is one), then one closed **Details** fold (`data-card-details`) holding `AvailableReturnCoverage` whole — measured-from, held at last value, what is missing, how it's calculated, included accounts. Nothing is dropped; no figure moves. Every card that uses `coverageInfo` gets it: Gain / loss, available history, FYTD, YTD, Consolidated return. The Returns attribution table's ⓘ is unchanged.
+- `check-return-calculations.mjs` now asserts the fold starts closed and the working is off the panel's face, then opens it; `check-latest-account-returns.mjs` and `dev/check-selected-attribution.mjs` open it first. `src/pages/MorningCIO.tsx`, `src/components/AvailableReturnCoverage.tsx` (`showAssumption`), `src/index.css` (`.card-details`).

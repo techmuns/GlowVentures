@@ -34,6 +34,10 @@ try {
       await button.click();
       const dialog = page.getByRole('dialog');
       assert.equal(normalise(await dialog.locator('[data-return-result]').innerText()), shown, `${id}: same figure as card`);
+      // The working is kept whole behind one closed Details fold (the family, 16 Nov 2026: "simplest crisp short").
+      assert.equal(await dialog.locator('[data-card-details]').getAttribute('open'), null, `${id}: Details fold starts closed`);
+      assert.doesNotMatch(await dialog.innerText(), /What is missing/, `${id}: the working is not on the panel's face`);
+      await dialog.locator('[data-card-details] > summary').click();
       assert.match(await dialog.innerText(), /Based on the available records|No account has enough information/);
       assert.match(await dialog.innerText(), /What is missing/);
       assert.equal(await dialog.locator('[data-attribution-coverage]').count(), 1);
