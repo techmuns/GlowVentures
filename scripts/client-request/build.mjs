@@ -385,9 +385,14 @@ const sFund = FUND_NEED.map((f, i) => `<tr><td>${i + 1}. ${esc(f.fund)}</td><td>
 // this"). Each row names the holding and what to send for it; the family needs
 // to see which stocks' transaction statements to pull, not just an account list.
 const directItems = ITEMS.filter((it) => !it.move);
+// The family asked (16 Nov 2026) to keep the stock names but make the "what to
+// send" column just "transaction records" — not the per-stock explanations.
+// The specific note on each holding is still held in the book (it.send) and is
+// what the check() above validates; it is simply not printed here.
+const DIRECT_SEND = "Complete transaction statement — every purchase, sale and transfer, with dates and amounts.";
 const s1 = directItems.map((it, i) => {
   const units = it.unitsText ? `<br>Recorded shares / units: ${esc(it.unitsText)}` : it.units != null ? `<br>Recorded shares / units: ${fmt(it.units)}${it.unitsNote ? ` (${esc(it.unitsNote)})` : ""}` : "";
-  return `<tr><td>${esc(it.holder)}<br>${esc(it.account)}</td><td>${i + 1}. ${esc(it.what)}${units}</td><td>${esc(it.send)}</td><td>${esc(it.from)}</td></tr>`;
+  return `<tr><td>${esc(it.holder)}<br>${esc(it.account)}</td><td>${i + 1}. ${esc(it.what)}${units}</td><td>${DIRECT_SEND}</td><td>${esc(it.from)}</td></tr>`;
 }).join("\n");
 
 // RESOLVED is still validated above (so a request already answered can never be
@@ -417,7 +422,7 @@ tbody tr:nth-child(even) td { background: #f1f5f9; }
 <h1>Records still needed from the client — short list</h1>
 <p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This is the short cleanup list, in the order to work through it: the family's own direct holdings first (section 1), then the PMS mandates (section 2), then the AIF and other funds (section 3). For the PMS mandates and the funds there is no stock-by-stock list to go through — one complete set of records for each named manager or fund answers everything we need.</p>
 <h2>1. Direct holdings — the stock transaction statements still needed</h2>
-<p class="lead">For each holding below, send that stock or fund's complete transaction statement — every purchase, sale, transfer, bonus and split, with dates and amounts. That one statement answers its cost and its purchase dates. The note on each row is only what is unclear about that particular holding.</p>
+<p class="lead">For each holding below, send that stock or fund's complete transaction statement — every purchase, sale, transfer, bonus and split, with dates and amounts. That one statement answers its cost and its purchase dates; nothing more is needed per holding.</p>
 <table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
 <thead><tr><th>Holder and account</th><th>Stock, fund or file</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
 ${s1}
