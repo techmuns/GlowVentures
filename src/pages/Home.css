@@ -29,6 +29,9 @@ html.dark .home-dashboard { --home-border: #32334b; --home-surface: #201e38; --h
 .home-view-menu button { text-align: left; padding: 8px 10px; border-radius: 7px; font-size: var(--home-font-body); font-weight: 600; color: var(--home-text); }
 .home-view-menu button:hover, .home-view-menu button:focus-visible { background: var(--home-tint); }
 .home-view-menu-blank { color: var(--home-muted) !important; font-weight: 500 !important; margin-top: 3px; border-top: 1px solid var(--home-border); border-radius: 0 !important; }
+/* A drillable allocation slice underlines its name to show it opens its holdings (Stage 10oy). */
+.home-allocation-legend button[data-home-drill] { cursor: pointer; }
+.home-allocation-legend button[data-home-drill]:hover .home-allocation-name, .home-allocation-legend button[data-home-drill]:focus-visible .home-allocation-name { text-decoration: underline; text-underline-offset: 2px; }
 @media (max-width: 560px) { .home-view-bar { gap: 8px; margin-top: 14px; } .home-view-rename input { min-width: 0; width: 120px; } .home-view-actions .home-button { padding: 7px; } }
 .home-date-range { padding: 7px 10px; border: 1px solid var(--home-border); background: var(--home-surface); border-radius: 8px; gap: 8px; color: var(--home-muted); }
 .home-date-range input { min-width: 0; width: 118px; padding: 0; background: transparent; border: 0; color: var(--home-text); font-size: var(--home-font-body); font-family: inherit; }
