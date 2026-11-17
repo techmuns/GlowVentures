@@ -17,7 +17,7 @@
 // NAME, never a figure: the page decides what a widget means from the book at
 // render time, so nothing stored here can put a number on screen.
 import { useEffect, useState } from 'react';
-import { DEFAULT_HOME_LAYOUT, HOME_LAYOUT_KEY, LEGACY_HOME_LAYOUT_KEY, migrateHomeLayout, readHomeLayout, type HomeWidgetEntry } from './homeWidgets';
+import { DEFAULT_HOME_LAYOUT, HOME_LAYOUT_KEY, HOME_WIDGETS, LEGACY_HOME_LAYOUT_KEY, migrateHomeLayout, readHomeLayout, type HomeWidgetEntry, type HomeWidgetId } from './homeWidgets';
 
 export type HomeView = { id: string; name: string; layout: HomeWidgetEntry[] };
 export type HomeViewsState = { views: HomeView[]; activeId: string };
@@ -73,8 +73,27 @@ export function sanitizeViews(raw: unknown): HomeView[] {
   return out;
 }
 
+const sized = (ids: HomeWidgetId[]): HomeWidgetEntry[] =>
+  ids.flatMap(id => { const w = HOME_WIDGETS.find(x => x.id === id); return w ? [{ id, size: w.size }] : []; });
+
+/**
+ * READY-MADE THEMED VIEWS, so a reader picks a dashboard rather than a blank canvas
+ * (the family, 17 Nov 2026: *"cant we add something default?"*). Each is a curated set
+ * of the existing widgets — the same affordance as the competitor's view templates. The
+ * switcher's "New" offers these, and a fresh book opens on a few of them.
+ */
+export const HOME_VIEW_PRESETS: HomeView[] = [
+  { id: 'overview', name: 'Overview', layout: DEFAULT_HOME_LAYOUT },
+  { id: 'performance', name: 'Performance', layout: sized(['ytd', 'inception', 'equityTwr', 'cash', 'performance', 'gains', 'movements', 'monthly']) },
+  { id: 'allocation', name: 'Allocation', layout: sized(['allocation', 'baskets', 'sectorBars', 'sectors', 'geography', 'assets', 'history']) },
+  { id: 'cash', name: 'Cash & liquidity', layout: sized(['aum', 'cash', 'flows', 'assets']) },
+];
+const clonePreset = (p: HomeView): HomeView => ({ ...p, layout: p.layout.map(e => ({ ...e })) });
+const presetsByIds = (ids: readonly string[]): HomeView[] => ids.flatMap(id => { const p = HOME_VIEW_PRESETS.find(x => x.id === id); return p ? [clonePreset(p)] : []; });
+
 export const DEFAULT_VIEW_NAME = 'Overview';
-export const defaultViews = (): HomeView[] => [{ id: 'overview', name: DEFAULT_VIEW_NAME, layout: DEFAULT_HOME_LAYOUT }];
+/** A fresh book opens on three ready-made views to flip between, not one empty one. */
+export const defaultViews = (): HomeView[] => presetsByIds(['overview', 'performance', 'allocation']);
 
 /**
  * FIRST RUN CARRIES A READER'S EXISTING LAYOUT FORWARD. Before views existed,
@@ -91,7 +110,9 @@ function migratedViews(): HomeView[] | null {
     const layout = saved != null
       ? readHomeLayout(JSON.parse(saved))
       : migrateHomeLayout(JSON.parse(localStorage.getItem(LEGACY_HOME_LAYOUT_KEY) ?? 'null'));
-    return layout && layout.length ? [{ id: 'my-overview', name: 'My overview', layout }] : null;
+    // Keep their arrangement as "My overview", and offer the themed presets beside it,
+    // so a reader who already customised Home still gains the ready-made views.
+    return layout && layout.length ? [{ id: 'my-overview', name: 'My overview', layout }, ...presetsByIds(['performance', 'allocation'])] : null;
   } catch {
     return null;
   }
