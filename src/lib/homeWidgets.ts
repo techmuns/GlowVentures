@@ -32,7 +32,15 @@ export const HOME_WIDGETS = [
 export type HomeWidgetId = typeof HOME_WIDGETS[number]['id'];
 export type HomeWidgetSize = 'quarter' | 'half' | 'wide' | 'full';
 export type HomeWidgetEntry = { id: HomeWidgetId; size: HomeWidgetSize };
-export const DEFAULT_HOME_LAYOUT: HomeWidgetEntry[] = HOME_WIDGETS.filter(w => !['baskets', 'ytd', 'inception', 'equityTwr', 'gains', 'sectorBars', 'equity', 'fixedIncome', 'alternate', 'realEstate', 'commodities', 'currency', 'concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors'].includes(w.id)).map(w => ({ id: w.id, size: w.size }));
+const sizeOf = (id: HomeWidgetId): HomeWidgetSize => HOME_WIDGETS.find(w => w.id === id)!.size;
+// The home a reader sees before customising. The family's BASKET donut LEADS the
+// allocation (Stable Growth / Entrepreneurial Growth / Thematic & Tactical / Liquidity),
+// and the asset-class donut sits beside it — the family, 17 Nov 2026: the baskets are
+// "their buckets", not the asset-class split. Order is explicit so the basket donut
+// comes first; the asset-class donut keeps its own `data-home-class` handles for checks.
+export const DEFAULT_HOME_LAYOUT: HomeWidgetEntry[] =
+  (['aum', 'netWorth', 'assetsTotal', 'liabilities', 'cash', 'performance', 'baskets', 'allocation', 'geography', 'history', 'flows', 'assets'] as HomeWidgetId[])
+    .map(id => ({ id, size: sizeOf(id) }));
 export const HOME_LAYOUT_KEY = 'glow:home:widgets:v2';
 export const LEGACY_HOME_LAYOUT_KEY = 'glow:home:widgets:v1';
 export function readHomeLayout(raw: unknown): HomeWidgetEntry[] | null {

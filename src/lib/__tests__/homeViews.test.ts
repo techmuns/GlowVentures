@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { sanitizeViews, addView, duplicateView, renameView, removeView, setActiveLayout, activeView, uniqueViewId, slugify, cleanName, MAX_VIEWS, HOME_VIEW_PRESETS, defaultViews, type HomeViewsState } from '../homeViews';
-import { readHomeLayout, type HomeWidgetEntry } from '../homeWidgets';
+import { readHomeLayout, DEFAULT_HOME_LAYOUT, type HomeWidgetEntry } from '../homeWidgets';
 
 const layout: HomeWidgetEntry[] = [{ id: 'aum', size: 'full' }, { id: 'cash', size: 'quarter' }];
 const base: HomeViewsState = { views: [{ id: 'overview', name: 'Overview', layout }], activeId: 'overview' };
@@ -58,5 +58,9 @@ assert.equal(removed.activeId, 'overview', 'the active view falls back to a surv
 assert.ok(HOME_VIEW_PRESETS.length >= 3 && HOME_VIEW_PRESETS.every(p => p.layout.length > 0), 'themed templates exist and none is blank');
 for (const p of HOME_VIEW_PRESETS) assert.equal(readHomeLayout(p.layout)?.length, p.layout.length, `preset ${p.id} uses only real widgets`);
 assert.ok(defaultViews().length >= 3 && defaultViews().every(v => v.layout.length > 0), 'a fresh book opens on several populated views');
+
+// The family's baskets lead the default Home allocation (17 Nov: "their buckets").
+const bi = DEFAULT_HOME_LAYOUT.findIndex(w => w.id === 'baskets'), ai = DEFAULT_HOME_LAYOUT.findIndex(w => w.id === 'allocation');
+assert.ok(bi >= 0 && ai >= 0 && bi < ai, 'the basket donut leads the default, the asset-class donut sits beside it');
 
 console.log('homeViews: all assertions passed');
