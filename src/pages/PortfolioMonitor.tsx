@@ -54,11 +54,11 @@ import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY, type TaxonomySource } from "@/lib/familyTaxonomy";
 // THE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the same
 // three; see the header of `groupAxis.ts` for why they cannot be a local
-// definition on either screen — and for why the FOURTH one, SECURITY, is this
-// page's alone and is deliberately not in `GROUP_VIEWS`.
+// definition on either screen — and for why the FOURTH and FIFTH (SECURITY,
+// OWNER) are this page's alone and deliberately not in `GROUP_VIEWS`.
 import {
   MONITOR_GROUP_VIEWS, GROUP_VIEWS, type MonitorAxis, type GroupAxis,
-  SECURITY_AXIS, SECURITY_SECTION,
+  SECURITY_AXIS, SECURITY_SECTION, OWNER_AXIS,
   groupKeyFor, groupSourceFor, groupOrdFor, groupLabelFor,
   ALL_LABEL, GROUP_COLUMN_HEAD, GROUP_NOUN, bucketFor, heldUnderMandate,
   statedGroupKeyFor, moveTargetsFor, productKeysFor,
@@ -878,7 +878,11 @@ export function PortfolioMonitor() {
    * CASE rather than an edge one: a reader who opens `/monitor` and clicks
    * Transactions without touching the axis takes exactly this path.
    */
-  const txnAxis: GroupAxis = groupAxis === SECURITY_AXIS ? "category" : groupAxis;
+  // SECURITY and OWNER are Holdings-only axes; the Transactions table cannot
+  // section on either (a dated trade has no "all securities" row, and owner is
+  // the Holdings pivot), so both fall back to Category there — exactly as the
+  // security axis already did.
+  const txnAxis: GroupAxis = groupAxis === SECURITY_AXIS || groupAxis === OWNER_AXIS ? "category" : groupAxis;
   /** What the axis control lights up: the raw param on Holdings, the resolved one on Transactions. */
   const activeAxis: MonitorAxis = view === "holdings" ? groupAxis : txnAxis;
   const entities = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => ownerOf(accIdx, p)))).sort()], [positions, accIdx]);
@@ -938,7 +942,7 @@ export function PortfolioMonitor() {
   const closeMoveMenu = useCallback(() => setMoveMenu(null), []);
   const closeMoveToast = useCallback(() => setMoveToast(null), []);
   const openMoveMenu = (e: ReactMouseEvent<HTMLTableRowElement>, r: Row) => {
-    if (view !== "holdings" || groupAxis === SECURITY_AXIS) return;
+    if (view !== "holdings" || groupAxis === SECURITY_AXIS || groupAxis === OWNER_AXIS) return;
     const ps = rowPositionsOf(r);
     if (!ps.length) return;
     e.preventDefault();
@@ -1962,7 +1966,16 @@ export function PortfolioMonitor() {
         // name's whole exposure, however it was arrived at — and the route is
         // named per account in the row's own expansion rather than by splitting
         // the row in two.
-        const k = bySecurity ? rowKeyOf(p) : bucketFor(accIdx, p) + " | " + rowKeyOf(p);
+        // THE KEY'S FIRST HALF IS THE SECTION, so a name held two ways reads as
+        // two rows under the category it sits in. On the OWNER axis the section
+        // IS the owner, and owner is a fact about the ACCOUNT, not the holding:
+        // a share two members both hold must be two rows, one per member, or one
+        // member's row carries the other's units and neither section ties to its
+        // own header. So key `rest` by the active section on that axis (the
+        // mandate rows above already do, via `groupKeyFor`); the product axes keep
+        // their category half, which is what splits a direct holding from a PMS one.
+        const sectionHalf = groupAxis === OWNER_AXIS ? groupKeyFor(groupAxis, accIdx, p) : bucketFor(accIdx, p);
+        const k = bySecurity ? rowKeyOf(p) : sectionHalf + " | " + rowKeyOf(p);
         (m.get(k) ?? m.set(k, []).get(k)!).push(p);
       }
       out = [...m.values()].map((ps) => {
