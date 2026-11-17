@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Copy, LayoutDashboard, Pencil, Plus, Trash2, X } from 'lucide-react';
-import { HOME_VIEW_PRESETS } from '@/lib/homeViews';
+import { Cloud, Copy, Laptop, LayoutDashboard, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { HOME_VIEW_PRESETS, VIEWS_SAVED_FOR_EVERYONE } from '@/lib/homeViews';
 import type { useHomeViews } from '@/lib/homeViews';
 
 type Controller = ReturnType<typeof useHomeViews>;
@@ -86,6 +86,19 @@ export function HomeViewBar({ controller }: { controller: Controller }) {
             disabled={views.length <= 1} aria-label="Delete view" title={views.length <= 1 ? 'A dashboard keeps at least one view' : 'Delete this view'}><Trash2 size={13} /></button>
         )}
       </div>
+      {/* WHERE THESE VIEWS LIVE — "for everyone" once the shared store has them,
+          "this browser" where it is not connected (locally, or before the site's
+          token is set). The reason is the hover; `upstreamStatus.ts`'s rule, that
+          a card which can never fill must not look like one that is waiting,
+          arriving through a preference. */}
+      {controller.status.status !== 'loading' && (
+        <span className="home-view-sync" data-home-view-sync={controller.status.status}
+          title={controller.status.status === 'shared' ? VIEWS_SAVED_FOR_EVERYONE : controller.status.reason}>
+          {controller.status.status === 'shared'
+            ? <><Cloud size={12} aria-hidden /> Saved for everyone</>
+            : <><Laptop size={12} aria-hidden /> This browser</>}
+        </span>
+      )}
     </div>
   );
 }

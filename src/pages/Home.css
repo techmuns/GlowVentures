@@ -19,6 +19,9 @@ html.dark .home-dashboard { --home-border: #32334b; --home-surface: #201e38; --h
 .home-view-add:disabled { opacity: .45; }
 .home-view-rename input { padding: 6px 10px; font-size: var(--home-font-body); font-weight: 650; color: var(--home-text); background: var(--home-surface); border: 1px solid var(--home-border); border-radius: 6px; min-width: 150px; }
 .home-view-actions { display: flex; align-items: center; gap: 6px; }
+.home-view-sync { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 4px 9px; border-radius: 999px; font-size: var(--home-font-caption); font-weight: 600; color: var(--home-muted); background: var(--home-tint); white-space: nowrap; }
+.home-view-sync[data-home-view-sync=shared] { color: var(--home-accent); }
+.home-view-sync svg { flex: none; }
 .home-view-icon-button { padding: 7px 8px; }
 .home-view-confirm { display: flex; align-items: center; gap: 6px; }
 .home-view-danger { color: #d2544f; border-color: #d2544f66; }
