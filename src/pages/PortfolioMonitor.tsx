@@ -4249,6 +4249,24 @@ export function PortfolioMonitor() {
         </div>
       )}
 
+      {/* NAMING THE DEFAULT VIEW, so it is not read as a direct-only list (a
+          client review read a share held through a fund as a leak into Direct
+          Equity). All Securities clubs every vehicle; the Direct / PMS / Via
+          funds columns already split them, and this one line says so where the
+          section-filter row is not drawn, with the single click to the
+          direct-equity grouping. Exempt from the prose probe as a declared,
+          acted-on note (`data-prose-ok`), not an explainer paragraph. */}
+      {view === "holdings" && bySecurity && (
+        <div className="mb-2 border-b border-ink-700 pb-1.5">
+          <p className="max-w-[56rem] text-xs leading-relaxed text-slate-400"
+            data-prose-ok="names the All Securities view as total exposure across every vehicle, not a direct-only list, and links to the Direct Equity grouping">
+            <span className="font-medium text-slate-300">Total exposure</span> — every company clubbed across each vehicle that holds it: the family's own demat (<span className="text-slate-300">Direct</span>), a PMS manager's mandate (<span className="text-slate-300">PMS</span>) and funds that disclose it (<span className="text-slate-300">Via funds</span>). Not a direct-equity-only list —{" "}
+            <button type="button" data-show-direct-equity onClick={() => setGroupAxis("category")}
+              className="font-medium text-champagne-400 hover:underline ring-focus">group by Category</button>{" "}for Direct Equity on its own.
+          </p>
+        </div>
+      )}
+
       {view === "holdings" ? (
         <Card pad={false} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-auto" data-navigation-scroll="monitor-holdings">
@@ -4868,6 +4886,28 @@ export function PortfolioMonitor() {
                    * `AbsentCell` with the reason rather than a 0 or a blend.
                    */
                   const m = r.mandate;
+                  /**
+                   * WHERE THE FAMILY HOLDS IT DIRECTLY — the demat or broking
+                   * account(s) its OWN shares sit in, named under the security so
+                   * "which demat is this direct holding in?" is answered without
+                   * opening the row (a client review asked to tell direct holdings
+                   * apart by their custody). Own-account venues only: a PMS line is
+                   * the manager's mandate and shows under the PMS column, and a name
+                   * the family reaches only through a fund has no own custody and so
+                   * carries nothing here. Never on a mandate row, which is itself an
+                   * account. `vehicle` is the account's provider for a demat
+                   * (`mandateLabel` falls to it where no strategy is printed).
+                   *
+                   * THE CONSOLIDATED REVIEW IS NOT A CUSTODIAN (types.ts: "a
+                   * GROUPING, not a custodian"). Its private lines carry `engagement
+                   * "Direct"`, so they read as the own route, but the review is a
+                   * source, not a demat — a venue whose every line is review-sourced
+                   * is dropped, so an unlisted direct holding names no false custody.
+                   */
+                  const directCustodians = m ? [] : [...new Set((r.venues ?? [])
+                    .filter((v) => v.route === ROUTE_LABEL.own && v.positions.some((p) => !p.reviewSource))
+                    .map((v) => v.vehicle)
+                    .filter(Boolean))].sort();
                   const cmpSymbol = !m && !r.fundClasses.length && (r.measuredNA || r.assetClass === "Equity" || r.assetClass === "ETF")
                     ? quoteSymbolFor({ securityKey: r.securityKey, isin: r.isin }) : null;
                   const cmpQuote = cmpSymbol ? quoteFeed?.quotes[cmpSymbol] : null;
@@ -5108,9 +5148,14 @@ export function PortfolioMonitor() {
                              when it is true: under a filter a mandate row's
                              figures cover PART of the mandate, and a reader who
                              is not told that reads a subset as the account. */
-                          sub={m && m.holdings.length < m.accountCount ? (
+                          sub={m ? (m.holdings.length < m.accountCount ? (
                             <span className="text-amber-400/80">
                               {m.holdings.length} of {m.accountCount} holdings match the filters — the mandate itself holds {fmtFromBase(m.accountMV, { compact: true })}
+                            </span>
+                          ) : undefined) : directCustodians.length > 0 ? (
+                            <span className="text-slate-500" data-direct-custodians={directCustodians.join(" · ")}
+                              title={`Held directly in the family's own ${directCustodians.length === 1 ? "account" : "accounts"}: ${directCustodians.join(", ")}. A PMS manager's holding of this company shows under PMS, and a fund's under Via funds.`}>
+                              Direct in {directCustodians.join(" · ")}
                             </span>
                           ) : undefined} />
                         <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
