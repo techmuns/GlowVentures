@@ -1,5 +1,5 @@
 import { Fragment, lazy, Suspense, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Area, AreaChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ArrowDownLeft, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronRight, Globe2, Wallet } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
@@ -137,8 +137,8 @@ export function Home() {
     ytd: returnTile('ytd'),
     inception: returnTile('inception'),
     performance: (<HomePerformance from={from} to={to} />),
-    allocation: (<HomeAllocation model={model} money={money} displayCurrency={displayCurrency} />),
-    baskets: (<HomeAllocation model={basketModel} money={money} displayCurrency={displayCurrency} axis="basket" />),
+    allocation: (<HomeAllocation model={model} money={money} displayCurrency={displayCurrency} canDrill={!historical} />),
+    baskets: (<HomeAllocation model={basketModel} money={money} displayCurrency={displayCurrency} axis="basket" canDrill={!historical} />),
     geography: (<Panel title="Geographic exposure" label="INVESTMENT FOOTPRINT" className="home-geography-panel" right={<Hint text="The book contains India-focused accounts. A fund's registration, listing venue or currency does not establish where its underlying investments are located. Verified country allocations are not recorded." />}>
         <div className="home-geography" data-home-geography data-unclassified-value={model.total ?? ''}><div className="home-geography-heading"><span className="home-geography-icon"><Globe2 size={23} strokeWidth={1.25} /></span><div><strong>India-focused investment book</strong><span>Country split not recorded</span></div></div><div className="home-geography-coverage"><span>Not yet mapped</span><strong>{money(model.total)}</strong></div></div>
       </Panel>),
@@ -184,12 +184,18 @@ const ALLOCATION_AXES = {
   assetClass: { title: 'Asset allocation', label: 'THE COMPOSITION', center: 'ALLOCATION', noun: 'asset classes', list: 'Asset class allocation', probe: 'allocation', row: 'data-home-class' },
   basket: { title: 'Basket allocation', label: 'BY BASKET', center: 'BASKETS', noun: 'baskets', list: 'Basket allocation', probe: 'basket', row: 'data-home-basket-row' },
 } as const;
-function HomeAllocation({ model, money, displayCurrency, axis = 'assetClass' }: { model: ReturnType<typeof homeAssets>; money: (value: number | null | undefined) => string; displayCurrency: string; axis?: HomeAxis }) {
+function HomeAllocation({ model, money, displayCurrency, axis = 'assetClass', canDrill = false }: { model: ReturnType<typeof homeAssets>; money: (value: number | null | undefined) => string; displayCurrency: string; axis?: HomeAxis; canDrill?: boolean }) {
+  const navigate = useNavigate();
   const [active, setActive] = useState<string | null>(null);
   const selected = model.assets.find(a => a.key === active), copy = ALLOCATION_AXES[axis];
+  // Click a row to open the holdings behind it — *"let it connect source, what is
+  // source of equity"* (the family, 16 Nov). Only in the current view: a historical
+  // mix collapses multi-class accounts to "Mixed mandates", which maps to no set.
+  const hrefFor = (key: string): string | null =>
+    !canDrill ? null : axis === 'basket' ? drilldownHref('basket', key) : key === 'Cash' ? drilldownHref('home-cash') : drilldownHref('home-class', key);
   return <Panel title={copy.title} label={copy.label} className="home-allocation-panel" right={<span className="home-tag">{displayCurrency}</span>}>
     <div className="home-allocation-layout"><div className="home-donut" {...{ [`data-home-${copy.probe}-chart`]: '' }}>{model.chartable ? <><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={model.assets} dataKey="value" nameKey="label" innerRadius="76%" outerRadius="94%" paddingAngle={2} stroke="none" isAnimationActive={false} onMouseEnter={(_, index) => setActive(model.assets[index]?.key ?? null)} onMouseLeave={() => setActive(null)}>{model.assets.map(a => <Cell key={a.key} fill={homeColor(a.key, axis)} fillOpacity={selected && a.key !== selected.key ? .3 : 1} />)}</Pie></PieChart></ResponsiveContainer><div className="home-donut-center" {...{ [`data-home-${copy.probe}-selection`]: selected?.key ?? '' }} aria-hidden="true"><span>{selected?.label ?? copy.center}</span><strong>{selected?.weight != null ? weightLabel(selected.weight) : model.assets.length}</strong><small>{selected ? money(selected.value) : copy.noun}</small></div></> : <AbsentSection what={`${copy.title} unavailable`} needs="Positive values and a non-negative breakdown are needed for a donut chart. Signed values remain in the asset table." />}</div>
-    <ul className="home-allocation-legend" aria-label={copy.list} {...{ [`data-home-${copy.probe}`]: '' }}>{model.assets.map(a => <li key={a.key} {...{ [copy.row]: a.key }} data-value={a.value} data-weight={a.weight ?? ''}><button type="button" {...{ [`data-home-${copy.probe}-choice`]: a.key }} aria-pressed={active === a.key} onMouseEnter={() => setActive(a.key)} onMouseLeave={() => setActive(null)} onFocus={() => setActive(a.key)} onBlur={() => setActive(null)} onClick={() => setActive(a.key)}><span className="home-allocation-name"><i className="home-swatch" style={{ background: homeColor(a.key, axis) }} />{a.label}</span><small>{a.weight == null ? '—' : weightLabel(a.weight)}</small><strong>{money(a.value)}</strong></button></li>)}</ul></div>
+    <ul className="home-allocation-legend" aria-label={copy.list} {...{ [`data-home-${copy.probe}`]: '' }}>{model.assets.map(a => <li key={a.key} {...{ [copy.row]: a.key }} data-value={a.value} data-weight={a.weight ?? ''}><button type="button" {...{ [`data-home-${copy.probe}-choice`]: a.key }} {...(hrefFor(a.key) ? { 'data-home-drill': '' } : {})} title={hrefFor(a.key) ? `View ${a.label} holdings` : undefined} aria-pressed={active === a.key} onMouseEnter={() => setActive(a.key)} onMouseLeave={() => setActive(null)} onFocus={() => setActive(a.key)} onBlur={() => setActive(null)} onClick={() => { const href = hrefFor(a.key); if (href) navigate(href); else setActive(a.key); }}><span className="home-allocation-name"><i className="home-swatch" style={{ background: homeColor(a.key, axis) }} />{a.label}</span><small>{a.weight == null ? '—' : weightLabel(a.weight)}</small><strong>{money(a.value)}</strong></button></li>)}</ul></div>
   </Panel>;
 }
 
