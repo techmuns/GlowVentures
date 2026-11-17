@@ -9,6 +9,20 @@ html.dark .home-dashboard { --home-border: #32334b; --home-surface: #201e38; --h
 .home-periods { padding: 4px; background: var(--home-tint); border-radius: 8px; gap: 1px; }
 .home-periods button { border-radius: 5px; padding: 6px 12px; font-size: var(--home-font-body); color: var(--home-muted); }
 .home-periods button[aria-pressed=true] { background: var(--home-surface); color: var(--home-text); box-shadow: 0 1px 4px #0000000a; }
+/* ── The view switcher: several named dashboards on one Home (Stage 10ow) ── */
+.home-view-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.home-view-icon { color: var(--home-muted); flex: none; }
+.home-view-tabs { display: flex; align-items: center; flex-wrap: wrap; padding: 4px; gap: 1px; background: var(--home-tint); border-radius: 8px; }
+.home-view-tabs button { border-radius: 5px; padding: 6px 12px; font-size: var(--home-font-body); font-weight: 600; color: var(--home-muted); }
+.home-view-tabs button[aria-pressed=true] { background: var(--home-surface); color: var(--home-text); box-shadow: 0 1px 4px #0000000a; }
+.home-view-add { display: flex; align-items: center; padding: 6px 9px; color: var(--home-muted); }
+.home-view-add:disabled { opacity: .45; }
+.home-view-rename input { padding: 6px 10px; font-size: var(--home-font-body); font-weight: 650; color: var(--home-text); background: var(--home-surface); border: 1px solid var(--home-border); border-radius: 6px; min-width: 150px; }
+.home-view-actions { display: flex; align-items: center; gap: 6px; }
+.home-view-icon-button { padding: 7px 8px; }
+.home-view-confirm { display: flex; align-items: center; gap: 6px; }
+.home-view-danger { color: #d2544f; border-color: #d2544f66; }
+@media (max-width: 560px) { .home-view-bar { gap: 8px; margin-top: 14px; } .home-view-rename input { min-width: 0; width: 120px; } .home-view-actions .home-button { padding: 7px; } }
 .home-date-range { padding: 7px 10px; border: 1px solid var(--home-border); background: var(--home-surface); border-radius: 8px; gap: 8px; color: var(--home-muted); }
 .home-date-range input { min-width: 0; width: 118px; padding: 0; background: transparent; border: 0; color: var(--home-text); font-size: var(--home-font-body); font-family: inherit; }
 .home-date-range input::-webkit-calendar-picker-indicator { width: 11px; opacity: .55; }

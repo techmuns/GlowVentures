@@ -21,6 +21,8 @@ import { chartTooltipStyle, chartTooltipItemStyle, chartTooltipLabelStyle } from
 import { fmtDate, fmtPct } from '@/lib/format';
 import { useHomeCardReturns } from '@/lib/useHomeCardReturns';
 import { HomeWidgetActions, HomeWidgetBoard, useHomeWidgets } from '@/components/HomeWidgetBoard';
+import { HomeViewBar } from '@/components/HomeViewBar';
+import { useHomeViews } from '@/lib/homeViews';
 import { HomeConcentration, HomeMovements, HomeMonthly, HomeVolatility, HomeSectors, HomeSectorBars, HomeGainsBreakdown, HomeEquityTwr, HomeUnavailable } from '@/components/HomeExtraWidgets';
 import type { HomeWidgetId } from '@/lib/homeWidgets';
 import { HomeReturnCoverage } from '@/components/HomeReturnCoverage';
@@ -56,7 +58,8 @@ export function Home() {
   const from = validHomeDate(params.get('homeFrom')) && params.get('homeFrom')! < to ? params.get('homeFrom')! : fallbackFrom;
   const [draftFrom, setDraftFrom] = useState(from), [draftTo, setDraftTo] = useState(to), [dateError, setDateError] = useState('');
   useEffect(() => { setDraftFrom(from); setDraftTo(to); }, [from, to]);
-  const widgetState = useHomeWidgets();
+  const views = useHomeViews();
+  const widgetState = useHomeWidgets(views.active.layout, views.setActiveLayout);
   // Morning CIO's return cards, computed only while a return tile is on Home or in the library.
   const cards = useHomeCardReturns(widgetState.open || widgetState.layout.some(w => w.id === 'ytd' || w.id === 'inception' || w.id === 'gains'));
   const applyDates = (start: string, end: string) => {
@@ -164,6 +167,7 @@ export function Home() {
   };
   return <div className="home-dashboard" data-home-overview data-home-total={model.total ?? ''}>
     <PageHeader title="Home" right={<div className="flex flex-wrap items-center gap-2"><Suspense fallback={null}><PortfolioReportExport /></Suspense><HomeWidgetActions state={widgetState} /></div>} />
+    <HomeViewBar controller={views} />
     <div className="home-heading"><div><span className="home-eyebrow">YOUR WEALTH, AT A GLANCE</span><p className="home-intro">A clear view of the bigger picture.</p></div>
       <div className="home-date-toolbar"><div className="home-periods" role="group" aria-label="Home date presets">{(['mtd', 'ytd', 'fytd', 'y1'] as const).map((key, i) => <button type="button" key={key} aria-pressed={from === periodStart(key, to)} onClick={() => applyDates(periodStart(key, today)!, today)}>{['MTD', 'YTD', 'FYTD', '1Y'][i]}</button>)}</div>
         <form className="home-date-range" onSubmit={e => { e.preventDefault(); applyDates(draftFrom, draftTo); }}><CalendarDays size={14} aria-hidden /><label><span className="sr-only">Home start date</span><input type="date" min="2000-01-01" max={draftTo} value={draftFrom} onChange={e => setDraftFrom(e.target.value)} required /></label><span className="home-date-divider">—</span><label><span className="sr-only">Home end date</span><input type="date" min={draftFrom} max={today} value={draftTo} onChange={e => setDraftTo(e.target.value)} required /></label><button type="submit" aria-label="Apply Home dates" title="Apply dates"><Check size={15} /></button></form></div></div>
