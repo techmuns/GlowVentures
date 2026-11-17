@@ -22,7 +22,7 @@ import { accountIndex, engagementOf, ownerOf } from "@/lib/accounts";
  * screen and the Portfolio Monitor alike — see the header of `groupAxis.ts`.
  */
 import {
-  GROUP_AXES, GROUP_VIEWS, type GroupAxis, groupKeyFor, groupSourceFor,
+  ALLOC_AXES, ALLOC_VIEWS, OWNER_AXIS, type GroupAxis, type AllocAxis, groupKeyFor, groupSourceFor,
   groupCount, GROUP_COLUMN_HEAD, GROUP_NOUN,
 } from "@/lib/groupAxis";
 import {
@@ -148,10 +148,11 @@ const UNPLACED_COLOR = "#64748b";
  * the heading the family reads and `check:pages` uses it as a section boundary
  * on this page. The other two say plainly whose taxonomy they are.
  */
-const ALLOC_TITLE: Record<GroupAxis, string> = {
+const ALLOC_TITLE: Record<AllocAxis, string> = {
   category: "Allocation by asset class & mandate",
   assetClass: "Allocation by asset class — the family's own",
   basket: "Allocation by basket — the family's own",
+  owner: "Allocation by owner — each family member & entity",
 };
 /**
  * ── ONE PAGE, THREE PANELS, AND NO PAGE SCROLL ───────────────────────────────
@@ -223,9 +224,11 @@ const CIO_TABS = [
 // Keep the storage key: an explicitly customised layout remains the reader's.
 const CIO_TILES_KEY = "glow:cioTiles:v1";
 
-const sectionColor = (axis: GroupAxis, key: string, i: number) => {
+const sectionColor = (axis: AllocAxis, key: string, i: number) => {
   if (key === UNCLASSIFIED) return UNPLACED_COLOR;
   if (axis === "category") return bucketColor(key, i);
+  // Owner has no fixed colour map — each member/entity takes the next chart colour.
+  if (axis === OWNER_AXIS) return CHART_COLORS[i % CHART_COLORS.length];
   const map = axis === "basket" ? BASKET_COLOR : FAMILY_CLASS_COLOR;
   return map[key] ?? CHART_COLORS[i % CHART_COLORS.length];
 };
@@ -644,8 +647,8 @@ function useCioModel() {
      * dependencies — the memo also pools every account's XIRR, and recomputing
      * that because a reader pressed a segment would be work for nothing.
      */
-    const rowsByAxis = new Map<GroupAxis, Map<string, typeof p>>();
-    for (const axis of GROUP_AXES) {
+    const rowsByAxis = new Map<AllocAxis, Map<string, typeof p>>();
+    for (const axis of ALLOC_AXES) {
       const m = new Map<string, typeof p>();
       for (const x of p) {
         const key = groupKeyFor(axis, accIdx, x);
@@ -771,7 +774,7 @@ function useCioModel() {
     });
     // A bucket of POSITIONS — no dated capital-movement flows at bucket level,
     // so no money-weighted rate; its total return on cost is what the row shows.
-    const positionBucket = (axis: GroupAxis, key: string, i: number): Bucket => {
+    const positionBucket = (axis: AllocAxis, key: string, i: number): Bucket => {
       const rows = rowsByAxis.get(axis)?.get(key) ?? [];
       const g = eqGroup(rows);
       /**
@@ -807,10 +810,13 @@ function useCioModel() {
      * own row: a section the book HAS must never be silently dropped for not
      * being on a list written before it arrived.
      */
-    const DECLARED: Record<GroupAxis, readonly string[]> = {
+    const DECLARED: Record<AllocAxis, readonly string[]> = {
       category: [MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, "AIF", "Mutual Fund", "ETF", "Cash"],
       basket: BASKET_ORDER,
       assetClass: FAMILY_CLASS_ORDER,
+      // Owner sections are discovered from the positions and ranked by value
+      // like every other axis here; the book declares no fixed owner list.
+      owner: [],
     };
     /**
      * THE FUND-OF-FUNDS ROWS, WHICH ARE THE SAME ON EVERY AXIS AND SAY SO.
@@ -832,7 +838,7 @@ function useCioModel() {
       fundBucket("Pre-IPO Funds", "#38bdf8", pm.preIpoFunds.length, preF, preX, "pre-ipo"),
       fundBucket("Debt Funds", "#818cf8", pm.debtFunds.length, debtF, debtX, "debt-fund"),
     ];
-    const bucketsFor = (axis: GroupAxis): Bucket[] => {
+    const bucketsFor = (axis: AllocAxis): Bucket[] => {
       const declared = DECLARED[axis];
       const keys = [
         ...declared,
@@ -848,7 +854,7 @@ function useCioModel() {
       // This is the whole §0 rule applied to the allocation view.
       return all.filter((b) => b.count > 0).sort((a, b) => b.current - a.current);
     };
-    const bucketsByAxis = { category: bucketsFor("category"), assetClass: bucketsFor("assetClass"), basket: bucketsFor("basket") } as Record<GroupAxis, Bucket[]>;
+    const bucketsByAxis = { category: bucketsFor("category"), assetClass: bucketsFor("assetClass"), basket: bucketsFor("basket"), owner: bucketsFor("owner") } as Record<AllocAxis, Bucket[]>;
     const buckets = bucketsByAxis.category;
 
     // Distinct names, consolidated on securityKey across accounts. ISIN cannot do
@@ -966,7 +972,7 @@ export function MorningCIO() {
    * the basket view" has to be a link rather than an instruction. The default
    * stays param-free and stays CATEGORY, which is the table they already read.
    */
-  const [allocAxis, setAllocAxis] = useViewParam(GROUP_VIEWS, {}, "alloc");
+  const [allocAxis, setAllocAxis] = useViewParam(ALLOC_VIEWS, {}, "alloc");
   // WHICH PANEL IS ON SCREEN. See `CIO_TABS` above for what the three are and
   // why the choice lives in the URL.
   /**
@@ -1015,7 +1021,7 @@ export function MorningCIO() {
     return: (b) => b.retPct,
     // Weight is `current ÷ the book`, so it orders exactly as Current does.
     weight: (b) => b.current,
-  }, (b) => allocAxis === "basket" ? { basket: b.key } : { category: sectionLabel(b.key) }, memberScope.owners !== null));
+  }, (b) => allocAxis === "basket" ? { basket: b.key } : allocAxis === OWNER_AXIS ? { entity: b.key } : { category: sectionLabel(b.key) }, memberScope.owners !== null));
   /**
    * HOW MUCH OF THIS VIEW THE FAMILY NAMED PRODUCT BY PRODUCT, summed off the
    * rows on screen rather than recomputed from the book — a caption struck on a
@@ -1701,7 +1707,7 @@ export function MorningCIO() {
               <div className="flex flex-wrap items-center gap-2">
                 <div role="tablist" aria-label="Group the allocation by"
                   className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
-                  {GROUP_VIEWS.map((v) => (
+                  {ALLOC_VIEWS.map((v) => (
                     <button key={v.key} type="button" role="tab" aria-selected={allocAxis === v.key} title={v.title}
                       data-alloc-axis={v.key}
                       onClick={() => setAllocAxis(v.key)}
@@ -1766,7 +1772,7 @@ export function MorningCIO() {
                   </thead>
                   <tbody className="divide-y divide-ink-700/60">
                     {sections.map((b) => (
-                      <Tr view={allocView} reviewScope={allocAxis === "basket" ? { basket: b.key } : { category: sectionLabel(b.key) }} key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key} data-alloc-unplaced-row={b.unplaced ? "1" : undefined}>
+                      <Tr view={allocView} reviewScope={allocAxis === "basket" ? { basket: b.key } : allocAxis === OWNER_AXIS ? { entity: b.key } : { category: sectionLabel(b.key) }} key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key} data-alloc-unplaced-row={b.unplaced ? "1" : undefined}>
                         <td className="px-2 py-2.5">
                           {/* THE ROW OPENS THE HOLDINGS BEHIND IT — on whichever
                               axis the table is grouped by. AIF, PMS mandates,
@@ -1915,7 +1921,7 @@ export function MorningCIO() {
                     for the notes under the tables to go. Whose taxonomy this is,
                     and the value each of their two rules placed, stay on screen:
                     those are figures a reader acts on. */}
-                {allocAxis !== "category" && (
+                {allocAxis !== "category" && allocAxis !== OWNER_AXIS && (
                   <div className="mt-3 space-y-0.5 text-[11px] leading-relaxed text-slate-500">
                     {/* ONE SHORT LINE (Stage 10cp): whose taxonomy it is and the
                         value their direct-stock rule placed are the figures; how

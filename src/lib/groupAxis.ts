@@ -195,12 +195,18 @@ export const SECURITY_AXIS = "security" as const;
  * are `separateInvestments`, counted in full under each). Like SECURITY it is
  * the Monitor's Holdings table alone and is NOT added to `GROUP_AXES` /
  * `GROUP_VIEWS`: it is a fact about the ACCOUNT, not a classification of the
- * holding, so it carries no move targets and no family-taxonomy source, and
- * Morning CIO's allocation card (which groups the three product axes) is left
- * exactly as the family scoped it.
+ * holding, so it carries no move targets and no family-taxonomy source, and it
+ * is never a `GroupAxis` — the move menu, the Transactions table and the
+ * classification tie-out all read `GROUP_VIEWS` and so never offer it. It IS an
+ * allocation axis, though — it sections and sums to the book's total — so it is
+ * offered on the two allocation surfaces through `AllocAxis` / `ALLOC_VIEWS`:
+ * the Monitor's Holdings table and Morning CIO's allocation card (*"how is the
+ * core doing, the satellite, the liquidity"* — the family's framing, per member).
  */
 export const OWNER_AXIS = "owner" as const;
 export type MonitorAxis = GroupAxis | typeof SECURITY_AXIS | typeof OWNER_AXIS;
+/** The allocation axes that section the whole book and sum to its total: the three product axes plus Owner. NOT a `GroupAxis` — no moves, no family taxonomy, not on Transactions. */
+export type AllocAxis = GroupAxis | typeof OWNER_AXIS;
 
 /**
  * The single section every holding lands in on the security axis. It exists so
@@ -228,11 +234,26 @@ export const SECURITY_SECTION = "All securities";
  * table — which cannot section on securities (`txnAxis`) — still lands on
  * Category too. Only the Holdings table's opening view changed.
  */
+/** The Owner view object, shared by the Monitor's Holdings table and Morning CIO's allocation card (`MONITOR_GROUP_VIEWS` and `ALLOC_VIEWS`). */
+export const OWNER_VIEW = { key: OWNER_AXIS, label: "Owner", title: "One section per owning family member or entity — each person, trust and LLP that holds in the book — each summing to that owner's holdings. Who holds it, not what it is: the family's own split across its members, which the member selector can only show one at a time." } as const;
+
 export const MONITOR_GROUP_VIEWS: readonly { key: MonitorAxis; label: string; title: string }[] = [
   { key: SECURITY_AXIS, label: "All Securities", title: "One row per security, ranked by exposure — every holding of a name clubbed across every vehicle that holds it, whether the family bought it directly or a discretionary manager chose it. Open a row to see through what means it is held." },
   ...GROUP_VIEWS,
-  { key: OWNER_AXIS, label: "Owner", title: "One section per owning family member or entity — each person, trust and LLP that holds in the book — each summing to that owner's holdings. Who holds it, not what it is: the family's own split across its members, which the member selector can only show one at a time." },
+  OWNER_VIEW,
 ];
+
+/**
+ * THE ALLOCATION AXES — the three product axes plus Owner — and their views.
+ * These section the whole book and sum to its total, so they are the axes the
+ * two allocation surfaces offer: the Monitor's Holdings table (via
+ * `MONITOR_GROUP_VIEWS`) and Morning CIO's allocation card (via `ALLOC_VIEWS`).
+ * Owner rides here rather than in `GROUP_VIEWS`, so the Transactions table and
+ * the classification tie-out — which read `GROUP_VIEWS` — never offer an axis
+ * they cannot section on.
+ */
+export const ALLOC_AXES: readonly AllocAxis[] = [...GROUP_AXES, OWNER_AXIS];
+export const ALLOC_VIEWS: readonly { key: AllocAxis; label: string; title: string }[] = [...GROUP_VIEWS, OWNER_VIEW];
 
 /**
  * The section a holding sits in on the chosen axis. One place, three answers —
