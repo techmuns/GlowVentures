@@ -1,17 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowDown, ArrowLeft, ArrowUp, Check, GripVertical, LayoutGrid, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
-import { DEFAULT_HOME_LAYOUT, HOME_LAYOUT_KEY, LEGACY_HOME_LAYOUT_KEY, HOME_WIDGETS, migrateHomeLayout, moveHomeWidget, readHomeLayout, type HomeWidgetEntry, type HomeWidgetId, type HomeWidgetSize } from '@/lib/homeWidgets';
+import { DEFAULT_HOME_LAYOUT, HOME_WIDGETS, moveHomeWidget, type HomeWidgetEntry, type HomeWidgetId, type HomeWidgetSize } from '@/lib/homeWidgets';
 
-export function useHomeWidgets() {
-  const [layout, update] = useState<HomeWidgetEntry[]>(() => {
-    try {
-      const saved = localStorage.getItem(HOME_LAYOUT_KEY);
-      return (saved != null ? readHomeLayout(JSON.parse(saved)) : migrateHomeLayout(JSON.parse(localStorage.getItem(LEGACY_HOME_LAYOUT_KEY) ?? 'null'))) ?? DEFAULT_HOME_LAYOUT;
-    } catch { return DEFAULT_HOME_LAYOUT; }
-  });
+// The widget board's layout is CONTROLLED by the active Home view (`homeViews.ts`):
+// a reader switches views and the board shows and edits THAT view's widgets, so
+// persistence belongs to the view, not here. This hook keeps only the board's own
+// UI flags — edit mode, the library dialog, and the live-region announcement.
+export function useHomeWidgets(layout: HomeWidgetEntry[], setLayout: (next: HomeWidgetEntry[]) => void) {
   const [editing, setEditing] = useState(false), [open, setOpen] = useState(false), [announcement, setAnnouncement] = useState('');
-  useEffect(() => { try { localStorage.setItem(HOME_LAYOUT_KEY, JSON.stringify(layout)); } catch { /* Keep this session's layout when storage is unavailable. */ } }, [layout]);
-  const setLayout = (next: HomeWidgetEntry[]) => update(next);
   return { layout, setLayout, editing, setEditing, open, setOpen, announcement, setAnnouncement };
 }
 type State = ReturnType<typeof useHomeWidgets>;
@@ -45,7 +41,7 @@ export function HomeWidgetBoard({ state, widgets, irrelevant }: { state: State; 
       </div>;
     })}
     {!state.layout.length && <div className="home-widget-empty"><LayoutGrid size={30} strokeWidth={1} /><h2>Make Home your own</h2><p>Add the widgets you want to see here.</p><button type="button" className="home-button home-add-widgets" onClick={() => state.setOpen(true)}><Plus size={14} />Add widgets</button></div>}
-  </div>{state.editing && <div className="home-layout-note"><span>Drag a widget or use the arrows to reorder. Your layout is saved in this browser.</span><button type="button" onClick={() => state.setLayout(DEFAULT_HOME_LAYOUT)}>Restore default layout</button></div>}
+  </div>{state.editing && <div className="home-layout-note"><span>Drag a widget or use the arrows to reorder. This view is saved in this browser.</span><button type="button" onClick={() => state.setLayout(DEFAULT_HOME_LAYOUT)}>Restore default layout</button></div>}
   <span role="status" className="sr-only">{state.announcement}</span>
   <dialog ref={dialog} className="home-widget-dialog" aria-labelledby="home-widget-dialog-title" onKeyDown={e => { if (e.key === 'Escape') { e.preventDefault(); close(); } }} onCancel={e => { e.preventDefault(); close(); }} onClick={e => { if (e.target === e.currentTarget) close(); }}>
     {state.open && <div className="home-widget-dialog-content"><div className="home-widget-dialog-heading"><div>{active && <button type="button" className="home-widget-back" onClick={() => setSelected(null)}><ArrowLeft size={13} />All widgets</button>}<span className="home-eyebrow">BUILD YOUR OVERVIEW</span><h2 id="home-widget-dialog-title">{active?.name ?? 'Widget library'}</h2></div><button type="button" className="home-widget-close" aria-label="Close widget library" onClick={close}><X size={19} /></button></div>
