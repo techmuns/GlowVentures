@@ -48,7 +48,8 @@
  * allocation axis. See `SECURITY_AXIS` below for what it is and why widening
  * `GroupAxis` to include it would have been the wrong move.
  */
-import type { AccountIndex } from "./accounts";
+import { ownerForAccount, type AccountIndex } from "./accounts";
+import { ownerOrd } from "./owners";
 import {
   holdingBucket, bucketLabel, isMandateHeld,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, AT_COST_BUCKET, REAL_ESTATE_BUCKET,
@@ -178,7 +179,28 @@ export const GROUP_VIEWS: readonly { key: GroupAxis; label: string; title: strin
  * cannot see the name's total exposure at all — which is the gap reported here.
  */
 export const SECURITY_AXIS = "security" as const;
-export type MonitorAxis = GroupAxis | typeof SECURITY_AXIS;
+
+/**
+ * ── THE FIFTH AXIS: OWNER — also the Portfolio Monitor's alone ──────────────
+ *
+ * A family-office / competitor ask ("add a layer like the ultimate owner"): see
+ * the same holdings sectioned by WHO holds them — each family member, trust and
+ * LLP — so the office can read one member's book against another's at a glance,
+ * where the member SCOPE filter only ever narrows to one at a time.
+ *
+ * Unlike SECURITY it IS a true allocation axis: every position has exactly one
+ * account owner, so the owner sections partition the book and sum to
+ * `BOOK_SUMMARY.totalValue` (no holding is counted under two owners — the book
+ * carries no cross-owner `dedupeGroup`, and the two confirmed cross-owner pairs
+ * are `separateInvestments`, counted in full under each). Like SECURITY it is
+ * the Monitor's Holdings table alone and is NOT added to `GROUP_AXES` /
+ * `GROUP_VIEWS`: it is a fact about the ACCOUNT, not a classification of the
+ * holding, so it carries no move targets and no family-taxonomy source, and
+ * Morning CIO's allocation card (which groups the three product axes) is left
+ * exactly as the family scoped it.
+ */
+export const OWNER_AXIS = "owner" as const;
+export type MonitorAxis = GroupAxis | typeof SECURITY_AXIS | typeof OWNER_AXIS;
 
 /**
  * The single section every holding lands in on the security axis. It exists so
@@ -209,6 +231,7 @@ export const SECURITY_SECTION = "All securities";
 export const MONITOR_GROUP_VIEWS: readonly { key: MonitorAxis; label: string; title: string }[] = [
   { key: SECURITY_AXIS, label: "All Securities", title: "One row per security, ranked by exposure — every holding of a name clubbed across every vehicle that holds it, whether the family bought it directly or a discretionary manager chose it. Open a row to see through what means it is held." },
   ...GROUP_VIEWS,
+  { key: OWNER_AXIS, label: "Owner", title: "One section per owning family member or entity — each person, trust and LLP that holds in the book — each summing to that owner's holdings. Who holds it, not what it is: the family's own split across its members, which the member selector can only show one at a time." },
 ];
 
 /**
@@ -221,6 +244,7 @@ export const MONITOR_GROUP_VIEWS: readonly { key: MonitorAxis; label: string; ti
  */
 export const groupKeyFor = (axis: MonitorAxis, idx: AccountIndex, p: Classifiable): string => {
   if (axis === SECURITY_AXIS) return SECURITY_SECTION;
+  if (axis === OWNER_AXIS) return ownerForAccount(idx, p.accountId);
   if (axis === "category") return categoryKeyFor(p, engagementFor(idx, p));
   const isMandate = heldUnderMandate(idx, p);
   return axis === "basket" ? basketKeyOf(p, isMandate) : familyClassKeyOf(p, isMandate);
@@ -257,7 +281,7 @@ export const groupSourceFor = (axis: MonitorAxis, idx: AccountIndex, p: Classifi
   // Both the category and the security axes are derived from the book itself and
   // ask nothing of the family, so neither heading has anything to disclose —
   // unless the family moved the row on the page.
-  if (axis === SECURITY_AXIS) return "review";
+  if (axis === SECURITY_AXIS || axis === OWNER_AXIS) return "review";
   if (axis === "category") return movedCategory(p, heldUnderMandate(idx, p)) ? "moved" : "review";
   const isMandate = heldUnderMandate(idx, p);
   const r = axis === "basket" ? familyBasket(p, isMandate) : familyAssetClass(p, isMandate);
@@ -267,6 +291,7 @@ export const groupSourceFor = (axis: MonitorAxis, idx: AccountIndex, p: Classifi
 /** Reading order per axis, with the unclassified section last on the two new ones. */
 export const groupOrdFor = (axis: MonitorAxis) =>
   axis === SECURITY_AXIS ? () => 0
+  : axis === OWNER_AXIS ? ownerOrd
   : axis === "category" ? bucketOrd : axis === "basket" ? basketOrd : familyClassOrd;
 
 /**
@@ -280,7 +305,7 @@ export const groupLabelFor = (axis: MonitorAxis) => (key: string) =>
 /** What the "all" option on a section filter says, per axis. */
 export const ALL_LABEL: Record<MonitorAxis, string> = {
   category: "All categories", assetClass: "All asset classes", basket: "All baskets",
-  security: "All securities",
+  security: "All securities", owner: "All owners",
 };
 
 /**
@@ -297,6 +322,7 @@ export const GROUP_NOUN: Record<MonitorAxis, { one: string; many: string }> = {
   assetClass: { one: "asset class", many: "asset classes" },
   basket: { one: "basket", many: "baskets" },
   security: { one: "security", many: "securities" },
+  owner: { one: "owner", many: "owners" },
 };
 
 /** `3 baskets` / `1 bucket` — a count and its noun, agreeing, per axis. */
@@ -316,4 +342,5 @@ export const GROUP_COLUMN_HEAD: Record<MonitorAxis, string> = {
   assetClass: "Asset class — the family's own",
   basket: "Basket",
   security: "Security",
+  owner: "Owner",
 };
