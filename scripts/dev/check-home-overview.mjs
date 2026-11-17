@@ -176,6 +176,7 @@ try {
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     // Add every additional reference widget through its actual popup.
     for (const id of ['concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors', 'baskets', 'equity', 'fixedIncome', 'alternate', 'realEstate', 'commodities', 'ytd', 'inception', 'gains', 'equityTwr', 'sectorBars']) {
+      if (await page.locator(`[data-home-widget="${id}"]`).count()) continue;  // already in this view's layout (baskets now leads the default)
       await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
       await page.getByRole('searchbox', { name: 'Search widgets' }).fill('');
       await dialog.locator(`[data-widget-catalog="${id}"]`).click();

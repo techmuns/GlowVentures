@@ -85,7 +85,7 @@ const sized = (ids: HomeWidgetId[]): HomeWidgetEntry[] =>
 export const HOME_VIEW_PRESETS: HomeView[] = [
   { id: 'overview', name: 'Overview', layout: DEFAULT_HOME_LAYOUT },
   { id: 'performance', name: 'Performance', layout: sized(['ytd', 'inception', 'equityTwr', 'cash', 'performance', 'gains', 'movements', 'monthly']) },
-  { id: 'allocation', name: 'Allocation', layout: sized(['allocation', 'baskets', 'sectorBars', 'sectors', 'geography', 'assets', 'history']) },
+  { id: 'allocation', name: 'Allocation', layout: sized(['baskets', 'allocation', 'sectorBars', 'sectors', 'geography', 'assets', 'history']) },
   { id: 'cash', name: 'Cash & liquidity', layout: sized(['aum', 'cash', 'flows', 'assets']) },
 ];
 const clonePreset = (p: HomeView): HomeView => ({ ...p, layout: p.layout.map(e => ({ ...e })) });
