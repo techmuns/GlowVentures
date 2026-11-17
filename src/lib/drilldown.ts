@@ -36,7 +36,7 @@ import { concentrationNames } from "./concentration";
  * opened from already answered. Same reason the predicates below are delegated
  * rather than paraphrased.
  */
-import { type GroupAxis, groupKeyFor, groupLabelFor, GROUP_NOUN } from "./groupAxis";
+import { type GroupAxis, type AllocAxis, OWNER_AXIS, groupKeyFor, groupLabelFor, GROUP_NOUN } from "./groupAxis";
 import { measuredAccountsReturn, type UnmeasuredAccount } from "./returns";
 import { xirrPct, moneyWeightedReturn, type MoneyWeighted } from "./bucketXirr";
 import { currentHomeHoldings, homeClassTile } from './homeDashboard';
@@ -76,6 +76,7 @@ export type DrilldownId =
    */
   | "basket"        // …on the family's BASKET axis
   | "family-class"  // …on the family's own ASSET-CLASS axis
+  | "owner"         // …on the OWNER axis — the holdings of one family member or entity
   | "measured"    // the accounts the money-weighted return covers
   | "top-names"
   | "cross-held"
@@ -83,7 +84,7 @@ export type DrilldownId =
   | "losers";
 
 const IDS = new Set<DrilldownId>([
-  "book", "home-cash", "home-class", "bucket", "basket", "family-class",
+  "book", "home-cash", "home-class", "bucket", "basket", "family-class", "owner",
   "measured", "top-names", "cross-held", "winners", "losers",
 ]);
 
@@ -92,12 +93,12 @@ const IDS = new Set<DrilldownId>([
  * mapping lives, so Morning CIO builds the link and this file resolves it from
  * the same table rather than from two agreeing literals.
  */
-export const AXIS_SCOPE: Record<GroupAxis, DrilldownId> = {
-  category: "bucket", basket: "basket", assetClass: "family-class",
+export const AXIS_SCOPE: Record<AllocAxis, DrilldownId> = {
+  category: "bucket", basket: "basket", assetClass: "family-class", owner: "owner",
 };
-/** …and back, for the three branches that share one implementation. */
-const SCOPE_AXIS: Partial<Record<DrilldownId, GroupAxis>> = {
-  bucket: "category", basket: "basket", "family-class": "assetClass",
+/** …and back, for the branches that share one implementation. */
+const SCOPE_AXIS: Partial<Record<DrilldownId, AllocAxis>> = {
+  bucket: "category", basket: "basket", "family-class": "assetClass", owner: OWNER_AXIS,
 };
 
 /**
@@ -453,14 +454,17 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
      */
     case "bucket":
     case "basket":
-    case "family-class": {
-      const axis = SCOPE_AXIS[scope.id] as GroupAxis;
+    case "family-class":
+    case "owner": {
+      const axis = SCOPE_AXIS[scope.id] as AllocAxis;
       const inRow = (p: Position) => groupKeyFor(axis, accIdx, p) === scope.key;
       const rows = consolidated.filter(inRow);
       const label = groupLabelFor(axis)(scope.key);
       const noun = GROUP_NOUN[axis].one;
       const decidedBy = axis === "category"
         ? "The bucket is decided by `holdingBucket` — the one function every holdings table on this site groups by — so this list is the row's own arithmetic rather than a second reading of it."
+        : axis === OWNER_AXIS
+        ? "The owner is the account's own, from the registry — who holds it, not what it is — so this is every holding in the book that this member or entity owns, counted once."
         : `The ${noun} is the FAMILY'S OWN, taken from their consolidated review product by product: no statement in the archive states one, and nothing here is inferred from what the instrument is. A direct stock the review does not name individually is placed by their own stated rule instead, and the allocation row says how much of it was.`;
       return {
         ...base, ...excludedWhere(inRow), id: scope.id, key: scope.key,
