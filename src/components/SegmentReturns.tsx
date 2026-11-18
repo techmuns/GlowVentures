@@ -11,6 +11,7 @@ import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME, BOOK_CAP
 import { BENCHMARKS } from '@/lib/benchmarks';
 import { capitalMovesWithCalls } from '@/lib/tranches';
 import { lineBenchmark, type LineBenchmark } from '@/lib/lineBenchmark';
+import { indexMove, rowBenchmark, BENCH_SHORT } from '@/lib/holdingBenchmark';
 import { useBenchmarkLevels } from '@/components/HoldingBenchmark';
 import { LineBenchmarkCell, BENCH_HOW } from '@/components/LineBenchmarkCell';
 import { AvailableReturnCoverage } from '@/components/AvailableReturnCoverage';
@@ -196,6 +197,32 @@ export default function SegmentReturns({ selection: recordedSelection, period, e
     : returnGapText(l.measured?.reason ?? l.missing[0]?.reason ?? 'We need values and dated payments for these dates.', selection.start);
   const bench = (l: SelectedLine) => benches.get(l) ?? lineBenchmark(l, selection, benchLevels, benchCtx);
   const fig = (l: SelectedLine) => figures.get(l) ??lineHoldingFigures(l.positions, { wholeAccounts: wholeAccountsOf(l), inSession, ownerOf: p => ownerOf(idx, p) });
+  // ── A HOLDING'S PRICE MOVE OVER A CUSTOM WINDOW (Yamini, Nov 2026) ──────────
+  // A custom window carries no dated purchases or sales, so neither a money- nor
+  // a time-weighted return can be struck for one security, and both the Return
+  // and Benchmark cells are — (`lineBenchmark` returns null when `returnPct` is).
+  // Only that gap is filled: the holding's own published price move over the
+  // dates chosen, against its own index's move over the same dates (Stage 10kd's
+  // `rowBenchmark`). It is labelled a PRICE return — point to point, dividends
+  // out of the price indices — and never shown where a dated return already
+  // exists, on any other period or axis, or on the Total. The money-weighted
+  // figures are untouched.
+  const priceWindow = axis === 'security' && period === 'custom';
+  const priceOf = (l: SelectedLine) => {
+    if (!priceWindow || l.key === 'total' || l.returnPct != null) return null;
+    if (!l.positions.length || new Set(l.positions.map(p => p.securityKey)).size !== 1) return null;
+    const pm = selectionMarketOf(market, l.positions);
+    if (pm.pct == null || !pm.from || !pm.to) return null;
+    const hb = rowBenchmark(l.positions, null);
+    let indexPct: number | null = null, indexReason: string | null = null;
+    if (hb.bench) {
+      const lv = benchLevels(hb.bench.key);
+      if ('level' in lv) { const ix = indexMove(pm.from, pm.to, lv.level); if (ix.shown) indexPct = ix.pct; else indexReason = ix.reason; }
+      else indexReason = lv.reason;
+    } else indexReason = hb.why ?? null;
+    return { holdingPct: pm.pct, indexPct, indexReason, from: pm.from, to: pm.to,
+      short: hb.bench ? BENCH_SHORT[hb.bench.key] : null, name: hb.bench?.name ?? null, why: hb.why ?? null };
+  };
   const reviewScopeOf = (l: SelectedLine): ReviewScope => {
     const whole = wholeAccountsOf(l);
     return whole && whole.every(id => idx.get(id)?.engagement === 'PMS') ? { accountIds: whole, isMandate: true } : { positions: l.positions };
@@ -259,6 +286,25 @@ export default function SegmentReturns({ selection: recordedSelection, period, e
   };
   const cells = (l: SelectedLine, kind: 'parent' | 'child') => {
     const pad = TREE_CELL[kind], h = holdingCells(l, pad), scope = reviewScopeOf(l);
+    const pw = priceOf(l);
+    const benchCell = pw
+      ? <td key="bench" data-seg-cell="bench" data-bench-currency="INR" data-bench-price={pw.indexPct ?? ''} className={`${pad} text-right mono ${changeColor(pw.indexPct)}`}>
+          <span className="inline-flex items-center justify-end gap-1" title={pw.indexPct != null
+            ? `${pw.name}: its published price move from ${fmtDate(pw.from)} to ${fmtDate(pw.to)}, the same window. A price index — dividends are not in it.${pw.why ? ` ${pw.why}` : ''}`
+            : pw.indexReason ?? undefined}>
+            {pw.short && <span className="text-[10px] font-normal text-slate-500" data-bench-label>{pw.short}</span>}
+            {pw.indexPct != null ? <><span className="ret-tag">PRICE</span>{pct(pw.indexPct)}</> : <AbsentCell reason={pw.indexReason ?? 'No index the price feed carries over this window.'} />}
+          </span></td>
+      : <LineBenchmarkCell key="bench" label={l.key === 'total' ? 'Total' : l.label} b={bench(l)} pad={pad} requested={selection.type} money={money} />;
+    const retCell = pw
+      ? <td key="ret" data-seg-cell="ret" data-seg-price={pw.holdingPct} className={`${pad} text-right mono ${changeColor(pw.holdingPct)}`}>
+          <span className="inline-flex items-center justify-end gap-1" title={`Price move ${fmtDate(pw.from)} → ${fmtDate(pw.to)}: the holding's own published price return over the dates you chose — point to point, not money-weighted. A custom window carries no dated purchases or sales, so neither a money- nor a time-weighted return is struck here; the Benchmark column is the same holding's own index over the same two dates.`}>
+            <span className="ret-tag">PRICE</span>{pct(pw.holdingPct)}<HoldingAssumptionInfo units={l.units} showLabel={false} />
+          </span></td>
+      : <td key="ret" data-seg-cell="ret" data-seg-shown-as={l.measured?.shown ? (l.measured.shownAs ?? selection.type) : undefined} className={`${pad} text-right mono ${changeColor(l.returnPct)}`}><span className="inline-flex items-center justify-end gap-1"
+          title={shownAbsolute(l) ? `Held under a year, so this is the absolute return, not ${type.label}: a return under a year is never annualised.`
+            : l.measured?.basis === 'annual' && l.periodPct != null ? `${pct(l.periodPct)} over the period itself, not stated per year` : undefined}>
+          {l.returnPct != null ? <>{shownAbsolute(l) && <span className="ret-tag">ABS</span>}{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} showLabel={false} />{info(l, 'return')}</span></td>;
     return [
       <td key="holdings" className={`${pad} text-right mono text-slate-400`}>{l.positions.length || (l.units.length ? '—' : 0)}</td>,
       h.qty, h.avgCost, h.cmp, h.day,
@@ -269,11 +315,8 @@ export default function SegmentReturns({ selection: recordedSelection, period, e
       <td key="gain" data-seg-cell="gain" className={`${pad} text-right mono ${changeColor(l.gain)}`}><span className="inline-flex items-center justify-end gap-1">
         {l.gain != null ? money(l.gain, true) : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} showLabel={false} />{info(l, 'gain')}</span></td>,
       h.pnl, h.realised,
-      <LineBenchmarkCell key="bench" label={l.key === 'total' ? 'Total' : l.label} b={bench(l)} pad={pad} requested={selection.type} money={money} />,
-      <td key="ret" data-seg-cell="ret" data-seg-shown-as={l.measured?.shown ? (l.measured.shownAs ?? selection.type) : undefined} className={`${pad} text-right mono ${changeColor(l.returnPct)}`}><span className="inline-flex items-center justify-end gap-1"
-        title={shownAbsolute(l) ? `Held under a year, so this is the absolute return, not ${type.label}: a return under a year is never annualised.`
-          : l.measured?.basis === 'annual' && l.periodPct != null ? `${pct(l.periodPct)} over the period itself, not stated per year` : undefined}>
-        {l.returnPct != null ? <>{shownAbsolute(l) && <span className="ret-tag">ABS</span>}{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} showLabel={false} />{info(l, 'return')}</span></td>,
+      benchCell,
+      retCell,
       ...TWR_COLUMNS.map(c => <AdjustedTwrCell key={c.key} column={c.key} result={twrOf(l)[c.key]} pad={pad} label={l.label} onRetry={retryTwr} />),
       <td key="contrib" className={`${pad} text-right mono ${changeColor(l.contribution)}`}>{l.contribution != null ? `${l.contribution >= 0 ? '+' : ''}${l.contribution.toFixed(2)} pp` : <AbsentCell reason={contributionReason} />}</td>,
       <td key="basis" className={`${pad} text-right text-[11px] text-slate-400`}>{l.units.some(u => u.assumption)
