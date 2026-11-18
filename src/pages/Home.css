@@ -110,7 +110,7 @@ html.dark .home-hint-popover { box-shadow: 0 12px 32px #0008; }
 .home-benchmark-select option { background: var(--home-surface); color: var(--home-text); }
 .home-performance-stats { display: flex; flex-wrap: wrap; gap: 42px; margin-bottom: 16px; }
 .home-performance-stats > div { display: flex; flex-direction: column; gap: 7px; }
-.home-performance-stats span { display: flex; align-items: center; gap: 6px; font-size: var(--home-font-body); color: var(--home-muted); }
+.home-performance-stats > div > span { display: flex; align-items: center; gap: 6px; font-size: var(--home-font-body); color: var(--home-muted); }
 .home-performance-stats strong { font-size: 32px; font-weight: 450; line-height: 1.2; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
 .home-performance-stats > .home-excess { margin-left: auto; text-align: right; }
 .home-excess > span { justify-content: flex-end; }

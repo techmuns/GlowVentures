@@ -184,3 +184,8 @@
 - That knob is now in the export dialog: a **"Top holdings per chart"** select (Top 10 / 15 / 20 / 25) beside the report-type and period controls (`CioReportExport.tsx`, `data-cio-report-topn`). The chosen count flows through `preview(period, edition, topN)` → `ReportDialog` → `exportCioReport(snapshot, edition, { topN })`; it is clamped to [5, 25] in the exporter so a chart's bars stay legible, and the three charts that rank holdings — Equity by value, Equity by unrealised return, Private by value — slice to `topN`, with their headings following ("Top 20 Holdings by Value").
 - Additive and inert by default: the default stays Top 10, so an export no one reconfigures is byte-identical to before. No book figure is touched — this only changes how many already-computed rows a chart draws, never a value.
 - Verified: `tsc -b`, `build` and `check-cio-report.mjs` green (summary + detailed editions, real-book totals, selected member, USD, landscape pages, omissions, retry, preview, download, mobile); full `test:family` green (the raw-`<table>` ban included — the control is a `<select>`, not a table). UI only; the book is untouched.
+
+### Stage 10pk — Home: the benchmark ⓘ text no longer shows on its own
+
+- Home's Portfolio performance row styled every `span` under `.home-performance-stats` as `display: flex`. The ⓘ popover beside the benchmark name is a `span`, so the rule beat its `display: none` and the whole benchmark explanation sat across the chart, unasked.
+- The rule now reaches only the row's own labels (`.home-performance-stats > div > span`); the popover opens only on hover or click again, 280–320px wide.
