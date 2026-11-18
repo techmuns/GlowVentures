@@ -623,7 +623,9 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   `polycab.yml` (Polycab exchange data), `index-sectors.yml` (NSE factsheet
   sector weights, days 1–15 monthly), `statement-intake.yml` (dashboard uploads
   → the book; dispatched by each upload, every 20 min as a backstop; sealed
-  PDFs need the `GLOW_PDF_PASSWORDS` Actions secret).
+  PDFs need the `GLOW_PDF_PASSWORDS` Actions secret), `cams-intake.yml` (the
+  family's CAMS/KFintech feed → the statement inbox daily, `scripts/ingest/cams-fetch.mjs`;
+  inert until the `CAMS_SFTP_*` secrets are set, `docs/CAMS-INTAKE.md`; Stage 10pf).
 - With no token and no network every page renders on statement marks.
 
 ## Conventions
