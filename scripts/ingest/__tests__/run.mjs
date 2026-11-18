@@ -28,6 +28,8 @@ const SUITES = [
   { name: "parseNum", file: "parseNum.test.mjs", required: true },
   { name: "readStatus", file: "readStatus.test.mjs", required: true },
   { name: "checkReads", file: "checkReads.test.mjs", required: true },
+  // CAMS auto-intake: the transport-agnostic fetch, dedup and inbox commit (Stage 10pf).
+  { name: "camsFetch", file: "camsFetch.test.mjs", required: true },
   // A scan is read only where the page checks it (lib/scan.mjs, providers/nsdlScan.mjs).
   { name: "scanRead", file: "scanRead.test.mjs", required: true },
   { name: "layout",   file: "layout.test.mjs",   required: true },
