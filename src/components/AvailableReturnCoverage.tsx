@@ -3,6 +3,8 @@ import type { Account } from '@/lib/types';
 import { holdingAssumptionText } from '@/lib/assumedHoldingReturns';
 import { RETURN_TYPES } from '@/lib/periodReturns';
 import { returnGapText, type ReturnSelection, type SelectedLine } from '@/lib/selectedSegmentReturns';
+import { xirr } from '@/lib/xirr';
+import { xirrConvergence } from '@/lib/xirrInspect';
 
 /** The same plain coverage explanation on attribution rows and headline cards. */
 export function AvailableReturnCoverage({ line: l, selection, accounts, money, field, notes = [], starts = [], showAssumption = true }: {
@@ -119,6 +121,45 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
             <div className="contents" key={String(label)}><dt className="text-slate-400">{label}</dt><dd className="text-right tabular text-slate-100">{money(amount as number)}</dd></div>)}
           <dt className="text-slate-400">Gain / loss</dt><dd className="text-right tabular text-slate-100">{money(l.gain!, true)}</dd>
         </dl>}
+        {/* INSPECT THE XIRR (the "show the math" panel): the money-weighted rate
+            is solved for, not a division, so its working is the equation it
+            solves and the search that finds it — the row's own dated cash flows,
+            and the net present value at a sweep of rates crossing zero at the
+            answer (`xirrInspect.ts`). Shown only where the figure IS an
+            annualised XIRR and carries its flows; collapsed, so it never changes
+            the popup's height until a reader opens it. */}
+        {shownAs === 'xirr' && (l.measured?.working?.flows?.length ?? 0) >= 2 && (() => {
+          const flows = l.measured!.working!.flows;
+          const rate = xirr(flows);
+          if (rate == null) return null;
+          const rows = xirrConvergence(flows, rate);
+          const fmtRate = (r: number) => `${r >= 0 ? '+' : ''}${(r * 100).toFixed(1)}%`;
+          return (
+            <details data-xirr-inspect data-navigation-details="availablereturncoverage-6" className="mt-1">
+              <summary className="ring-focus cursor-pointer rounded text-slate-200">Inspect: how this yearly rate is found</summary>
+              <div className="mt-3 space-y-3">
+                <p>XIRR is the single yearly rate that makes the money balance: discount every cash flow back to the start at that rate and the total is zero. It is solved for, not divided — here is the equation and the search that finds it.</p>
+                <p className="mono text-[11px] text-slate-400" data-xirr-equation>Σ cash flow ÷ (1 + rate)^(years from start) = 0</p>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs tabular" data-xirr-flows>
+                  <dt className="text-slate-400">Date</dt><dd className="text-right text-slate-400">Cash flow</dd>
+                  {flows.map((f, i) => <div className="contents" key={i} data-xirr-flow>
+                    <dt className="text-slate-300">{fmtDate(f.date.toISOString().slice(0, 10))}</dt>
+                    <dd className="text-right text-slate-100">{money(f.amount, true)}</dd>
+                  </div>)}
+                </dl>
+                <p className="text-slate-400">The opening value counts as money in, the closing value as money out, and every top-up and withdrawal sits on its own date. The net present value at a range of yearly rates, crossing zero at the solved rate:</p>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs tabular" data-xirr-npv>
+                  <dt className="text-slate-400">Yearly rate</dt><dd className="text-right text-slate-400">Net present value</dd>
+                  {rows.map((r, i) => <div className={`contents ${r.solution ? 'font-semibold text-champagne-400' : 'text-slate-300'}`} key={i}
+                    data-xirr-npv-row data-xirr-solution={r.solution ? '1' : undefined}>
+                    <dt>{fmtRate(r.rate)}{r.solution ? ' · the return' : ''}</dt>
+                    <dd className="text-right">{money(r.npv, true)}</dd>
+                  </div>)}
+                </dl>
+              </div>
+            </details>
+          );
+        })()}
           </div>
         </details>}
         {l.units.length > 0 && <details data-attribution-included data-navigation-details="availablereturncoverage-5"><summary className="ring-focus cursor-pointer rounded text-slate-200">View included accounts and dates</summary>

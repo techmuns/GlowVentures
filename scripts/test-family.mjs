@@ -21,6 +21,7 @@ const DIR = fs.mkdtempSync(path.join(TEMP_ROOT, "run-"));
 const SUITES = [
   ["capital integrity", "src/lib/__tests__/capitalIntegrity.test.ts"],
   ["financial solver integrity", "src/lib/__tests__/xirrIntegrity.test.ts"],
+  ["XIRR inspector convergence", "src/lib/__tests__/xirrInspect.test.ts"],
   ["Home dashboard dates and history", "src/lib/__tests__/homeDashboard.test.ts"],
   ["home overview", "src/lib/__tests__/homeOverview.test.ts"],
   ["home views", "src/lib/__tests__/homeViews.test.ts"],
