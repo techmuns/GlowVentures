@@ -140,22 +140,22 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
               <div className="mt-3 space-y-3">
                 <p>XIRR is the single yearly rate that makes the money balance: discount every cash flow back to the start at that rate and the total is zero. It is solved for, not divided — here is the equation and the search that finds it.</p>
                 <p className="mono text-[11px] text-slate-400" data-xirr-equation>Σ cash flow ÷ (1 + rate)^(years from start) = 0</p>
-                <div className="overflow-x-auto"><table className="w-full text-xs tabular" data-xirr-flows>
-                  <thead><tr className="text-slate-400"><th className="pb-1 text-left font-normal">Date</th><th className="pb-1 text-right font-normal">Cash flow</th></tr></thead>
-                  <tbody>{flows.map((f, i) => <tr key={i} data-xirr-flow>
-                    <td className="py-0.5 text-left text-slate-300">{fmtDate(f.date.toISOString().slice(0, 10))}</td>
-                    <td className="py-0.5 text-right text-slate-100">{money(f.amount, true)}</td>
-                  </tr>)}</tbody>
-                </table></div>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs tabular" data-xirr-flows>
+                  <dt className="text-slate-400">Date</dt><dd className="text-right text-slate-400">Cash flow</dd>
+                  {flows.map((f, i) => <div className="contents" key={i} data-xirr-flow>
+                    <dt className="text-slate-300">{fmtDate(f.date.toISOString().slice(0, 10))}</dt>
+                    <dd className="text-right text-slate-100">{money(f.amount, true)}</dd>
+                  </div>)}
+                </dl>
                 <p className="text-slate-400">The opening value counts as money in, the closing value as money out, and every top-up and withdrawal sits on its own date. The net present value at a range of yearly rates, crossing zero at the solved rate:</p>
-                <div className="overflow-x-auto"><table className="w-full text-xs tabular" data-xirr-npv>
-                  <thead><tr className="text-slate-400"><th className="pb-1 text-left font-normal">Yearly rate</th><th className="pb-1 text-right font-normal">Net present value</th></tr></thead>
-                  <tbody>{rows.map((r, i) => <tr key={i} data-xirr-npv-row data-xirr-solution={r.solution ? '1' : undefined}
-                    className={r.solution ? 'font-semibold text-champagne-400' : 'text-slate-300'}>
-                    <td className="py-0.5 text-left">{fmtRate(r.rate)}{r.solution ? ' · the return' : ''}</td>
-                    <td className="py-0.5 text-right tabular">{money(r.npv, true)}</td>
-                  </tr>)}</tbody>
-                </table></div>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs tabular" data-xirr-npv>
+                  <dt className="text-slate-400">Yearly rate</dt><dd className="text-right text-slate-400">Net present value</dd>
+                  {rows.map((r, i) => <div className={`contents ${r.solution ? 'font-semibold text-champagne-400' : 'text-slate-300'}`} key={i}
+                    data-xirr-npv-row data-xirr-solution={r.solution ? '1' : undefined}>
+                    <dt>{fmtRate(r.rate)}{r.solution ? ' · the return' : ''}</dt>
+                    <dd className="text-right">{money(r.npv, true)}</dd>
+                  </div>)}
+                </dl>
               </div>
             </details>
           );
