@@ -12,11 +12,13 @@ const EDITIONS: [ReportEdition, string, string][] = [
 ];
 const editionLabel = (e: ReportEdition) => EDITIONS.find(([v]) => v === e)![1];
 
-function ReportOptions({ initial, initialEdition, preview, close }: { initial: ReportPeriod; initialEdition: ReportEdition;
-  preview: (period: ReportPeriod, edition: ReportEdition) => void; close: () => void }) {
+const TOP_N_CHOICES = [10, 15, 20, 25];
+function ReportOptions({ initial, initialEdition, initialTopN, preview, close }: { initial: ReportPeriod; initialEdition: ReportEdition; initialTopN: number;
+  preview: (period: ReportPeriod, edition: ReportEdition, topN: number) => void; close: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const today = reportToday();
   const [edition, setEdition] = useState(initialEdition);
+  const [topN, setTopN] = useState(initialTopN);
   const [key, setKey] = useState(initial.key);
   const [year, setYear] = useState(Number(initial.from?.slice(0, 4) ?? today.slice(0, 4)));
   const [quarter, setQuarter] = useState(Math.ceil(Number(initial.from?.slice(5, 7) ?? today.slice(5, 7)) / 3));
@@ -28,7 +30,7 @@ function ReportOptions({ initial, initialEdition, preview, close }: { initial: R
   let chosen: ReportPeriod | undefined, error = '';
   try { chosen = reportPeriod(key, { today, year, quarter, from, to }); } catch (e) { error = (e as Error).message; }
   return createPortal(<dialog ref={dialog} onCancel={close} aria-label="Choose report type and period" className="cio-report-options" data-cio-report-options>
-    <form onSubmit={e => { e.preventDefault(); if (chosen) { try { preview(chosen, edition); } catch { setFailure('The selected records could not be prepared. Please retry.'); } } }}>
+    <form onSubmit={e => { e.preventDefault(); if (chosen) { try { preview(chosen, edition, topN); } catch { setFailure('The selected records could not be prepared. Please retry.'); } } }}>
       <div className="cio-report-options-heading"><div><strong>Export report</strong><p>Choose the report and period for your family office review.</p></div>
         <button type="button" onClick={close} aria-label="Close report options"><X size={20} /></button></div>
       <fieldset className="cio-report-edition" data-cio-report-edition={edition}>
@@ -38,6 +40,9 @@ function ReportOptions({ initial, initialEdition, preview, close }: { initial: R
             onChange={() => setEdition(value)} data-cio-report-edition-option={value} />
             <span className="cio-report-edition-dot" aria-hidden /><span><strong>{label}</strong><small>{hint}</small></span></label>)}</div>
       </fieldset>
+      <label>Top holdings per chart<select value={topN} onChange={e => setTopN(Number(e.target.value))} data-cio-report-topn={topN}
+        title="How many names each “Top holdings” chart lists — e.g. Top 10 by value, or Top 20.">
+        {TOP_N_CHOICES.map(n => <option key={n} value={n}>Top {n}</option>)}</select></label>
       <label>Reporting period<select value={key} onChange={e => {
         const next = e.target.value; setKey(next); setFailure('');
         if (next === 'fy') setYear(Number(today.slice(0, 4)) - (Number(today.slice(5, 7)) < 4 ? 1 : 0));
@@ -60,7 +65,7 @@ function ReportOptions({ initial, initialEdition, preview, close }: { initial: R
   </dialog>, document.body);
 }
 
-function ReportDialog({ snapshot, edition, close, change }: { snapshot: CioReportSnapshot; edition: ReportEdition; close: () => void; change: () => void }) {
+function ReportDialog({ snapshot, edition, topN, close, change }: { snapshot: CioReportSnapshot; edition: ReportEdition; topN: number; close: () => void; change: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [result, setResult] = useState<Result>();
   const [error, setError] = useState('');
@@ -69,13 +74,13 @@ function ReportDialog({ snapshot, edition, close, change }: { snapshot: CioRepor
   useEffect(() => {
     let active = true, url: string | undefined;
     setResult(undefined); setError('');
-    void import('@/lib/exportCioReport').then(m => m.exportCioReport(snapshot, edition)).then(r => {
+    void import('@/lib/exportCioReport').then(m => m.exportCioReport(snapshot, edition, { topN })).then(r => {
       if (!active) return;
       url = URL.createObjectURL(r.blob);
       setResult({ url, filename: r.filename, pages: r.pages, bytes: r.blob.size });
     }).catch(() => { if (active) setError('The report could not be prepared. Please retry.'); });
     return () => { active = false; if (url) URL.revokeObjectURL(url); };
-  }, [snapshot, edition, attempt]);
+  }, [snapshot, edition, topN, attempt]);
   return createPortal(<dialog ref={dialog} onCancel={close} aria-label="Family office report preview"
     className="cio-report-dialog" data-cio-report-preview>
     <div className="cio-report-toolbar">
@@ -103,6 +108,7 @@ export function CioReportExport({ snapshot }: { snapshot: (period: ReportPeriod)
   const [options, setOptions] = useState(false);
   const [period, setPeriod] = useState(() => reportPeriod('qtd'));
   const [edition, setEdition] = useState<ReportEdition>('detailed');
+  const [topN, setTopN] = useState(10);
   const [captured, setCaptured] = useState<CioReportSnapshot>();
   const close = () => { setOptions(false); setCaptured(undefined); requestAnimationFrame(() => button.current?.focus()); };
   return <>
@@ -110,8 +116,8 @@ export function CioReportExport({ snapshot }: { snapshot: (period: ReportPeriod)
       title="Preview and download a colour PDF with your family's current figures" data-cio-export-report>
       <FileDown size={15} /> Export report
     </button>
-    {options && <ReportOptions initial={period} initialEdition={edition} close={close}
-      preview={(p, e) => { const value = snapshot(p); setPeriod(p); setEdition(e); setOptions(false); setCaptured(value); }} />}
-    {captured && <ReportDialog snapshot={captured} edition={edition} close={close} change={() => { setCaptured(undefined); setOptions(true); }} />}
+    {options && <ReportOptions initial={period} initialEdition={edition} initialTopN={topN} close={close}
+      preview={(p, e, n) => { const value = snapshot(p); setPeriod(p); setEdition(e); setTopN(n); setOptions(false); setCaptured(value); }} />}
+    {captured && <ReportDialog snapshot={captured} edition={edition} topN={topN} close={close} change={() => { setCaptured(undefined); setOptions(true); }} />}
   </>;
 }

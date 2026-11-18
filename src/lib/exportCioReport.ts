@@ -34,9 +34,12 @@ async function loadAssets(): Promise<Assets> {
 
 /** Vector text, tables and charts stay sharp and searchable in the saved colour PDF.
  *  The summary edition draws the same pages and figures, without the holding-by-holding tables. */
-export async function exportCioReport(s: CioReportSnapshot, edition: ReportEdition = 'detailed') {
+export async function exportCioReport(s: CioReportSnapshot, edition: ReportEdition = 'detailed', opts: { topN?: number } = {}) {
   const a = await loadAssets();
   const detailed = edition === 'detailed', editionName = detailed ? 'Detailed' : 'Summary';
+  // How many names each "Top holdings" chart shows — the family picks 10 / 15 / 20
+  // / 25 in the export dialog. Clamped so a chart's bars stay legible.
+  const topN = Math.max(5, Math.min(Math.round(opts.topN ?? 10), 25));
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true, putOnlyUsedFonts: true });
   pdf.addFileToVFS('NotoSans-Regular.ttf', a.regular); pdf.addFont('NotoSans-Regular.ttf', 'Noto', 'normal');
   pdf.addFileToVFS('NotoSans-Bold.ttf', a.bold); pdf.addFont('NotoSans-Bold.ttf', 'Noto', 'bold');
@@ -247,10 +250,10 @@ export async function exportCioReport(s: CioReportSnapshot, edition: ReportEditi
   if (!s.historical) {
   if (s.equity.length) {
     page('Equity');
-    heading('Top 10 Holdings by Value', M, 122, 351);
-    bars(s.equity.slice(0, 10).map(h => ({ label: h.name, value: h.value, display: s.money(h.value) })), M, 157, 351, 285);
-    heading('Top 10 by Unrealised Return', 431, 122, RIGHT - 431);
-    bars(s.equity.filter(h => h.pct != null).sort((a, b) => b.pct! - a.pct!).slice(0, 10)
+    heading(`Top ${topN} Holdings by Value`, M, 122, 351);
+    bars(s.equity.slice(0, topN).map(h => ({ label: h.name, value: h.value, display: s.money(h.value) })), M, 157, 351, 285);
+    heading(`Top ${topN} by Unrealised Return`, 431, 122, RIGHT - 431);
+    bars(s.equity.filter(h => h.pct != null).sort((a, b) => b.pct! - a.pct!).slice(0, topN)
       .map(h => ({ label: h.name, value: h.pct!, display: s.percent(h.pct) })), 431, 157, RIGHT - 431, 285, true);
     para('Direct and managed listed equity. Unrealised return is the unrealised gain divided by the cost of units currently held, wherever every line has a verified cost and gain. It is neither YTD nor an annualised return. Holdings with missing costs are omitted from the return ranking.', M, 490, RIGHT - M, 8.5);
     if (detailed) { page('Equity Holdings'); holdingTable('Equity Holdings', s.equity); }
@@ -268,7 +271,7 @@ export async function exportCioReport(s: CioReportSnapshot, edition: ReportEditi
   if (privateHoldings.length || s.privateRows.length) {
     page('Private Equity & Venture Capital');
     heading('Private Investments Allocation', M, 122, 351);
-    bars(privateHoldings.slice(0, 10).map(h => ({ label: h.name, value: h.value, display: s.money(h.value) })), M, 156, 351, 280);
+    bars(privateHoldings.slice(0, topN).map(h => ({ label: h.name, value: h.value, display: s.money(h.value) })), M, 156, 351, 280);
     heading('Capital Deployment', 431, 122, RIGHT - 431);
     const d = s.summary.deploy;
     table('Private Equity & Venture Capital', [{ label: 'Measure', width: .65 }, { label: s.currency, width: .35, right: true }],
