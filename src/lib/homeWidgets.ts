@@ -22,12 +22,16 @@ export const HOME_WIDGETS = [
   { id: 'inception', name: 'Since Inception Return', category: 'Performance', description: 'Return on capital since investment: the same figure as Morning CIO’s consolidated return.', kind: 'number', size: 'quarter' },
   { id: 'equityTwr', name: 'Equity TWR', category: 'Performance', description: 'Time-weighted return of the Equity asset class this calendar year, in INR: the Returns table’s Adjusted TWR (YTD).', kind: 'number', size: 'quarter' },
   { id: 'gains', name: 'Gains Breakdown – YTD', category: 'Performance', description: 'This calendar year’s gain as bars, by member or by asset class: the records behind the YTD return.', kind: 'bars', size: 'half' },
+  { id: 'contributors', name: 'Top Contributors & Detractors', category: 'Performance', description: 'The holdings that produced the most — and least — rupee gain over the selected period.', kind: 'table', size: 'half' },
+  { id: 'winners', name: 'Winners & Losers', category: 'Performance', description: 'How many holdings rose and fell in the period, with the best and worst and the median return.', kind: 'table', size: 'half' },
   { id: 'movements', name: 'Large Performance Movements', category: 'Performance', description: 'Measured holding returns beyond +10% or −10% over the selected period.', kind: 'table', size: 'half' },
   { id: 'monthly', name: 'Month by Month Discrete Performance', category: 'Performance', description: 'Separate monthly portfolio returns over the selected range, using available dated records.', kind: 'table', size: 'full' },
   { id: 'vintage', name: 'Performance by Vintage', category: 'Performance', description: 'Private-equity fund performance grouped by a verified fund vintage and fund-level IRR.', kind: 'bars', size: 'half' },
   { id: 'volatility', name: 'Top Securities by Volatility', category: 'Risk', description: 'The ten most volatile public investments, ranked by daily return volatility in the selected period.', kind: 'bars', size: 'half' },
   { id: 'sectorBars', name: 'Value by Sector', category: 'Allocation', description: 'Company-share holdings’ value by sector as a bar chart, in INR (or USD when selected).', kind: 'bars', size: 'full' },
   { id: 'sectors', name: 'Stock Sector Breakdown', category: 'Allocation', description: 'Your recorded company-share holdings grouped by their verified sectors.', kind: 'donut', size: 'half' },
+  { id: 'publicPrivate', name: 'Public vs Private Markets', category: 'Allocation', description: 'The book split by where the money is invested — listed markets against private capital.', kind: 'bars', size: 'half' },
+  { id: 'byManager', name: 'Value by Manager', category: 'Allocation', description: 'The investment book grouped by the platform or manager each account is held with.', kind: 'bars', size: 'half' },
 ] as const;
 export type HomeWidgetId = typeof HOME_WIDGETS[number]['id'];
 export type HomeWidgetSize = 'quarter' | 'half' | 'wide' | 'full';

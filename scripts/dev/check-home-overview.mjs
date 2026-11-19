@@ -151,7 +151,7 @@ try {
     }
     await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
     const dialog = page.getByRole('dialog');
-    assert.equal(await dialog.locator('[data-widget-catalog]').count(), 29, 'all personal-choice widgets remain available');
+    assert.equal(await dialog.locator('[data-widget-catalog]').count(), 33, 'all personal-choice widgets remain available');
     await page.getByRole('searchbox', { name: 'Search widgets' }).fill('currency');
     assert.equal(await dialog.locator('[data-widget-catalog]').count(), 1);
     await dialog.locator('[data-widget-catalog="currency"]').hover();
