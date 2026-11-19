@@ -1,6 +1,6 @@
 import { ExportableTable } from "@/components/ExportableTable";
-import { type ReactNode, useEffect, useMemo } from "react";
-import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote, CalendarDays } from "lucide-react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote, CalendarDays, ChevronDown } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { AllocationChart } from "@/components/AllocationViews";
@@ -22,7 +22,7 @@ import { accountIndex, engagementOf, ownerOf } from "@/lib/accounts";
  * screen and the Portfolio Monitor alike — see the header of `groupAxis.ts`.
  */
 import {
-  GROUP_AXES, GROUP_VIEWS, type GroupAxis, groupKeyFor, groupSourceFor,
+  ALLOC_AXES, ALLOC_VIEWS, OWNER_AXIS, type GroupAxis, type AllocAxis, groupKeyFor, groupSourceFor,
   groupCount, GROUP_COLUMN_HEAD, GROUP_NOUN,
 } from "@/lib/groupAxis";
 import {
@@ -57,7 +57,6 @@ import { INVESTOR_DEFAULT_TILES } from "@/lib/investorSummary";
 import { availableCardReturns, statementReturnInputs, type AvailableCardReturn, type GainCardReturn } from "@/lib/availableCardReturns";
 import { useMarketHistories } from "@/lib/useMarketReturns";
 import { assumedHoldingBook } from "@/lib/assumedHoldingBook";
-import { HoldingAssumptionInfo } from "@/components/HoldingAssumptionInfo";
 import { CioReportExport } from '@/components/CioReportExport';
 import { cioReportSnapshot } from '@/lib/cioReport';
 import { cioReportReturns } from '@/lib/cioReportReturns';
@@ -149,11 +148,15 @@ const UNPLACED_COLOR = "#64748b";
  * the heading the family reads and `check:pages` uses it as a section boundary
  * on this page. The other two say plainly whose taxonomy they are.
  */
-const ALLOC_TITLE: Record<GroupAxis, string> = {
+const ALLOC_TITLE: Record<AllocAxis, string> = {
   category: "Allocation by asset class & mandate",
   assetClass: "Allocation by asset class — the family's own",
   basket: "Allocation by basket — the family's own",
+  owner: "Allocation by owner — each family member & entity",
 };
+// The optional SECOND grouping axis (the two-level pivot): "None" plus the four
+// allocation axes. The one equal to the primary axis is treated as None.
+const THEN_VIEWS = [{ key: "none", label: "None", title: "No second grouping" }, ...ALLOC_VIEWS] as const;
 /**
  * ── ONE PAGE, THREE PANELS, AND NO PAGE SCROLL ───────────────────────────────
  *
@@ -224,9 +227,11 @@ const CIO_TABS = [
 // Keep the storage key: an explicitly customised layout remains the reader's.
 const CIO_TILES_KEY = "glow:cioTiles:v1";
 
-const sectionColor = (axis: GroupAxis, key: string, i: number) => {
+const sectionColor = (axis: AllocAxis, key: string, i: number) => {
   if (key === UNCLASSIFIED) return UNPLACED_COLOR;
   if (axis === "category") return bucketColor(key, i);
+  // Owner has no fixed colour map — each member/entity takes the next chart colour.
+  if (axis === OWNER_AXIS) return CHART_COLORS[i % CHART_COLORS.length];
   const map = axis === "basket" ? BASKET_COLOR : FAMILY_CLASS_COLOR;
   return map[key] ?? CHART_COLORS[i % CHART_COLORS.length];
 };
@@ -645,8 +650,8 @@ function useCioModel() {
      * dependencies — the memo also pools every account's XIRR, and recomputing
      * that because a reader pressed a segment would be work for nothing.
      */
-    const rowsByAxis = new Map<GroupAxis, Map<string, typeof p>>();
-    for (const axis of GROUP_AXES) {
+    const rowsByAxis = new Map<AllocAxis, Map<string, typeof p>>();
+    for (const axis of ALLOC_AXES) {
       const m = new Map<string, typeof p>();
       for (const x of p) {
         const key = groupKeyFor(axis, accIdx, x);
@@ -772,7 +777,7 @@ function useCioModel() {
     });
     // A bucket of POSITIONS — no dated capital-movement flows at bucket level,
     // so no money-weighted rate; its total return on cost is what the row shows.
-    const positionBucket = (axis: GroupAxis, key: string, i: number): Bucket => {
+    const positionBucket = (axis: AllocAxis, key: string, i: number): Bucket => {
       const rows = rowsByAxis.get(axis)?.get(key) ?? [];
       const g = eqGroup(rows);
       /**
@@ -808,10 +813,13 @@ function useCioModel() {
      * own row: a section the book HAS must never be silently dropped for not
      * being on a list written before it arrived.
      */
-    const DECLARED: Record<GroupAxis, readonly string[]> = {
+    const DECLARED: Record<AllocAxis, readonly string[]> = {
       category: [MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, "AIF", "Mutual Fund", "ETF", "Cash"],
       basket: BASKET_ORDER,
       assetClass: FAMILY_CLASS_ORDER,
+      // Owner sections are discovered from the positions and ranked by value
+      // like every other axis here; the book declares no fixed owner list.
+      owner: [],
     };
     /**
      * THE FUND-OF-FUNDS ROWS, WHICH ARE THE SAME ON EVERY AXIS AND SAY SO.
@@ -833,7 +841,7 @@ function useCioModel() {
       fundBucket("Pre-IPO Funds", "#38bdf8", pm.preIpoFunds.length, preF, preX, "pre-ipo"),
       fundBucket("Debt Funds", "#818cf8", pm.debtFunds.length, debtF, debtX, "debt-fund"),
     ];
-    const bucketsFor = (axis: GroupAxis): Bucket[] => {
+    const bucketsFor = (axis: AllocAxis): Bucket[] => {
       const declared = DECLARED[axis];
       const keys = [
         ...declared,
@@ -849,8 +857,30 @@ function useCioModel() {
       // This is the whole §0 rule applied to the allocation view.
       return all.filter((b) => b.count > 0).sort((a, b) => b.current - a.current);
     };
-    const bucketsByAxis = { category: bucketsFor("category"), assetClass: bucketsFor("assetClass"), basket: bucketsFor("basket") } as Record<GroupAxis, Bucket[]>;
+    const bucketsByAxis = { category: bucketsFor("category"), assetClass: bucketsFor("assetClass"), basket: bucketsFor("basket"), owner: bucketsFor("owner") } as Record<AllocAxis, Bucket[]>;
     const buckets = bucketsByAxis.category;
+    /**
+     * THE TWO-LEVEL PIVOT (Addepar "Edit table", stacked groupings). A section's
+     * OWN positions, re-grouped by a SECOND axis and valued with the very same
+     * `eqGroup` the section used — so every inner row ties to the section above
+     * it on every column (value, invested, return, weight). Only position
+     * sections split; a fund-of-funds row carries no per-holding rows, so it
+     * returns none and does not open. The book has no cross-axis `dedupeGroup`,
+     * so partitioning the rows by a second axis never splits one holding across
+     * two inner rows.
+     */
+    const subGroups = (primaryAxis: AllocAxis, sectionKey: string, secondaryAxis: AllocAxis): Bucket[] => {
+      const rows = rowsByAxis.get(primaryAxis)?.get(sectionKey) ?? [];
+      const byKey = new Map<string, typeof p>();
+      for (const x of rows) { const a = byKey.get(groupKeyFor(secondaryAxis, accIdx, x)); if (a) a.push(x); else byKey.set(groupKeyFor(secondaryAxis, accIdx, x), [x]); }
+      return [...byKey.entries()].map(([key, inner], i): Bucket => {
+        const g = eqGroup(inner);
+        return { key, color: sectionColor(secondaryAxis, key, i), count: g.count, invested: g.invested, current: g.mv,
+          investedFifo: g.fifo, vacuous: g.vacuous, fromPositions: true, ruleMV: 0, cashRuleMV: 0, derivedMV: 0, movedMV: 0,
+          unplaced: key === UNCLASSIFIED, retPct: g.ret, distributed: 0, xirr: null, xirrBasis: "ledger", xirrNote: null, sheet: null,
+          withoutCost: g.withoutCost, withoutCostMV: g.withoutCostMV, costedMV: g.costedMV };
+      }).filter((b) => b.count > 0).sort((a, b) => b.current - a.current);
+    };
 
     // Distinct names, consolidated on securityKey across accounts. ISIN cannot do
     // this here: the same company arrives from two platforms with two spellings
@@ -934,7 +964,7 @@ function useCioModel() {
       capitalAlso: commitmentTotals(cap.counting.alsoReported.map((x) => x.commitment)),
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
-      buckets, bucketsByAxis,
+      buckets, bucketsByAxis, subGroups,
       available: availableCardReturns(statementPortfolio ?? portfolio, consolidated,
         statementReturnInputs(statementPortfolio ?? portfolio), today, assumptionBook),
       distinctNames: byKey.size, crossHeld, top10Pct,
@@ -967,7 +997,7 @@ export function MorningCIO() {
    * the basket view" has to be a link rather than an instruction. The default
    * stays param-free and stays CATEGORY, which is the table they already read.
    */
-  const [allocAxis, setAllocAxis] = useViewParam(GROUP_VIEWS, {}, "alloc");
+  const [allocAxis, setAllocAxis] = useViewParam(ALLOC_VIEWS, {}, "alloc");
   // WHICH PANEL IS ON SCREEN. See `CIO_TABS` above for what the three are and
   // why the choice lives in the URL.
   /**
@@ -980,10 +1010,17 @@ export function MorningCIO() {
   // this component returns early on an unloaded book, and a hook after that is
   // a different bug from the one being fixed.
   const allocView = useTableView("cio-allocation", ALLOC_COLS, { reviewKind: "category" });
+  // The two-level pivot: an optional SECOND grouping axis (URL `?then=`) and which
+  // section rows are expanded into their inner breakdown (per browser, not the URL).
+  const [thenParam, setThen] = useViewParam(THEN_VIEWS, {}, "then");
+  const [openRows, setOpenRows] = useState<Set<string>>(() => new Set());
 
   if (!portfolio || !model) return null;
   const m = model;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  // The second axis, ignored when it is None or equal to the primary (no nesting then).
+  const thenAxis: AllocAxis | null = thenParam !== "none" && thenParam !== allocAxis ? (thenParam as AllocAxis) : null;
+  const toggleRow = (key: string) => setOpenRows((s) => { const n = new Set(s); if (n.has(key)) n.delete(key); else n.add(key); return n; });
   /**
    * THE CAPITAL COUNTED ONCE WITH ITS HOLDING, said the way the Private Market
    * tiles say it — the same function writes both, so the two pages cannot
@@ -1016,7 +1053,7 @@ export function MorningCIO() {
     return: (b) => b.retPct,
     // Weight is `current ÷ the book`, so it orders exactly as Current does.
     weight: (b) => b.current,
-  }, (b) => allocAxis === "basket" ? { basket: b.key } : { category: sectionLabel(b.key) }, memberScope.owners !== null));
+  }, (b) => allocAxis === "basket" ? { basket: b.key } : allocAxis === OWNER_AXIS ? { entity: b.key } : { category: sectionLabel(b.key) }, memberScope.owners !== null));
   /**
    * HOW MUCH OF THIS VIEW THE FAMILY NAMED PRODUCT BY PRODUCT, summed off the
    * rows on screen rather than recomputed from the book — a caption struck on a
@@ -1082,17 +1119,30 @@ export function MorningCIO() {
   const NAMES_WHAT = `Open every holding in the book. ${fmtNum(m.distinctNames)} is the count of distinct securities across every account; the page lists them grouped one row per name and per mandate, so a mandate's names are one row there.`;
   const returnAccounts = (statementPortfolio ?? portfolio).accounts;
   const benchLine = (r: AvailableCardReturn) => <CardBenchmarkLine card={r} accounts={returnAccounts} money={money} />;
-  const coverageInfo = (r: AvailableCardReturn, field: 'gain' | 'return') => <>
-    <CardBenchmarkInfo card={r} accounts={returnAccounts} money={money} />
-    <AvailableReturnCoverage line={r.total} selection={r.selection} accounts={returnAccounts}
-      money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} starts={r.starts} /></>;
-  const coveredCaption = (r: AvailableCardReturn) => <span data-card-coverage
-    data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
-    data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
-    data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
-    data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}>
-    {r.total.units.length ? 'Available data' : 'No usable return records'} · {r.coveredHoldings} of {r.totalHoldings} holdings<br />
-    {money(r.coveredValue)} covered · {r.coveredAccounts} {r.coveredAccounts === 1 ? 'account' : 'accounts'} <HoldingAssumptionInfo units={r.total.units} showLabel={tab !== 'returns'} /></span>;
+  /**
+   * THE CARDS' ⓘ, SHORT (the family, 16 Nov 2026: "These (i) explanations are way
+   * to long … make it simplest crisp short"). The summary and the benchmarks stay
+   * open; the assumption is one line; the working, the held and missing records and
+   * the included accounts are kept whole behind one closed Details fold.
+   */
+  const coverageInfo = (r: AvailableCardReturn, field: 'gain' | 'return') => {
+    const assumed = r.total.units.filter((u) => u.assumption);
+    const owners = [...new Set(assumed.map((u) => u.assumption!.owner))];
+    return <>
+      <CardBenchmarkInfo card={r} accounts={returnAccounts} money={money} />
+      {assumed.length > 0 && <p data-return-assumption-line data-assumed-count={assumed.length} className="text-xs text-slate-400">
+        Assumed still held{owners.length === 1 ? ` by ${owners[0]}` : ''}: <span className="tabular">{fmtNum(assumed.length)}</span> {assumed.length === 1 ? 'holding' : 'holdings'} with no sale on record.</p>}
+      <details data-card-details className="card-details">
+        <summary className="card-details-toggle ring-focus inline-flex cursor-pointer items-center gap-1 rounded py-1 text-slate-300">
+          Details<ChevronDown className="card-details-chevron h-4 w-4" aria-hidden="true" />
+        </summary>
+        <div className="mt-3">
+          <AvailableReturnCoverage line={r.total} selection={r.selection} accounts={returnAccounts} showAssumption={false}
+            money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} starts={r.starts} />
+        </div>
+      </details>
+    </>;
+  };
   /**
    * THE THREE RETURN CARDS' CAPTION — ONE LINE (the family, 5 Nov 2026: "more
    * minimal … I rather see number of records covered over total records"). The
@@ -1282,7 +1332,7 @@ export function MorningCIO() {
       id: "return", label: "Consolidated return", icon: <Percent className="h-4 w-4" />,
       calculation: capitalCalculation, href: returnsHref('inception'),
       hrefTitle: 'Return on recorded capital since investment for the available data. The info button lists the holdings left out and the records they need. Open Return attribution for the same verified holdings.',
-      value: pct1(since.total.returnPct), second: benchLine(since), sub: coveredCaption(since),
+      value: pct1(since.total.returnPct), second: benchLine(since), sub: periodCaption(since),
     },
     /* Uncalled capital and Distributions are COMMITMENT facts. With no
        commitment in the book they have no denominator — "₹0 undrawn" would
@@ -1689,7 +1739,7 @@ export function MorningCIO() {
               <div className="flex flex-wrap items-center gap-2">
                 <div role="tablist" aria-label="Group the allocation by"
                   className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
-                  {GROUP_VIEWS.map((v) => (
+                  {ALLOC_VIEWS.map((v) => (
                     <button key={v.key} type="button" role="tab" aria-selected={allocAxis === v.key} title={v.title}
                       data-alloc-axis={v.key}
                       onClick={() => setAllocAxis(v.key)}
@@ -1698,6 +1748,19 @@ export function MorningCIO() {
                     </button>
                   ))}
                 </div>
+                {/* THE SECOND GROUPING (the two-level pivot): "group by X, then by
+                    Y". Each section then opens into its own breakdown by the
+                    chosen second axis, every inner row tying to the section above
+                    it (`m.subGroups`). The option equal to the first axis is
+                    disabled — nesting a thing inside itself groups nothing. */}
+                <label className="inline-flex items-center gap-1 text-[11px] text-slate-400" title="Open each row into a second grouping — the same holdings, split again.">
+                  then by
+                  <select value={thenParam} data-alloc-then={thenParam}
+                    onChange={(e) => setThen(e.target.value as typeof thenParam)}
+                    className="rounded border border-ink-600 bg-ink-800 px-1.5 py-0.5 text-[11px] text-slate-200">
+                    {THEN_VIEWS.map((v) => <option key={v.key} value={v.key} disabled={v.key === allocAxis}>{v.label}</option>)}
+                  </select>
+                </label>
                 {/* THE COUNT IS OF THE SECTIONS THE AXIS NAMES (CK-C11): "5 baskets
                     held" counted the Not-classified row, which is no basket of
                     the family's four — it is named beside the count instead. */}
@@ -1753,8 +1816,8 @@ export function MorningCIO() {
                     </Tr>
                   </thead>
                   <tbody className="divide-y divide-ink-700/60">
-                    {sections.map((b) => (
-                      <Tr view={allocView} reviewScope={allocAxis === "basket" ? { basket: b.key } : { category: sectionLabel(b.key) }} key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key} data-alloc-unplaced-row={b.unplaced ? "1" : undefined}>
+                    {sections.flatMap((b) => [
+                      <Tr view={allocView} reviewScope={allocAxis === "basket" ? { basket: b.key } : allocAxis === OWNER_AXIS ? { entity: b.key } : { category: sectionLabel(b.key) }} key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key} data-alloc-unplaced-row={b.unplaced ? "1" : undefined}>
                         <td className="px-2 py-2.5">
                           {/* THE ROW OPENS THE HOLDINGS BEHIND IT — on whichever
                               axis the table is grouped by. AIF, PMS mandates,
@@ -1771,6 +1834,16 @@ export function MorningCIO() {
                               positions and is deliberately NOT a link (see
                               `fromPositions`): a link to a table that could only
                               be empty reads as a feed that failed. */}
+                          <div className="flex items-center gap-1">
+                          {/* THE TWO-LEVEL PIVOT'S TOGGLE: opens this section into its
+                              breakdown by the second axis. The label stays a drill link. */}
+                          {thenAxis && b.fromPositions && (
+                            <button type="button" onClick={() => toggleRow(b.key)} aria-expanded={openRows.has(b.key)}
+                              aria-label={`${openRows.has(b.key) ? "Collapse" : "Expand"} ${sectionLabel(b.key)}`} data-alloc-expand={b.key}
+                              className="shrink-0 rounded p-0.5 text-slate-400 transition-colors hover:text-slate-100">
+                              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openRows.has(b.key) ? "" : "-rotate-90"}`} />
+                            </button>
+                          )}
                           {b.fromPositions ? (
                             <Link to={drilldownHref(AXIS_SCOPE[allocAxis], b.key)}
                               title={`Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${sectionLabel(b.key)}`}
@@ -1785,6 +1858,7 @@ export function MorningCIO() {
                               {sectionLabel(b.key)}
                             </span>
                           )}
+                          </div>
                           {/* AN UNPLACED ROW NAMES ITS CAUSE, and it is the one
                               row here that is not a fact about the holdings under
                               it. "Other" would read as a section the family
@@ -1817,8 +1891,31 @@ export function MorningCIO() {
                         <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{money(b.current)}</td>
                         <td className="px-2 py-2.5 text-right whitespace-nowrap">{returnCell(b)}</td>
                         <td className="px-2 py-2.5 text-right mono text-slate-400">{m.totalValue > 0 ? `${((b.current / m.totalValue) * 100).toFixed(1)}%` : DASH}</td>
-                      </Tr>
-                    ))}
+                      </Tr>,
+                      // THE INNER BREAKDOWN (two-level pivot): this section's own holdings
+                      // re-grouped by the second axis, each row tying to the section above
+                      // it on every column (`m.subGroups`).
+                      ...(thenAxis && b.fromPositions && openRows.has(b.key)
+                        ? m.subGroups(allocAxis, b.key, thenAxis).map((sub) => (
+                          <Tr view={allocView} key={`${b.key}::${sub.key}`}
+                            reviewScope={thenAxis === "basket" ? { basket: sub.key } : thenAxis === OWNER_AXIS ? { entity: sub.key } : { category: thenAxis === "category" ? bucketLabel(sub.key) : sub.key }}
+                            className="bg-ink-900/40" data-alloc-subrow={`${b.key}::${sub.key}`}>
+                            <td className="py-1.5 pl-9 pr-2">
+                              <span className="flex items-center gap-2 text-[13px] text-slate-300">
+                                <span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: sub.color }} />
+                                {thenAxis === "category" ? bucketLabel(sub.key) : sub.key}
+                                <span className="text-[10px] text-slate-500">· {sub.count}</span>
+                              </span>
+                            </td>
+                            <td className="py-1.5 px-2 text-right mono text-[13px] text-slate-400 whitespace-nowrap">
+                              {sub.invested === null ? <AbsentCell reason="no statement behind these holdings reports what they cost — a depository records what is held, never what was paid for it" /> : money(sub.invested)}</td>
+                            <td className="py-1.5 px-2 text-right mono text-[13px] text-slate-300 whitespace-nowrap">{money(sub.current)}</td>
+                            <td className="py-1.5 px-2 text-right text-[13px] whitespace-nowrap">{returnCell(sub)}</td>
+                            <td className="py-1.5 px-2 text-right mono text-[13px] text-slate-400">{m.totalValue > 0 ? `${((sub.current / m.totalValue) * 100).toFixed(1)}%` : DASH}</td>
+                          </Tr>
+                        ))
+                        : []),
+                    ])}
                   </tbody>
                   <tfoot>
                     <TrFoot view={allocView} className="border-t-2 border-ink-600 px-2 py-2.5 text-left font-semibold text-slate-200"
@@ -1903,7 +2000,7 @@ export function MorningCIO() {
                     for the notes under the tables to go. Whose taxonomy this is,
                     and the value each of their two rules placed, stay on screen:
                     those are figures a reader acts on. */}
-                {allocAxis !== "category" && (
+                {allocAxis !== "category" && allocAxis !== OWNER_AXIS && (
                   <div className="mt-3 space-y-0.5 text-[11px] leading-relaxed text-slate-500">
                     {/* ONE SHORT LINE (Stage 10cp): whose taxonomy it is and the
                         value their direct-stock rule placed are the figures; how

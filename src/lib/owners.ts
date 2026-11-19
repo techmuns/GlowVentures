@@ -39,6 +39,18 @@ export function ownerDisplayName(ownerId: string | null | undefined): string {
   return ownerById(ownerId)?.displayName ?? BOOK_OWNER_NAMES.get(ownerId) ?? ownerId;
 }
 
+/**
+ * Rank a holder by the BOOK's own order — family members first, then the trusts
+ * and LLPs, then the review's unattributed line (`BOOK_OWNERS`) — so the Owner
+ * grouping axis reads top to bottom the way every owner pick-list does. Keyed on
+ * the DISPLAY NAME, because that is the section key the axis carries (as the
+ * Category and Basket axes carry their own readable keys); a name the book does
+ * not list sorts last rather than guessing a position for it.
+ */
+const BOOK_OWNER_RANK = new Map(BOOK_OWNERS.map((o, i) => [o.displayName, i]));
+export const ownerOrd = (displayName: string): number =>
+  BOOK_OWNER_RANK.get(displayName) ?? BOOK_OWNERS.length;
+
 /** Every canonical owner, alphabetical — for filters and pick-lists. */
 export function allOwners() {
   return [...OWNERS].sort((a, b) => a.displayName.localeCompare(b.displayName));

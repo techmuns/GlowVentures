@@ -23,12 +23,14 @@
 // member sees "whole family only" rather than a figure over part of the book.
 //
 // A month no record measures reads "—" with its reason — never a zero.
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { FileDown } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { Card } from "@/components/Card";
 import { ExportableTable } from "@/components/ExportableTable";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { fmtPct, fmtDate, changeColor } from "@/lib/format";
+import { PRIVATE_REPORT_BRAND } from "@/lib/privateReport";
 import { currentHoldings, dedupedPositions } from "@/lib/analytics";
 import { returnSelectionFor } from "@/lib/useReturnSelection";
 import { selectedSegmentReturns } from "@/lib/selectedSegmentReturns";
@@ -56,7 +58,8 @@ const monthLabel = (ym: string) =>
 const lastDayOf = (c: Date) => new Date(Date.UTC(c.getUTCFullYear(), c.getUTCMonth() + 1, 0)).toISOString().slice(0, 10);
 
 export function MonthlyPerformance() {
-  const { portfolio, statementPortfolio, consolidated, corporateActions, fmtFromBase, scope } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, corporateActions, fmtFromBase, displayCurrency, scope } = usePortfolio();
+  const [pdfBusy, setPdfBusy] = useState(false);
   const current = useMemo(() => currentHoldings(consolidated), [consolidated]);
   const feed = useMarketHistories(current);
   const assumptions = useMemo(
@@ -131,6 +134,46 @@ export function MonthlyPerformance() {
   const accounts = (statementPortfolio ?? portfolio)?.accounts.length ?? 0;
   const maxCovered = rows.reduce((m, r) => Math.max(m, r.covered), 0);
 
+  // Download the table as a branded PDF for the principals (task 408). The cells
+  // carry exactly what the table shows (same display-currency formatting), and a
+  // month that measures nothing stays a dash — never a zero.
+  const downloadPdf = async () => {
+    if (pdfBusy || !rows.length) return;
+    setPdfBusy(true);
+    try {
+      const pct = (n: number | null) => (n == null ? DASH : fmtPct(n, { sign: true, decimals: 2 }));
+      const mon = (n: number | null, sign?: boolean) => (n == null ? DASH : money(n, sign));
+      const last = measured[measured.length - 1];
+      const { exportMonthlyPdf } = await import("@/lib/exportMonthlyPdf");
+      const r = await exportMonthlyPdf({
+        brand: PRIVATE_REPORT_BRAND, scope: scope.label, currency: displayCurrency,
+        exportedOn: fmtDate(new Date().toISOString().slice(0, 10)),
+        columns: [{ label: "Month" }, { label: "Opening", right: true }, { label: "Money in", right: true },
+          { label: "Money out", right: true }, { label: "Gain", right: true }, { label: "Closing", right: true },
+          { label: "Return", right: true }, { label: "Cumulative", right: true }, { label: "Nifty 500", right: true }],
+        rows: rows.map((m) => [monthLabel(m.month), mon(m.opening), mon(m.moneyIn), mon(m.moneyOut),
+          mon(m.gain, true), mon(m.closing), pct(m.ret), pct(m.cumulative), pct(m.bench)]),
+        footer: measured.length
+          ? [`Cumulative · ${measured.length} month${measured.length === 1 ? "" : "s"}`,
+            `${fmtDate(measured[0].from)} → ${fmtDate(last.to)}`, "", "", "", "", "", pct(last.cumulative), pct(last.benchCumulative)]
+          : undefined,
+        note: `Each month's opening value, money in and out, gain, money-weighted return (Modified Dietz) and the Nifty 500 over the same month. Cumulative is the money-weighted return from the book's first measured month — the available-history figure. Coverage reaches ${maxCovered} of ${accounts} accounts. ${scope.label}. A month no record measures reads "—", never a zero.`,
+      });
+      const url = URL.createObjectURL(r.blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = r.filename; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+    } catch { /* a failed render leaves the table and its Excel export untouched */ }
+    finally { setPdfBusy(false); }
+  };
+  const pdfButton = (
+    <button type="button" onClick={() => { void downloadPdf(); }} disabled={pdfBusy || !rows.length} data-month-pdf
+      title="Download the month-on-month table as a branded PDF for the principals"
+      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-600/30 bg-emerald-500/5 px-2.5 py-1 text-xs font-medium text-emerald-600 ring-focus hover:bg-emerald-500/10 disabled:opacity-50">
+      <FileDown className="h-3.5 w-3.5" />{pdfBusy ? "Preparing…" : "Download PDF"}
+    </button>
+  );
+
   if (scope.selected) {
     return (
       <Card className="mt-5" title="Month-on-month performance"
@@ -153,8 +196,8 @@ export function MonthlyPerformance() {
   }
 
   return (
-    <Card className="mt-5" title="Month-on-month performance"
-      subtitle={`Each month from ${fmtDate(rows[0].from)} to ${fmtDate(rows[rows.length - 1].to)}: its opening value, money in and out, gain, money-weighted return (Modified Dietz) and the Nifty 500 over the same month. Cumulative is the money-weighted return from the book's first measured month to that month — the available-history figure the Returns tab shows. Each month covers the accounts the book can value for it, so an opening value can step up as more accounts report; coverage reaches ${maxCovered} of ${accounts} accounts. Export to Excel from the table menu.`}>
+    <Card className="mt-5" title="Month-on-month performance" right={pdfButton}
+      subtitle={`Each month from ${fmtDate(rows[0].from)} to ${fmtDate(rows[rows.length - 1].to)}: its opening value, money in and out, gain, money-weighted return (Modified Dietz) and the Nifty 500 over the same month. Cumulative is the money-weighted return from the book's first measured month to that month — the available-history figure the Returns tab shows. Each month covers the accounts the book can value for it, so an opening value can step up as more accounts report; coverage reaches ${maxCovered} of ${accounts} accounts. Export to Excel from the table menu, or to PDF with the button above.`}>
       <div className="overflow-x-auto" data-navigation-scroll="monthly-performance" data-month-table>
         <ExportableTable exportName="Month-on-month performance" className="w-full text-[12.5px]" data-table-static="one row per calendar month in order; the columns are a bridge read left to right — opening, money in and out, gain, closing, the month's return, the cumulative and the Nifty 500">
           <thead className="label-xs border-b border-ink-700">

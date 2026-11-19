@@ -65,7 +65,24 @@ try {
   assert.ok(whole.pages >= 8); assert.ok(whole.text.includes(headline), 'PDF matches the actual portfolio tile');
   for (const expected of ['Glow Ventures', 'Munshot AI', 'Table of Contents', 'Portfolio Overview', 'Equity', 'Returns & Coverage', 'Report Notes', '₹']) assert.ok(whole.text.includes(expected), expected);
   for (const absent of ['TERRABELLA', 'Andrea Smith', 'S&P 500', 'Hedge Fund', 'Geography Exposure', 'Currency Exposure', 'Projected Income']) assert.ok(!whole.text.includes(absent), absent);
+  // Detailed is the default and carries the holding-by-holding tables.
+  for (const expected of ['DETAILED REPORT', 'Detailed report', 'Equity Holdings', 'COST OF UNITS HELD']) assert.ok(whole.text.includes(expected), expected);
   await page.screenshot({ path: path.join(out, 'whole-family-preview.png') });
+  // Summary: the same figures, charts and summary tables, without any holding-by-holding table.
+  await page.getByRole('button', { name: 'Change options', exact: true }).click();
+  await page.locator('[data-cio-report-edition-option="summary"]').check();
+  assert.equal(await page.locator('[data-cio-report-edition]').getAttribute('data-cio-report-edition'), 'summary');
+  await page.screenshot({ path: path.join(out, 'report-options-summary.png') });
+  await page.getByRole('button', { name: 'Preview report', exact: true }).click();
+  const summary = await downloadReport();
+  assert.ok(summary.pages < whole.pages, `Summary (${summary.pages} pages) is shorter than Detailed (${whole.pages})`);
+  assert.ok(summary.text.includes(headline), 'Summary keeps the actual portfolio figure');
+  assert.ok(/Summary/.test(path.basename(summary.file)), 'Summary filename');
+  for (const expected of ['SUMMARY REPORT', 'Summary report', 'Table of Contents', 'Portfolio Overview', 'Asset Table', 'Top 10 Holdings by Value', 'Returns & Coverage', 'Report Notes'])
+    assert.ok(summary.text.includes(expected), `Summary keeps ${expected}`);
+  for (const absent of ['Equity Holdings', 'COST OF UNITS HELD', 'Private Investments - Holdings', 'Private Investments - Activity Overview', 'Cash Flows - Selected Period', 'Detailed report'])
+    assert.ok(!summary.text.includes(absent), `Summary omits ${absent}`);
+  await page.screenshot({ path: path.join(out, 'summary-preview.png') });
   await page.keyboard.press('Escape'); await page.locator('[data-cio-report-preview]').waitFor({ state: 'detached' });
   assert.ok(await page.getByRole('button', { name: 'Export report', exact: true }).evaluate(el => el === document.activeElement), 'Focus restored');
   // Capture the chosen member and USD, then confirm the second export uses that snapshot.
@@ -80,7 +97,7 @@ try {
   const scoped = await downloadReport(); assert.ok(scoped.text.includes(usdHeadline)); assert.ok(scoped.text.includes('Ajay')); assert.ok(scoped.text.includes('USD')); assert.ok(!scoped.text.includes('Whole family'));
   assert.ok(scoped.text.includes('Month-to-Date Review'));
   // A trailing multi-year period changes both the dates and the actual return selection.
-  await page.getByRole('button', { name: 'Change period', exact: true }).click();
+  await page.getByRole('button', { name: 'Change options', exact: true }).click();
   await page.locator('[data-cio-report-period]').selectOption('2y');
   const trailingFrom = await page.locator('input[aria-label="Report start date"]').inputValue();
   assert.ok(Number(trailingFrom.slice(0, 4)) < new Date().getFullYear());
@@ -101,7 +118,7 @@ try {
   assert.ok(!historical.text.includes('Equity Holdings')); assert.ok(!historical.text.includes('Asset Table')); assert.ok(!historical.text.includes(usdHeadline));
   await page.getByRole('button', { name: 'Close report preview', exact: true }).click();
   assert.deepEqual(errors, []);
-  await fs.writeFile(path.join(out, 'results.json'), JSON.stringify({ base, whole: { file: whole.file, pages: whole.pages, headline }, scoped: { file: scoped.file, pages: scoped.pages, headline: usdHeadline }, trailing: { file: trailing.file, from: trailingFrom }, historical: { file: historical.file, pages: historical.pages }, assetRetry: true, focusRestored: true, mobile: true, homeExport: true, cashDetail: { value: cash, matchesHome: true }, errors }, null, 2));
-  console.log('Colour CIO report: real-book totals, selected member, USD, landscape pages, text bounds, omissions, retry, PDF preview, download and mobile passed.');
+  await fs.writeFile(path.join(out, 'results.json'), JSON.stringify({ base, whole: { file: whole.file, pages: whole.pages, headline }, summary: { file: summary.file, pages: summary.pages }, scoped: { file: scoped.file, pages: scoped.pages, headline: usdHeadline }, trailing: { file: trailing.file, from: trailingFrom }, historical: { file: historical.file, pages: historical.pages }, assetRetry: true, focusRestored: true, mobile: true, homeExport: true, cashDetail: { value: cash, matchesHome: true }, errors }, null, 2));
+  console.log('Colour CIO report: summary and detailed editions, real-book totals, selected member, USD, landscape pages, text bounds, omissions, retry, PDF preview, download and mobile passed.');
 } catch (e) { await page.screenshot({ path: path.join(out, 'failure.png') }).catch(() => {}); throw e; }
 finally { await browser.close(); }

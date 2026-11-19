@@ -598,6 +598,15 @@ function noTextLayer(grid) {
     return makeDocument({ ...base, status: "failed", warnings: [{ code: "extractor-threw", detail: e?.message ?? String(e) }, ...openedWarnings] });
   }
 
+  // A reader that was ASSIGNED a file must return a document or throw; a bare
+  // `return null`/`undefined` is a reader bug, but it must never abort the whole
+  // run (one bad file would hold an entire delivery, as the ICICI demat
+  // transaction statement did — extract.mjs:601 read `.warnings` off null).
+  // Treat it as this one document failing to read, and carry on to the rest.
+  if (result == null) {
+    return makeDocument({ ...base, status: "failed", warnings: [{ code: "extractor-returned-nothing", detail: `${extractorName(extractor)} returned ${result === null ? "null" : "undefined"} instead of a document; a reader must return a document or throw` }, ...openedWarnings] });
+  }
+
   const warnings = [...(result.warnings ?? []), ...openedWarnings];
 
   // A FIELD THE READER PRODUCED AND THE CONTRACT DOES NOT CARRY IS LOST WITHOUT

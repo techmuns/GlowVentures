@@ -36,10 +36,10 @@ import { concentrationNames } from "./concentration";
  * opened from already answered. Same reason the predicates below are delegated
  * rather than paraphrased.
  */
-import { type GroupAxis, groupKeyFor, groupLabelFor, GROUP_NOUN } from "./groupAxis";
+import { type GroupAxis, type AllocAxis, OWNER_AXIS, groupKeyFor, groupLabelFor, GROUP_NOUN } from "./groupAxis";
 import { measuredAccountsReturn, type UnmeasuredAccount } from "./returns";
 import { xirrPct, moneyWeightedReturn, type MoneyWeighted } from "./bucketXirr";
-import { currentHomeHoldings } from './homeDashboard';
+import { currentHomeHoldings, homeClassTile } from './homeDashboard';
 
 /** The route the drill-down lives at. Imported, never typed at a call site. */
 export const DRILLDOWN_PATH = "/holdings";
@@ -57,6 +57,7 @@ export const TOP_NAMES = 10;
 export type DrilldownId =
   | "book"        // every holding — Current Value of Holdings (and the capital invested in it), Positions, Distinct names
   | "home-cash"   // Home's cash total, including small and negative non-zero balances
+  | "home-class"  // one of Home's asset class tiles (key = the family's asset class), on the same rule as home-cash
   | "bucket"      // one allocation row, on the CATEGORY axis
   /**
    * ONE ALLOCATION ROW ON EACH OF THE FAMILY'S OWN TWO AXES.
@@ -75,6 +76,7 @@ export type DrilldownId =
    */
   | "basket"        // …on the family's BASKET axis
   | "family-class"  // …on the family's own ASSET-CLASS axis
+  | "owner"         // …on the OWNER axis — the holdings of one family member or entity
   | "measured"    // the accounts the money-weighted return covers
   | "top-names"
   | "cross-held"
@@ -82,7 +84,7 @@ export type DrilldownId =
   | "losers";
 
 const IDS = new Set<DrilldownId>([
-  "book", "home-cash", "bucket", "basket", "family-class",
+  "book", "home-cash", "home-class", "bucket", "basket", "family-class", "owner",
   "measured", "top-names", "cross-held", "winners", "losers",
 ]);
 
@@ -91,12 +93,12 @@ const IDS = new Set<DrilldownId>([
  * mapping lives, so Morning CIO builds the link and this file resolves it from
  * the same table rather than from two agreeing literals.
  */
-export const AXIS_SCOPE: Record<GroupAxis, DrilldownId> = {
-  category: "bucket", basket: "basket", assetClass: "family-class",
+export const AXIS_SCOPE: Record<AllocAxis, DrilldownId> = {
+  category: "bucket", basket: "basket", assetClass: "family-class", owner: "owner",
 };
-/** …and back, for the three branches that share one implementation. */
-const SCOPE_AXIS: Partial<Record<DrilldownId, GroupAxis>> = {
-  bucket: "category", basket: "basket", "family-class": "assetClass",
+/** …and back, for the branches that share one implementation. */
+const SCOPE_AXIS: Partial<Record<DrilldownId, AllocAxis>> = {
+  bucket: "category", basket: "basket", "family-class": "assetClass", owner: OWNER_AXIS,
 };
 
 /**
@@ -418,13 +420,20 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
   };
 
   switch (scope.id) {
-    case "home-cash": {
+    case "home-cash":
+    case "home-class": {
       // Home includes every non-zero balance; the usual holdings floor would change its total.
-      const rows = currentHomeHoldings(portfolio.positions).filter(p => groupKeyFor('assetClass', accIdx, p) === 'Cash');
+      // Cash keeps its own address; every other Home class tile names its class in `key`.
+      const cls = scope.id === "home-cash" ? "Cash" : scope.key;
+      const tile = homeClassTile(cls);
+      const title = tile?.holdings ?? `${groupLabelFor("assetClass")(cls)} holdings`;
+      const rows = currentHomeHoldings(portfolio.positions).filter(p => groupKeyFor('assetClass', accIdx, p) === cls);
       return {
-        ...base, ...excludedWhere(() => false), id: scope.id, key: "",
-        title: "Cash holdings", crumb: "Total cash", rows,
-        absent: rows.length ? null : { what: "No cash holdings", needs: "No separately valued cash holdings are recorded in this selection." },
+        ...base, ...excludedWhere(() => false), id: scope.id, key: scope.id === "home-cash" ? "" : cls,
+        title, crumb: tile?.name ?? title, rows,
+        absent: rows.length ? null : cls === "Cash"
+          ? { what: "No cash holdings", needs: "No separately valued cash holdings are recorded in this selection." }
+          : { what: `No ${title.toLowerCase()}`, needs: `No holdings in the family's ${groupLabelFor("assetClass")(cls)} asset class are recorded in this selection.` },
       };
     }
     /**
@@ -445,14 +454,17 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
      */
     case "bucket":
     case "basket":
-    case "family-class": {
-      const axis = SCOPE_AXIS[scope.id] as GroupAxis;
+    case "family-class":
+    case "owner": {
+      const axis = SCOPE_AXIS[scope.id] as AllocAxis;
       const inRow = (p: Position) => groupKeyFor(axis, accIdx, p) === scope.key;
       const rows = consolidated.filter(inRow);
       const label = groupLabelFor(axis)(scope.key);
       const noun = GROUP_NOUN[axis].one;
       const decidedBy = axis === "category"
         ? "The bucket is decided by `holdingBucket` — the one function every holdings table on this site groups by — so this list is the row's own arithmetic rather than a second reading of it."
+        : axis === OWNER_AXIS
+        ? "The owner is the account's own, from the registry — who holds it, not what it is — so this is every holding in the book that this member or entity owns, counted once."
         : `The ${noun} is the FAMILY'S OWN, taken from their consolidated review product by product: no statement in the archive states one, and nothing here is inferred from what the instrument is. A direct stock the review does not name individually is placed by their own stated rule instead, and the allocation row says how much of it was.`;
       return {
         ...base, ...excludedWhere(inRow), id: scope.id, key: scope.key,

@@ -29,11 +29,12 @@ export const accountOf = (idx: AccountIndex, p: Position): Account | undefined =
  * splits one family member into three. An account whose owner never resolved
  * falls back to its printed name — visible and odd-looking, which is the point.
  */
-export const ownerOf = (idx: AccountIndex, p: Position): string => {
-  const a = idx.get(p.accountId);
+export const ownerForAccount = (idx: AccountIndex, accountId: string): string => {
+  const a = idx.get(accountId);
   if (!a) return UNKNOWN;
   return a.ownerId ? ownerDisplayName(a.ownerId) : a.owner || UNKNOWN;
 };
+export const ownerOf = (idx: AccountIndex, p: Position): string => ownerForAccount(idx, p.accountId);
 
 /** The canonical owner id, for grouping and joins. Null when unresolved. */
 export const ownerIdOf = (idx: AccountIndex, p: Position): string | null =>

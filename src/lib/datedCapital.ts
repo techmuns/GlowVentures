@@ -207,7 +207,7 @@ export function buildDatedCapital(input: {
         reason: lines.length === 1 ? short.reason : `one of the ${lines.length} holdings behind this row is not dated in full — ${short.reason}` };
     }
     const flows: DatedFlow[] = [];
-    let since: string | null = null, to: string | null = null, n = 0, trades = 0, lots = 0, recovered = 0;
+    let since: string | null = null, to: string | null = null, n = 0, trades = 0, lots = 0, recovered = 0, review = 0;
     // Lines closed at a market price, their units assumed held (Stage 10jo).
     const owners = new Set<string>(), from = new Set<string>();
     const closes: NonNullable<Extract<RowCapital, { dated: true }>["closes"]> = [];
@@ -222,7 +222,7 @@ export function buildDatedCapital(input: {
       }
       for (const f of x.flows) flows.push({ date: new Date(f.date), amount: f.amount });
       n += x.payments;
-      if (x.basis === "trades") trades++; else if (x.basis === "lots") lots++; else recovered++;
+      if (x.basis === "trades") trades++; else if (x.basis === "lots") lots++; else if (x.basis === "review") review++; else recovered++;
       if (since === null || x.since < since) since = x.since;
       const close = x.close?.date ?? x.flows.at(-1)!.date;
       if (x.close) flows.push({ date: new Date(x.close.date), amount: x.close.value });
@@ -231,7 +231,7 @@ export function buildDatedCapital(input: {
     if (since === null || to === null) return null;
     return {
       dated: true, accountIds: accts, accounts: lines.length, flows: n, since, to,
-      days: dayDiff(since, to), annualPct: xirrPct(flows), holdings: { trades, lots, recovered }, legs,
+      days: dayDiff(since, to), annualPct: xirrPct(flows), holdings: { trades, lots, recovered, ...(review ? { review } : {}) }, legs,
       ...(owners.size ? { assumed: { owners: [...owners].sort(), from: [...from].sort() }, closes } : {}),
     };
   };

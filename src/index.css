@@ -41,8 +41,11 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   border: 1px solid #236268; border-radius: 7px; padding: 7px 11px;
   background: #003f43; color: #fff; font-size: 12px; font-weight: 600; white-space: nowrap;
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
 }
-.cio-report-export:hover, .cio-report-download:hover { background: #165b60; }
+@media (hover: hover) and (pointer: fine) { .cio-report-export:hover, .cio-report-download:hover { background: #165b60; } }
+.cio-report-export:active, .cio-report-download:not(:disabled):active, .cio-report-options-footer button:not(:disabled):active { transform: scale(0.97); }
+.cio-report-options-footer button { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
 .cio-report-export:focus-visible, .cio-report-download:focus-visible { outline: 2px solid #7e9f9e; outline-offset: 3px; }
 .cio-report-dialog {
   position: fixed; inset: 0; margin: auto; width: min(96vw, 1380px); max-width: 96vw;
@@ -62,6 +65,38 @@
 .cio-report-loading button { padding: 8px 14px; border: 1px solid #7e9f9e; border-radius: 6px; }
 .cio-report-options { position: fixed; inset: 0; margin: auto; width: 520px; max-width: 94vw; max-height: 90vh; padding: 24px; border: 1px solid #c7d8d5; border-radius: 12px; background: #fff; color: #183338; overflow-y: auto; box-shadow: 0 24px 100px #0006; }
 .cio-report-options::backdrop { background: #061918b3; }
+/* The options modal settles in from 96% (never from nothing), centred; the backdrop only fades. */
+.cio-report-options[open] { transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+.cio-report-options[open]::backdrop { transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+@starting-style {
+  .cio-report-options[open] { opacity: 0; transform: scale(0.96); }
+  .cio-report-options[open]::backdrop { opacity: 0; }
+}
+/* Summary / Detailed: two radio cards; the native radio keeps arrow-key and screen-reader behaviour. */
+.cio-report-edition { min-width: 0; margin: 0 0 18px; padding: 0; border: 0; }
+.cio-report-edition legend { margin-bottom: 7px; padding: 0; font-size: 12px; font-weight: 600; }
+.cio-report-edition-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cio-report-options .cio-report-edition-options label {
+  position: relative; flex-direction: row; align-items: flex-start; gap: 10px;
+  padding: 11px 12px; border: 1px solid #c7d8d5; border-radius: 8px; background: #fff; cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.cio-report-options .cio-report-edition-options input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.cio-report-edition-options label > span:last-child { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cio-report-edition-options strong { font-size: 13px; font-weight: 600; color: #183338; }
+.cio-report-edition-options small { font-size: 11px; font-weight: 400; color: #63787a; line-height: 1.4; }
+.cio-report-edition-dot { flex: 0 0 auto; width: 14px; height: 14px; margin-top: 2px; border: 1.5px solid #9fb6b4; border-radius: 50%; background: #fff; }
+.cio-report-options .cio-report-edition-options label:has(input:checked) { border-color: #003f43; background: #f1f6f5; box-shadow: inset 0 0 0 1px #003f43; }
+.cio-report-edition-options label:has(input:checked) .cio-report-edition-dot { border-color: #003f43; box-shadow: inset 0 0 0 3px #fff; background: #003f43; }
+.cio-report-options .cio-report-edition-options label:has(input:focus-visible) { outline: 2px solid #7e9f9e; outline-offset: 2px; }
+.cio-report-options .cio-report-edition-options label:active { transform: scale(0.98); }
+@media (hover: hover) and (pointer: fine) { .cio-report-options .cio-report-edition-options label:not(:has(input:checked)):hover { border-color: #7e9f9e; } }
+@media (prefers-reduced-motion: reduce) {
+  .cio-report-options[open] { transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+  @starting-style { .cio-report-options[open] { transform: none; } }
+  .cio-report-export:active, .cio-report-download:active, .cio-report-options-footer button:active,
+  .cio-report-options .cio-report-edition-options label:active { transform: none; }
+}
 .cio-report-options-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 22px; }
 .cio-report-options-heading strong { font-size: 19px; }
 .cio-report-options-heading p { margin-top: 6px; font-size: 12px; color: #63787a; }
@@ -75,6 +110,7 @@
 .cio-report-options-footer { margin-top: 22px; display: flex; justify-content: end; align-items: center; gap: 20px; font-size: 12px; }
 .cio-report-options-footer button:disabled { opacity: .5; cursor: not-allowed; }
 @media (max-width: 640px) { .cio-report-toolbar { padding: 10px; gap: 8px; } .cio-report-toolbar strong { font-size: 12px; } .cio-report-actions { gap: 8px; } }
+@media (max-width: 420px) { .cio-report-edition-options { grid-template-columns: 1fr; } }
 
 /* File drags cover the library's viewport, including an open provider folder. */
 .statement-drop-overlay {
@@ -465,6 +501,21 @@ body {
 html:not(.dark) { color-scheme: light; }
 
 .return-calculation::backdrop { background: rgb(15 23 42 / 0.5); }
+/* Morning CIO cards' ⓘ: the working sits behind one closed Details fold
+   (16 Nov 2026). Only transform moves; the press and the chevron are quick. */
+.card-details > summary { list-style: none; transform-origin: left center; transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1); }
+.card-details > summary::-webkit-details-marker { display: none; }
+.card-details > summary:active { transform: scale(0.97); }
+.card-details-chevron { transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+.card-details[open] > summary .card-details-chevron { transform: rotate(180deg); }
+@media (hover: hover) and (pointer: fine) {
+  .card-details > summary:hover { color: #f1f5f9; }
+  html:not(.dark) .card-details > summary:hover { color: #1a1830; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-details > summary:active { transform: none; }
+  .card-details-chevron { transition: none; }
+}
 html:not(.dark) body { background: #f4f2ec; color: #1a1830; }
 /* A label a reader scans for — a column heading, a tile's name — in the ink
    GCR sets its table headings in, a step darker than the grey that made every
@@ -864,6 +915,22 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
   max-height: 36rem;
   overflow-y: auto;
 }
+/* THE POSITION-BY-ACCOUNT TABLE SNAPS ITS ROWS (16 Nov 2026). On the stock
+   page's Position tab this table shrinks into a short panel (StockInfo, 28 Oct
+   2026) between a sticky header and its pinned totals. A holding held inside the
+   funds is a TWO-LINE derived row, so a free scroll could leave one resting with
+   its first line hidden under the opaque header — an orphaned "0.83% of the
+   fund" floating below it with empty cells. Snap each row's top to just below
+   the header so a row never stops half-covered. The sticky totals are untouched,
+   staying pinned to the box; `scroll-padding-top` matches the one-line header's
+   own height (~2.6rem in the table's zoomed space, measured 16 Nov 2026). */
+#root [data-navigation-scroll="stockinfo-2"] {
+  scroll-snap-type: y mandatory;
+  scroll-padding-top: 2.6rem;
+}
+#root [data-navigation-scroll="stockinfo-2"] > table > tbody > tr {
+  scroll-snap-align: start;
+}
 /* Portfolio Monitor keeps the Security labels beside horizontally scrolled
    figures as well as keeping its heading row above vertically scrolled rows.
    Section bands and expanded detail cells span columns and must scroll whole. */
@@ -1193,3 +1260,11 @@ html:not(.dark) .move-menu-item:focus { background-color: rgba(234, 228, 213, 0.
   .move-menu-item:active, .move-toast-undo:active { transform: none; }
 }
 @keyframes move-fade { from { opacity: 0; } }
+
+/* A SPREADSHEET STATEMENT'S CITED CELL (Stage 10oo). The PDF view marks the
+   figure a link cites with a yellow highlighter (`PdfPreview`); a CSV or
+   workbook marks the same figure in its grid, so both read as one thing. The
+   row keeps its champagne tint; the cell is the highlighter over it. Static —
+   the jump to it is the feedback, and nothing here is clicked twice a day. */
+#root td[data-source-cell="true"] { background-color: rgba(255, 230, 0, 0.24); box-shadow: inset 0 0 0 1px #d9ac00; }
+html:not(.dark) #root td[data-source-cell="true"] { background-color: rgba(255, 230, 0, 0.5); }

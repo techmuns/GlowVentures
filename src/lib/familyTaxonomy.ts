@@ -138,13 +138,13 @@ import { placementOf } from "./familyPlacements";
 export type FamilyBasket =
   | "Stable Growth" | "Entrepreneurial Growth" | "Thematic & Tactical" | "Liquidity";
 /** Real Estate is the family's word for the LLPs' Nzuri shares (Stage 10mg; `REAL_ESTATE_KEYS`). */
-export type FamilyAssetClass = "Equity" | "Debt" | "Alternate" | "Real Estate" | "Cash";
+export type FamilyAssetClass = "Equity" | "Debt" | "Alternate" | "Commodities" | "Real Estate" | "Cash";
 
 /** Reading order for the two new axes. Sections sort by this, never alphabetically. */
 export const BASKET_ORDER: readonly FamilyBasket[] =
   ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"];
 export const FAMILY_CLASS_ORDER: readonly FamilyAssetClass[] =
-  ["Equity", "Debt", "Alternate", "Real Estate", "Cash"];
+  ["Equity", "Debt", "Alternate", "Commodities", "Real Estate", "Cash"];
 
 /**
  * WHAT A HOLDING THE FAMILY HAS NOT CLASSIFIED IS CALLED, and it is deliberately
@@ -566,6 +566,25 @@ const cashByInstruction = (p: Classifiable, isMandate: boolean): boolean =>
   !isMandate && isCashEquivalent(p);
 
 /**
+ * ── GOLD AND SILVER ARE COMMODITIES, NOT "ALTERNATE" (#373, 29 Oct 2026) ────
+ *
+ *   "And why is gold sitting in alternate actually?" — Yamini, 29 Oct 2026.
+ *
+ * The review workbook files the two bullion ETFs on its Alternate sheet, so the
+ * map above keeps that citation and `familyTaxonomy.test.ts` still ties it to
+ * the workbook row. But the family's own word is that gold and silver are a
+ * commodity exposure of their own — so, exactly as arbitrage funds are ruled
+ * Cash over the review's Debt (`cashByInstruction`), these two are ruled
+ * Commodities over the review's Alternate, applied before the review hit. Only
+ * the ASSET CLASS moves; their basket stays the review's Thematic & Tactical,
+ * which the family's email already calls "Themes like Gold, Silver". Named
+ * holdings, never inferred: a commodity ETF added later joins this set.
+ */
+const COMMODITY_KEYS: ReadonlySet<string> = new Set(["sec:dsp-gold-etf", "sec:dsp-silver-etf"]);
+const commoditiesByInstruction = (p: Classifiable, isMandate: boolean): boolean =>
+  !isMandate && COMMODITY_KEYS.has(productKeyOf(p, isMandate));
+
+/**
  * ── A ROW THE FAMILY MOVED ON THE PAGE, READ BEFORE EVERYTHING ELSE ────────
  *
  * Their move is the newest word on that one product, so it wins over the
@@ -625,6 +644,9 @@ export function statedAssetClass(p: Classifiable, isMandate: boolean): Resolved<
     return hit?.assetClass === "Cash"
       ? { value: "Cash", source: "review", reviewProduct: hit.reviewProduct }
       : { value: "Cash", source: "cash-rule", reviewProduct: hit?.reviewProduct ?? null };
+  }
+  if (commoditiesByInstruction(p, isMandate)) {
+    return { value: "Commodities", source: "family", reviewProduct: hit?.reviewProduct ?? null };
   }
   if (hit) return { value: hit.assetClass, source: "review", reviewProduct: hit.reviewProduct };
   if (p.reviewTaxonomy) return { value: p.reviewTaxonomy.assetClass, source: "review", reviewProduct: null };

@@ -14,6 +14,11 @@ unless something is pushed … i want things pushed"* — the family, 24 Sep 202
   `build` and the checks for what you changed are green. Do not leave a fix
   waiting on a PR. Hold a PR open only when the user says so in that request
   (for example "do not merge until I tell you").
+- **Label every PR `automerge`** unless the user says to hold it (the family,
+  16 Nov 2026: "Automatically merge once done always"). CI's last job squash-merges
+  it into `main` once every job passes, so no one waits on CI. If another check
+  fails, `main` changed a generated file it also changes, or `main` already has its
+  stage letter, it comments instead (`.github/scripts/merge-on-green.sh`, Stage 10ou).
 - **Be quick.** Run the checks that cover the change: `build`, the relevant
   suite, and `ONLY=<routes>` for the pages you touched. A full `check:pages`
   sweep is not needed before every merge.
@@ -618,7 +623,9 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   `polycab.yml` (Polycab exchange data), `index-sectors.yml` (NSE factsheet
   sector weights, days 1–15 monthly), `statement-intake.yml` (dashboard uploads
   → the book; dispatched by each upload, every 20 min as a backstop; sealed
-  PDFs need the `GLOW_PDF_PASSWORDS` Actions secret).
+  PDFs need the `GLOW_PDF_PASSWORDS` Actions secret), `cams-intake.yml` (the
+  family's CAMS/KFintech feed → the statement inbox daily, `scripts/ingest/cams-fetch.mjs`;
+  inert until the `CAMS_SFTP_*` secrets are set, `docs/CAMS-INTAKE.md`; Stage 10pf).
 - With no token and no network every page renders on statement marks.
 
 ## Conventions

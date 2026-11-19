@@ -13,7 +13,7 @@
 // rule — several payments XIRR, one compounded from its own day, under a year
 // the holding-period return.
 import { BOOK_ACCOUNTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_HOLDING_INCOME, BOOK_HOLDING_LOTS, BOOK_HOLDING_TRADES, BOOK_POSITIONS, BOOK_POSITION_TRANCHES, BOOK_RECOVERED_COSTS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
-import { holdingFlowsOf, holdingPeriodOf } from "@/lib/holdingFlows";
+import { datedUnitRecordOf, holdingFlowsOf, holdingPeriodOf } from "@/lib/holdingFlows";
 import { buildDatedCapital } from "@/lib/datedCapital";
 import { holdingReturn, measuredReturn, type ReturnInput } from "@/lib/analytics";
 import type { Position } from "@/lib/types";
@@ -52,7 +52,7 @@ ok("the book dates holdings' money by their trades and by their lots", byTrades.
     const f = flowsOf(p);
     if (!f?.dated) return true;
     const key = `${p.accountId}|${p.securityKey}`;
-    if (f.basis === "recovered") return false; // struck in its own section below
+    if (f.basis === "recovered" || f.basis === "review") return false; // each struck in its own section below
     const principal = f.basis === "lots"
       ? -(BOOK_HOLDING_LOTS[key] ?? []).reduce((a, l) => a + l.cost, 0)
       : (BOOK_HOLDING_TRADES[key] ?? []).filter((t) => t.date >= p.tradeRecord!.from && t.date <= p.tradeRecord!.to)
@@ -206,6 +206,55 @@ ok("the book dates holdings' money by their trades and by their lots", byTrades.
     thisYear.map((p) => p.securityKey).join(", "));
   const older = byRecovered.filter((p) => p.recoveredCost!.heldPurchases!.first < `${(asOfOf(p) ?? AS_OF).slice(0, 4)}-01-01`);
   ok("...and one it shows held on 1 January stays a dash", older.length > 0 && older.every((p) => !measuredReturn(inputOf(p), "ytd", AS_OF).shown));
+}
+
+// ── THE REVIEW'S DATED MONEY, AND A SPLIT, DATE THE RATE TOO (Stage 10ot) ───
+//
+// *"didnt we decide the full logic"* — the family, 16 Nov 2026, on Man
+// Industries: dated on Invested on (Stage 10ms) and dashed on XIRR and YTD.
+{
+  const man = BOOK_POSITIONS.find((p) => p.securityKey === "man-industries-india" && p.accountId === "hdfc-securities-3110320")!;
+  const rv = man.reviewPurchases!;
+  const f = flowsOf(man);
+  const buys = (rv.cashRecord ?? []).filter((x) => x.side === "buy");
+  const sells = (rv.cashRecord ?? []).filter((x) => x.side === "sell");
+  ok("Man Industries: the review's two buys and the account's sales are its dated money",
+    !!f?.dated && f.basis === "review" && buys.length === 2 && buys[0].date === "2025-01-10" && buys[1].date === "2025-07-25"
+      && sells.length === rv.sales && f.payments === buys.length + sells.length && f.since === "2025-01-10",
+    JSON.stringify(f && f.dated ? { basis: f.basis, payments: f.payments, since: f.since } : f));
+  // The lots still held cost what Stage 10ms checked against the statement.
+  ok("...its buys are the review's own amounts, within 0.5% of the statement's cost of what is still held",
+    Math.abs(buys.reduce((n, x) => n + x.amount, 0) - 19200000 - 149999976) < 1 && Math.abs(rv.lotCost! - man.costBasis!) <= .005 * man.costBasis!);
+  const rec = datedUnitRecordOf(man, asOfOf(man));
+  ok("...and it held 5,17,317 shares on 31 December, 4,80,000 now",
+    rec?.basis === "review" && rec.unitRecord.filter((u) => u.date <= "2025-12-31").at(-1)?.units === 517317 && rec.unitRecord.at(-1)?.units === man.quantity,
+    JSON.stringify(rec?.unitRecord));
+  const cap = DC.behind([man], BOOK_POSITIONS.filter((x) => x !== man));
+  const x = cap ? measuredReturn({ ...inputOf(man), capital: cap }, "xirr", AS_OF) : null;
+  ok("...so its XIRR is struck, naming the review", !!x?.shown && /family review's dated purchases/.test(x.note ?? ""), JSON.stringify(x));
+  // A review record that does not end on the units held is not this line's.
+  ok("a review record short of the units held dates nothing", flowsOf({ ...man, quantity: man.quantity! + 1 }) === null
+    && datedUnitRecordOf({ ...man, quantity: man.quantity! + 1 }, asOfOf(man)) === null);
+
+  // A SPLIT moves units, not money: V2 Retail's trades are every rupee.
+  const v2 = BOOK_POSITIONS.find((p) => p.actionRecord?.actions.some((a) => a.kind === "split") && p.actionRecord.actions.every((a) => a.kind !== "demerger"));
+  const vf = v2 ? flowsOf(v2) : null;
+  ok("a line dated through a split solves on its own trades", !!v2 && !!vf?.dated && vf.basis === "trades", v2?.securityKey);
+  // A DEMERGER does not: the money was paid for the parent.
+  const dm = BOOK_POSITIONS.find((p) => p.actionRecord?.actions.some((a) => a.kind === "demerger"));
+  ok("…and one dated through a demerger does not", !!dm && !(flowsOf(dm)?.dated), dm?.securityKey);
+
+  // WHAT 31 DECEMBER HELD is on a trade record only from the day it proves nil.
+  // A line rolled on past its statement by its manager's tape (Stage 10mh) is the roll's, not this record's.
+  ok("a rolled-forward line takes no unit record", BOOK_POSITIONS.filter((p) => p.rolledForward && p.tradeRecord?.unaccounted === 0)
+    .every((p) => datedUnitRecordOf(p, asOfOf(p)) === null));
+  const late = BOOK_POSITIONS.find((p) => !p.rolledForward && p.tradeRecord?.unaccounted === 0 && p.tradeRecord.from > "2026-01-01" && (p.quantity ?? 0) > 0);
+  const lr = late ? datedUnitRecordOf(late, asOfOf(late)) : null;
+  ok("a trade window opening after 1 January knows nothing before it", !!lr && lr.basis === "trades" && lr.knownFrom === late!.tradeRecord!.from, late?.securityKey);
+  const early = BOOK_POSITIONS.find((p) => !p.rolledForward && p.tradeRecord?.unaccounted === 0 && p.tradeRecord.from <= "2025-12-31" && (p.quantity ?? 0) > 0
+    && (BOOK_HOLDING_TRADES[`${p.accountId}|${p.securityKey}`] ?? []).every((t) => t.amount !== null));
+  const er = early ? datedUnitRecordOf(early, asOfOf(early)) : null;
+  ok("...one from before it ends on exactly the units held", !!er && er.knownFrom <= "2025-12-31" && Math.abs(er.unitRecord.at(-1)!.units - early!.quantity!) < 1e-6, early?.securityKey);
 }
 
 if (fails) { console.log(`\n${fails} failed`); process.exit(1); }

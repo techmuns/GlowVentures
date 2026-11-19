@@ -28,7 +28,7 @@ import { returnGapText, type SelectedLine } from '@/lib/selectedSegmentReturns';
 import type { Account } from '@/lib/types';
 
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
-/** A count of distinct accounts, never bridge rows (Stage 10oc). */
+/** A count of distinct accounts, never bridge rows (Stage 10pm). */
 const accountsWord = (n: number) => `${n} ${n === 1 ? 'account' : 'accounts'}`;
 /** Every signed realised figure behind the total, by the record that carries it (`capitalBridge`'s own rule). */
 const realisedRecords = (rows: readonly BridgeAccount[]) => rows.flatMap((r) => !r.split ? []

@@ -8,21 +8,30 @@ of screener.in, which publishes NSE's industry classification. Its **Broad
 Industry** level (the AMFI industry list funds file under) is resolved to GICS
 through `shared/sectors.mjs`, and that answer wins wherever there is one.
 
-- **542 of 550 companies placed** (listed-as 22 · app-symbol 207 · isin 277 · name 36).
-- 8 not placed by screener.in; the app places these from their funds' filing, then their statement, and names any it cannot.
+- **552 of 552 companies placed** (listed-as 22 · app-symbol 209 · isin 277 · reviewed 8 · name 36).
+- 0 not placed by screener.in; the app places these from their funds' filing, then their statement, and names any it cannot.
 
 ## Not placed by screener.in
 
-| Company | Value | Why |
-| --- | ---: | --- |
-| HEG Graphite Limited | ₹0.64 Cr | no NSE or BSE listing bridges to it |
-| Gujarat Gas Ltd. | ₹0.09 Cr | the page carries no classification |
-| GSPL India Transco Ltd | ₹0.02 Cr | no NSE or BSE listing bridges to it |
-| Talwandi Sabo Power Ltd. | ₹0.01 Cr | no NSE or BSE listing bridges to it |
-| nicco | ₹0.00 Cr | no NSE or BSE listing bridges to it |
-| sterlite-electric | ₹0.00 Cr | no NSE or BSE listing bridges to it |
-| sterlite-grid | ₹0.00 Cr | no NSE or BSE listing bridges to it |
-| sterlite-grid-5 | ₹0.00 Cr | no NSE or BSE listing bridges to it |
+_None — every company a sector table can draw now carries a GICS sector._
+
+## Placed by hand review
+
+Companies screener.in's page carries no classification for. Each is given its
+own NSE broad-industry group — checked against the company's business and the
+GICS its listed peers already carry in this book — and resolved to GICS through
+the same `shared/sectors.mjs` map every other row uses. Reviewed 16 Nov 2026.
+
+| Company | Broad industry (reviewed) | GICS |
+| --- | --- | --- |
+| HEG Graphite Limited | Industrial Products | Industrials |
+| Gujarat Gas Ltd. | Gas | Utilities |
+| GSPL India Transco Ltd | Gas | Utilities |
+| Talwandi Sabo Power Ltd. | Power | Utilities |
+| nicco | Industrial Products | Industrials |
+| sterlite-electric | Power | Utilities |
+| sterlite-grid | Power | Utilities |
+| sterlite-grid-5 | Power | Utilities |
 
 ## Joined by name or by the reviewed table
 
@@ -39,26 +48,23 @@ Identifiers carry the rest; these are the joins a reviewer should read.
 | KRISHCA STRAPPING SOLUTIONS LTD | Krishca Strapping Solutions Ltd (KRISHCA) | name |
 | TBO Tek Ltd. | TBO Tek Ltd (TBOTEK) | name |
 | Affle India Ltd. | Affle 3i Ltd (AFFLE) | listed-as |
-| IndiGrid Infrastructure Trust | IndiGrid Infrastructure Trust (INDIGRID) | listed-as |
-| Embassy Office Parks Reit | Embassy Office Parks REIT (EMBASSY) | listed-as |
 | Aarti Industries Ltd. | Aarti Industries Ltd (AARTIIND) | name |
-| Nexus Select Trust | Nexus Select Trust (NXST) | listed-as |
 | Brainbees Solutions Ltd. | Brainbees Solutions Ltd (FIRSTCRY) | name |
-| Brookfield India Real Estate Trust | Brookfield India Real Estate Trust (BIRET) | listed-as |
-| MANALI PETROCHEMICAL LTD. | Manali Petrochemicals Ltd (MANALIPETC) | listed-as |
 | KEC International Ltd. | KEC International Ltd (KEC) | name |
+| MANALI PETROCHEMICAL LTD. | Manali Petrochemicals Ltd (MANALIPETC) | listed-as |
 | Chambal Fertilisers & Chemicals Ltd. | Chambal Fertilisers & Chemicals Ltd (CHAMBLFERT) | listed-as |
+| IndiGrid Infrastructure Trust | IndiGrid Infrastructure Trust (INDIGRID) | listed-as |
 | CIE Automotive India Ltd | CIE Automotive India Ltd (CIEINDIA) | name |
 | AIA Engineering Ltd. | AIA Engineering Ltd (AIAENG) | name |
+| Embassy Office Parks Reit | Embassy Office Parks REIT (EMBASSY) | listed-as |
+| Nexus Select Trust | Nexus Select Trust (NXST) | listed-as |
 | Chemplast Sanmar Ltd | Chemplast Sanmar Ltd (CHEMPLASTS) | name |
-| Indus Infra Trust | Indus Infra Trust (INDUSINVIT) | listed-as |
 | SASKEN COMMUNICATION TECHNOLOGIES | Sasken Technologies Ltd (SASKEN) | listed-as |
+| Brookfield India Real Estate Trust | Brookfield India Real Estate Trust (BIRET) | listed-as |
 | Aadhar Housing Finance Limited | Aadhar Housing Finance Ltd (AADHARHFC) | name |
 | Red Tape Ltd | Redtape Ltd (REDTAPE) | listed-as |
-| IRB Invit Fund | IRB InvIT Fund (IRBINVIT) | listed-as |
 | India Shelter Finance Corporation Limited | India Shelter Finance Corporation Ltd (INDIASHLTR) | name |
 | National Aluminium Company Limited | National Aluminium Company Ltd (NATIONALUM) | name |
-| Raajmarg Infra Investment Trust | RaajMarg Infra Investment Trust (RIIT) | listed-as |
 | Krishna Institute of Medical Sciences Limited | Krishna Institute of Medical Sciences Ltd (KIMS) | name |
 | Leela Palaces Hotels & Resorts Limited | Leela Palaces Hotels & Resorts Ltd (THELEELA) | name |
 | LTIMindtree Limited | LTM Ltd (LTM) | listed-as |
@@ -68,23 +74,26 @@ Identifiers carry the rest; these are the joins a reviewer should read.
 | TD Power Systems Limited | TD Power Systems Ltd (TDPOWERSYS) | name |
 | Poly Medicure Limited | Poly Medicure Ltd (POLYMED) | name |
 | Ajax Engineering Limited | Ajax Engineering Ltd (AJAXENGG) | name |
+| Indus Infra Trust | Indus Infra Trust (INDUSINVIT) | listed-as |
 | Dr. Lal Path Labs Limited | Dr Lal Pathlabs Ltd (LALPATHLAB) | name |
 | Firstsource Solutions Limited | Firstsource Solutions Ltd (FSL) | name |
 | Kirloskar Oil Engines Limited | Kirloskar Oil Engines Ltd (KIRLOSENG) | name |
-| Mindspace Business Parks Reit | Mindspace Business Parks REIT (MINDSPACE) | listed-as |
 | Doms Industries Limited | DOMS Industries Ltd (DOMS) | name |
 | Aether Industries Limited | Aether Industries Ltd (AETHER) | name |
-| POWERGRID Infrastructure Investment Trust | Powergrid Infrastructure Investment Trust (PGINVIT) | listed-as |
 | Safari Industries (India) Limited | Safari Industries (India) Ltd (SAFARI) | name |
 | Sudeep Pharma Limited | Sudeep Pharma Ltd (SUDEEPPHRM) | name |
 | Rainbow Childrens Medicare Limited | Rainbow Childrens Medicare Ltd (RAINBOW) | name |
+| IRB Invit Fund | IRB InvIT Fund (IRBINVIT) | listed-as |
 | Corona Remedies Limited | Corona Remedies Ltd (CORONA) | name |
+| Raajmarg Infra Investment Trust | RaajMarg Infra Investment Trust (RIIT) | listed-as |
 | Orkla India Limited | Orkla India Ltd (ORKLAINDIA) | name |
 | Kusumgar Limited | Kusumgar Ltd (KUSUMGAR) | name |
 | Bajaj Electricals Ltd. | Bajaj Electricals Ltd (BAJAJELEC) | name |
-| Altius Telecom Infrastructure Trust | Altius Telecom Infrastructure Trust (543225) | listed-as |
+| Mindspace Business Parks Reit | Mindspace Business Parks REIT (MINDSPACE) | listed-as |
 | Awfis Space Solutions Limited | AWFIS Space Solutions Ltd (AWFIS) | name |
 | Shilpa Medicare Limited | Shilpa Medicare Ltd (SHILPAMED) | name |
 | Newgen Software Technologies Limited | Newgen Software Technologies Ltd (NEWGEN) | name |
 | Laxmi Dental Limited | Laxmi Dental Ltd (LAXMIDENTL) | name |
 | Nucleus Software Exports Limited | Nucleus Software Exports Ltd (NUCLEUS) | name |
+| Altius Telecom Infrastructure Trust | Altius Telecom Infrastructure Trust (543225) | listed-as |
+| POWERGRID Infrastructure Investment Trust | Powergrid Infrastructure Investment Trust (PGINVIT) | listed-as |

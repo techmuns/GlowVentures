@@ -48,7 +48,8 @@
  * allocation axis. See `SECURITY_AXIS` below for what it is and why widening
  * `GroupAxis` to include it would have been the wrong move.
  */
-import type { AccountIndex } from "./accounts";
+import { ownerForAccount, type AccountIndex } from "./accounts";
+import { ownerOrd } from "./owners";
 import {
   holdingBucket, bucketLabel, isMandateHeld,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, AT_COST_BUCKET, REAL_ESTATE_BUCKET,
@@ -142,7 +143,7 @@ export type GroupAxis = (typeof GROUP_AXES)[number];
  */
 export const GROUP_VIEWS: readonly { key: GroupAxis; label: string; title: string }[] = [
   { key: "category", label: "Category", title: "What kind of thing this is and who chose it: direct equity, a PMS mandate, an AIF, a mutual fund, an ETF, real estate, cash." },
-  { key: "assetClass", label: "Asset class", title: "The family's own asset classes — Equity, Debt, Alternate, Real Estate, Cash — as their consolidated review and written instructions state them. Not the instrument type: a gold ETF is Alternate and a liquid fund is Cash." },
+  { key: "assetClass", label: "Asset class", title: "The family's own asset classes — Equity, Debt, Alternate, Commodities, Real Estate, Cash — as their consolidated review and written instructions state them. Not the instrument type: gold and silver ETFs are Commodities and a liquid fund is Cash." },
   { key: "basket", label: "Basket", title: "The family's four baskets: Stable Growth, Entrepreneurial Growth, Thematic & Tactical, Liquidity." },
 ];
 
@@ -178,7 +179,34 @@ export const GROUP_VIEWS: readonly { key: GroupAxis; label: string; title: strin
  * cannot see the name's total exposure at all — which is the gap reported here.
  */
 export const SECURITY_AXIS = "security" as const;
-export type MonitorAxis = GroupAxis | typeof SECURITY_AXIS;
+
+/**
+ * ── THE FIFTH AXIS: OWNER — also the Portfolio Monitor's alone ──────────────
+ *
+ * A family-office / competitor ask ("add a layer like the ultimate owner"): see
+ * the same holdings sectioned by WHO holds them — each family member, trust and
+ * LLP — so the office can read one member's book against another's at a glance,
+ * where the member SCOPE filter only ever narrows to one at a time.
+ *
+ * Unlike SECURITY it IS a true allocation axis: every position has exactly one
+ * account owner, so the owner sections partition the book and sum to
+ * `BOOK_SUMMARY.totalValue` (no holding is counted under two owners — the book
+ * carries no cross-owner `dedupeGroup`, and the two confirmed cross-owner pairs
+ * are `separateInvestments`, counted in full under each). Like SECURITY it is
+ * the Monitor's Holdings table alone and is NOT added to `GROUP_AXES` /
+ * `GROUP_VIEWS`: it is a fact about the ACCOUNT, not a classification of the
+ * holding, so it carries no move targets and no family-taxonomy source, and it
+ * is never a `GroupAxis` — the move menu, the Transactions table and the
+ * classification tie-out all read `GROUP_VIEWS` and so never offer it. It IS an
+ * allocation axis, though — it sections and sums to the book's total — so it is
+ * offered on the two allocation surfaces through `AllocAxis` / `ALLOC_VIEWS`:
+ * the Monitor's Holdings table and Morning CIO's allocation card (*"how is the
+ * core doing, the satellite, the liquidity"* — the family's framing, per member).
+ */
+export const OWNER_AXIS = "owner" as const;
+export type MonitorAxis = GroupAxis | typeof SECURITY_AXIS | typeof OWNER_AXIS;
+/** The allocation axes that section the whole book and sum to its total: the three product axes plus Owner. NOT a `GroupAxis` — no moves, no family taxonomy, not on Transactions. */
+export type AllocAxis = GroupAxis | typeof OWNER_AXIS;
 
 /**
  * The single section every holding lands in on the security axis. It exists so
@@ -206,10 +234,26 @@ export const SECURITY_SECTION = "All securities";
  * table — which cannot section on securities (`txnAxis`) — still lands on
  * Category too. Only the Holdings table's opening view changed.
  */
+/** The Owner view object, shared by the Monitor's Holdings table and Morning CIO's allocation card (`MONITOR_GROUP_VIEWS` and `ALLOC_VIEWS`). */
+export const OWNER_VIEW = { key: OWNER_AXIS, label: "Owner", title: "One section per owning family member or entity — each person, trust and LLP that holds in the book — each summing to that owner's holdings. Who holds it, not what it is: the family's own split across its members, which the member selector can only show one at a time." } as const;
+
 export const MONITOR_GROUP_VIEWS: readonly { key: MonitorAxis; label: string; title: string }[] = [
   { key: SECURITY_AXIS, label: "All Securities", title: "One row per security, ranked by exposure — every holding of a name clubbed across every vehicle that holds it, whether the family bought it directly or a discretionary manager chose it. Open a row to see through what means it is held." },
   ...GROUP_VIEWS,
+  OWNER_VIEW,
 ];
+
+/**
+ * THE ALLOCATION AXES — the three product axes plus Owner — and their views.
+ * These section the whole book and sum to its total, so they are the axes the
+ * two allocation surfaces offer: the Monitor's Holdings table (via
+ * `MONITOR_GROUP_VIEWS`) and Morning CIO's allocation card (via `ALLOC_VIEWS`).
+ * Owner rides here rather than in `GROUP_VIEWS`, so the Transactions table and
+ * the classification tie-out — which read `GROUP_VIEWS` — never offer an axis
+ * they cannot section on.
+ */
+export const ALLOC_AXES: readonly AllocAxis[] = [...GROUP_AXES, OWNER_AXIS];
+export const ALLOC_VIEWS: readonly { key: AllocAxis; label: string; title: string }[] = [...GROUP_VIEWS, OWNER_VIEW];
 
 /**
  * The section a holding sits in on the chosen axis. One place, three answers —
@@ -221,6 +265,7 @@ export const MONITOR_GROUP_VIEWS: readonly { key: MonitorAxis; label: string; ti
  */
 export const groupKeyFor = (axis: MonitorAxis, idx: AccountIndex, p: Classifiable): string => {
   if (axis === SECURITY_AXIS) return SECURITY_SECTION;
+  if (axis === OWNER_AXIS) return ownerForAccount(idx, p.accountId);
   if (axis === "category") return categoryKeyFor(p, engagementFor(idx, p));
   const isMandate = heldUnderMandate(idx, p);
   return axis === "basket" ? basketKeyOf(p, isMandate) : familyClassKeyOf(p, isMandate);
@@ -257,7 +302,7 @@ export const groupSourceFor = (axis: MonitorAxis, idx: AccountIndex, p: Classifi
   // Both the category and the security axes are derived from the book itself and
   // ask nothing of the family, so neither heading has anything to disclose —
   // unless the family moved the row on the page.
-  if (axis === SECURITY_AXIS) return "review";
+  if (axis === SECURITY_AXIS || axis === OWNER_AXIS) return "review";
   if (axis === "category") return movedCategory(p, heldUnderMandate(idx, p)) ? "moved" : "review";
   const isMandate = heldUnderMandate(idx, p);
   const r = axis === "basket" ? familyBasket(p, isMandate) : familyAssetClass(p, isMandate);
@@ -267,6 +312,7 @@ export const groupSourceFor = (axis: MonitorAxis, idx: AccountIndex, p: Classifi
 /** Reading order per axis, with the unclassified section last on the two new ones. */
 export const groupOrdFor = (axis: MonitorAxis) =>
   axis === SECURITY_AXIS ? () => 0
+  : axis === OWNER_AXIS ? ownerOrd
   : axis === "category" ? bucketOrd : axis === "basket" ? basketOrd : familyClassOrd;
 
 /**
@@ -280,7 +326,7 @@ export const groupLabelFor = (axis: MonitorAxis) => (key: string) =>
 /** What the "all" option on a section filter says, per axis. */
 export const ALL_LABEL: Record<MonitorAxis, string> = {
   category: "All categories", assetClass: "All asset classes", basket: "All baskets",
-  security: "All securities",
+  security: "All securities", owner: "All owners",
 };
 
 /**
@@ -297,6 +343,7 @@ export const GROUP_NOUN: Record<MonitorAxis, { one: string; many: string }> = {
   assetClass: { one: "asset class", many: "asset classes" },
   basket: { one: "basket", many: "baskets" },
   security: { one: "security", many: "securities" },
+  owner: { one: "owner", many: "owners" },
 };
 
 /** `3 baskets` / `1 bucket` — a count and its noun, agreeing, per axis. */
@@ -316,4 +363,5 @@ export const GROUP_COLUMN_HEAD: Record<MonitorAxis, string> = {
   assetClass: "Asset class — the family's own",
   basket: "Basket",
   security: "Security",
+  owner: "Owner",
 };

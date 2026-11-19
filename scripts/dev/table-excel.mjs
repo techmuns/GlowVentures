@@ -5,13 +5,14 @@ import ExcelJS from 'exceljs';
 
 const output = path.resolve('.cache/table-export-check', String(Date.now()));
 let sequence = 0;
-async function downloadWorkbook(button, label) {
+export async function downloadWorkbook(button, label) {
   await fs.mkdir(output, {recursive:true});
   // Full expanded histories and nested detail sheets take longer than the
   // former first-level export. Still fail if no workbook arrives within 3 min.
   const downloadPromise = button.page().waitForEvent('download', { timeout: 180000 });
-  await button.click();
-  const download = await downloadPromise;
+  // Observe both operations immediately. A failed click must not leave an
+  // orphaned download rejection that masks its cause when cleanup closes Chrome.
+  const [download] = await Promise.all([downloadPromise, button.click()]);
   assert.match(download.suggestedFilename(), /\.xlsx$/);
   const destination = path.join(output, `${++sequence}-${label.replace(/[^a-z0-9]+/gi,'-')}.xlsx`);
   await download.saveAs(destination);
