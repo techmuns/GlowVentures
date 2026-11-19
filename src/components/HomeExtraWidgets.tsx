@@ -6,7 +6,7 @@ import { usePortfolio } from '@/context/PortfolioContext';
 import { ExportableTable } from '@/components/ExportableTable';
 import { AbsentCell, AbsentSection } from '@/components/Absent';
 import { concentrationNames } from '@/lib/concentration';
-import { currentHoldings, dedupedPositions } from '@/lib/analytics';
+import { currentHoldings, dedupedPositions, marketSides } from '@/lib/analytics';
 import { useReturnSelection, returnSelectionFor } from '@/lib/useReturnSelection';
 import { selectedSegmentReturns, UNSPLIT_RETURNS } from '@/lib/selectedSegmentReturns';
 import { exitedRows } from '@/lib/drilldown';
@@ -205,4 +205,104 @@ export function HomeEquityTwr({ to }: { to: string }) {
     value={twr?.pct == null ? <AbsentCell reason={absentWhy} /> : <span className={twr.pct > 0 ? 'home-positive' : twr.pct < 0 ? 'home-negative' : undefined}>{fmtPct(twr.pct, { sign: true, decimals: 1 })}</span>}
     note={twr?.to ? `YTD · to ${fmtDate(twr.to)}` : 'YTD'}
     link={{ to: '/cio?tab=returns&rp=ytd&rtype=xirr&seg=assetClass', label: 'View returns' }} />;
+}
+
+/** One holding-level return record set for the selected range, by security. */
+function useSecurityReturns(from: string, to: string) {
+  const { portfolio, statementPortfolio } = usePortfolio();
+  const { selection, current } = useReturnSelection({ period: 'custom', start: from, end: to, type: 'xirr' });
+  return useMemo(() => {
+    const statement = statementPortfolio ?? portfolio;
+    if (!statement || !selection) return null;
+    const recorded = dedupedPositions(statement.positions);
+    return selectedSegmentReturns(current, exitedRows(recorded), statement.accounts, 'security', selection, () => null, currentHoldings(recorded));
+  }, [portfolio, statementPortfolio, selection, current]);
+}
+
+/**
+ * WHAT DROVE THE RETURN: each holding's rupee gain over the selected range, the
+ * biggest five gainers and biggest five detractors. A gain adds up to the book's
+ * total gain (the same records as Morning CIO), so this is CONTRIBUTION — not an
+ * isolated return — and the Return column is the holding's own period return beside it.
+ */
+export function HomeContributors({ from, to }: { from: string; to: string }) {
+  const { convertFromBase, fmtFromBase, displayCurrency } = usePortfolio();
+  const result = useSecurityReturns(from, to);
+  const measured = (result?.rows ?? []).filter(r => r.key !== UNSPLIT_RETURNS && r.gain != null && Math.abs(r.gain) >= 0.5);
+  const byGain = [...measured].sort((a, b) => b.gain! - a.gain!);
+  const rows = [...byGain.filter(r => r.gain! > 0).slice(0, 5), ...byGain.filter(r => r.gain! < 0).slice(-5).reverse()];
+  const moneyCell = (n: number) => homeExportNumber(convertFromBase(n), displayCurrency === 'USD' ? '"$"#,##0.00' : '"₹"#,##0.00');
+  return <ExtraPanel title="Top contributors & detractors" label="WHAT DROVE THE RETURN" hint="Each holding's rupee gain over the selected range — unrealised and realised results and recorded income over the capital it held — using the same available-record and assumed-ownership rules as Morning CIO. The five largest gainers and five largest detractors; a gain adds up to the book's total gain, so this is contribution, not an isolated return. Whole-account returns without a security split are excluded.">
+    <div className="home-table-scroll home-widget-table-limit"><ExportableTable className="home-table"><thead><tr><th>Investment</th><th>Contribution</th><th>Return</th></tr></thead><tbody>
+      {rows.map(r => <tr key={r.key} data-home-contributor={r.key} data-value={r.gain!}><td>{r.label}</td><td {...moneyCell(r.gain!)} className={r.gain! < 0 ? 'home-negative' : 'home-positive'}>{fmtFromBase(r.gain!, { compact: true, sign: true })}</td><td {...homeExportNumber(r.periodPct == null ? null : r.periodPct / 100, '0.00%')} className={r.periodPct != null && r.periodPct < 0 ? 'home-negative' : undefined}>{pct(r.periodPct)}</td></tr>)}
+      {!rows.length && <tr><td colSpan={3} className="home-empty">No measured holding gain in this period</td></tr>}
+    </tbody></ExportableTable></div><div className="home-performance-foot"><span>{fmtDate(from)} – {fmtDate(to)}</span></div>
+  </ExtraPanel>;
+}
+
+/** THE BREADTH OF THE PERIOD: how many holdings rose, how many fell, and the extremes. */
+export function HomeWinners({ from, to }: { from: string; to: string }) {
+  const result = useSecurityReturns(from, to);
+  const measured = (result?.rows ?? []).filter(r => r.key !== UNSPLIT_RETURNS && r.periodPct != null);
+  const up = measured.filter(r => r.periodPct! > 0), down = measured.filter(r => r.periodPct! < 0), flat = measured.filter(r => r.periodPct! === 0);
+  const best = up.reduce<(typeof up)[number] | null>((a, b) => (!a || b.periodPct! > a.periodPct! ? b : a), null);
+  const worst = down.reduce<(typeof down)[number] | null>((a, b) => (!a || b.periodPct! < a.periodPct! ? b : a), null);
+  const sorted = measured.map(r => r.periodPct!).sort((a, b) => a - b);
+  const median = sorted.length ? (sorted.length % 2 ? sorted[(sorted.length - 1) / 2] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2) : null;
+  const rows = measured.length ? [
+    { k: 'up', label: 'Holdings up', value: String(up.length), cls: 'home-positive' },
+    { k: 'down', label: 'Holdings down', value: String(down.length), cls: 'home-negative' },
+    ...(flat.length ? [{ k: 'flat', label: 'Holdings unchanged', value: String(flat.length), cls: '' }] : []),
+    { k: 'best', label: 'Best performer', value: best ? `${best.label} · ${pct(best.periodPct)}` : '—', cls: 'home-positive' },
+    { k: 'worst', label: 'Worst performer', value: worst ? `${worst.label} · ${pct(worst.periodPct)}` : '—', cls: 'home-negative' },
+    { k: 'median', label: 'Median return', value: median == null ? '—' : pct(median), cls: '' },
+  ] : [];
+  return <ExtraPanel title="Winners & losers" label="THE BREADTH OF THE PERIOD" hint="Every holding with a measured return in the selected range, counted by direction — the same available-record rules as Morning CIO. This is breadth, not size: a holding counts once however large, and the count is not weighted by value. Whole-account returns without a security split are excluded.">
+    {!measured.length ? <AbsentSection what="No holding-level return history" needs="Opening and closing values and reconciled capital movements within this range are needed." />
+    : <div className="home-table-scroll"><ExportableTable exportName="Home — winners & losers" className="home-table" data-home-winners data-home-up={up.length} data-home-down={down.length}><thead><tr><th>Measure</th><th>Value</th></tr></thead><tbody>{rows.map(r => <tr key={r.k}><td>{r.label}</td><td className={r.cls}>{r.value}</td></tr>)}</tbody></ExportableTable></div>}
+    <div className="home-performance-foot"><span>{fmtDate(from)} – {fmtDate(to)}</span></div>
+  </ExtraPanel>;
+}
+
+/** A horizontal value-bar list, largest first, each with its share and an optional note. */
+function BarList({ rows, money, total, probe, share = 'of the book' }: { rows: { key: string; label: string; value: number; color: string; why?: string }[]; money: (n: number) => string; total: number; probe: string; share?: string }) {
+  const max = Math.max(...rows.map(r => r.value), 1);
+  return <ul className="home-barlist" {...{ [`data-home-${probe}`]: '' }}>{rows.map(r => <li key={r.key} {...{ [`data-home-${probe}-row`]: r.key }} data-value={r.value}>
+    <div className="home-barlist-head"><span><i className="home-swatch" style={{ background: r.color }} />{r.label}{r.why && <Hint text={r.why} />}</span><strong>{money(r.value)}</strong></div>
+    <div className="home-barlist-track"><i style={{ width: `${r.value / max * 100}%`, background: r.color }} /></div>
+    <small>{total > 0 ? `${(r.value / total * 100).toFixed(1)}% ${share}` : '—'}</small>
+  </li>)}</ul>;
+}
+
+const SIDE_COLOR: Record<string, string> = { listed: '#378574', private: '#b29558', unplaced: '#8a8f9c' };
+/** WHERE THE CAPITAL IS: the book split by listed markets against private capital. */
+export function HomePublicPrivate({ historical }: { historical: boolean }) {
+  const { portfolio, statementPortfolio, fmtFromBase, displayCurrency } = usePortfolio();
+  const rows = useMemo(() => (historical || !portfolio) ? [] : marketSides((statementPortfolio ?? portfolio).positions), [portfolio, statementPortfolio, historical]);
+  const total = rows.reduce((s, r) => s + r.value, 0);
+  return <ExtraPanel title="Public vs private markets" label="WHERE THE CAPITAL IS" right={<span className="home-tag">{displayCurrency}</span>} hint="The book's market investments split by where the money is invested — listed markets against private capital — placed as everywhere else in the dashboard from the SEBI category each statement prints, not by what kind of vehicle holds it. A Category III AIF is listed exposure; a private-equity or venture fund is private. The share is of these two sides together; cash, debt and real estate are not a listed-or-private question and sit outside the split. Latest available marks; a side with nothing in it is left out.">
+    {historical ? <AbsentSection what="Historical split unavailable" needs="Dated security-level holdings are needed to split a historical whole-account value by market side." />
+      : rows.length ? <BarList probe="side" share="of market investments" total={total} money={n => fmtFromBase(n, { compact: true })} rows={rows.map(r => ({ key: r.key, label: r.label, value: r.value, color: SIDE_COLOR[r.key] ?? '#8a8f9c', why: r.why }))} />
+      : <AbsentSection what="No placed holdings" needs="Valued holdings with a recorded market side are required." />}
+  </ExtraPanel>;
+}
+
+/** WHO RUNS THE MONEY: the investment book grouped by the platform or manager it is held with. */
+export function HomeByManager({ historical }: { historical: boolean }) {
+  const { portfolio, consolidated, fmtFromBase, displayCurrency } = usePortfolio();
+  const rows = useMemo(() => {
+    if (historical || !portfolio) return [];
+    const providerOf = new Map(portfolio.accounts.map(a => [a.accountId, a.provider]));
+    const sums = new Map<string, number>();
+    for (const p of consolidated) { if (p.marketValue <= 0) continue; const prov = providerOf.get(p.accountId) ?? 'Unrecorded custodian'; sums.set(prov, (sums.get(prov) ?? 0) + p.marketValue); }
+    return [...sums].map(([key, value]) => ({ key, value })).sort((a, b) => b.value - a.value);
+  }, [portfolio, consolidated, historical]);
+  const total = rows.reduce((s, r) => s + r.value, 0);
+  const TOP = 8, rest = rows.slice(TOP), restSum = rest.reduce((s, r) => s + r.value, 0);
+  const display = [...rows.slice(0, TOP).map(r => ({ key: r.key, label: r.key, value: r.value })), ...(restSum > 0 ? [{ key: '__rest', label: `${rest.length} more ${rest.length === 1 ? 'manager' : 'managers'}`, value: restSum }] : [])];
+  return <ExtraPanel title="Value by manager" label="WHO RUNS THE MONEY" right={<span className="home-tag">{displayCurrency}</span>} hint="The investment book grouped by the platform or manager each account is held with — the custodian, PMS or AIF manager on the statement, never the owner. Latest available marks. A holding reported on two members' statements of the same mandate is counted once; the largest eight are shown and the rest pooled.">
+    {historical ? <AbsentSection what="Historical split unavailable" needs="Dated account values are needed to split a historical book by manager." />
+      : display.length ? <BarList probe="manager" total={total} money={n => fmtFromBase(n, { compact: true })} rows={display.map((r, i) => ({ key: r.key, label: r.label, value: r.value, color: r.key === '__rest' ? '#8a8f9c' : CHART_COLORS[i % CHART_COLORS.length] }))} />
+      : <AbsentSection what="No valued holdings" needs="Valued holdings with a recorded provider are required." />}
+  </ExtraPanel>;
 }
