@@ -67,3 +67,31 @@ export function moveHomeWidget(layout: HomeWidgetEntry[], id: HomeWidgetId, targ
   if (index < 0 || target < 0 || target >= layout.length || target === index) return layout;
   const next = [...layout], [entry] = next.splice(index, 1); next.splice(target, 0, entry); return next;
 }
+/** Columns each size takes on a board of this width (CSS px): 12 across on a wide board,
+ *  pairs on a medium one, one per row on a narrow one. */
+export function homeWidgetColumns(boardWidth: number): Record<HomeWidgetSize, number> {
+  if (boardWidth >= 860) return { quarter: 3, half: 6, wide: 9, full: 12 };
+  if (boardWidth >= 560) return { quarter: 6, half: 12, wide: 12, full: 12 };
+  return { quarter: 12, half: 12, wide: 12, full: 12 };
+}
+/** Pack widgets into rows of 12 in order, then stretch each row's widgets in proportion
+ *  so the row ends flush with the board: a half and a compact share 8 + 4, never 6 + 3
+ *  and an empty quarter. The stored size is untouched; only the drawn span grows. */
+export function packHomeRows(sizes: HomeWidgetSize[], columns: Record<HomeWidgetSize, number>): number[] {
+  const spans: number[] = [];
+  let row: number[] = [];
+  const flush = () => {
+    const used = row.reduce((s, n) => s + n, 0);
+    if (!row.length) return;
+    const grown = row.map(n => Math.floor(n * 12 / used));
+    grown[grown.length - 1] += 12 - grown.reduce((s, n) => s + n, 0);
+    spans.push(...grown); row = [];
+  };
+  for (const size of sizes) {
+    const span = Math.min(12, columns[size]);
+    if (row.reduce((s, n) => s + n, 0) + span > 12) flush();
+    row.push(span);
+  }
+  flush();
+  return spans;
+}

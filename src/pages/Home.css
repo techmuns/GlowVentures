@@ -110,7 +110,7 @@ html.dark .home-hint-popover { box-shadow: 0 12px 32px #0008; }
 .home-benchmark-select option { background: var(--home-surface); color: var(--home-text); }
 .home-performance-stats { display: flex; flex-wrap: wrap; gap: 42px; margin-bottom: 16px; }
 .home-performance-stats > div { display: flex; flex-direction: column; gap: 7px; }
-.home-performance-stats span { display: flex; align-items: center; gap: 6px; font-size: var(--home-font-body); color: var(--home-muted); }
+.home-performance-stats > div > span { display: flex; align-items: center; gap: 6px; font-size: var(--home-font-body); color: var(--home-muted); }
 .home-performance-stats strong { font-size: 32px; font-weight: 450; line-height: 1.2; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
 .home-performance-stats > .home-excess { margin-left: auto; text-align: right; }
 .home-excess > span { justify-content: flex-end; }
@@ -151,8 +151,8 @@ html.dark .home-hint-popover { box-shadow: 0 12px 32px #0008; }
 .home-widget-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .home-add-widgets { background: #2f7162; border-color: #2f7162; color: #fff; }
 .home-add-widgets:hover { background: #265f52; }
-.home-widget-board { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; align-items: stretch; margin: 0 0 24px; }
-.home-widget { min-width: 0; position: relative; }
+.home-widget-board { position: relative; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; align-items: stretch; margin: 0 0 24px; }
+.home-widget { min-width: 0; position: relative; container: home-widget / inline-size; }
 .home-widget-full { grid-column: span 12; }
 .home-widget-wide { grid-column: span 9; }
 .home-widget-half { grid-column: span 6; }
@@ -160,15 +160,16 @@ html.dark .home-hint-popover { box-shadow: 0 12px 32px #0008; }
 .home-widget > .home-panel { height: 100%; margin-bottom: 0; }
 .home-widget > .home-hero { height: 100%; }
 .home-widget > .home-metric { height: 100%; border: 1px solid var(--home-border); border-radius: 10px; background: var(--home-surface); min-height: 124px; }
-.home-widget[data-home-widget="cash"] > .home-metric { justify-content: center; }
-.home-widget-editing .home-widget { border: 1px dashed #70a392; border-radius: 12px; padding: 7px; background: #37857407; }
-.home-widget-tools { display: flex; align-items: center; gap: 5px; min-height: 30px; margin: 0 3px 7px; font-size: var(--home-font-caption); color: var(--home-muted); }
+.home-widget-editing .home-widget { border: 1px solid var(--home-border); border-radius: 12px; padding: 7px; background: var(--home-tint); }
+.home-widget-tools { display: flex; align-items: center; gap: 5px; min-height: 30px; margin: 0 0 7px; padding: 0 3px; border-radius: 7px; font-size: var(--home-font-caption); color: var(--home-muted); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
 .home-widget-tools > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
 .home-widget-tools > button { display: grid; place-items: center; padding: 3px; border-radius: 3px; }
-.home-widget-tools > button:hover { background: #37857414; }
-.home-widget-tools > button:disabled { opacity: .25; cursor: default; }
-.home-widget-tools > button[draggable] { cursor: grab; }
-.home-widget-tools select { background: var(--home-surface); border: 1px solid var(--home-border); border-radius: 4px; padding: 2px; font-size: var(--home-font-caption); max-width: 65px; }
+.home-widget-tools > button { cursor: pointer; transition: transform 120ms cubic-bezier(.23, 1, .32, 1); }
+.home-widget-tools > button[data-home-widget-grip] { cursor: grab; color: var(--home-accent); }
+.home-widget-tools > button:active { transform: scale(.92); }
+.home-widget-tools > button:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 1px; }
+@media (hover: hover) and (pointer: fine) { .home-widget-tools:hover { background: #3785740d; } .home-widget-tools > button:hover { background: #37857414; } }
+.home-widget-tools select { background: var(--home-surface); border: 1px solid var(--home-border); border-radius: 4px; padding: 2px 3px; font-size: var(--home-font-caption); color: var(--home-text); cursor: pointer; flex-shrink: 0; }
 .home-widget-editing .home-widget > .home-panel, .home-widget-editing .home-widget > .home-hero, .home-widget-editing .home-widget > .home-metric { height: calc(100% - 37px); }
 .home-layout-note { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: -7px 0 22px; font-size: var(--home-font-secondary); color: var(--home-muted); }
 .home-layout-note button { color: var(--home-accent); }
@@ -227,9 +228,9 @@ html.dark .home-hint-popover { box-shadow: 0 12px 32px #0008; }
 .home-widget-quarter > .home-panel .home-performance-stats { flex-wrap: wrap; }
 .home-widget-quarter > .home-panel .home-allocation-layout, .home-widget-half > .home-panel .home-allocation-layout { flex-direction: column; }
 .home-widget-quarter > .home-panel .home-allocation-legend, .home-widget-half > .home-panel .home-allocation-legend { width: 100%; }
-@media (max-width: 1000px) { .home-widget-quarter, .home-widget-wide { grid-column: span 6; } .home-widget-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 700px) { .home-widget-half, .home-widget-wide { grid-column: span 12; } .home-widget-wide + [data-home-widget="cash"].home-widget-quarter { grid-column: span 12; } .home-widget-wide + [data-home-widget="cash"].home-widget-quarter > .home-metric { display: grid; grid-template-columns: 1fr auto; align-items: center; min-height: 98px; padding: 18px 20px; } .home-widget-wide + [data-home-widget="cash"].home-widget-quarter > .home-metric > small { grid-column: 1 / -1; } .home-widget-dialog { width: calc(100vw - 20px); max-height: calc(100dvh - 30px); border-radius: 12px; } .home-widget-dialog-content { padding: 20px; } .home-widget-catalog { gap: 20px 14px; } .home-widget-art { height: 110px; } .home-library-filters > select { width: 140px; } .home-widget-dialog-heading h2 { font-size: 22px; } }
-@media (max-width: 430px) { .home-widget-board { gap: 12px; } .home-widget-catalog { grid-template-columns: 1fr; } .home-widget-art { height: 135px; } .home-widget-tools { flex-wrap: wrap; } .home-widget-quarter:has(.home-widget-tools) { grid-column: span 12; } .home-widget-live-preview { padding: 8px; } .home-widget-actions { gap: 5px; } .home-widget-actions .home-button { padding: 7px; font-size: var(--home-font-secondary); } }
+@media (max-width: 1000px) { .home-widget-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .home-widget-dialog { width: calc(100vw - 20px); max-height: calc(100dvh - 30px); border-radius: 12px; } .home-widget-dialog-content { padding: 20px; } .home-widget-catalog { gap: 20px 14px; } .home-widget-art { height: 110px; } .home-library-filters > select { width: 140px; } .home-widget-dialog-heading h2 { font-size: 22px; } }
+@media (max-width: 430px) { .home-widget-board { gap: 12px; } .home-widget-catalog { grid-template-columns: 1fr; } .home-widget-art { height: 135px; } .home-widget-tools { flex-wrap: wrap; } .home-widget-live-preview { padding: 8px; } .home-widget-actions { gap: 5px; } .home-widget-actions .home-button { padding: 7px; font-size: var(--home-font-secondary); } }
 @media (prefers-reduced-motion: reduce) { .home-dashboard *, .home-dashboard *::before, .home-dashboard *::after { transition: none !important; scroll-behavior: auto !important; } }
 /* Keep the confirmation action visible while a widget preview scrolls. */
 .home-widget-dialog-content { display: flex; flex-direction: column; max-height: calc(100dvh - 62px); }
@@ -276,13 +277,10 @@ html #root .home-table tfoot td { border-bottom: 0; }
 .home-widget > .home-panel:hover { border-color: #b7cfc2; box-shadow: 0 4px 16px #263f3505; }
 html.dark .home-widget > .home-panel:hover { border-color: #52695f; }
 @container home-allocation (max-width: 520px) { .home-allocation-panel .home-allocation-layout { grid-template-columns: 1fr; gap: 13px; min-height: 0; } .home-allocation-panel .home-donut { width: 175px; } .home-allocation-legend button { padding-block: 9px; } }
-@media (max-width: 1100px) { .home-widget-half { grid-column: span 12; } }
 
 /* Match the table export controls to the widget body type. */
 .home-dashboard [data-export-excel] { font-size: var(--home-font-secondary); }
 
-/* Keep larger summary values on a full row after the shared size rules. */
-@media (max-width: 560px) { .home-widget-quarter { grid-column: span 12; } }
 
 /* Panel heading tools: a control and the ⓘ side by side. */
 .home-panel-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
@@ -305,3 +303,50 @@ html.dark .home-widget > .home-panel:hover { border-color: #52695f; }
 /* Value by sector: a long list of columns scrolls inside its own card. */
 .home-sector-bars { height: 360px; overflow-x: auto; overflow-y: hidden; }
 @media (max-width: 560px) { .home-gain-bars li { grid-template-columns: minmax(70px, 34%) minmax(0, 1fr) auto; gap: 8px; } .home-gains-total > strong { font-size: 24px; } }
+
+/* Stage 10pl — widgets fit their slot. The board packs each row flush (packHomeRows); each
+   widget then reads its own width, so a figure laid out for a compact tile is not stretched
+   across a full row, and a chart squeezed into a compact tile drops its padding. */
+.home-widget > .home-metric > .home-metric-link { margin-top: auto; padding-top: 2px; }
+@container home-widget (min-width: 520px) {
+  .home-widget > .home-metric { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "label link" "value note"; align-content: center; gap: 10px 28px; padding-inline: 28px; }
+  .home-widget > .home-metric > span { grid-area: label; }
+  .home-widget > .home-metric > strong { grid-area: value; font-size: 34px; }
+  .home-widget > .home-metric > small { grid-area: note; justify-self: end; align-self: end; padding-bottom: 6px; font-size: var(--home-font-secondary); }
+  .home-widget > .home-metric > .home-metric-link { grid-area: link; justify-self: end; margin-top: 0; padding-top: 0; }
+}
+@container home-widget (max-width: 250px) {
+  .home-widget > .home-metric { padding: 16px; }
+  .home-widget > .home-metric > strong { font-size: 25px; }
+}
+@container home-widget (max-width: 640px) {
+  .home-widget > .home-hero { padding: 24px; gap: 18px; }
+  .home-widget > .home-hero .home-hero-side { text-align: left; }
+  .home-widget > .home-hero .home-hero-side a { justify-content: flex-start; }
+}
+@container home-widget (max-width: 460px) {
+  .home-widget > .home-panel { padding: 18px 16px; }
+  .home-widget > .home-panel .home-panel-heading { margin-bottom: 16px; gap: 10px; }
+  .home-widget > .home-panel .home-performance-stats { gap: 14px 22px; }
+  .home-widget > .home-panel .home-performance-stats strong { font-size: 25px; }
+  .home-widget > .home-panel .home-performance-stats > .home-excess { margin-left: 0; text-align: left; }
+  .home-widget > .home-panel .home-gains-total > strong { font-size: 24px; }
+}
+
+/* Stage 10pl — drag to move. The lifted card follows the pointer (translate, set per frame),
+   a little larger and on a soft shadow; the dashed outline is where it will land. */
+.home-widget-editing .home-widget::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: 0 22px 44px -14px #1d332c47, 0 6px 14px -6px #1d332c29; opacity: 0; transition: opacity 200ms ease; }
+.home-widget[data-dragging] { position: absolute; left: 0; top: 0; z-index: 30; pointer-events: none; background: var(--home-surface); border-color: #8fb9a9; scale: 1.02; transition: scale 200ms cubic-bezier(.23, 1, .32, 1); will-change: translate; }
+.home-widget[data-dragging]::after { opacity: 1; }
+@starting-style { .home-widget[data-dragging] { scale: 1; } .home-widget[data-dragging]::after { opacity: 0; } }
+html.dark .home-widget[data-dragging] { border-color: #52695f; }
+html.dark .home-widget-editing .home-widget::after { box-shadow: 0 22px 44px -14px #000a, 0 6px 14px -6px #0007; }
+.home-widget-drop { min-width: 0; border: 2px dashed #6fa592; border-radius: 12px; background: #37857410; }
+html.dark .home-widget-drop { border-color: #5f9583; background: #37857418; }
+html.home-widget-grabbing, html.home-widget-grabbing * { cursor: grabbing !important; user-select: none !important; -webkit-user-select: none !important; }
+@media (prefers-reduced-motion: reduce) { .home-widget[data-dragging] { scale: 1; } }
+/* A geography card given a whole row reads across, not as a tall half-empty box. */
+@container home-widget (min-width: 760px) {
+  .home-geography-panel .home-geography { flex-direction: row; align-items: center; justify-content: space-between; min-height: 0; padding: 26px 28px; }
+  .home-geography-panel .home-geography-coverage { flex-direction: column; align-items: flex-end; gap: 4px; padding: 0 0 0 28px; border-top: 0; border-left: 1px solid var(--home-border); }
+}
