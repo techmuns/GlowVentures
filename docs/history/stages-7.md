@@ -191,6 +191,18 @@
 - A reader that was assigned a file (chosen by provider/reportType) must return a document or throw; a bare `return null` is a reader bug, but one bad file must never hold a whole delivery. `extractOne` now treats a `null`/`undefined` return exactly like a throw — a single `failed` document with an `extractor-returned-nothing` warning — and carries on to the rest. (Why that one ICICI transaction layout's reader returns null is a separate fix; it is now a named `failed`, not a crash.)
 - No established figure moves: no reader in the committed `source/` returns null (the pipeline would already have crashed), so the guard is a no-op on the current book. Verified: `test:ingest` green including the golden extract (162 passed, 0 failed, byte-identical). Found while ingesting the family's 18 Nov demat upload; the per-layout readers for the HDFC/ICICI/Motilal transaction histories in that drop are the follow-up.
 
+### Stage 10pk — Home: the benchmark ⓘ text no longer shows on its own
+
+- Home's Portfolio performance row styled every `span` under `.home-performance-stats` as `display: flex`. The ⓘ popover beside the benchmark name is a `span`, so the rule beat its `display: none` and the whole benchmark explanation sat across the chart, unasked.
+- The rule now reaches only the row's own labels (`.home-performance-stats > div > span`); the popover opens only on hover or click again, 280–320px wide.
+
+### Stage 10pl — Home: drag widgets to move them; every widget fits its slot
+
+- **Rows end flush.** `packHomeRows` (`src/lib/homeWidgets.ts`) packs each view's widgets into rows of 12 in order and stretches a short row's widgets in proportion — a half and a compact draw 8 + 4, a lone compact draws the whole row. The saved size is untouched; only the drawn span grows. Columns per size follow the board's own width (`homeWidgetColumns`), replacing the viewport media rules.
+- **Content reads its own width.** Each widget is a size container: a metric given a wide slot lays out across (figure left, link and note right), a hero or chart squeezed narrow drops padding, and a full-row Geographic exposure reads across instead of as a tall half-empty box.
+- **Drag replaces the arrows.** Grab a widget by its bar in Edit layout: it lifts (1.02×, soft shadow, transform origin at the grab point), takes the shape of the slot under it, and a dashed outline marks where it will land; the other widgets slide to make room (WAAPI `translate`, 240 ms). It settles into place on release, scrolls the pane near an edge, Escape puts it back, and the layout is saved once, on the drop. Keyboard: the handle (`Move <widget>`) takes the arrow keys, one place per press, without motion. Works in every Home view.
+- The lifted card stays in the board's one keyed list, so React moves its node rather than rebuilding it (no chart remount).
+
 ### Stage 10pm — "Not split" counts accounts, not lines
 
 *"what is not split here?"* — the family, 12 Nov 2026, on Investment performance's breakdown: "Not split · 34 accounts" beside "53 accounts" at the top.
