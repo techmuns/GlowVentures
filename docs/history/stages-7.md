@@ -216,11 +216,11 @@
 *"for all unclassified in sector composition please put them in correct classification"* — the family, 12 Nov 2026 (PR #411).
 
 - Unclassified was already cleared on main (#434, #444): tape rows joined the universe, and a hand-reviewed table placed the eight names screener.in did not.
-- Three of those eight have screener.in pages under new names. They now join by `LISTED_AS` and leave the reviewed table. GICS is unchanged (Utilities).
+- Three of those eight have screener.in pages under new names. They now join by `LISTED_AS`. Their reviewed Gas and Power classifications remain available if a source page cannot supply a sector. All three still map to Utilities.
   - Gujarat Gas → Gujarat Energy (`GUJENERGY`, same ISIN). The old id, `GUJRATGAS`, was the Gujarat Gas Company merged away in 2015.
   - Talwandi Sabo Power → Vedanta Power (`VEDPOWER`, renamed 3 Jun 2026).
   - ICICI Prudential India Opportunities Fund reports its GSPL Transmission allotment (`GSPLTRANS`, ISIN INE1TUG01013) under the name "GSPL India Transco Ltd".
-- The reviewed table keeps HEG Graphite (not yet listed), Nicco and Sterlite Electric / Grid. 552 of 552 placed (listed-as 25, reviewed 5).
+- Five issuers currently use reviewed classifications, covering HEG Graphite, Nicco and the Sterlite Electric / Grid names. 552 of 552 placed (listed-as 25, reviewed 5).
 - check-pages, both failing on main:
   - The Monitor sector index (`MONITOR_BASIS_BOOK.sector`) now reads screener.in first and through `screenerKeys.json`, as `companyExposure` does. It had kept the pre-10md statement-first order (Engineers India, eClerx, MPS, PVR Inox, Tejas).
   - The Consolidated table must omit the Unclassified row when the book places every issuer. Otherwise the row must explain the missing classification. The Monitor check also includes Owner in its expected Holdings axis order.

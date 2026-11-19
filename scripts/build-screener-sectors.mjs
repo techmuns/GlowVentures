@@ -95,8 +95,6 @@ const REUSE = process.env.REUSE === "1";
  *   • In that same filing, "GSPL India Transco Ltd" carries ISIN INE1TUG01013
  *     on all 1,744,132 shares. GSPL Transmission's 2025–26 annual report
  *     gives that exact ISIN for its equity after the Gujarat Gas demerger.
- * Until then the three stood in the reviewed table below; screener's own page
- * now places them, on the same Gas / Power industries.
  */
 const LISTED_AS = {
   "national-stock-exchange-of-india": "544937",     // its BSE listing; NSE does not list itself
@@ -136,14 +134,17 @@ const LISTED_AS = {
  * `shared/sectors.mjs` map every other row uses — never a hand-set GICS and
  * never a guess. A key absent from the universe is dropped, not asserted.
  *
- *   power transmission → "Power" → Utilities (with NTPC, Power Grid)
+ *   gas distribution / transmission → "Gas"   → Utilities (with GAIL, IGL, Petronet)
+ *   power generation / transmission → "Power" → Utilities (with NTPC, Power Grid)
  *   graphite electrodes, wires & cables → "Industrial Products" → Industrials (with KEI, Finolex, Universal Cables)
  *
- * Gujarat Gas, GSPL India Transco and Talwandi Sabo Power were here until
- * Stage 10po; each now has its own screener.in page under its new name
- * (`LISTED_AS` above), so screener places them and this table no longer does.
+ * The three renamed listings normally resolve through LISTED_AS. Keep their
+ * reviewed industries for builds where the source cannot supply a sector.
  */
 const REVIEWED_BROAD_INDUSTRY = {
+  "gujarat-gas": "Gas",                  // city gas distribution (CGD), a regulated distributor like Indraprastha Gas
+  "gspl-india-transco": "Gas",           // natural-gas transmission infrastructure (the GSPL transco demerger)
+  "talwandi-sabo-power": "Power",        // 1,980 MW thermal power generation (Vedanta)
   "heg-graphite": "Industrial Products", // graphite electrodes (Electrodes & Refractories), like the HEG parent
   "nicco": "Industrial Products",        // Nicco Corporation — wires & cables, like Finolex / KEI / Universal Cables
   "sterlite-electric": "Power",          // Sterlite Power — electricity transmission
