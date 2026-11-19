@@ -22,12 +22,15 @@ await page.route('**/api/fx', r => r.fulfill({ json: { ok: true, inrPerUsd: 84, 
 await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
 const readPdf = async download => {
   const file = path.join(out, download.suggestedFilename()); await download.saveAs(file);
-  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const { getDocument, OPS } = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const loading = getDocument({ data: new Uint8Array(await fs.readFile(file)), useSystemFonts: true });
   const pdf = await loading.promise;
   let text = ''; const bounds = [];
   for (let n = 1; n <= pdf.numPages; n++) {
     const p = await pdf.getPage(n), v = p.getViewport({ scale: 1 }); assert.ok(v.width > v.height, 'Landscape A4');
+    const ops = await p.getOperatorList();
+    assert.ok(ops.fnArray.some((op, i) => op === OPS.paintImageXObject && ops.argsArray[i][1] === 1280 && ops.argsArray[i][2] === 181),
+      `The Glow Ventures wordmark is embedded on page ${n}`);
     for (const item of (await p.getTextContent()).items.filter(i => 'str' in i && i.str.trim())) {
       text += item.str + ' ';
       const [x, y] = [item.transform[4], item.transform[5]];

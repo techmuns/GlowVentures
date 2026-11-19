@@ -1,3 +1,4 @@
+import { brandWorkbookTitles } from "./reportBrand";
 // ── PRIVATE MARKET REPORT → EXCEL (client #418) ─────────────────────────────
 //
 // *"… PDF, Excel, management-ready."* — Gaurav, 5 Nov 2026.
@@ -114,6 +115,7 @@ export async function exportPrivateReportExcel(s: PrivateReportSnapshot) {
   });
   inv.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cols.length } };
 
+  await brandWorkbookTitles(book, [ov]);
   const blob = new Blob([await book.xlsx.writeBuffer()], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });

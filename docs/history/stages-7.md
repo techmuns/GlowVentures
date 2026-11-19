@@ -230,3 +230,8 @@
 - check-pages, both failing on main:
   - The Monitor sector index (`MONITOR_BASIS_BOOK.sector`) now reads screener.in first and through `screenerKeys.json`, as `companyExposure` does. It had kept the pre-10md statement-first order (Engineers India, eClerx, MPS, PVR Inox, Tejas).
   - The Consolidated table must omit the Unclassified row when the book places every issuer. Otherwise the row must explain the missing classification. The Monitor check also includes Owner in its expected Holdings axis order.
+
+### Stage 10pp — Permanent Glow Ventures artwork
+
+- The dashboard sidebar, sign-in screen and browser icon use the supplied blue-and-black G|V mark. The full wordmark appears on printed dashboard pages, PDF covers and headers, client records requests and workbook title sheets.
+- Month-on-month PDF continuations now start a new branded page before drawing more rows.

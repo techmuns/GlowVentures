@@ -21,9 +21,9 @@ import { fundHistoryModel, periodFundXirr } from "./fundHistory";
 import { sumOrNull } from "./analytics";
 import type { ReportPeriod } from "./cioReportPeriod";
 import { fmtCurrency, fmtDate } from "./format";
+import { REPORT_BRAND } from "./reportBrand";
 
-/** The client wordmark used across the dashboard; Munshot is the report provider. */
-export const PRIVATE_REPORT_BRAND = { name: "Glow Ventures", mark: "G", provider: "Munshot AI" } as const;
+export { REPORT_BRAND as PRIVATE_REPORT_BRAND };
 
 /** One investment the report draws — the fields the page's fund rows already carry. */
 export type PrivateReportInput = {
@@ -123,7 +123,7 @@ export function privateReportSnapshot({ funds, fundDated, totals, scope, currenc
   const atCost = rows.filter((r) => r.atCost);
 
   return {
-    brand: PRIVATE_REPORT_BRAND, scope, currency, period, generatedAt: now.toISOString(), exportedOn: isoDate(now),
+    brand: REPORT_BRAND, scope, currency, period, generatedAt: now.toISOString(), exportedOn: isoDate(now),
     date: period.to, money, percent, multiple,
     // The display-currency converter, so the Excel export can carry real numbers
     // (which Excel can sum and sort) rather than the formatted strings the PDF uses.

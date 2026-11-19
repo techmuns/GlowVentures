@@ -25,6 +25,7 @@ const PASSWORD_HASH = "6da1b78fa68be61bd96cd363385ad72f91460c60c5b95447bfe54309f
 // with scripts/set-dashboard-password.mjs.
 const PEPPER = "glow-ventures-family-office::pw::v1";
 
+const BRAND_MARK = "/brand/glow-ventures-mark.png";
 const COOKIE = "glow_auth";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
@@ -90,6 +91,7 @@ function loginPage({ error, next }) {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
 <title>Glow Ventures Family Office — Sign in</title>
+<link rel="icon" type="image/png" href="${BRAND_MARK}" />
 <style>
   :root { color-scheme: light dark; }
   * { box-sizing: border-box; }
@@ -103,11 +105,7 @@ function loginPage({ error, next }) {
     border-radius: 16px; padding: 32px 28px; box-shadow: 0 12px 40px rgba(60,55,100,0.10);
   }
   .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
-  .mark {
-    width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center;
-    background: linear-gradient(135deg, #d9c48f, #b8923c); color: #1a1830; font-weight: 700;
-    letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(184,146,60,0.35);
-  }
+  .mark { width: 60px; height: 38px; flex: none; object-fit: cover; border-radius: 6px; }
   .brand h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: -0.01em; }
   .brand p { font-size: 11px; margin: 2px 0 0; letter-spacing: 0.18em; text-transform: uppercase; color: #8a8699; }
   label { display: block; font-size: 12px; font-weight: 500; margin: 0 0 7px; color: #55516b; }
@@ -138,7 +136,7 @@ function loginPage({ error, next }) {
 </head><body>
   <form class="card" method="POST" action="${action}" autocomplete="on">
     <div class="brand">
-      <div class="mark">GV</div>
+      <img class="mark" src="${BRAND_MARK}" width="60" height="38" alt="" />
       <div><h1>Glow Ventures Family Office</h1><p>Investor Cockpit</p></div>
     </div>
     <label for="password">Enter password to continue</label>
@@ -170,6 +168,14 @@ function loginPage({ error, next }) {
 export async function onRequest(context) {
   const { request, next } = context;
   const url = new URL(request.url);
+
+  // The sign-in page uses this single static image. A missing image can
+  // resolve to the SPA shell on Pages, so only return a PNG here.
+  if (url.pathname === BRAND_MARK && (request.method === "GET" || request.method === "HEAD")) {
+    const image = await context.env.ASSETS.fetch(new URL(BRAND_MARK, url.origin), { method: request.method });
+    if (image.ok && image.headers.get("Content-Type")?.split(";")[0] === "image/png") return image;
+    return new Response(null, { status: 404 });
+  }
 
   // Sign out — clear the cookie and bounce to the login page.
   if (url.pathname === "/__auth/logout") {

@@ -399,6 +399,8 @@ const s1 = directItems.map((it, i) => {
 // printed), but the family asked (16 Nov 2026) to drop the "no longer needed"
 // table from the client's copy — it is housekeeping, not something to act on.
 
+const wordmark = readFileSync(join(ROOT, "public/brand/glow-ventures-wordmark.png")).toString("base64");
+const logo = `<img src="data:image/png;base64,${wordmark}" alt="Glow Ventures" style="width:38mm;height:auto;display:block">`;
 const html = `<!doctype html><html><head><meta charset="utf-8"><title>Glow Ventures — records still needed (short list)</title><style>
 @page { size: A4 landscape; margin: 16mm 12mm 16mm 12mm; }
 * { box-sizing: border-box; }
@@ -418,7 +420,9 @@ tbody tr:nth-child(even) td { background: #f1f5f9; }
 .s1 col.c1 { width: 19%; } .s1 col.c2 { width: 24%; } .s1 col.c3 { width: 44%; } .s1 col.c4 { width: 13%; }
 .s4 col.c1 { width: 25%; } .s4 col.c2 { width: 25%; } .s4 col.c3 { width: 50%; }
 .newpage { break-before: page; }
+@media print { .screen-brand { display: none; } }
 </style></head><body>
+<div class="screen-brand">${logo}</div>
 <h1>Records still needed from the client — short list</h1>
 <p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This is the short cleanup list, in the order to work through it: the family's own direct holdings first (section 1), then the PMS mandates (section 2), then the AIF and other funds (section 3). For the PMS mandates and the funds there is no stock-by-stock list to go through — one complete set of records for each named manager or fund answers everything we need.</p>
 <h2>1. Direct holdings — the stock transaction statements still needed</h2>
@@ -454,7 +458,7 @@ const band = (side, inner) => `<div style="font-family:Arial,Helvetica,sans-seri
 await page.pdf({
   path: OUT, format: "A4", landscape: true, printBackground: true, displayHeaderFooter: true,
   margin: { top: "16mm", bottom: "16mm", left: "12mm", right: "12mm" },
-  headerTemplate: band("border-bottom:0.3mm solid #dbe2ea;padding-bottom:2mm;", `Glow Ventures | Records still needed (short list) | Checked ${checkedLong}`),
+  headerTemplate: band("border-bottom:0.3mm solid #dbe2ea;padding-bottom:1mm;display:flex;align-items:center;justify-content:space-between;", `${logo}<span>Records still needed (short list) | Checked ${checkedLong}</span>`),
   footerTemplate: band("border-top:0.3mm solid #dbe2ea;padding-top:2mm;display:flex;justify-content:space-between;",
     `<span>Quantities refer to the named saved records; later transactions may change them.</span><span>Page <span class="pageNumber"></span></span>`),
 });

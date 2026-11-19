@@ -47,6 +47,17 @@ for (const [path, type, body] of [['/assets/current.js', 'application/javascript
 }
 const missing = await request('/assets/gone.js', 'text/plain', 'missing', true, 404);
 assert.equal(missing.status, 404);
+const markPath = '/brand/glow-ventures-mark.png';
+for (const type of ['image/png', 'text/html']) {
+  const mark = await onRequest({
+    request: new Request('https://local.test' + markPath),
+    env: { ASSETS: { fetch: () => new Response(type === 'image/png' ? 'logo' : 'SPA fallback', { headers: { 'Content-Type': type } }) } },
+  });
+  assert.equal(mark.status, type === 'image/png' ? 200 : 404);
+  assert.equal(await mark.text(), type === 'image/png' ? 'logo' : '');
+}
+const otherBrandFile = await request('/brand/glow-ventures-wordmark.png', 'image/png', 'protected asset', false);
+assert.match(await otherBrandFile.text(), /Enter password/);
 const login = await request('/stock/known?members=one', 'text/html', 'never served', false);
 assert.equal(login.status, 200);
 assert.match(await login.text(), /Sign in|Enter password/);

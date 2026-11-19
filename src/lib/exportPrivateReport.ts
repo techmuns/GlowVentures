@@ -1,3 +1,4 @@
+import { drawReportWordmark, loadReportWordmark } from "./reportBrand";
 // ── THE PRIVATE MARKET REPORT PDF (client #418) ─────────────────────────────
 //
 // A branded, vector PDF of the private book, built from `privateReportSnapshot`.
@@ -40,7 +41,7 @@ async function loadAssets(): Promise<Assets> {
 
 /** Vector text, tables and charts stay sharp and searchable in the saved colour PDF. */
 export async function exportPrivateReport(s: PrivateReportSnapshot) {
-  const a = await loadAssets();
+  const [a, wordmark] = await Promise.all([loadAssets(), loadReportWordmark()]);
   const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4", compress: true, putOnlyUsedFonts: true });
   pdf.addFileToVFS("NotoSans-Regular.ttf", a.regular); pdf.addFont("NotoSans-Regular.ttf", "Noto", "normal");
   pdf.addFileToVFS("NotoSans-Bold.ttf", a.bold); pdf.addFont("NotoSans-Bold.ttf", "Noto", "bold");
@@ -61,14 +62,8 @@ export async function exportPrivateReport(s: PrivateReportSnapshot) {
     pdf.text(lines, x, y, { lineHeightFactor: 1.55 });
     return y + lines.length * size * 1.55;
   };
-  const logo = (x: number, y: number, light = false) => {
-    pdf.setFillColor("#c3a962"); pdf.roundedRect(x, y, 26, 26, 6, 6, "F");
-    text(s.brand.mark, x + 13, y + 19, 17, "#14272b", true, "center");
-    text(s.brand.name.toUpperCase(), x + 36, y + 11, 11, light ? "#ffffff" : TEAL, true);
-    text("FAMILY OFFICE", x + 36, y + 24, 6.5, light ? "#d8e3df" : MUTED);
-  };
   const header = (title: string, continued = false) => {
-    logo(M, 23);
+    drawReportWordmark(pdf, wordmark, M, 23);
     text(s.scope, RIGHT, 33, 8, MUTED, false, "right");
     text(`${s.period.label} | To ${fmtDate(s.date)} | ${s.currency}`, RIGHT, 47, 8, MUTED, false, "right");
     text(`${title}${continued ? " (continued)" : ""}`, M, 83, 16, TEAL);
@@ -134,7 +129,7 @@ export async function exportPrivateReport(s: PrivateReportSnapshot) {
   // ── Cover: the same split yacht / forest-green cover as the family report ──
   pdf.addImage(a.cover, "JPEG", 0, 0, W / 2, H, undefined, "FAST");
   pdf.setFillColor("#102522"); pdf.rect(W / 2, 0, W / 2, H, "F");
-  logo(42, 63, true);
+  drawReportWordmark(pdf, wordmark, 42, 58, 210);
   text("Private Market Review", W / 2 + 32, 108, 27, "#ffffff");
   para("Your private companies and funds: capital deployed, current value, multiples and money-weighted return, from the records on file.", W / 2 + 32, 160, 320, 11, "#dce7e3");
   text("REPORTING PERIOD", W / 2 + 32, 360, 8, "#b9cdca");

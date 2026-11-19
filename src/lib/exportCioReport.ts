@@ -1,3 +1,4 @@
+import { drawReportWordmark, loadReportWordmark } from "./reportBrand";
 import { jsPDF } from 'jspdf';
 import { REPORT_COLORS, type CioReportSnapshot, type ReportEdition, type ReportHolding } from './cioReport';
 import { fmtDate } from './format';
@@ -35,7 +36,7 @@ async function loadAssets(): Promise<Assets> {
 /** Vector text, tables and charts stay sharp and searchable in the saved colour PDF.
  *  The summary edition draws the same pages and figures, without the holding-by-holding tables. */
 export async function exportCioReport(s: CioReportSnapshot, edition: ReportEdition = 'detailed', opts: { topN?: number } = {}) {
-  const a = await loadAssets();
+  const [a, wordmark] = await Promise.all([loadAssets(), loadReportWordmark()]);
   const detailed = edition === 'detailed', editionName = detailed ? 'Detailed' : 'Summary';
   // How many names each "Top holdings" chart shows — the family picks 10 / 15 / 20
   // / 25 in the export dialog. Clamped so a chart's bars stay legible.
@@ -60,14 +61,8 @@ export async function exportCioReport(s: CioReportSnapshot, edition: ReportEditi
     pdf.text(lines, x, y, { lineHeightFactor: 1.55 });
     return y + lines.length * size * 1.55;
   };
-  const logo = (x: number, y: number, light = false) => {
-    pdf.setFillColor('#c3a962'); pdf.roundedRect(x, y, 26, 26, 6, 6, 'F');
-    text(s.brand.mark, x + 13, y + 19, 17, '#14272b', true, 'center');
-    text(s.brand.name.toUpperCase(), x + 36, y + 11, 11, light ? '#ffffff' : TEAL, true);
-    text('FAMILY OFFICE', x + 36, y + 24, 6.5, light ? '#d8e3df' : MUTED);
-  };
   const header = (title: string, continued = false) => {
-    logo(M, 23);
+    drawReportWordmark(pdf, wordmark, M, 23);
     text(s.scope, RIGHT, 33, 8, MUTED, false, 'right');
     text(`${editionName} report | ${s.period.label} | To ${fmtDate(s.date)} | ${s.currency}`, RIGHT, 47, 8, MUTED, false, 'right');
     text(`${title}${continued ? ' (continued)' : ''}`, M, 83, 16, TEAL);
@@ -157,7 +152,7 @@ export async function exportCioReport(s: CioReportSnapshot, edition: ReportEditi
   // The screenshot's split yacht / forest-green cover, with the client's own identity.
   pdf.addImage(a.cover, 'JPEG', 0, 0, W / 2, H, undefined, 'FAST');
   pdf.setFillColor('#102522'); pdf.rect(W / 2, 0, W / 2, H, 'F');
-  logo(42, 63, true);
+  drawReportWordmark(pdf, wordmark, 42, 58, 210);
   text(`${editionName.toUpperCase()} REPORT`, W / 2 + 32, 68, 8, '#d4c28e', true);
   text('Family Office', W / 2 + 32, 105, 29, '#ffffff');
   text(s.period.title, W / 2 + 32, 148, s.period.title.length > 20 ? 24 : 29, '#ffffff');

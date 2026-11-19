@@ -1,3 +1,4 @@
+import { brandWorkbookTitles } from "./reportBrand";
 // Styled Excel export for the whole Portfolio Monitor tab (Holdings + the
 // managers' dated trade tape), carrying the dashboard's champagne-on-ink design
 // language into the workbook. Values are in INR (the model's base currency) so a
@@ -1055,6 +1056,7 @@ export function buildPortfolioWorkbook(
 export async function exportPortfolioExcel(positions: Position[], accounts: Account[], txns: TxnInput): Promise<void> {
   const wb = buildPortfolioWorkbook(positions, accounts, txns);
 
+  await brandWorkbookTitles(wb);
   const buf = await wb.xlsx.writeBuffer();
   const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const url = URL.createObjectURL(blob);
