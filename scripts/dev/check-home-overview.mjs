@@ -151,7 +151,7 @@ try {
     }
     await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
     const dialog = page.getByRole('dialog');
-    assert.equal(await dialog.locator('[data-widget-catalog]').count(), 29, 'all personal-choice widgets remain available');
+    assert.equal(await dialog.locator('[data-widget-catalog]').count(), 33, 'all personal-choice widgets remain available');
     await page.getByRole('searchbox', { name: 'Search widgets' }).fill('currency');
     assert.equal(await dialog.locator('[data-widget-catalog]').count(), 1);
     await dialog.locator('[data-widget-catalog="currency"]').hover();
@@ -162,7 +162,7 @@ try {
     await dialog.getByRole('button', { name: 'Add to Home', exact: true }).click();
     await page.locator('[data-home-widget="currency"]').waitFor();
     await page.getByRole('button', { name: 'Edit layout', exact: true }).click();
-    await page.getByRole('button', { name: 'Move Currency Exposure earlier' }).click();
+    await page.getByRole('button', { name: 'Move Currency Exposure', exact: true }).press('ArrowUp');  // the drag handle's keyboard move (Stage 10pl)
     await page.getByRole('combobox', { name: 'Size of Currency Exposure', exact: true }).selectOption('full');
     assert.match(await page.locator('[data-home-widget="currency"]').getAttribute('class'), /home-widget-full/);
     const layout = await page.locator('[data-home-widget]').evaluateAll(els => els.map(el => el.dataset.homeWidget));

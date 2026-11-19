@@ -82,24 +82,19 @@ const REUSE = process.env.REUSE === "1";
  * HEG Advanced Materials, its parent), which is on neither NSE's nor BSE's list
  * yet; it takes the reviewed table below.
  *
- * THE GSPC AND VEDANTA RESTRUCTURINGS, rechecked 12 Nov 2026 (Stage 10pm). On
+ * THE GSPC AND VEDANTA RESTRUCTURINGS, rechecked 12 Nov 2026 (Stage 10po). On
  * 6 Nov three fund-held names reached no page; each has since listed, or kept
  * its listing, under another name. NSE's master and each page are the evidence:
  *   • Gujarat Gas Ltd is GUJARAT ENERGY LIMITED — the same ISIN, INE844O01030,
  *     and screener's page for it says "Gujarat Gas Limited (GGL)". The id this
  *     table carried, GUJRATGAS, is screener's page for the OTHER, older Gujarat
  *     Gas Company, merged away in 2015, which is why it carried no sector.
- *   • Talwandi Sabo Power Ltd was renamed VEDANTA POWER LIMITED on 3 Jun 2026
- *     and listed on 15 Jun from Vedanta's demerger; its paper keeps the issuer
- *     code INE694L, which a fund's Vedanta Power CP line carries.
- *   • "GSPL India Transco Ltd" is how ICICI Pru India Opportunities' 31 Jul
- *     2026 portfolio names its allotment of GSPL TRANSMISSION LIMITED — the
- *     gas-transmission company Gujarat Gas demerged, 1 share for every 3 held
- *     (record date 2 Jul, allotted 8 Jul, listed 30 Sep). The filing holds
- *     17,44,132 of these — the 1-for-3 allotment on 52,32,396 shares — beside
- *     the 51,35,100 Gujarat Gas shares it still held on 31 Jul; the unlisted
- *     pipeline joint venture of a similar name is not a fund holding. Either
- *     reading lands in the same industry, Gas.
+ *   • Talwandi Sabo Power and Vedanta Power share equity ISIN INE694L01019.
+ *     ICICI Prudential India Opportunities Fund's July 2026 portfolio lists
+ *     the 5,748,883 shares under Vedanta Power.
+ *   • In that same filing, "GSPL India Transco Ltd" carries ISIN INE1TUG01013
+ *     on all 1,744,132 shares. GSPL Transmission's 2025–26 annual report
+ *     gives that exact ISIN for its equity after the Gujarat Gas demerger.
  * Until then the three stood in the reviewed table below; screener's own page
  * now places them, on the same Gas / Power industries.
  */
@@ -145,7 +140,7 @@ const LISTED_AS = {
  *   graphite electrodes, wires & cables → "Industrial Products" → Industrials (with KEI, Finolex, Universal Cables)
  *
  * Gujarat Gas, GSPL India Transco and Talwandi Sabo Power were here until
- * Stage 10pm; each now has its own screener.in page under its new name
+ * Stage 10po; each now has its own screener.in page under its new name
  * (`LISTED_AS` above), so screener places them and this table no longer does.
  */
 const REVIEWED_BROAD_INDUSTRY = {

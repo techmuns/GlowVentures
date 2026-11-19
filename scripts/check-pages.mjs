@@ -14095,7 +14095,7 @@ const MONITOR_BASIS_BOOK = (() => {
     const VENDOR = JSON.parse(readFileSync(new URL("../src/data/screenerSectors.json", import.meta.url), "utf8"));
     // The listing `build-sectors` joined for a company the app's symbol tier does
     // not reach (Stage 10md) — a renamed, BSE-only or demerged company (Stage
-    // 10pm: HEG Graphite carries no symbol of its own). `companyExposure` reads
+    // 10po: HEG Graphite carries no symbol of its own). `companyExposure` reads
     // it after the symbol, so this does too.
     const VENDOR_KEYS = JSON.parse(readFileSync(new URL("../src/data/screenerKeys.json", import.meta.url), "utf8"));
     // Deduped over EVERY position, as the page's `consolidated` is — the index
@@ -14113,7 +14113,7 @@ const MONITOR_BASIS_BOOK = (() => {
       // — a company's sector does not depend on how much of it is held.
       const rows = allShares.filter((p) => p.securityKey === k);
       // Stage 10md's ORDER, which this index kept the old way round until Stage
-      // 10pm: screener.in wherever it has a page, then the industry every fund
+      // 10po: screener.in wherever it has a page, then the industry every fund
       // filing agrees on, then the statement — `companyExposure`'s three tiers,
       // the same order `placeOf` in SECURITY_AXIS_BOOK writes out. Statement
       // first read Engineers India as IT off one PMS's "Consulting Services".
@@ -21934,7 +21934,7 @@ const DEFAULT_AXIS = [
     const a = ctx?.axisButtons;
     if (!a?.length) return false;
     return a[0].key === "security" && a[0].label === "All Securities"
-      && a.map((b) => b.key).join(",") === "security,category,assetClass,basket";
+      && a.map((b) => b.key).join(",") === "security,category,assetClass,basket,owner";
   }],
   ["…and the bare /monitor opens on it — no ?group= in the address, and it is the one lit", (t, ctx) => {
     const c = ctx?.axisControl, a = ctx?.axisButtons;
@@ -30824,12 +30824,15 @@ const INVARIANTS = {
      * send the next reader to the wrong source.
      */
     ["the Unclassified row names its cause, for this view's own sources", (t, ctx) => {
-      // Stage 10pm: every issuer placed, so there is no row to carry a cause.
-      // Abstains on the BOOK's count (the same re-expression the Unclassified
-      // hover check reads), never on the page failing to draw the row.
+      // Compare the rendered rows with the independent count from the book.
       const u = SECURITY_AXIS_BOOK?.tiers?.consolidated?.unclassMix;
       if (!u) return { notChecked: "the book could not be read on this run" };
-      if (!(u.shares + u.debt + u.other)) return { notChecked: "no issuer on this page is unclassified" };
+      const rows = ctx?.sectorLayout?.returns;
+      if (!rows?.length) return false;
+      const row = rows.find((r) => r.key === "Unclassified");
+      const count = u.shares + u.debt + u.other;
+      if (count === 0) return !row;
+      if (row?.count !== count) return false;
       // Stage 10md: the three sources in the order they are tried.
       return (ctx?.titles ?? []).some((x) => /screener\.in has no page that names these companies, and neither a fund disclosure nor the family[\u2019\']s own statement/i.test(x));
     }],
