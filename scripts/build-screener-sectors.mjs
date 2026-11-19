@@ -79,9 +79,22 @@ const REUSE = process.env.REUSE === "1";
  * symbol or scrip code echoed back — so a typo here is refused, never stored.
  *
  * Not listed, on purpose: HEG Graphite (the demerged graphite business, not
- * HEG Advanced Materials, its parent), GSPL India Transco and Talwandi Sabo
- * Power (demerged, unlisted) and Gujarat Gas (merged; its page keeps no
- * classification). They keep their funds' filing where it prints one.
+ * HEG Advanced Materials, its parent), which is on neither NSE's nor BSE's list
+ * yet; it takes the reviewed table below.
+ *
+ * THE GSPC AND VEDANTA RESTRUCTURINGS, rechecked 12 Nov 2026 (Stage 10po). On
+ * 6 Nov three fund-held names reached no page; each has since listed, or kept
+ * its listing, under another name. NSE's master and each page are the evidence:
+ *   • Gujarat Gas Ltd is GUJARAT ENERGY LIMITED — the same ISIN, INE844O01030,
+ *     and screener's page for it says "Gujarat Gas Limited (GGL)". The id this
+ *     table carried, GUJRATGAS, is screener's page for the OTHER, older Gujarat
+ *     Gas Company, merged away in 2015, which is why it carried no sector.
+ *   • Talwandi Sabo Power and Vedanta Power share equity ISIN INE694L01019.
+ *     ICICI Prudential India Opportunities Fund's July 2026 portfolio lists
+ *     the 5,748,883 shares under Vedanta Power.
+ *   • In that same filing, "GSPL India Transco Ltd" carries ISIN INE1TUG01013
+ *     on all 1,744,132 shares. GSPL Transmission's 2025–26 annual report
+ *     gives that exact ISIN for its equity after the Gujarat Gas demerger.
  */
 const LISTED_AS = {
   "national-stock-exchange-of-india": "544937",     // its BSE listing; NSE does not list itself
@@ -91,7 +104,9 @@ const LISTED_AS = {
   "credit-access-grameen": "CREDITACC",             // NSE prints "CreditAccess Grameen"
   "punjab-chem-and-crop-prot-l": "PUNJABCHEM",      // the statement clips the name
   "affle-india": "AFFLE",                           // renamed Affle 3i
-  "gujarat-gas": "GUJRATGAS",                       // screener keeps the merged company's page
+  "gujarat-gas": "GUJENERGY",                       // renamed Gujarat Energy, ISIN INE844O01030 unchanged
+  "gspl-india-transco": "GSPLTRANS",                // the fund's name for its GSPL Transmission allotment
+  "talwandi-sabo-power": "VEDPOWER",                // renamed Vedanta Power, 3 Jun 2026
   "manali-petrochemical": "MANALIPETC",
   "chambal-fertilisers-and-chemicals": "CHAMBLFERT", // NSE spells it "Fertilizers"
   "sasken-communication-technologies": "SASKEN",    // renamed Sasken Technologies
@@ -122,6 +137,9 @@ const LISTED_AS = {
  *   gas distribution / transmission → "Gas"   → Utilities (with GAIL, IGL, Petronet)
  *   power generation / transmission → "Power" → Utilities (with NTPC, Power Grid)
  *   graphite electrodes, wires & cables → "Industrial Products" → Industrials (with KEI, Finolex, Universal Cables)
+ *
+ * The three renamed listings normally resolve through LISTED_AS. Keep their
+ * reviewed industries for builds where the source cannot supply a sector.
  */
 const REVIEWED_BROAD_INDUSTRY = {
   "gujarat-gas": "Gas",                  // city gas distribution (CGD), a regulated distributor like Indraprastha Gas

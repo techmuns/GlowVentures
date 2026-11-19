@@ -2265,6 +2265,28 @@
     "joinedBy": "nse-symbol",
     "page": "Garware Hi Tech Films Ltd"
   },
+  "GSPLTRANS": {
+    "gics": "Utilities",
+    "gicsFrom": "broadIndustry",
+    "screenerBroadSector": "Energy",
+    "screenerSector": "Oil, Gas & Consumable Fuels",
+    "screenerSectorCode": "IN03/IN0301",
+    "screenerBroadIndustry": "Gas",
+    "screenerIndustry": "LPG/CNG/PNG/LNG Supplier",
+    "joinedBy": "nse-symbol",
+    "page": "GSPL Transmission Ltd"
+  },
+  "GUJENERGY": {
+    "gics": "Utilities",
+    "gicsFrom": "broadIndustry",
+    "screenerBroadSector": "Energy",
+    "screenerSector": "Oil, Gas & Consumable Fuels",
+    "screenerSectorCode": "IN03/IN0301",
+    "screenerBroadIndustry": "Gas",
+    "screenerIndustry": "LPG/CNG/PNG/LNG Supplier",
+    "joinedBy": "nse-symbol",
+    "page": "Gujarat Energy Ltd"
+  },
   "GVT&D": {
     "gics": "Industrials",
     "gicsFrom": "broadIndustry",
@@ -5719,6 +5741,17 @@
     "joinedBy": "nse-symbol",
     "page": "Vedanta Ltd"
   },
+  "VEDPOWER": {
+    "gics": "Utilities",
+    "gicsFrom": "broadIndustry",
+    "screenerBroadSector": "Utilities",
+    "screenerSector": "Power",
+    "screenerSectorCode": "IN11/IN1101",
+    "screenerBroadIndustry": "Power",
+    "screenerIndustry": "Power Generation",
+    "joinedBy": "nse-symbol",
+    "page": "Vedanta Power Ltd"
+  },
   "VGUARD": {
     "gics": "Consumer Discretionary",
     "gicsFrom": "broadIndustry",
@@ -5972,28 +6005,6 @@
     "joinedBy": "nse-symbol",
     "page": "Zydus Lifesciences Ltd"
   },
-  "gspl-india-transco": {
-    "gics": "Utilities",
-    "gicsFrom": "reviewed",
-    "screenerBroadSector": null,
-    "screenerSector": "Gas",
-    "screenerSectorCode": null,
-    "screenerBroadIndustry": "Gas",
-    "screenerIndustry": null,
-    "joinedBy": "reviewed",
-    "page": "reviewed by hand — screener.in carries no classification for this company"
-  },
-  "gujarat-gas": {
-    "gics": "Utilities",
-    "gicsFrom": "reviewed",
-    "screenerBroadSector": null,
-    "screenerSector": "Gas",
-    "screenerSectorCode": null,
-    "screenerBroadIndustry": "Gas",
-    "screenerIndustry": null,
-    "joinedBy": "reviewed",
-    "page": "reviewed by hand — screener.in carries no classification for this company"
-  },
   "heg-graphite": {
     "gics": "Industrials",
     "gicsFrom": "reviewed",
@@ -6039,17 +6050,6 @@
     "page": "reviewed by hand — screener.in carries no classification for this company"
   },
   "sterlite-grid-5": {
-    "gics": "Utilities",
-    "gicsFrom": "reviewed",
-    "screenerBroadSector": null,
-    "screenerSector": "Power",
-    "screenerSectorCode": null,
-    "screenerBroadIndustry": "Power",
-    "screenerIndustry": null,
-    "joinedBy": "reviewed",
-    "page": "reviewed by hand — screener.in carries no classification for this company"
-  },
-  "talwandi-sabo-power": {
     "gics": "Utilities",
     "gicsFrom": "reviewed",
     "screenerBroadSector": null,
