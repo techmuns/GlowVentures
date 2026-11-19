@@ -202,3 +202,11 @@
 - **Content reads its own width.** Each widget is a size container: a metric given a wide slot lays out across (figure left, link and note right), a hero or chart squeezed narrow drops padding, and a full-row Geographic exposure reads across instead of as a tall half-empty box.
 - **Drag replaces the arrows.** Grab a widget by its bar in Edit layout: it lifts (1.02×, soft shadow, transform origin at the grab point), takes the shape of the slot under it, and a dashed outline marks where it will land; the other widgets slide to make room (WAAPI `translate`, 240 ms). It settles into place on release, scrolls the pane near an edge, Escape puts it back, and the layout is saved once, on the drop. Keyboard: the handle (`Move <widget>`) takes the arrow keys, one place per press, without motion. Works in every Home view.
 - The lifted card stays in the board's one keyed list, so React moves its node rather than rebuilding it (no chart remount).
+
+### Stage 10pm — "Not split" counts accounts, not lines
+
+*"what is not split here?"* — the family, 12 Nov 2026, on Investment performance's breakdown: "Not split · 34 accounts" beside "53 accounts" at the top.
+
+- The top line counted distinct accounts; "Not split · N accounts" and How it is built's "covers the same N accounts" counted bridge rows, and a row is a whole account or one holding measured on its own, so one account could be counted several times.
+- `capitalBridge` now carries `accounts` and `unsplitAccounts` (distinct account ids). The Not split row, its hover, How it is built's coverage line and its Not split heading use them; the hover gives the line count where it differs. Handles: `data-bridge-accounts` (now distinct accounts), `data-bridge-rows`, `data-bridge-split-rows`, `data-bridge-unsplit-accounts`.
+- No figure changes. `capitalBridge.test.ts` adds two holdings of one account: two rows, one account not split.
