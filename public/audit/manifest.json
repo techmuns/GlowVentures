@@ -14712,6 +14712,43 @@
   ]
  },
  {
+  "docKey": "carnelian-bharat-amritkaal-fund-4551-2026-10-31-holdings",
+  "provider": "Carnelian Bharat Amritkaal Fund",
+  "accountNo": "4551",
+  "owner": "ANKITA BHARAT JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-31",
+  "reportType": "holdings",
+  "sourcePath": "source/november-2026-e/CARNELIAN BHARAT AMRITKAAL FUND -AC ST OF ANKITA 11-NOV-26.pdf",
+  "pages": 2,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "carnelian-bharat-amritkaal-fund-4551-2026-10-31-holdings",
+  "label": "Carnelian Bharat Amritkaal Fund · 4551 · holdings",
+  "fy": "2026-10-31",
+  "source": "source/november-2026-e/CARNELIAN BHARAT AMRITKAAL FUND -AC ST OF ANKITA 11-NOV-26.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 3,
+    "cols": 8
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "helios-mutual-fund-10355977-2026-11-03-holdings",
   "provider": "Helios Mutual Fund",
   "accountNo": "10355977",

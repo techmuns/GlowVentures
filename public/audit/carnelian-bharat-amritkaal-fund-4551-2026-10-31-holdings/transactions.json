@@ -1,0 +1,35 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "class",
+   "description",
+   "kind",
+   "amount",
+   "net",
+   "units",
+   "balanceUnits"
+  ],
+  [
+   "2025-08-31",
+   "Carnelian Bharat Amritkaal Fund",
+   "Contribution Amount",
+   "contribution",
+   100000000,
+   99995000.25,
+   8775109.058,
+   8775109.058
+  ],
+  [
+   "2025-12-31",
+   "Carnelian Bharat Amritkaal Fund",
+   "DRAWDOWN Transaction",
+   "contribution",
+   50000000,
+   50000425.08,
+   4217985.767,
+   12993094.825
+  ]
+ ]
+}
