@@ -91,10 +91,13 @@ export async function exportMonthlyPdf(data: MonthlyPdfInput): Promise<{ blob: B
   if (data.footer) { y += 2; drawRow(data.footer, true); }
 
   // Subtitle + coverage note under the table.
-  pdf.setFont("Noto", "normal"); pdf.setFontSize(8); pdf.setTextColor(MUTED);
-  const noteLines = pdf.splitTextToSize(clean(data.note ?? data.subtitle ?? ""), RIGHT - M);
-  if (y + noteLines.length * 11 + 10 > BOTTOM) { pdf.addPage(); header(); y = 104; }
-  pdf.text(noteLines, M, y + 14, { lineHeightFactor: 1.5 });
+  const note = clean(data.note ?? data.subtitle ?? "");
+  if (note) {
+    const lines = pdf.splitTextToSize(note, RIGHT - M, { fontName: "Noto", fontStyle: "normal", fontSize: 8 });
+    if (y + lines.length * 12 + 14 > BOTTOM) { pdf.addPage(); header(); y = 104; }
+    pdf.setFont("Noto", "normal"); pdf.setFontSize(8); pdf.setTextColor(MUTED);
+    pdf.text(lines, M, y + 14, { lineHeightFactor: 1.5 });
+  }
 
   for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
     pdf.setPage(i); line(M, H - 30, RIGHT);
