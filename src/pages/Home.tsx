@@ -23,7 +23,7 @@ import { useHomeCardReturns } from '@/lib/useHomeCardReturns';
 import { HomeWidgetActions, HomeWidgetBoard, useHomeWidgets } from '@/components/HomeWidgetBoard';
 import { HomeViewBar } from '@/components/HomeViewBar';
 import { useHomeViews } from '@/lib/homeViews';
-import { HomeConcentration, HomeMovements, HomeMonthly, HomeVolatility, HomeSectors, HomeSectorBars, HomeGainsBreakdown, HomeEquityTwr, HomeUnavailable } from '@/components/HomeExtraWidgets';
+import { HomeConcentration, HomeMovements, HomeMonthly, HomeVolatility, HomeSectors, HomeSectorBars, HomeGainsBreakdown, HomeEquityTwr, HomeContributors, HomeWinners, HomePublicPrivate, HomeByManager, HomeUnavailable } from '@/components/HomeExtraWidgets';
 import type { HomeWidgetId } from '@/lib/homeWidgets';
 import { HomeReturnCoverage } from '@/components/HomeReturnCoverage';
 import { Hint, Metric } from '@/components/HomeMetric';
@@ -164,6 +164,10 @@ export function Home() {
     sectorBars: (<HomeSectorBars historical={historical} />),
     gains: (<HomeGainsBreakdown ytd={cards?.ytd ?? null} historical={historical} />),
     equityTwr: (<HomeEquityTwr to={to} />),
+    contributors: (<HomeContributors from={from} to={to} />),
+    winners: (<HomeWinners from={from} to={to} />),
+    publicPrivate: (<HomePublicPrivate historical={historical} />),
+    byManager: (<HomeByManager historical={historical} />),
   };
   return <div className="home-dashboard" data-home-overview data-home-total={model.total ?? ''}>
     <PageHeader title="Home" right={<div className="flex flex-wrap items-center gap-2"><Suspense fallback={null}><PortfolioReportExport /></Suspense><HomeWidgetActions state={widgetState} /></div>} />

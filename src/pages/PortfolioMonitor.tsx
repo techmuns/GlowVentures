@@ -5494,7 +5494,7 @@ export function PortfolioMonitor() {
                               /* A shown figure keeps itself on one line and lets the index line under it wrap below. */
                               className={`px-2 py-1.5 text-right mono ${res.shown ? "" : "whitespace-nowrap"}`}
                               title={r.live && !r.costNA ? mixedBasisNote : undefined}>
-                              {/* THE HOLDING'S FIGURE LEADS (Stage 10pm): a size up and semibold, the index line under it quieter. */}
+                              {/* THE HOLDING'S FIGURE LEADS (Stage 10pn): a size up and semibold, the index line under it quieter. */}
                               <span className={`whitespace-nowrap ${res.shown ? "text-[13px] leading-tight" : ""}`}>
                                 {offMeasure && <span className="ret-tag mr-0.5">{res.tag}</span>}
                                 {res.shown && res.assumed && <AssumedMark note={res.note} />}
