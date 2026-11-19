@@ -210,3 +210,9 @@
 - The top line counted distinct accounts; "Not split · N accounts" and How it is built's "covers the same N accounts" counted bridge rows, and a row is a whole account or one holding measured on its own, so one account could be counted several times.
 - `capitalBridge` now carries `accounts` and `unsplitAccounts` (distinct account ids). The Not split row, its hover, How it is built's coverage line and its Not split heading use them; the hover gives the line count where it differs. Handles: `data-bridge-accounts` (now distinct accounts), `data-bridge-rows`, `data-bridge-split-rows`, `data-bridge-unsplit-accounts`.
 - No figure changes. `capitalBridge.test.ts` adds two holdings of one account: two rows, one account not split.
+
+### Stage 10pn — The Monitor's return cells: the holding's figure leads, its index under it
+
+- *"make the main return bold and the bottom benchmark also better ui so can easily read the cell"* — every return cell's figure is a size up (13px) and semibold.
+- The inline index line XIRR and YTD still carry (HPR's moved to the Benchmark column, Stage 10oc) is quieter: `BenchLine`'s short index name is a small-caps label (`.bench-name` in `index.css`) and its return a lighter medium-weight figure, with a small gap above. Same data attributes, hover, absence handling and best-guess asterisk.
+- The first-column freeze this PR first carried landed separately as Stage 10nj (#399).
