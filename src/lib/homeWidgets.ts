@@ -22,12 +22,16 @@ export const HOME_WIDGETS = [
   { id: 'inception', name: 'Since Inception Return', category: 'Performance', description: 'Return on capital since investment: the same figure as Morning CIO’s consolidated return.', kind: 'number', size: 'quarter' },
   { id: 'equityTwr', name: 'Equity TWR', category: 'Performance', description: 'Time-weighted return of the Equity asset class this calendar year, in INR: the Returns table’s Adjusted TWR (YTD).', kind: 'number', size: 'quarter' },
   { id: 'gains', name: 'Gains Breakdown – YTD', category: 'Performance', description: 'This calendar year’s gain as bars, by member or by asset class: the records behind the YTD return.', kind: 'bars', size: 'half' },
+  { id: 'contributors', name: 'Top Contributors & Detractors', category: 'Performance', description: 'The holdings that produced the most — and least — rupee gain over the selected period.', kind: 'table', size: 'half' },
+  { id: 'winners', name: 'Winners & Losers', category: 'Performance', description: 'How many holdings rose and fell in the period, with the best and worst and the median return.', kind: 'table', size: 'half' },
   { id: 'movements', name: 'Large Performance Movements', category: 'Performance', description: 'Measured holding returns beyond +10% or −10% over the selected period.', kind: 'table', size: 'half' },
   { id: 'monthly', name: 'Month by Month Discrete Performance', category: 'Performance', description: 'Separate monthly portfolio returns over the selected range, using available dated records.', kind: 'table', size: 'full' },
   { id: 'vintage', name: 'Performance by Vintage', category: 'Performance', description: 'Private-equity fund performance grouped by a verified fund vintage and fund-level IRR.', kind: 'bars', size: 'half' },
   { id: 'volatility', name: 'Top Securities by Volatility', category: 'Risk', description: 'The ten most volatile public investments, ranked by daily return volatility in the selected period.', kind: 'bars', size: 'half' },
   { id: 'sectorBars', name: 'Value by Sector', category: 'Allocation', description: 'Company-share holdings’ value by sector as a bar chart, in INR (or USD when selected).', kind: 'bars', size: 'full' },
   { id: 'sectors', name: 'Stock Sector Breakdown', category: 'Allocation', description: 'Your recorded company-share holdings grouped by their verified sectors.', kind: 'donut', size: 'half' },
+  { id: 'publicPrivate', name: 'Public vs Private Markets', category: 'Allocation', description: 'The book split by where the money is invested — listed markets against private capital.', kind: 'bars', size: 'half' },
+  { id: 'byManager', name: 'Value by Manager', category: 'Allocation', description: 'The investment book grouped by the platform or manager each account is held with.', kind: 'bars', size: 'half' },
 ] as const;
 export type HomeWidgetId = typeof HOME_WIDGETS[number]['id'];
 export type HomeWidgetSize = 'quarter' | 'half' | 'wide' | 'full';
@@ -66,4 +70,32 @@ export function moveHomeWidget(layout: HomeWidgetEntry[], id: HomeWidgetId, targ
   const index = layout.findIndex(w => w.id === id);
   if (index < 0 || target < 0 || target >= layout.length || target === index) return layout;
   const next = [...layout], [entry] = next.splice(index, 1); next.splice(target, 0, entry); return next;
+}
+/** Columns each size takes on a board of this width (CSS px): 12 across on a wide board,
+ *  pairs on a medium one, one per row on a narrow one. */
+export function homeWidgetColumns(boardWidth: number): Record<HomeWidgetSize, number> {
+  if (boardWidth >= 860) return { quarter: 3, half: 6, wide: 9, full: 12 };
+  if (boardWidth >= 560) return { quarter: 6, half: 12, wide: 12, full: 12 };
+  return { quarter: 12, half: 12, wide: 12, full: 12 };
+}
+/** Pack widgets into rows of 12 in order, then stretch each row's widgets in proportion
+ *  so the row ends flush with the board: a half and a compact share 8 + 4, never 6 + 3
+ *  and an empty quarter. The stored size is untouched; only the drawn span grows. */
+export function packHomeRows(sizes: HomeWidgetSize[], columns: Record<HomeWidgetSize, number>): number[] {
+  const spans: number[] = [];
+  let row: number[] = [];
+  const flush = () => {
+    const used = row.reduce((s, n) => s + n, 0);
+    if (!row.length) return;
+    const grown = row.map(n => Math.floor(n * 12 / used));
+    grown[grown.length - 1] += 12 - grown.reduce((s, n) => s + n, 0);
+    spans.push(...grown); row = [];
+  };
+  for (const size of sizes) {
+    const span = Math.min(12, columns[size]);
+    if (row.reduce((s, n) => s + n, 0) + span > 12) flush();
+    row.push(span);
+  }
+  flush();
+  return spans;
 }

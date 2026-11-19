@@ -82,7 +82,7 @@ const REUSE = process.env.REUSE === "1";
  * HEG Advanced Materials, its parent), which is on neither NSE's nor BSE's list
  * yet; it takes the reviewed table below.
  *
- * THE GSPC AND VEDANTA RESTRUCTURINGS, rechecked 12 Nov 2026 (Stage 10pm). On
+ * THE GSPC AND VEDANTA RESTRUCTURINGS, rechecked 12 Nov 2026 (Stage 10po). On
  * 6 Nov three fund-held names reached no page; each has since listed, or kept
  * its listing, under another name. NSE's master and each page are the evidence:
  *   • Gujarat Gas Ltd is GUJARAT ENERGY LIMITED — the same ISIN, INE844O01030,
@@ -145,7 +145,7 @@ const LISTED_AS = {
  *   graphite electrodes, wires & cables → "Industrial Products" → Industrials (with KEI, Finolex, Universal Cables)
  *
  * Gujarat Gas, GSPL India Transco and Talwandi Sabo Power were here until
- * Stage 10pm; each now has its own screener.in page under its new name
+ * Stage 10po; each now has its own screener.in page under its new name
  * (`LISTED_AS` above), so screener places them and this table no longer does.
  */
 const REVIEWED_BROAD_INDUSTRY = {
