@@ -1,3 +1,4 @@
+import { GLOW_MARK } from "@/lib/reportBrand";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { ChevronDown, Lock, Menu, X } from "lucide-react";
@@ -134,20 +135,16 @@ export function Sidebar() {
     {mobileOpen && <button type="button" className="mobile-nav-backdrop" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
     <aside ref={asideRef} style={{ width }} data-mobile-expanded={mobileOpen}
       className="app-sidebar relative flex h-full shrink-0 flex-col border-r border-ink-700 bg-ink-900">
-      {/* THE WORDMARK IS GLOW CENTRAL RESEARCH'S — a gold "G" and GLOW VENTURES
-          in gold capitals, with what this particular app is underneath — so
-          the two dashboards the family uses read as one house (Stage 10cg). */}
       <div className="flex h-16 items-center gap-2.5 border-b border-ink-700 px-5" data-sidebar-brand>
         <button ref={mobileToggle} type="button" className="mobile-nav-toggle" aria-expanded={mobileOpen}
           aria-controls="dashboard-navigation" aria-label={mobileOpen ? 'Collapse navigation' : 'Expand navigation'} onClick={() => setMobileOpen(open => !open)}>
           {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
         </button>
-        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-champagne-500 to-champagne-600 text-ink-950 shadow-glow">
-          <span className="font-display text-[15px] font-extrabold">G</span>
-        </div>
+        <img src={GLOW_MARK} alt="Glow Ventures" width={54} height={34}
+          className="shrink-0 rounded-md object-cover" data-sidebar-mark />
         <div className="min-w-0 leading-tight" data-sidebar-wordmark>
-          <div className="truncate font-display text-[14px] font-extrabold uppercase tracking-[0.08em] text-champagne-400">Glow Ventures</div>
-          <div className="truncate text-[10px] font-semibold text-slate-500">Family Office Cockpit</div>
+          <div className="truncate font-display text-[14px] font-bold text-slate-100">Family Office</div>
+          <div className="truncate text-[10px] font-semibold text-slate-500">Investor Cockpit</div>
         </div>
       </div>
       <nav id="dashboard-navigation" className="flex-1 overflow-y-auto px-2.5 py-4">
@@ -214,7 +211,7 @@ export function Sidebar() {
       </nav>
       <div className="border-t border-ink-700 px-5 py-3" data-sidebar-footer>
         <div className="flex items-center gap-2.5">
-          <div className="grid h-8 w-8 place-items-center rounded-full bg-ink-600 text-xs font-semibold text-slate-200">GV</div>
+          <img src={GLOW_MARK} alt="" width={32} height={32} className="shrink-0 rounded-md" />
           <div className="leading-tight">
             <div className="text-xs font-medium text-slate-200">Glow Ventures Family Office</div>
             <div className="text-[10px] text-slate-500">Principal</div>

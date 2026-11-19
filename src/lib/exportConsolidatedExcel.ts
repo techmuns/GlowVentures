@@ -1,3 +1,4 @@
+import { brandWorkbookTitles } from "./reportBrand";
 import ExcelJS from "exceljs";
 import type { ConsolidatedBook, ConsolidatedLink } from "./consolidatedSheet";
 import { fitExcelWorksheet } from "./excelLayout";
@@ -80,7 +81,9 @@ export function createConsolidatedWorkbook(book: ConsolidatedBook, dashboardUrl:
 }
 
 export async function downloadConsolidatedExcel(book: ConsolidatedBook, dashboardUrl: string) {
-  const bytes = await createConsolidatedWorkbook(book, dashboardUrl).xlsx.writeBuffer();
+  const workbook = createConsolidatedWorkbook(book, dashboardUrl);
+  await brandWorkbookTitles(workbook);
+  const bytes = await workbook.xlsx.writeBuffer();
   const url = URL.createObjectURL(new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
   const a = document.createElement("a");
   a.href = url; a.download = `Glow_Ventures_Consolidated_${book.asOf}.xlsx`; a.click();

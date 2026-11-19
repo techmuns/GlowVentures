@@ -1,3 +1,4 @@
+import { drawReportWordmark, loadReportWordmark } from "./reportBrand";
 // ── MONTH-ON-MONTH PERFORMANCE → PDF (client #408) ──────────────────────────
 //
 //   *"… if I want to show it to my principals."* — Yamini, 5 Nov 2026.
@@ -31,7 +32,7 @@ async function loadFonts() {
 }
 
 export type MonthlyPdfInput = {
-  brand: { name: string; mark: string; provider: string };
+  brand: { name: string; provider: string };
   scope: string; currency: string; exportedOn: string;
   subtitle?: string;
   columns: { label: string; right?: boolean }[];
@@ -41,7 +42,7 @@ export type MonthlyPdfInput = {
 };
 
 export async function exportMonthlyPdf(data: MonthlyPdfInput): Promise<{ blob: Blob; filename: string; pages: number }> {
-  const f = await loadFonts();
+  const [f, wordmark] = await Promise.all([loadFonts(), loadReportWordmark()]);
   const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4", compress: true, putOnlyUsedFonts: true });
   pdf.addFileToVFS("NotoSans-Regular.ttf", f.regular); pdf.addFont("NotoSans-Regular.ttf", "Noto", "normal");
   pdf.addFileToVFS("NotoSans-Bold.ttf", f.bold); pdf.addFont("NotoSans-Bold.ttf", "Noto", "bold");
@@ -62,11 +63,7 @@ export async function exportMonthlyPdf(data: MonthlyPdfInput): Promise<{ blob: B
   const colX = (i: number) => M + widths.slice(0, i).reduce((a, b) => a + b, 0);
 
   const header = () => {
-    pdf.setFillColor("#c3a962"); pdf.roundedRect(M, 24, 24, 24, 6, 6, "F");
-    pdf.setFont("Noto", "bold"); pdf.setFontSize(15); pdf.setTextColor("#14272b");
-    pdf.text(clean(data.brand.mark), M + 12, 41, { align: "center" });
-    text(data.brand.name.toUpperCase(), M + 34, 34, 11, TEAL, true);
-    text("FAMILY OFFICE", M + 34, 45, 6.5, MUTED);
+    drawReportWordmark(pdf, wordmark, M, 23);
     text(data.scope, RIGHT, 32, 8, MUTED, false, "right");
     text(`${data.currency} · Exported ${data.exportedOn}`, RIGHT, 44, 8, MUTED, false, "right");
     text("Month-on-month performance", M, 74, 16, TEAL);
@@ -80,7 +77,7 @@ export async function exportMonthlyPdf(data: MonthlyPdfInput): Promise<{ blob: B
   header();
   let y = headRow(104);
   const drawRow = (cells: string[], bold = false, alt = false) => {
-    if (y + 18 > BOTTOM) { header(); y = headRow(104); }
+    if (y + 18 > BOTTOM) { pdf.addPage(); header(); y = headRow(104); }
     if (alt) { pdf.setFillColor("#f4f6f5"); pdf.rect(M, y - 11, RIGHT - M, 17, "F"); }
     data.columns.forEach((c, i) => {
       const raw = clean(cells[i] ?? "");
@@ -94,10 +91,13 @@ export async function exportMonthlyPdf(data: MonthlyPdfInput): Promise<{ blob: B
   if (data.footer) { y += 2; drawRow(data.footer, true); }
 
   // Subtitle + coverage note under the table.
-  pdf.setFont("Noto", "normal"); pdf.setFontSize(8); pdf.setTextColor(MUTED);
-  const noteLines = pdf.splitTextToSize(clean(data.note ?? data.subtitle ?? ""), RIGHT - M);
-  if (y + noteLines.length * 11 + 10 > BOTTOM) { header(); y = 104; }
-  pdf.text(noteLines, M, y + 14, { lineHeightFactor: 1.5 });
+  const note = clean(data.note ?? data.subtitle ?? "");
+  if (note) {
+    const lines = pdf.splitTextToSize(note, RIGHT - M, { fontName: "Noto", fontStyle: "normal", fontSize: 8 });
+    if (y + lines.length * 12 + 14 > BOTTOM) { pdf.addPage(); header(); y = 104; }
+    pdf.setFont("Noto", "normal"); pdf.setFontSize(8); pdf.setTextColor(MUTED);
+    pdf.text(lines, M, y + 14, { lineHeightFactor: 1.5 });
+  }
 
   for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
     pdf.setPage(i); line(M, H - 30, RIGHT);

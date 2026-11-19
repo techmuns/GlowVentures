@@ -3,10 +3,13 @@
 @tailwind utilities;
 
 .mobile-nav-toggle, .mobile-nav-backdrop { display: none; }
+[data-sidebar-mark] { width: 54px; height: 34px; }
 @media (max-width: 640px) {
   .app-sidebar { width: 64px !important; }
   .app-sidebar [data-sidebar-brand] { justify-content: center; padding-inline: 0; }
   .app-sidebar [data-sidebar-brand] > div { display: none; }
+  .app-sidebar[data-mobile-expanded="false"] [data-sidebar-brand] { flex-direction: column; gap: 2px; }
+  .app-sidebar[data-mobile-expanded="false"] [data-sidebar-mark] { order: -1; width: 36px; height: 21px; }
   .mobile-nav-toggle {
     display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0;
     border: 1px solid var(--chart-tooltip-border); border-radius: 6px;

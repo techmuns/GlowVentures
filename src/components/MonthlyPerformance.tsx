@@ -30,7 +30,7 @@ import { Card } from "@/components/Card";
 import { ExportableTable } from "@/components/ExportableTable";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { fmtPct, fmtDate, changeColor } from "@/lib/format";
-import { PRIVATE_REPORT_BRAND } from "@/lib/privateReport";
+import { REPORT_BRAND } from "@/lib/reportBrand";
 import { currentHoldings, dedupedPositions } from "@/lib/analytics";
 import { returnSelectionFor } from "@/lib/useReturnSelection";
 import { selectedSegmentReturns } from "@/lib/selectedSegmentReturns";
@@ -146,7 +146,7 @@ export function MonthlyPerformance() {
       const last = measured[measured.length - 1];
       const { exportMonthlyPdf } = await import("@/lib/exportMonthlyPdf");
       const r = await exportMonthlyPdf({
-        brand: PRIVATE_REPORT_BRAND, scope: scope.label, currency: displayCurrency,
+        brand: REPORT_BRAND, scope: scope.label, currency: displayCurrency,
         exportedOn: fmtDate(new Date().toISOString().slice(0, 10)),
         columns: [{ label: "Month" }, { label: "Opening", right: true }, { label: "Money in", right: true },
           { label: "Money out", right: true }, { label: "Gain", right: true }, { label: "Closing", right: true },

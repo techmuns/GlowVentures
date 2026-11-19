@@ -7,9 +7,9 @@ import { bucketLabel, holdingBucket } from './analytics';
 import { fmtCurrency, fmtDate } from './format';
 import type { ReportPeriod } from './cioReportPeriod';
 import type { cioReportReturns } from './cioReportReturns';
+import { REPORT_BRAND } from "./reportBrand";
 
-/** The client wordmark already used in Sidebar; Munshot is the report provider. */
-export const REPORT_BRAND = { name: 'Glow Ventures', mark: 'G', provider: 'Munshot AI' } as const;
+export { REPORT_BRAND };
 export const REPORT_COLORS = ['#003f43', '#7e9f9e', '#34558e', '#c0d1ec', '#b35406', '#f5a56b', '#b8cdca'];
 
 export type ReportBucket = { key: string; current: number; invested: number | null; retPct: number | null;

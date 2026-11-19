@@ -1,3 +1,4 @@
+import { GLOW_MARK, GLOW_WORDMARK } from "@/lib/reportBrand";
 import { lazy, Suspense, useRef } from "react";
 import { useNavigationScroll } from '@/lib/useNavigationScroll';
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
@@ -133,6 +134,10 @@ export default function App() {
     <div className="flex h-full bg-ink-950 text-slate-200 bg-grid">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
+        <picture className="hidden print:block">
+          <source media="print" srcSet={GLOW_WORDMARK} />
+          <img src={GLOW_MARK} alt="Glow Ventures" width={192} height={27} className="mb-3" />
+        </picture>
         <TopBar />
         {/* THE INDEX STRIP IS OUTSIDE `<main>`, DELIBERATELY. The family asked to
             see the four Nifty levels "at all times", so it is mounted here rather
