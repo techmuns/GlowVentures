@@ -2,9 +2,9 @@
  "version": 1,
  "records": {
   "home-views:default": {
-   "value": "{\"views\":[{\"id\":\"my-overview\",\"name\":\"My overview\",\"layout\":[{\"id\":\"aum\",\"size\":\"half\"},{\"id\":\"ytd\",\"size\":\"quarter\"},{\"id\":\"performance\",\"size\":\"full\"},{\"id\":\"allocation\",\"size\":\"half\"},{\"id\":\"geography\",\"size\":\"half\"},{\"id\":\"history\",\"size\":\"full\"},{\"id\":\"flows\",\"size\":\"full\"},{\"id\":\"assets\",\"size\":\"full\"}]},{\"id\":\"performance\",\"name\":\"Performance\",\"layout\":[{\"id\":\"ytd\",\"size\":\"quarter\"},{\"id\":\"inception\",\"size\":\"quarter\"},{\"id\":\"cash\",\"size\":\"quarter\"},{\"id\":\"performance\",\"size\":\"full\"},{\"id\":\"gains\",\"size\":\"half\"},{\"id\":\"movements\",\"size\":\"half\"},{\"id\":\"monthly\",\"size\":\"full\"}]},{\"id\":\"allocation\",\"name\":\"Allocation\",\"layout\":[{\"id\":\"baskets\",\"size\":\"half\"},{\"id\":\"allocation\",\"size\":\"half\"},{\"id\":\"sectors\",\"size\":\"half\"},{\"id\":\"geography\",\"size\":\"half\"},{\"id\":\"assets\",\"size\":\"full\"},{\"id\":\"history\",\"size\":\"full\"}]}],\"updatedAt\":\"2026-11-18T11:58:16.590Z\"}",
+   "value": "{\"views\":[{\"id\":\"my-overview\",\"name\":\"My overview\",\"layout\":[{\"id\":\"aum\",\"size\":\"half\"},{\"id\":\"ytd\",\"size\":\"quarter\"},{\"id\":\"performance\",\"size\":\"full\"},{\"id\":\"allocation\",\"size\":\"half\"},{\"id\":\"geography\",\"size\":\"half\"},{\"id\":\"history\",\"size\":\"full\"},{\"id\":\"flows\",\"size\":\"full\"},{\"id\":\"assets\",\"size\":\"full\"}]},{\"id\":\"performance\",\"name\":\"Performance\",\"layout\":[{\"id\":\"ytd\",\"size\":\"quarter\"},{\"id\":\"cash\",\"size\":\"quarter\"},{\"id\":\"performance\",\"size\":\"full\"},{\"id\":\"gains\",\"size\":\"half\"},{\"id\":\"movements\",\"size\":\"half\"},{\"id\":\"monthly\",\"size\":\"full\"}]},{\"id\":\"allocation\",\"name\":\"Allocation\",\"layout\":[{\"id\":\"baskets\",\"size\":\"half\"},{\"id\":\"allocation\",\"size\":\"half\"},{\"id\":\"sectors\",\"size\":\"half\"},{\"id\":\"geography\",\"size\":\"half\"},{\"id\":\"assets\",\"size\":\"full\"},{\"id\":\"history\",\"size\":\"full\"}]}],\"updatedAt\":\"2026-11-19T05:43:19.581Z\"}",
    "metadata": {
-    "updatedAt": "2026-11-18T11:58:16.590Z"
+    "updatedAt": "2026-11-19T05:43:19.581Z"
    }
   },
   "tile-set:cio": {
