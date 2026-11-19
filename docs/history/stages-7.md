@@ -190,3 +190,17 @@
 - A family upload of 8 archives (52 statements, 18 Nov) was held in full — the Statement Library showed "Needs attention / `npm run extract` failed" on every file. The statements were fine (all readable, none sealed): the bug was in `extract.mjs`. `extractOne` built `result.warnings` off the extractor's return WITHOUT guarding a `null`/`undefined` return, and the `try/catch` around `extractor.extract(...)` only catches throws. One ICICI demat transaction statement's reader returned `null`, so reading `result.warnings` threw a `TypeError` that aborted the ENTIRE run (extract.mjs:601) — every archive after it in the delivery (the Motilal demat holding statement that finally sources Kingfa 17,675u / Manorama, the newer ICICI holdings, SVAN) was never read, so the intake held all 8.
 - A reader that was assigned a file (chosen by provider/reportType) must return a document or throw; a bare `return null` is a reader bug, but one bad file must never hold a whole delivery. `extractOne` now treats a `null`/`undefined` return exactly like a throw — a single `failed` document with an `extractor-returned-nothing` warning — and carries on to the rest. (Why that one ICICI transaction layout's reader returns null is a separate fix; it is now a named `failed`, not a crash.)
 - No established figure moves: no reader in the committed `source/` returns null (the pipeline would already have crashed), so the guard is a no-op on the current book. Verified: `test:ingest` green including the golden extract (162 passed, 0 failed, byte-identical). Found while ingesting the family's 18 Nov demat upload; the per-layout readers for the HDFC/ICICI/Motilal transaction histories in that drop are the follow-up.
+
+### Stage 10pm — Sector Composition: the renamed listings read screener.in's own page; two sector checks brought up to date
+
+*"for all unclassified in sector composition please put them in correct classification"* — the family, 12 Nov 2026 (PR #411).
+
+- Unclassified was already cleared on main (#434, #444): tape rows joined the universe, and a hand-reviewed table placed the eight names screener.in did not.
+- Three of those eight have screener.in pages under new names. They now join by `LISTED_AS` and leave the reviewed table. GICS is unchanged (Utilities).
+  - Gujarat Gas → Gujarat Energy (`GUJENERGY`, same ISIN). The old id, `GUJRATGAS`, was the Gujarat Gas Company merged away in 2015.
+  - Talwandi Sabo Power → Vedanta Power (`VEDPOWER`, renamed 3 Jun 2026).
+  - ICICI Pru India Opportunities' "GSPL India Transco Ltd" → GSPL Transmission (`GSPLTRANS`): its 1-for-3 demerger allotment.
+- The reviewed table keeps HEG Graphite (not yet listed), Nicco and Sterlite Electric / Grid. 552 of 552 placed (listed-as 25, reviewed 5).
+- check-pages, both failing on main:
+  - The Monitor sector index (`MONITOR_BASIS_BOOK.sector`) now reads screener.in first and through `screenerKeys.json`, as `companyExposure` does. It had kept the pre-10md statement-first order (Engineers India, eClerx, MPS, PVR Inox, Tejas).
+  - "The Unclassified row names its cause" abstains on the book's own unclassified count.

@@ -79,9 +79,29 @@ const REUSE = process.env.REUSE === "1";
  * symbol or scrip code echoed back — so a typo here is refused, never stored.
  *
  * Not listed, on purpose: HEG Graphite (the demerged graphite business, not
- * HEG Advanced Materials, its parent), GSPL India Transco and Talwandi Sabo
- * Power (demerged, unlisted) and Gujarat Gas (merged; its page keeps no
- * classification). They keep their funds' filing where it prints one.
+ * HEG Advanced Materials, its parent), which is on neither NSE's nor BSE's list
+ * yet; it takes the reviewed table below.
+ *
+ * THE GSPC AND VEDANTA RESTRUCTURINGS, rechecked 12 Nov 2026 (Stage 10pm). On
+ * 6 Nov three fund-held names reached no page; each has since listed, or kept
+ * its listing, under another name. NSE's master and each page are the evidence:
+ *   • Gujarat Gas Ltd is GUJARAT ENERGY LIMITED — the same ISIN, INE844O01030,
+ *     and screener's page for it says "Gujarat Gas Limited (GGL)". The id this
+ *     table carried, GUJRATGAS, is screener's page for the OTHER, older Gujarat
+ *     Gas Company, merged away in 2015, which is why it carried no sector.
+ *   • Talwandi Sabo Power Ltd was renamed VEDANTA POWER LIMITED on 3 Jun 2026
+ *     and listed on 15 Jun from Vedanta's demerger; its paper keeps the issuer
+ *     code INE694L, which a fund's Vedanta Power CP line carries.
+ *   • "GSPL India Transco Ltd" is how ICICI Pru India Opportunities' 31 Jul
+ *     2026 portfolio names its allotment of GSPL TRANSMISSION LIMITED — the
+ *     gas-transmission company Gujarat Gas demerged, 1 share for every 3 held
+ *     (record date 2 Jul, allotted 8 Jul, listed 30 Sep). The filing holds
+ *     17,44,132 of these — the 1-for-3 allotment on 52,32,396 shares — beside
+ *     the 51,35,100 Gujarat Gas shares it still held on 31 Jul; the unlisted
+ *     pipeline joint venture of a similar name is not a fund holding. Either
+ *     reading lands in the same industry, Gas.
+ * Until then the three stood in the reviewed table below; screener's own page
+ * now places them, on the same Gas / Power industries.
  */
 const LISTED_AS = {
   "national-stock-exchange-of-india": "544937",     // its BSE listing; NSE does not list itself
@@ -91,7 +111,9 @@ const LISTED_AS = {
   "credit-access-grameen": "CREDITACC",             // NSE prints "CreditAccess Grameen"
   "punjab-chem-and-crop-prot-l": "PUNJABCHEM",      // the statement clips the name
   "affle-india": "AFFLE",                           // renamed Affle 3i
-  "gujarat-gas": "GUJRATGAS",                       // screener keeps the merged company's page
+  "gujarat-gas": "GUJENERGY",                       // renamed Gujarat Energy, ISIN INE844O01030 unchanged
+  "gspl-india-transco": "GSPLTRANS",                // the fund's name for its GSPL Transmission allotment
+  "talwandi-sabo-power": "VEDPOWER",                // renamed Vedanta Power, 3 Jun 2026
   "manali-petrochemical": "MANALIPETC",
   "chambal-fertilisers-and-chemicals": "CHAMBLFERT", // NSE spells it "Fertilizers"
   "sasken-communication-technologies": "SASKEN",    // renamed Sasken Technologies
@@ -119,14 +141,14 @@ const LISTED_AS = {
  * `shared/sectors.mjs` map every other row uses — never a hand-set GICS and
  * never a guess. A key absent from the universe is dropped, not asserted.
  *
- *   gas distribution / transmission → "Gas"   → Utilities (with GAIL, IGL, Petronet)
- *   power generation / transmission → "Power" → Utilities (with NTPC, Power Grid)
+ *   power transmission → "Power" → Utilities (with NTPC, Power Grid)
  *   graphite electrodes, wires & cables → "Industrial Products" → Industrials (with KEI, Finolex, Universal Cables)
+ *
+ * Gujarat Gas, GSPL India Transco and Talwandi Sabo Power were here until
+ * Stage 10pm; each now has its own screener.in page under its new name
+ * (`LISTED_AS` above), so screener places them and this table no longer does.
  */
 const REVIEWED_BROAD_INDUSTRY = {
-  "gujarat-gas": "Gas",                  // city gas distribution (CGD), a regulated distributor like Indraprastha Gas
-  "gspl-india-transco": "Gas",           // natural-gas transmission infrastructure (the GSPL transco demerger)
-  "talwandi-sabo-power": "Power",        // 1,980 MW thermal power generation (Vedanta)
   "heg-graphite": "Industrial Products", // graphite electrodes (Electrodes & Refractories), like the HEG parent
   "nicco": "Industrial Products",        // Nicco Corporation — wires & cables, like Finolex / KEI / Universal Cables
   "sterlite-electric": "Power",          // Sterlite Power — electricity transmission

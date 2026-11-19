@@ -8,7 +8,7 @@ of screener.in, which publishes NSE's industry classification. Its **Broad
 Industry** level (the AMFI industry list funds file under) is resolved to GICS
 through `shared/sectors.mjs`, and that answer wins wherever there is one.
 
-- **552 of 552 companies placed** (listed-as 22 · app-symbol 209 · isin 277 · reviewed 8 · name 36).
+- **552 of 552 companies placed** (listed-as 25 · app-symbol 209 · isin 277 · reviewed 5 · name 36).
 - 0 not placed by screener.in; the app places these from their funds' filing, then their statement, and names any it cannot.
 
 ## Not placed by screener.in
@@ -25,9 +25,6 @@ the same `shared/sectors.mjs` map every other row uses. Reviewed 16 Nov 2026.
 | Company | Broad industry (reviewed) | GICS |
 | --- | --- | --- |
 | HEG Graphite Limited | Industrial Products | Industrials |
-| Gujarat Gas Ltd. | Gas | Utilities |
-| GSPL India Transco Ltd | Gas | Utilities |
-| Talwandi Sabo Power Ltd. | Power | Utilities |
 | nicco | Industrial Products | Industrials |
 | sterlite-electric | Power | Utilities |
 | sterlite-grid | Power | Utilities |
@@ -50,6 +47,7 @@ Identifiers carry the rest; these are the joins a reviewer should read.
 | Affle India Ltd. | Affle 3i Ltd (AFFLE) | listed-as |
 | Aarti Industries Ltd. | Aarti Industries Ltd (AARTIIND) | name |
 | Brainbees Solutions Ltd. | Brainbees Solutions Ltd (FIRSTCRY) | name |
+| Gujarat Gas Ltd. | Gujarat Energy Ltd (GUJENERGY) | listed-as |
 | KEC International Ltd. | KEC International Ltd (KEC) | name |
 | MANALI PETROCHEMICAL LTD. | Manali Petrochemicals Ltd (MANALIPETC) | listed-as |
 | Chambal Fertilisers & Chemicals Ltd. | Chambal Fertilisers & Chemicals Ltd (CHAMBLFERT) | listed-as |
@@ -63,8 +61,10 @@ Identifiers carry the rest; these are the joins a reviewer should read.
 | Brookfield India Real Estate Trust | Brookfield India Real Estate Trust (BIRET) | listed-as |
 | Aadhar Housing Finance Limited | Aadhar Housing Finance Ltd (AADHARHFC) | name |
 | Red Tape Ltd | Redtape Ltd (REDTAPE) | listed-as |
+| GSPL India Transco Ltd | GSPL Transmission Ltd (GSPLTRANS) | listed-as |
 | India Shelter Finance Corporation Limited | India Shelter Finance Corporation Ltd (INDIASHLTR) | name |
 | National Aluminium Company Limited | National Aluminium Company Ltd (NATIONALUM) | name |
+| Talwandi Sabo Power Ltd. | Vedanta Power Ltd (VEDPOWER) | listed-as |
 | Krishna Institute of Medical Sciences Limited | Krishna Institute of Medical Sciences Ltd (KIMS) | name |
 | Leela Palaces Hotels & Resorts Limited | Leela Palaces Hotels & Resorts Ltd (THELEELA) | name |
 | LTIMindtree Limited | LTM Ltd (LTM) | listed-as |
@@ -86,9 +86,9 @@ Identifiers carry the rest; these are the joins a reviewer should read.
 | IRB Invit Fund | IRB InvIT Fund (IRBINVIT) | listed-as |
 | Corona Remedies Limited | Corona Remedies Ltd (CORONA) | name |
 | Raajmarg Infra Investment Trust | RaajMarg Infra Investment Trust (RIIT) | listed-as |
+| Bajaj Electricals Ltd. | Bajaj Electricals Ltd (BAJAJELEC) | name |
 | Orkla India Limited | Orkla India Ltd (ORKLAINDIA) | name |
 | Kusumgar Limited | Kusumgar Ltd (KUSUMGAR) | name |
-| Bajaj Electricals Ltd. | Bajaj Electricals Ltd (BAJAJELEC) | name |
 | Mindspace Business Parks Reit | Mindspace Business Parks REIT (MINDSPACE) | listed-as |
 | Awfis Space Solutions Limited | AWFIS Space Solutions Ltd (AWFIS) | name |
 | Shilpa Medicare Limited | Shilpa Medicare Ltd (SHILPAMED) | name |
