@@ -15711,8 +15711,11 @@ const COL = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp: 5, d
  * Read positionally against `COL` a Weight assertion would be struck on a money
  * column — a real percentage against a real money figure, which is the
  * plausible-wrong-answer this sweep exists to catch rather than commit.
+ * The default return measures then draw HPR, XIRR, YTD and Benchmark, so Sector
+ * and Entities sit at 19 and 20 (Stage 10pp). A measure picked or dropped moves
+ * them again, which is why the Sector claim reads `data-sector`, not this index.
  */
-const COL_STOCK = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp: 5, day: 6, direct: 7, pms: 8, mv: 9, viaFunds: 10, exposure: 11, weight: 12, pnl: 13, realised: 14, ret: 15, sector: 16, entity: 17 };
+const COL_STOCK = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp: 5, day: 6, direct: 7, pms: 8, mv: 9, viaFunds: 10, exposure: 11, weight: 12, pnl: 13, realised: 14, ret: 15, xirr: 16, ytd: 17, benchmark: 18, sector: 19, entity: 20 };
 /**
  * A money cell in crore. `null` for a rendered em dash — an ABSENT figure, which
  * is a different answer from an unparseable one; NaN for anything else, so a
@@ -32978,7 +32981,10 @@ const INVARIANTS = {
       if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
       // A fund prints an em dash for sector by design — it spans many and its
       // statement names none — so the claim is struck on the rows that print one.
-      const printed = rows.map((r) => r.cells?.[COL_STOCK.sector]).filter((v) => v && v !== "—");
+      // Off the cell's own `data-sector` handle (null on a fund or mandate row),
+      // never a column position: the return-measure columns move Sector along
+      // (Stage 10pp — read at a fixed index it was reading XIRR).
+      const printed = rows.map((r) => r.sector).filter((v) => v && v !== "—");
       return printed.length > 0 && printed.every((v) => v === FILTER_SECTOR);
     }],
   ],

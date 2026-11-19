@@ -230,3 +230,8 @@
 - check-pages, both failing on main:
   - The Monitor sector index (`MONITOR_BASIS_BOOK.sector`) now reads screener.in first and through `screenerKeys.json`, as `companyExposure` does. It had kept the pre-10md statement-first order (Engineers India, eClerx, MPS, PVR Inox, Tejas).
   - The Consolidated table must omit the Unclassified row when the book places every issuer. Otherwise the row must explain the missing classification. The Monitor check also includes Owner in its expected Holdings axis order.
+
+### Stage 10pp — check-pages: the Monitor's sector filter is checked on the Sector cell again
+
+- `monitor-sector` "every row it draws is in that sector" read `COL_STOCK.sector` (16). Since the default return measures draw HPR, XIRR, YTD and Benchmark, column 16 is XIRR, so the check failed on main although every row on `?sector=Financials` is Financials.
+- The claim now reads each row's `data-sector` handle (null on a fund or mandate row), so a measure picked or dropped cannot move it. `COL_STOCK` names the four return columns and puts Sector and Entities at 19 and 20.
