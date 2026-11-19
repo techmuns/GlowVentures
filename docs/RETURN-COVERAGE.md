@@ -29,7 +29,7 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-10-07 | 2026-10-07 | Complete through the selected date |
-| Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-07-31 | — | Opening valuation and complete dated cash flows are missing |
+| Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-10-31 | — | Opening valuation and complete dated cash flows are missing |
 | Franklin India Credit AIF | 10387 | Ajay Jaisinghani | 2026-10-22 | — | Its capital arrived on 2026-10-22, after its only valuation (the NAV as on 2026-10-21); a later valuation measures it |
 | Goldstandard Wealth Private Limited | 100022 | Ankita Jaisinghani | 2026-10-06 | 2026-10-06 | Complete through the selected date |
 | Goldstandard Wealth Private Limited | 100023 | Ajay Jaisinghani | 2026-10-06 | 2026-10-06 | Complete through the selected date |
