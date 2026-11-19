@@ -1,6 +1,6 @@
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
-  Activity, Table2, Calculator, Gauge, Handshake, Cable, Library, Building2, FolderOpen, Home,
+  Activity, Table2, Calculator, Gauge, Handshake, Cable, Library, Building2, FolderOpen, Home, Radar,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -50,6 +50,7 @@ export const NAV: readonly NavEntry[] = [
   { to: "/returns", label: "Return & Drawdown", icon: Gauge, group: EXTRAS },
   { to: "/corporate-actions", label: "Corporate actions & dividends", icon: Receipt, group: EXTRAS },
   { to: "/ledger", label: "Ledger Insights", icon: Calculator, group: EXTRAS },
+  { to: "/deal-flow", label: "Deal Flow", icon: Radar, group: EXTRAS },
   // ── ADMIN CLOSES THE NAV ─────────────────────────────────────────────────
   // *"rearrange the admin to put the statement library on the top, then the
   // portfolio library, and then the data audit"* — the family, 28 Oct 2026.

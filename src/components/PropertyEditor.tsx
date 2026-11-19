@@ -89,6 +89,20 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
   const taxInputs = receivedWithoutPurchase(draft) || heldBefore2001 || numbers.fmv2001 !== "" || landOrFarm;
   const ownerChange = (index: number, patch: Partial<PropertyOwner>) => set("owners", draft.owners.map((o, i) => i === index ? { ...o, ...patch } : o));
   const memberId = (name: string) => members.find(m => m.label.toLowerCase() === name.trim().toLowerCase())?.ownerId ?? null;
+  // The owners' shares at a glance: the family asked to see when a split does not add up to 100%.
+  // Over 100% is impossible and flagged in red (and, as today, left out of every family total until
+  // fixed); under 100% is amber, because the rest may belong to someone not listed here. Nothing is
+  // blocked — a part-owned property with the balance held outside the family is a real case.
+  const shareInfo = useMemo(() => {
+    const named = draft.owners.filter(o => o.name.trim() || o.ownerId).length;
+    const withShare = draft.owners
+      .map((o, i) => ({ named: !!(o.name.trim() || o.ownerId), share: optionalNumber(shares[i]) }))
+      .filter(r => r.named && r.share !== null && Number.isFinite(r.share));
+    if (!withShare.length) return null;
+    const assigned = Math.round(withShare.reduce((s, r) => s + (r.share as number), 0) * 100) / 100;
+    return { assigned, remaining: Math.round((100 - assigned) * 100) / 100, blanks: named - withShare.length,
+      over: assigned > 100.000001, exact: Math.abs(assigned - 100) <= 0.000001 };
+  }, [draft.owners, shares]);
   const earmarkChange = (patch: Partial<PropertyEarmark>) => { lastEarmark.current = { ...lastEarmark.current, ...patch }; set("earmark", lastEarmark.current); };
   return <form onSubmit={save} className="space-y-5" aria-label="Property editor">
     <fieldset disabled={busy} className="space-y-5 disabled:opacity-60">
@@ -128,6 +142,15 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
           <div className="w-28"><TextField label="Share %" value={shares[i]} onChange={v => setShares(s => s.map((share, j) => i === j ? v : share))} /></div>
           <button type="button" className="btn-ghost mb-0.5" aria-label={`Remove owner ${i + 1}`} onClick={() => { set("owners", draft.owners.filter((_, j) => i !== j)); setShares(s => s.filter((_, j) => i !== j)); }}><X className="h-4 w-4" /></button>
         </div>)}</div>
+        {shareInfo && <p role="status" data-share-total={shareInfo.assigned} className={`mt-2 text-xs ${shareInfo.over ? "text-loss" : shareInfo.exact || shareInfo.blanks > 0 ? "text-slate-400" : "text-amber-400"}`}>
+          {shareInfo.over
+            ? `Shares add up to ${shareInfo.assigned}% — more than 100%. Reduce them so they total 100%; above 100% they are kept out of the family totals.`
+            : shareInfo.blanks > 0
+              ? `Entered shares total ${shareInfo.assigned}%. The ${shareInfo.blanks} owner${shareInfo.blanks > 1 ? "s" : ""} with no share cover the remaining ${shareInfo.remaining}%.`
+              : shareInfo.exact
+                ? "Owner shares total 100%."
+                : `Owner shares total ${shareInfo.assigned}% — the remaining ${shareInfo.remaining}% is owned by someone not listed here, or a share is missing.`}
+        </p>}
       </div>
       <div className="border-t border-ink-700 pt-4">
         <div className="flex flex-wrap items-center gap-3"><h3 className="h-section">Earmark</h3><CheckField label="Earmarked / to be gifted" checked={!!draft.earmark} onChange={on => set("earmark", on ? lastEarmark.current : null)} hint={EARMARK_MARKER_ONLY} /></div>

@@ -7,11 +7,32 @@ import { groupKeyFor, groupLabelFor } from './groupAxis';
 import { UNCLASSIFIED } from './familyTaxonomy';
 
 export const HOME_COLORS: Record<string, string> = {
-  Equity: '#378574', Debt: '#b29558', Alternate: '#8a78b5', 'Real Estate': '#759aba', Cash: '#97ab77',
+  Equity: '#378574', Debt: '#b29558', Alternate: '#8a78b5', Commodities: '#c3a24a', 'Real Estate': '#759aba', Cash: '#97ab77',
   'Mixed mandates': '#a2a8b5', [UNCLASSIFIED]: '#bac0c6',
 };
-export const homeColor = (key: string) => HOME_COLORS[key] ?? '#a2a8b5';
+/** The family's baskets in Home's palette; the two largest baskets sit at opposite ends of it. */
+export const HOME_BASKET_COLORS: Record<string, string> = {
+  'Stable Growth': '#378574', 'Entrepreneurial Growth': '#b29558', 'Thematic & Tactical': '#8a78b5', Liquidity: '#97ab77',
+  'Mixed mandates': '#a2a8b5', [UNCLASSIFIED]: '#bac0c6',
+};
+/** Home groups a value by the family's asset class or by their basket. */
+export type HomeAxis = 'assetClass' | 'basket';
+export const homeColor = (key: string, axis: HomeAxis = 'assetClass') => (axis === 'basket' ? HOME_BASKET_COLORS : HOME_COLORS)[key] ?? '#a2a8b5';
 export const homeClassLabel = (key: string) => key === UNCLASSIFIED ? 'Unclassified' : groupLabelFor('assetClass')(key);
+/**
+ * Home's asset class tiles, one per row of the asset allocation: `key` is the
+ * family's asset class, `name` the tile's figure and its drill-down crumb,
+ * `holdings` the drill-down's heading. The Debt class is named fixed income.
+ */
+export const HOME_CLASS_TILES = [
+  { id: 'cash', key: 'Cash', name: 'Total cash', holdings: 'Cash holdings' },
+  { id: 'equity', key: 'Equity', name: 'Total equity', holdings: 'Equity holdings' },
+  { id: 'fixedIncome', key: 'Debt', name: 'Total fixed income', holdings: 'Fixed income holdings' },
+  { id: 'alternate', key: 'Alternate', name: 'Total alternates', holdings: 'Alternate holdings' },
+  { id: 'realEstate', key: 'Real Estate', name: 'Total real estate', holdings: 'Real estate holdings' },
+  { id: 'commodities', key: 'Commodities', name: 'Total commodities', holdings: 'Commodity holdings' },
+] as const;
+export const homeClassTile = (key: string) => HOME_CLASS_TILES.find(t => t.key === key);
 export type HomeValue = { key: string; label: string; value: number; date: string | null; accountId: string; securityKey: string | null };
 export type HomeAsset = { key: string; label: string; value: number; weight: number | null; rows: HomeValue[] };
 
@@ -21,10 +42,10 @@ export function validHomeDate(value: string | null): value is string {
 }
 
 /** A whole account's history is never split using today's allocation weights. */
-export function homeUnitClass(unit: NavUnit, positions: readonly Position[], accounts: Account[]): string {
+export function homeUnitClass(unit: NavUnit, positions: readonly Position[], accounts: Account[], axis: HomeAxis = 'assetClass'): string {
   const own = positions.filter(p => p.accountId === unit.accountId && (!unit.securityKey || p.securityKey === unit.securityKey));
   const idx = accountIndex(accounts);
-  const classes = new Set(own.filter(p => p.marketValue !== 0).map(p => groupKeyFor('assetClass', idx, p)));
+  const classes = new Set(own.filter(p => p.marketValue !== 0).map(p => groupKeyFor(axis, idx, p)));
   return classes.size === 1 ? [...classes][0] : classes.size > 1 ? 'Mixed mandates' : UNCLASSIFIED;
 }
 
@@ -42,22 +63,22 @@ export function homeAssets(values: HomeValue[]) {
 
 export const currentHomeHoldings = (positions: Position[]) => dedupedPositions(positions).filter(p => p.marketValue !== 0);
 
-export function currentHomeValues(positions: Position[], accounts: Account[]): HomeValue[] {
+export function currentHomeValues(positions: Position[], accounts: Account[], axis: HomeAxis = 'assetClass'): HomeValue[] {
   const idx = accountIndex(accounts);
   return currentHomeHoldings(positions).map(p => ({
-    key: groupKeyFor('assetClass', idx, p), label: p.security, value: p.marketValue,
+    key: groupKeyFor(axis, idx, p), label: p.security, value: p.marketValue,
     date: p.navDate ?? idx.get(p.accountId)?.asOf ?? null, accountId: p.accountId, securityKey: p.securityKey,
   }));
 }
 
-export function historicalHomeValues(units: readonly NavUnit[], positions: readonly Position[], accounts: Account[], date: string) {
+export function historicalHomeValues(units: readonly NavUnit[], positions: readonly Position[], accounts: Account[], date: string, axis: HomeAxis = 'assetClass') {
   const idx = accountIndex(accounts);
   return units.flatMap(unit => {
     const value = unitValueAt(unit, date);
     if (value == null) return [];
     const a = idx.get(unit.accountId);
     const p = unit.securityKey ? positions.find(p => p.accountId === unit.accountId && p.securityKey === unit.securityKey) : null;
-    return [{ key: homeUnitClass(unit, positions, accounts), value, accountId: unit.accountId, securityKey: unit.securityKey,
+    return [{ key: homeUnitClass(unit, positions, accounts, axis), value, accountId: unit.accountId, securityKey: unit.securityKey,
       label: p?.security ?? `${a?.provider ?? unit.accountId} · ${a?.accountNo ?? ''}`,
       date: unit.marks.filter(m => m.date <= date).at(-1)?.date ?? unit.origin }];
   });

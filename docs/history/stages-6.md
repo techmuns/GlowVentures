@@ -1696,6 +1696,14 @@ Codex's review of #352, verified against the code and the book:
 - Build and edge validation share canonical JSON serialization. The server computes the fingerprint itself; a supplied hash cannot authorize a different book. Matching-reader statement updates retain their existing behavior.
 - Isolated API regressions cover identical books across readers, a real local correction, changed facts outside the editable columns, invalid reader metadata and absent fingerprint evidence. No manual production data publication is required.
 
+### Stage 10nz — Private Market: a fund's history over time, and its return over a chosen window
+
+- Client request #414 / #415. A fourth tab on the Private Market card, **History**: one fund (or company) at a time — its dated capital calls and distributions over time, its valuation history, and its money-weighted return over a window the reader picks. `src/lib/fundHistory.ts` (pure) and `src/components/FundHistory.tsx`, wired through `BOOK_VIEWS` in `PrivateMarket.tsx`.
+- Everything is a dated record the book already carries, and nothing is fabricated. The capital-flow timeline (and a cumulative paid-in/distributed step chart) is the fund's real dated calls and distributions from `FundDated`. A measured nil distribution is a real ₹0 (DPI 0.00×); an "unknown" payout record is an em dash for Distributed *and* DPI/TVPI, never a zero.
+- The **value & NAV trajectory** is drawn only from dated valuations. A private fund files one dated valuation today, so the trajectory is a single point and the rest is an `AbsentSection` — "awaiting the fund's quarterly NAV statements" — which fills on its own, per fund, the moment a second dated NAV lands.
+- The **money-weighted return over a chosen window** (#415) is shown only where a valuation exists at each end of the window; otherwise the cell is a dash naming the exact date and the missing NAV. Today only the full inception→latest window computes; a narrower range fills when the quarterly NAVs arrive. `periodFundXirr` reuses `xirr` and `moneyWeightedReturn` (annualised at ≥ 1 year, the absolute return under one).
+- Verified by a unit suite (`src/lib/__tests__/fundHistory.test.ts`, in `test:family`) over the timeline, the ILPA multiples, the honest period-IRR absents, the inception boundary and the trajectory filling on a second NAV; and a browser regression (`scripts/dev/check-fund-history.mjs`, in CI) driving the real page offline. The `check:pages` private-view probe now asserts the four tabs. The canonical book, statement basis and existing views are untouched.
+
 ### Stage 10oa — Preserve established figures while keeping financial audits advisory
 
 - The family explicitly requires the existing dashboard's figures, coverage, curated assumptions and working flows to remain intact. Financial audits are additive observations and cannot introduce review-expiry publication holds, discard saved corrections or blanket-disable existing returns.
@@ -1703,8 +1711,84 @@ Codex's review of #352, verified against the code and the book:
 - Independent arithmetic is compared beside the canonical result. Audit failures are contained, and existing source-scoped decisions survive reminder expiry without claiming a new review. The original new/worsening-source conflict protections remain in place.
 - Regression checks cover retained figures, capital corrections, dated-return coverage, current-source editing, expired reviews and audit failure isolation. Before/after comparison of the complete established book is retained with the local validation evidence.
 
-### Stage 10oc — The Monitor's return cells: the holding's figure leads, its index under it
+### Stage 10ob — Retain the original Excel export validation failure
 
-- *"make the main return bold and the bottom benchmark also better ui so can easily read the cell"* — the holding's return is a size up (13px) and semibold; the index line under it is quieter.
-- `BenchLine` (`src/components/HoldingBenchmark.tsx`): the index's short name is a small-caps label (`.bench-name` in `index.css`), its return a lighter medium-weight figure beside it, with a small gap above. Same data attributes, hover and absence handling as Stage 10nt; the best-guess asterisk stays.
-- The first-column freeze this PR first carried landed separately as Stage 10nj (#399), so it is dropped here.
+- A post-merge browser run could report a pending download's cleanup rejection instead of the original failed export click. The helper now observes the click and download together; neither rejection can become an orphaned error that masks the cause.
+- Regression fixtures exercise both failure orders. The broad table check records the original error and a screenshot before closing the browser, and CI retains those diagnostics. Existing workbook-content assertions, timeouts and source figures are unchanged.
+
+### Stage 10oc — Portfolio Monitor: the benchmark as its own labelled column
+
+- *"you are mentioning benchmark column? where is it on portfolio monitor i cant
+  see it? is that a bug or what?"* — the family, 13 Nov 2026. The per-holding
+  index (Stage 10kd) was a small grey line INSIDE each return cell and never a
+  column of its own, so a reader scanning the headers for "Benchmark" found none.
+  It is a column now (`benchmark`, after the return columns, before Sector), added
+  to `MONITOR_COLS` / `MONITOR_STOCK_COLS` / `MONITOR_STOCK_COLS_OTHER`, so it
+  sorts, drags and hides from Edit Columns like every other column.
+- The cell names the index IN FULL (Nifty Smallcap 250, not S250), carries the
+  amber `*` that flags a size-class best guess against the manager's printed
+  benchmark, and prints that index's return over the SAME holding-period money as
+  HPR — computed on `"absolute"` independently of which return measures are
+  ticked, so the column stands on its own. It is plain markup carrying
+  `data-bench-col` (not `data-bench`), so it is NOT counted as one of the inline
+  index lines the returns still carry.
+- The holding-period index shows in ONE place, not two. A holding row's HPR/auto
+  return cell no longer footnotes its index inline (that was a brief overlap on
+  the first cut, which the family flagged — *"remove the duplicate inline HPR
+  footnote"*): the Benchmark column carries it. XIRR and YTD keep their inline
+  footnote, because each is the index over its OWN window, which the one
+  holding-period column cannot show. Aggregate rows (section bands, the footer)
+  and opened child rows keep their inline index over their own return and leave
+  the new column empty, exactly as they leave Sector and Entities empty. No
+  figure, coverage or assumption is dropped — the HPR index moved, it did not go.
+- `check:pages`: the "every return carries its index line" invariant now accepts
+  the HPR/auto index in the Benchmark column cell (`data-bench-col` on the row)
+  as that figure's index line, so it stays green with the inline HPR footnote
+  removed; XIRR/YTD still satisfy it inline. The footer invariant reads the return
+  four cells from the end (Benchmark, Sector, Entities carry no total). No new
+  finding on `monitor` (the pre-existing category-axis sector failure is on
+  `main` and untouched).
+- The Excel export carries the benchmark BASIS as readable text, not only as the
+  cell's hover-note — *"add the reason to the excel export"* so Yamini can review
+  every best guess at once rather than row by row. The Benchmark cell sets
+  `data-export-value` to `"<index> <return> — best guess, confirm with Yamini |
+  manager's own benchmark. <why>"` (the `why` is `holdingBenchmark`'s own
+  selection reason); `readTableExport` writes that string, so the exported column
+  reads and AutoFilters on "confirm with Yamini". The on-screen cell is unchanged.
+
+### Stage 10od — Private Market: a watchlist of companies and funds added by hand
+
+- Client #310 (Pratik, 22 Oct 2026): *"is there a tab for watch list over here? … Can you add it? … Manually [added companies]."* A fifth tab on the Private Market card, **Watchlist**: companies and funds the family is WATCHING, not holding — each with a name, kind (company/fund), brand/legal entity, sector, notes and who added it, with edit and remove.
+- It is the family's own judgement, kept apart from the book: nothing reaches `glowData.ts` and no entry is counted in Market value, Capital invested or any holding total. It is separate from Research Central's public watchlist.
+- Saved for EVERYONE in the dashboard's shared store (`shared/dashboardStore.mjs`), not per-browser, so a company added on one laptop is on every screen. `functions/api/private-watchlist.js` is the endpoint (one `pwatch:<id>` key per entry carried as metadata; the same cross-origin, JSON and size guards as the capital calls), `src/lib/privateWatchlist.ts` the read hook (reusing `enteredCalls`' four store causes, their words and the one-time `SWITCH_ON_STEPS`), and `src/components/PrivateWatchlist.tsx` the tab. Until the store's `GLOW_GITHUB_TOKEN` is set the tab names the cause and shows the set-up steps, never an empty list that would read as "nothing is being watched".
+- The tab carries no figure, so it is excluded from the master table's column editor, search, return picker and expand-all, exactly as History is. The smart news-alert flags over these watched companies (client #311–#317) are Glow Central Research work, tracked there.
+
+### Stage 10oe — Private Market: Generate report
+
+- Client #418 (Gaurav, 5 Nov 2026): *"can I simply create a separate report … and generate a summary of progression or performance of investments over time, valuation, etc. … PDF … management-ready."* A **Generate report** button beside the Private Market tabs opens the same two-step flow as the Morning CIO report — pick a period, then preview-and-download — producing a branded, vector colour PDF of the private book.
+- The PDF covers the whole private book in the current member scope and display currency: a cover, contents, a **Private Market Overview** (narrative + a Capital & Multiples table + a largest-investments donut) and an **Investments** table of one row per investment — invested cost, current value, unrealised gain, capital paid in and distributed, TVPI and money-weighted IRR — then an allocation chart and report notes.
+- Every figure is a dated record the page already draws, read through the same model: `m.funds` for value / cost / gain, `fundDated` + `fundHistoryModel` / `periodFundXirr` for multiples and IRR, and the counted-once capital tiles for committed / called / undrawn. Nothing is fabricated — a missing figure is left blank, an at-cost holding shows no return, and a fund with one dated valuation shows only its inception→latest IRR (the History tab's own rule). The overview's invested and unrealised totals are the covered subset the page's tiles show (`sumOrNull`), named by count, not widened to the whole book.
+- `src/lib/privateReport.ts` (pure snapshot builder), `src/lib/exportPrivateReport.ts` (jsPDF renderer, its chart/table helpers kept isolated from `exportCioReport` so the established CIO report is untouched) and `src/components/PrivateReportExport.tsx` (the button + the shared `cio-report-*` dialogs). The button uses the dashboard's own champagne primary-CTA style, not the CIO report's fixed dark-teal button, which would read as an un-remapped dark fill on the light page.
+- `check:pages`' private-view probe now asserts the **five** tabs (funds, brands, transactions, history, watchlist) — reconciled with the Watchlist tab that Stage 10od added while the probe still named four. Verified: `build`, `test:family`, and `ONLY=private-market check:pages` all green; the report's figures tie to the page's tiles (value ₹278.7 Cr, invested ₹262 Cr over 70 of 71, unrealised ₹12.6 Cr, undrawn ₹16 Cr). The canonical book, statement basis and existing views are untouched.
+
+### Stage 10of — Private Market report: Excel + a subset picker; month-on-month PDF
+
+- Finishing the two parts of client #418 the first cut left out, and the PDF half of #408.
+- **#418 — Excel + subset.** The Generate-report dialog now lists every investment with a checkbox (All / None, default all), so Gaurav can report on ALL or a chosen SUBSET of funds/companies (`ReportInvestment[]` + `selected` set in `PrivateReportExport.tsx`; `PrivateMarket.tsx` filters `m.funds` to the picked keys). A subset leaves the whole-book committed/called/undrawn tiles blank (they cannot be attributed to a subset) and labels the scope "selected investments"; the per-fund multiples and paid-in/distributed stay correct because they are struck from each fund's own dated records. The preview dialog gains a **Download Excel** button beside Download PDF: `src/lib/exportPrivateReportExcel.ts` writes a two-sheet workbook (Overview = capital & multiples; Investments = one row per holding) from the same snapshot, with REAL NUMBERS in the display currency (Excel can sum/sort), a blank cell where the record carries none (`privateReportSnapshot` now also exposes `convert`).
+- **#408 — month-on-month PDF.** A **Download PDF** button on the Month-on-month card renders the table as a branded landscape PDF for the principals (`src/lib/exportMonthlyPdf.ts`, NotoSans embedded so ₹ renders). The cells carry exactly what the table shows (same display-currency formatting, a month that measures nothing stays "—", never a zero); Excel export is unchanged.
+- Verified: `tsc`, `npm run build`, `test:family` all green; `ONLY=private-market check:pages` clean; the subset report, the Excel (Zepto reads invested ₹15 Cr / value ₹22.8 Cr / TVPI 1.52x / IRR 52.17% as real numbers) and the month PDF all generated from the live page. The `returns` route's pre-existing gain-count figure invariant is unrelated (it reads the `returns-hit` tile, not the added button). The canonical book and existing views are untouched.
+
+### Stage 10og — Deal Flow: the private-market funding universe
+
+- Client #441–#448 (Gaurav, 12 Nov 2026): *"tracking investment activity: other companies which are getting funding … we go through those businesses … put them under watch list or … reach out to the founders."* A new **Deal Flow** page (`/deal-flow`, Extras) — the WHOLE market of Indian startup funding rounds, the companies the family does NOT hold, as a deal-sourcing funnel. Distinct from the per-held-company funding drill-down (Stage 10kt) and from the matched rows baked into `privateMarketNews.json`.
+- The universe is Glow Central Research's Inc42 "Funding Galore" feed (~3,000 rounds), fetched LIVE and edge-cached by `functions/api/private-market-deals.js` — a thin keyless proxy that trims each deal, parses the round size to `{value, currency}`, normalises the stage to a funnel group, and splits investors; the dashboard bundle stays lean and the family's statements are never touched. `src/lib/privateDeals.ts` is the read model (hook + reviewed trending-theme tags derived from the feed's own sector/sub-sector labels + funnel filter/sort helpers), `src/pages/DealFlow.tsx` the page.
+- The funnel (#442–#444): date presets (this week / 1 / 3 / 6 / 12 months / all, default 3 months), sector → sub-sector (cascading), a stage multi-select whose chips untick to exclude Seed / Pre-Seed (#443), a trending-theme filter (#444), sort by largest raise (over the live USD→INR rate) or newest, and a company/investor search; a company opens a drawer of all its captured rounds (#445). **Add to watchlist** (#441) writes straight to the #310 shared watchlist; a company already on it reads "On watchlist".
+- NOTHING is fabricated and the feed's own limits are NAMED, not faked: it carries funding rounds only — **M&A is not in it** (#441) — and no **founder contacts** (#446) or **sources beyond Inc42** such as ET / YourStory (#447–#449); each is shown as "not captured yet", and an undisclosed round size stays "—", never a zero. The page reads the external feed, not the book, so it renders on an empty book and needs no `Gate`.
+- Verified: `tsc`, `npm run build` and `test:family` green; the page driven live against the real feed (3,052 deals): the funnel, the theme chips, the company drawer and Add-to-watchlist all work, no console errors. `check:pages` does not sweep it (a live-feed route the offline check env cannot serve). The canonical book and existing views are untouched.
+
+### Stage 10oh — Real Estate: the owner-share total on the property editor (#322)
+
+- Client #322 (joint ownership): the editor let you split a property by share but never showed whether the shares added up, so a split totalling 90% or 130% went in silently — and above 100% the whole property quietly dropped out of the family totals (the established, tested rule: `propertyShare` returns null over 100%, "unfinished shares above 100% save but do not enter family totals").
+- `PropertyEditor.tsx` now shows a live line under the owners: **100%** reads plainly; **over 100%** is red and says the excess is kept out of the totals until fixed; **under 100% with every owner's share filled** is amber and says the rest is owned by someone not listed or a share is missing; where some owners are left blank it states how much the blanks cover. A `data-share-total` handle carries the figure.
+- Deliberately NOT a hard block: `validateProperty` is unchanged, because it also runs when properties are READ back (`src/lib/realEstate.ts`), so rejecting over-100% there would stop an existing over-allocated property from loading — and a property the family owns only part of (the balance held outside the family) is a real case. So this is pure visibility: the family can SEE and correct a split that does not add up, with the established save/figure rules intact.
+- Verified: `tsc`, `npm run build`, `test:real-estate`, `test-table-input-snapshots` and `test-table-export-failures` all green. No change to the shared store, the canonical book or any figure.

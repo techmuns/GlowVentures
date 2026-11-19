@@ -407,14 +407,29 @@ export function ReturnAnalysis() {
           <Pill tone="info">{m.priced.length} priced positions</Pill>
         </div>} />
 
+      {/* #411 — the one written statement of the return method the family asked
+          for. Everywhere else the convention is the hover on each figure; this
+          is the single visible note, so it carries data-prose-ok. */}
+      <p data-prose-ok="the family asked for one written statement of the return method (client #411)" data-return-standard
+        className="mb-4 mt-1 rounded-lg border border-ink-700 bg-ink-800/40 px-3 py-2 text-[12px] leading-relaxed text-slate-400">
+        <span className="font-medium text-slate-300">How these returns are measured.</span> A return counts everything the money
+        earned — unrealised plus realised gains plus dividends, over the capital deployed (the cost of units held plus the cost
+        of units already sold), never price change on cost alone. A holding-period return is cumulative; a period return with
+        money paid in or out over the window is money-weighted (Modified Dietz, or XIRR solved against the dated flows and the
+        closing value), so money added during a period is never counted as gain. CAGR is used only for a single purchase held a
+        year or more; any window under a year is shown as the absolute return, named as such. Figures are point-in-time on each
+        statement's own mark (and AMFI's published NAV where it prices a scheme), and anything no record can measure is shown as
+        “—” with its reason, never as a zero.
+      </p>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Return · FIFO, by holding"
+        <StatTile label="Return · FIFO, by holding" valueClassName="text-3xl"
           value={<span className={changeColor(m.embeddedRet ?? 0)}>{fmtPct(m.embeddedRet, { sign: true })}</span>}
           sub={<>{money(m.pnl, true)} unrealised + {money(m.realised, true)} realised + {money(m.income, true)} dividends on {money(m.deployed)} deployed</>}
           title={m.returnUnavailableReason ?? "Each holding's own FIFO figures, summed before they are divided: the unrealised gain on what is held plus the realised gain on units already sold plus the dividends each holding paid, over the cost of both. A whole mandate's fees and earlier sales belong to no single name and are not here — Morning CIO strikes a whole mandate on its capital."}
           icon={<Percent className="h-4 w-4" />} />
 
-        <StatTile label="Holdings showing a gain"
+        <StatTile label="Holdings showing a gain" valueClassName="text-3xl"
           {...(m.hitRate === null
             ? { value: <span className="text-slate-500">{DASH}</span>, sub: "no holding reports a cost to measure a gain against" }
             : {
@@ -437,7 +452,7 @@ export function ReturnAnalysis() {
             `isMandateHeld` accounts would be the other honest answer, and it is
             deliberately not taken: the widest dispersion in the book is a real
             finding, and narrowing it to the ten mandates would hide it. */}
-        <StatTile label="Spread between accounts"
+        <StatTile label="Spread between accounts" valueClassName="text-3xl"
           value={m.spread === null ? <span className="text-slate-500">{DASH}</span> : `${m.spread.toFixed(1)} pp`}
           sub={m.spread === null
             ? "needs two accounts with a cost basis"
@@ -447,7 +462,7 @@ export function ReturnAnalysis() {
           icon={<Scale className="h-4 w-4" />} />
 
         {dd ? (
-          <StatTile label="Maximum drawdown"
+          <StatTile label="Maximum drawdown" valueClassName="text-3xl"
             value={<span className={dd.pct < 0 ? "text-loss" : "text-slate-300"} data-xa="returns-drawdown"
                 data-value={dd.pct} data-peak={dd.peakDate ?? ""} data-trough={dd.troughDate ?? ""}
                 data-recovered={dd.recoveredOn ?? ""} data-points={dd.points}>

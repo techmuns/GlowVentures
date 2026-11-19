@@ -25,6 +25,9 @@ import {
   PRIVATE_ROUNDS, PRIVATE_MARKET_NEWS, privateCompanyById, companyMetrics, roundValues, sortedRounds, valuationPoints, stakeTrail,
   roundDateLabel, dayOf, fmtValuation, vendorOnly, ENTRY_WINDOW_DAYS, type FundingRound, type Headline, type PrivateCompany as Company, type Figure,
 } from "@/lib/privateRounds";
+import { useHoldingLinks, linkFor } from "@/lib/holdingLinks";
+import { useHoldingShares, sharesFor } from "@/lib/holdingShares";
+import { DocumentsFolderRow, DocumentsFolderLink, ShareCountRow } from "@/components/HoldingInputs";
 
 /**
  * ── A PRIVATE COMPANY'S OWN PAGE (Stage 10ko) ──────────────────────────────
@@ -64,7 +67,7 @@ const PC_TABS = [
 ] as const;
 
 const POS_COLS = ["entity", "account", "invested", "units", "cost", "value", "asOf"] as const;
-const ROUND_COLS = ["date", "round", "raised", "pre", "post", "price", "stake", "investors", "allInvestors", "source"] as const;
+const ROUND_COLS = ["date", "round", "raised", "pre", "post", "price", "stake", "stakeValue", "investors", "allInvestors", "source"] as const;
 const NEWS_COLS = ["at", "headline", "publisher"] as const;
 
 const GRID_COLOR = "var(--chart-grid, #2b2668)";
@@ -107,6 +110,11 @@ function CompanyPage({ company }: { company: Company }) {
   const posView = useTableView("pc-position", POS_COLS);
   const roundView = useTableView("pc-rounds", ROUND_COLS);
   const newsView = useTableView("pc-news", NEWS_COLS);
+  // #420 / #434 — the family's own records for this holding, kept in the shared store.
+  const linksStore = useHoldingLinks();
+  const sharesStore = useHoldingShares();
+  const docsLink = linksStore.state.status === "ready" ? linkFor(linksStore.state.links, company.id) : null;
+  const enteredShares = sharesStore.state.status === "ready" ? sharesFor(sharesStore.state.records, company.id) : null;
 
   const keys = useMemo(() => new Set(company.fundKeys), [company]);
   const folios = useMemo(() => (portfolio
@@ -124,6 +132,15 @@ function CompanyPage({ company }: { company: Company }) {
   const cost = folios.length && folios.every((f) => f.cost != null) ? folios.reduce((s, f) => s + (f.cost ?? 0), 0) : null;
   // A SHARE COUNT ONLY WHERE EVERY LINE CARRIES ONE — a part-count would strike a part-stake.
   const shares = folios.length && folios.every((f) => f.units != null) ? folios.reduce((s, f) => s + (f.units ?? 0), 0) : null;
+  // #434 — where the statement carries no share count, a count the family entered
+  // on the dashboard (from a CAS, an MGT-7, or by hand) stands in so the stake can
+  // be struck; it is labelled an entered count wherever it is used, never blended
+  // into the book. The statement's own count always wins.
+  const statementShares = shares;
+  const effectiveShares = statementShares ?? (enteredShares?.shares ?? null);
+  const sharesBasis = statementShares == null && enteredShares
+    ? `This stake is struck on a share count entered on the dashboard — ${enteredShares.shares.toLocaleString("en-IN")} shares, source: ${enteredShares.source} — because the statement carries none; it is not a statement figure.`
+    : null;
 
   const m = useMemo(() => companyMetrics(company, investedFrom), [company, investedFrom]);
   const cur = m.currency;
@@ -140,7 +157,7 @@ function CompanyPage({ company }: { company: Company }) {
 
   const rounds = sortedRounds(company);
   const { points, leftOut } = valuationPoints(company, cur);
-  const stakes = stakeTrail(company, shares, cost, investedFrom, cur);
+  const stakes = stakeTrail(company, effectiveShares, cost, investedFrom, cur, sharesBasis);
   const latestStake = (() => {
     const r = [...rounds].reverse().find((x) => stakes.at.has(x));
     return r ? { round: r, stake: stakes.at.get(r)! } : null;
@@ -187,6 +204,7 @@ function CompanyPage({ company }: { company: Company }) {
     raised: (r) => roundValues(r, cur).raised, pre: (r) => roundValues(r, cur).pre?.value ?? null,
     post: (r) => roundValues(r, cur).headline?.value ?? null, price: (r) => roundValues(r, cur).price,
     stake: (r) => stakes.at.get(r)?.pct ?? null,
+    stakeValue: (r) => stakes.at.get(r)?.value ?? null,
     investors: (r) => r.leadInvestors.join(", ") || null, allInvestors: (r) => r.investors?.length ?? null,
     source: (r) => r.sources[0]?.publisher ?? null,
   };
@@ -248,6 +266,7 @@ function CompanyPage({ company }: { company: Company }) {
           )}
           {company.listed && <Pill tone="info"><span title={`Listed${company.listed.date ? ` on ${fmtDate(company.listed.date)}` : ""} — its price since is a market quote, not a funding round`}>{company.listed.exchange}: {company.listed.symbol}</span></Pill>}
           {company.website && <a href={company.website} target="_blank" rel="noreferrer" className="text-[12px] text-champagne-400 hover:underline">{company.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</a>}
+          {docsLink && <DocumentsFolderLink link={docsLink} />}
           <span className="text-[11px] text-slate-500" data-pc-checked={company.checkedOn}
             title={`${PRIVATE_ROUNDS.method} This company's record was last researched on ${fmtDate(company.checkedOn)}.`}>
             rounds checked {fmtDate(company.checkedOn)}
@@ -294,14 +313,22 @@ function CompanyPage({ company }: { company: Company }) {
         <Kpi label="Your stake"
           {...(latestStake
             ? { value: <span data-pc-stake={latestStake.stake.pct} title={latestStake.stake.note}>{fmtNum(latestStake.stake.pct, 3)}%</span>,
-                sub: <span className="text-slate-500">after {latestStake.round.round}</span> }
-            : { value: <AbsentValue />, sub: <span className="text-slate-500" title={stakeAbsent} data-pc-stake-absent>{shares == null ? "no share count on the statement" : "not struck — hover for why"}</span> })}
+                second: latestStake.stake.value != null ? <span data-pc-stake-value={latestStake.stake.value} title={latestStake.stake.valueNote ?? undefined}>{money(latestStake.stake.value)} at that valuation</span> : undefined,
+                sub: <span className="text-slate-500">after {latestStake.round.round}{sharesBasis && <span data-pc-stake-entered title={sharesBasis}> · entered count</span>}</span> }
+            : { value: <AbsentValue />, sub: <span className="text-slate-500" title={stakeAbsent} data-pc-stake-absent>{effectiveShares == null ? "no share count — add one under Position" : "not struck — hover for why"}</span> })}
           icon={<Percent className="h-4 w-4" />} />
       </div>
 
       <div className="mt-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto" data-pc-panel={tab}>
         {tab === "position" && (
-          <Card className="mt-5" title="Position by account" pad={false}>
+          <>
+            <Card className="mt-5" title="Family records" subtitle="The family's own records for this holding — a link to its documents folder, and the share count where the statement carries none; saved for everyone who opens the dashboard">
+              <div className="divide-y divide-ink-700/60" data-pc-family-records>
+                <DocumentsFolderRow companyKey={company.id} companyName={company.brand} state={linksStore.state} onSave={linksStore.save} onDelete={linksStore.remove} />
+                <ShareCountRow companyKey={company.id} companyName={company.brand} statementShares={statementShares} state={sharesStore.state} onSave={sharesStore.save} onDelete={sharesStore.remove} />
+              </div>
+            </Card>
+            <Card className="mt-5" title="Position by account" pad={false}>
             <div className="overflow-x-auto">
               <ExportableTable exportName={`${company.brand} — position`} className="min-w-full whitespace-nowrap text-sm" data-pc-position>
                 <thead className="border-b border-ink-700">
@@ -330,7 +357,8 @@ function CompanyPage({ company }: { company: Company }) {
                 </tbody>
               </ExportableTable>
             </div>
-          </Card>
+            </Card>
+          </>
         )}
 
         {tab === "rounds" && (
@@ -352,6 +380,7 @@ function CompanyPage({ company }: { company: Company }) {
                         <SortHeader col="post" view={roundView} title="Post-money valuation — as the source prints it, or pre-money + amount raised (marked d); a valuation the source gives no basis for is marked so">Post-money</SortHeader>
                         <SortHeader col="price" view={roundView}>Price / share</SortHeader>
                         <SortHeader col="stake" view={roundView} title="The family's shares × the round's price per share ÷ its post-money — only where the family's statement carries a share count">Your stake</SortHeader>
+                        <SortHeader col="stakeValue" view={roundView} title="The family's stake × this round's valuation — what the holding is worth at this round's price. Derived (marked d); the book still carries the holding at cost, and this is not a realisable amount">Stake value</SortHeader>
                         <SortHeader col="investors" view={roundView} align="left">Lead investors</SortHeader>
                         <SortHeader col="allInvestors" view={roundView} align="left" title="Every investor Inc42's weekly funding table lists for the round, as it prints them">Investors</SortHeader>
                         <SortHeader col="source" view={roundView} align="left">Source</SortHeader>
@@ -388,6 +417,10 @@ function CompanyPage({ company }: { company: Company }) {
                             <td className="tabular whitespace-nowrap px-3 py-2 text-right">
                               {stake ? <span title={stake.note} data-pc-round-stake={stake.pct}>{fmtNum(stake.pct, 3)}%</span>
                                 : <AbsentCell reason={stakes.why.get(r)} />}
+                            </td>
+                            <td className="tabular whitespace-nowrap px-3 py-2 text-right">
+                              {stake?.value != null ? <span title={stake.valueNote ?? undefined} data-pc-round-stake-value={stake.value}>{money(stake.value)}<sup className="ml-0.5 text-[9px] text-slate-500">d</sup></span>
+                                : <AbsentCell reason={stake ? "this round prints no valuation in one currency to value the stake at" : stakes.why.get(r)} />}
                             </td>
                             <td className="max-w-[16rem] px-3 py-2 text-left text-slate-400">{r.leadInvestors.length ? r.leadInvestors.join(", ") : <AbsentCell reason="the source names no lead investor" />}</td>
                             <td className="min-w-[14rem] max-w-[22rem] px-3 py-2 text-left text-slate-400" data-pc-investors={r.investors?.length ?? 0}>

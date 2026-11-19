@@ -97,7 +97,7 @@ console.log("── only a tab name for a known product, from this site ──")
   ok("…which the menu words as this browser only", !r.ok && r.reason === PLACEMENT_REASONS.notConfigured);
 }
 
-console.log("── DSP Gold moves from Alternate to Equity on every surface's one rule ──");
+console.log("── DSP Gold moves from Commodities to Equity on every surface's one rule ──");
 {
   const idx = accountIndex(BOOK_ACCOUNTS);
   // A depository balance, valued on the live basis at the quote — the row the
@@ -106,7 +106,7 @@ console.log("── DSP Gold moves from Alternate to Equity on every surface's o
     .map((p) => ({ assetClass: p.assetClass, securityKey: p.securityKey, accountId: p.accountId }));
   ok("the book holds DSP Gold ETF", gold.length > 0, String(gold.length));
   const g = gold[0];
-  ok("before any move it is Alternate, by the review", groupKeyFor("assetClass", idx, g) === "Alternate" && groupSourceFor("assetClass", idx, g) === "review");
+  ok("before any move it is Commodities, by the family's rule", groupKeyFor("assetClass", idx, g) === "Commodities" && groupSourceFor("assetClass", idx, g) === "family");
   const products = productKeysFor(idx, gold);
   ok("its row stands for one product", products.length === 1 && products[0] === "sec:dsp-gold-etf", products.join(","));
 
@@ -114,16 +114,16 @@ console.log("── DSP Gold moves from Alternate to Equity on every surface's o
   ok("the move applies before the store answers", placementOf("assetClass", "sec:dsp-gold-etf")?.section === "Equity");
   ok("groupKeyFor files it under Equity", gold.every((p) => groupKeyFor("assetClass", idx, p) === "Equity"));
   ok("…and says the family moved it", groupSourceFor("assetClass", idx, g) === "moved");
-  ok("where it was is still Alternate", statedGroupKeyFor("assetClass", idx, g) === "Alternate");
+  ok("where it was is still Commodities", statedGroupKeyFor("assetClass", idx, g) === "Commodities");
   ok("the review's citation is kept", familyAssetClass(g, false)?.reviewProduct === "DSP Gold ETF");
   ok("the basket is untouched", groupKeyFor("basket", idx, g) === "Thematic & Tactical");
 
   await movePlacement("assetClass", products, null);
-  ok("moving it back removes the placement", groupKeyFor("assetClass", idx, g) === "Alternate" && groupSourceFor("assetClass", idx, g) === "review");
+  ok("moving it back removes the placement", groupKeyFor("assetClass", idx, g) === "Commodities" && groupSourceFor("assetClass", idx, g) === "family");
 
   // A name this build does not draw as a tab is ignored, never drawn as a heading.
   await movePlacement("assetClass", products, "Crypto");
-  ok("an unknown tab is ignored", groupKeyFor("assetClass", idx, g) === "Alternate");
+  ok("an unknown tab is ignored", groupKeyFor("assetClass", idx, g) === "Commodities");
   await movePlacement("assetClass", products, null);
 }
 
@@ -144,7 +144,7 @@ console.log("── a mandate moves whole, on the category axis too ──");
 
 console.log("── the tabs a row can be moved to ──");
 {
-  ok("asset class offers the family's five", moveTargetsFor("assetClass", "Alternate").join("|") === "Equity|Debt|Alternate|Real Estate|Cash");
+  ok("asset class offers the family's six", moveTargetsFor("assetClass", "Alternate").join("|") === "Equity|Debt|Alternate|Commodities|Real Estate|Cash");
   ok("basket offers the four baskets", moveTargetsFor("basket", UNCLASSIFIED).length === 4);
   ok("no row is moved INTO Not classified", !moveTargetsFor("assetClass", UNCLASSIFIED).includes(UNCLASSIFIED));
   ok("a security is never moved into PMS mandates or the at-cost heading",

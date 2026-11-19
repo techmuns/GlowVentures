@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { REPORT_COLORS, type CioReportSnapshot, type ReportHolding } from './cioReport';
+import { REPORT_COLORS, type CioReportSnapshot, type ReportEdition, type ReportHolding } from './cioReport';
 import { fmtDate } from './format';
 import { DEFAULT_BENCHMARK, benchmarkIdentity } from './benchmarks';
 import { settledPriceHistory, closeOnOrBefore } from './prices';
@@ -32,13 +32,18 @@ async function loadAssets(): Promise<Assets> {
   return assets;
 }
 
-/** Vector text, tables and charts stay sharp and searchable in the saved colour PDF. */
-export async function exportCioReport(s: CioReportSnapshot) {
+/** Vector text, tables and charts stay sharp and searchable in the saved colour PDF.
+ *  The summary edition draws the same pages and figures, without the holding-by-holding tables. */
+export async function exportCioReport(s: CioReportSnapshot, edition: ReportEdition = 'detailed', opts: { topN?: number } = {}) {
   const a = await loadAssets();
+  const detailed = edition === 'detailed', editionName = detailed ? 'Detailed' : 'Summary';
+  // How many names each "Top holdings" chart shows — the family picks 10 / 15 / 20
+  // / 25 in the export dialog. Clamped so a chart's bars stay legible.
+  const topN = Math.max(5, Math.min(Math.round(opts.topN ?? 10), 25));
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true, putOnlyUsedFonts: true });
   pdf.addFileToVFS('NotoSans-Regular.ttf', a.regular); pdf.addFont('NotoSans-Regular.ttf', 'Noto', 'normal');
   pdf.addFileToVFS('NotoSans-Bold.ttf', a.bold); pdf.addFont('NotoSans-Bold.ttf', 'Noto', 'bold');
-  pdf.setProperties({ title: `${s.brand.name} - ${s.period.title} - ${s.date}`,
+  pdf.setProperties({ title: `${s.brand.name} - ${s.period.title} (${editionName} report) - ${s.date}`,
     author: s.brand.provider, subject: `${s.scope} | ${s.currency} | ${s.period.label}`, creator: s.brand.provider });
   const entries: Entry[] = [];
   const clean = (v: Cell) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').replace(/\u00a0/g, ' ');
@@ -64,7 +69,7 @@ export async function exportCioReport(s: CioReportSnapshot) {
   const header = (title: string, continued = false) => {
     logo(M, 23);
     text(s.scope, RIGHT, 33, 8, MUTED, false, 'right');
-    text(`${s.period.label} | To ${fmtDate(s.date)} | ${s.currency}`, RIGHT, 47, 8, MUTED, false, 'right');
+    text(`${editionName} report | ${s.period.label} | To ${fmtDate(s.date)} | ${s.currency}`, RIGHT, 47, 8, MUTED, false, 'right');
     text(`${title}${continued ? ' (continued)' : ''}`, M, 83, 16, TEAL);
     line(M, 94, RIGHT, 94);
   };
@@ -153,6 +158,7 @@ export async function exportCioReport(s: CioReportSnapshot) {
   pdf.addImage(a.cover, 'JPEG', 0, 0, W / 2, H, undefined, 'FAST');
   pdf.setFillColor('#102522'); pdf.rect(W / 2, 0, W / 2, H, 'F');
   logo(42, 63, true);
+  text(`${editionName.toUpperCase()} REPORT`, W / 2 + 32, 68, 8, '#d4c28e', true);
   text('Family Office', W / 2 + 32, 105, 29, '#ffffff');
   text(s.period.title, W / 2 + 32, 148, s.period.title.length > 20 ? 24 : 29, '#ffffff');
   para('A clear view of your family office: asset allocation, investment performance and capital deployment, based on the records available for your portfolio.', W / 2 + 32, 205, 320, 11, '#dce7e3');
@@ -244,13 +250,13 @@ export async function exportCioReport(s: CioReportSnapshot) {
   if (!s.historical) {
   if (s.equity.length) {
     page('Equity');
-    heading('Top 10 Holdings by Value', M, 122, 351);
-    bars(s.equity.slice(0, 10).map(h => ({ label: h.name, value: h.value, display: s.money(h.value) })), M, 157, 351, 285);
-    heading('Top 10 by Unrealised Return', 431, 122, RIGHT - 431);
-    bars(s.equity.filter(h => h.pct != null).sort((a, b) => b.pct! - a.pct!).slice(0, 10)
+    heading(`Top ${topN} Holdings by Value`, M, 122, 351);
+    bars(s.equity.slice(0, topN).map(h => ({ label: h.name, value: h.value, display: s.money(h.value) })), M, 157, 351, 285);
+    heading(`Top ${topN} by Unrealised Return`, 431, 122, RIGHT - 431);
+    bars(s.equity.filter(h => h.pct != null).sort((a, b) => b.pct! - a.pct!).slice(0, topN)
       .map(h => ({ label: h.name, value: h.pct!, display: s.percent(h.pct) })), 431, 157, RIGHT - 431, 285, true);
     para('Direct and managed listed equity. Unrealised return is the unrealised gain divided by the cost of units currently held, wherever every line has a verified cost and gain. It is neither YTD nor an annualised return. Holdings with missing costs are omitted from the return ranking.', M, 490, RIGHT - M, 8.5);
-    page('Equity Holdings'); holdingTable('Equity Holdings', s.equity);
+    if (detailed) { page('Equity Holdings'); holdingTable('Equity Holdings', s.equity); }
   }
 
   // Categories without holdings produce no page, no zero-valued chart and no contents entry.
@@ -258,22 +264,22 @@ export async function exportCioReport(s: CioReportSnapshot) {
   const privateHoldings = s.holdings.filter(h => h.private);
   const equitySet = new Set(s.equity), cashSet = new Set(cash), privateSet = new Set(privateHoldings);
   const other = s.holdings.filter(h => !equitySet.has(h) && !cashSet.has(h) && !privateSet.has(h));
-  for (const category of [...new Set(other.map(h => h.category))]) {
+  if (detailed) for (const category of [...new Set(other.map(h => h.category))]) {
     const rows = other.filter(h => h.category === category);
     page(category); holdingTable(category, rows);
   }
   if (privateHoldings.length || s.privateRows.length) {
     page('Private Equity & Venture Capital');
     heading('Private Investments Allocation', M, 122, 351);
-    bars(privateHoldings.slice(0, 10).map(h => ({ label: h.name, value: h.value, display: s.money(h.value) })), M, 156, 351, 280);
+    bars(privateHoldings.slice(0, topN).map(h => ({ label: h.name, value: h.value, display: s.money(h.value) })), M, 156, 351, 280);
     heading('Capital Deployment', 431, 122, RIGHT - 431);
     const d = s.summary.deploy;
     table('Private Equity & Venture Capital', [{ label: 'Measure', width: .65 }, { label: s.currency, width: .35, right: true }],
       [['Commitments', s.money(d.committed)], ['Capital called', s.money(d.drawn)], ['Undrawn capital', s.money(d.unfunded)],
         ['Distributions received', s.money(d.distributed)]].filter(r => r[1] !== ''), 155, 431, RIGHT - 431);
-    para('Each holding and its capital account is counted once under the same consolidation rules as Private Market. An investment recorded only at purchase cost is marked [at cost]; no performance is inferred from it.', 431, 345, RIGHT - 431, 8);
-    if (privateHoldings.length) { page('Private Investments - Holdings'); holdingTable('Private Investments - Holdings', privateHoldings); }
-    if (s.privateRows.length) {
+    para(`Each holding and its capital account is counted once under the same consolidation rules as Private Market. ${detailed ? 'An investment recorded only at purchase cost is marked [at cost]; no performance is inferred from it.' : 'Investments recorded only at purchase cost are shown at cost; no performance is inferred from them.'}`, 431, 345, RIGHT - 431, 8);
+    if (detailed && privateHoldings.length) { page('Private Investments - Holdings'); holdingTable('Private Investments - Holdings', privateHoldings); }
+    if (detailed && s.privateRows.length) {
       page('Private Investments - Activity Overview');
       table('Private Investments - Activity Overview', [{ label: 'Fund / owner', width: .29 }, { label: 'As at', width: .10 },
         { label: 'Commitment', width: .13, right: true }, { label: 'Called', width: .12, right: true },
@@ -285,11 +291,11 @@ export async function exportCioReport(s: CioReportSnapshot) {
   if (cash.length) {
     page('Cash Holdings');
     bars(cash.slice(0, 8).map(h => ({ label: h.name, value: h.value, display: s.money(h.value) })), M, 126, RIGHT - M, 192);
-    holdingTable('Cash Holdings', cash, 348);
+    if (detailed) holdingTable('Cash Holdings', cash, 348);
   }
   }
   const windows = s.selected.total.units.filter(u => u.window && !u.held && u.key === u.accountId).map(u => ({ label: u.label, w: u.window! }));
-  if (windows.length) {
+  if (detailed && windows.length) {
     page('Cash Flows - Selected Period');
     para('Whole-account capital windows within the selected dates only. Opening value is a valuation, not a contribution. Trading within accounts and investments held flat are excluded, so they cannot be mistaken for external capital movements.', M, 120, RIGHT - M, 8);
     table('Cash Flows - Selected Period', [{ label: 'Account / investment', width: .28 }, { label: 'Window', width: .18 },
@@ -316,8 +322,8 @@ export async function exportCioReport(s: CioReportSnapshot) {
   const notes = [
     `${s.brand.name} | ${s.scope}. Prepared by ${s.brand.provider}. All amounts are displayed in ${s.currency}; the source book is recorded in INR and uses the dashboard's selected display exchange rate. Presentation currency does not establish the underlying currency exposure.`,
     `Requested reporting period: ${s.period.from ? fmtDate(s.period.from) : 'first available record'} to ${fmtDate(s.date)} (${s.period.label}). Exported ${fmtDate(s.exportedOn)}. ${s.historical ? 'Historical figures use supported records ending on or before the selected end date; later money movements, current holdings and live valuations are excluded.' : `Holdings use the selected Morning CIO snapshot: live prices where available and source marks elsewhere. Valuation dates span ${s.markSpan}.`} Returns measured over a shorter available window retain their actual measurement dates.`,
-    'Consolidation follows the dashboard: duplicate reports of the same holding are counted once. Holdings below the dashboard threshold are excluded from the detailed holdings in the same way as Morning CIO. Recorded invested capital includes only supported costs and capital records and may cover a different set from current value; the difference must not be treated as profit.',
-    'Returns and gains reuse Morning CIO calculations. Available-history returns, cumulative returns, annualised money-weighted returns and holding-period returns have different bases and are labelled separately. Continuation assumptions and investments held flat are included only under the dashboard rules and disclosed in Returns & Coverage. Holdings detail shows unrealised return on units held, excluding realised gains and income.',
+    `Consolidation follows the dashboard: duplicate reports of the same holding are counted once. Holdings below the dashboard threshold are excluded from the ${detailed ? 'detailed holdings' : 'holding charts'} in the same way as Morning CIO.${detailed ? '' : ' This summary report omits the holding-by-holding tables; the detailed report for the same dates carries them.'} Recorded invested capital includes only supported costs and capital records and may cover a different set from current value; the difference must not be treated as profit.`,
+    `Returns and gains reuse Morning CIO calculations. Available-history returns, cumulative returns, annualised money-weighted returns and holding-period returns have different bases and are labelled separately. Continuation assumptions and investments held flat are included only under the dashboard rules and disclosed in Returns & Coverage. ${detailed ? 'Holdings detail shows' : 'The equity return ranking shows'} unrealised return on units held, excluding realised gains and income.`,
     'Blank cells mean a figure is unavailable or cannot be measured reliably. Sections with no supported holdings or records are omitted. In particular, no geography, underlying currency exposure, duration, projected income, liabilities or historical monthly return is inferred from a current holding statement. Private holdings without a later valuation remain marked at cost.',
     'This report is confidential and intended for the family office. Past performance does not guarantee future results. Investment values may rise or fall. This report provides information from the available records and does not constitute investment, tax or legal advice.',
   ];
@@ -340,6 +346,6 @@ export async function exportCioReport(s: CioReportSnapshot) {
     text(`${i} / ${pdf.getNumberOfPages()}`, RIGHT, H - 17, 7, MUTED, false, 'right');
   }
   return { blob: pdf.output('blob'), pages: pdf.getNumberOfPages(),
-    filename: `${s.brand.name.replace(/\s+/g, '-')}-${s.period.title.replace(/\s+/g, '-')}-${s.period.from ?? 'available-history'}-to-${s.date}.pdf` };
+    filename: `${s.brand.name.replace(/\s+/g, '-')}-${s.period.title.replace(/\s+/g, '-')}-${editionName}-${s.period.from ?? 'available-history'}-to-${s.date}.pdf` };
 }
 

@@ -43,9 +43,10 @@ try {
   await tile.locator('[data-return-info]').click();
   const dialog = page.getByRole('dialog');
   assert.equal(Number((await dialog.locator('[data-return-result]').innerText()).replace(/[^0-9.+-]/g, '')), shown);
+  await dialog.locator('[data-card-details] > summary').click(); // the working sits behind one fold (16 Nov 2026)
   assert.match(await dialog.innerText(), /What is missing/);
   assert.match(await dialog.innerText(), /Newer records still need checking/);
-  await dialog.locator('details').filter({ hasText: '2026-10-06' }).first().locator('summary').click();
+  await dialog.locator('[data-card-details] details').filter({ hasText: '2026-10-06' }).first().locator(':scope > summary').click();
   assert.match(await dialog.innerText(), /6 Oct|2026-10-06/);
   await dialog.locator('[data-attribution-included] summary').click();
   const included = await dialog.locator('[data-attribution-included]').innerText();

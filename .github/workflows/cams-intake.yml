@@ -1,0 +1,71 @@
+name: CAMS intake
+
+# Pull the family's CAMS / KFintech feed into the statement inbox, which the
+# existing "Statement intake" workflow then reads into the book — through every
+# gate CI runs — and the site redeploys. No new reading path: a CAMS file lands
+# exactly as an uploaded folder would (shared/statementInbox.mjs).
+#
+# INERT UNTIL CONFIGURED. With no CAMS feed secret set, the fetch step is
+# skipped and this job is a no-op. The one-time setup is in docs/CAMS-INTAKE.md:
+# add the CAMS_SFTP_* secrets once, send one sample so a reader is confirmed,
+# and from then on it is automatic — nothing to run by hand.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "List what is new on the feed without queuing it"
+        type: boolean
+        default: false
+  schedule:
+    # Once a day (06:47 IST). A consolidated statement changes rarely, so daily
+    # is ample, and the fetch is a no-op whenever nothing new is on the feed.
+    # Minute jittered off the hour, and outside the delayed 06:00–09:00 PT band.
+    - cron: "17 1 * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+# One fetch at a time: a queued run that a newer one replaces loses nothing,
+# because the next run re-reads the whole feed.
+concurrency:
+  group: cams-intake
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # secrets.* cannot be read in an `if:` directly; surface one through env.
+      HAS_FEED: ${{ secrets.CAMS_SFTP_HOST }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The SFTP client lives in this workflow only, never in package.json, so
+      # the main build and CI never carry it (the fetcher imports it lazily).
+      - name: Install the SFTP client (this workflow only)
+        if: env.HAS_FEED != ''
+        run: npm install --no-save ssh2-sftp-client@^11
+
+      - name: Pull new CAMS statements into the inbox
+        if: env.HAS_FEED != ''
+        env:
+          GLOW_GITHUB_TOKEN: ${{ secrets.GLOW_GITHUB_TOKEN }}
+          CAMS_SFTP_HOST: ${{ secrets.CAMS_SFTP_HOST }}
+          CAMS_SFTP_PORT: ${{ secrets.CAMS_SFTP_PORT }}
+          CAMS_SFTP_USER: ${{ secrets.CAMS_SFTP_USER }}
+          CAMS_SFTP_PASSWORD: ${{ secrets.CAMS_SFTP_PASSWORD }}
+          CAMS_SFTP_KEY: ${{ secrets.CAMS_SFTP_KEY }}
+          CAMS_SFTP_PASSPHRASE: ${{ secrets.CAMS_SFTP_PASSPHRASE }}
+          CAMS_SFTP_PATH: ${{ secrets.CAMS_SFTP_PATH }}
+        run: node scripts/ingest/cams-fetch.mjs ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '--dry-run' || '' }}
+
+      - name: Not configured
+        if: env.HAS_FEED == ''
+        run: echo "CAMS feed not configured. Add the CAMS_SFTP_* repository secrets to enable it. See docs/CAMS-INTAKE.md."

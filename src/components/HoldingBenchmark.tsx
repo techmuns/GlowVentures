@@ -54,7 +54,7 @@ const PRICE_BASIS = "A price index: dividends are not in it.";
 /**
  * The line itself. `inline-block w-full` puts it under the figure without a
  * line break in the cell's text, which the page sweep reads row by row.
- * Quieter than the holding's figure above it (Stage 10oc): the index's name is
+ * Quieter than the holding's figure above it (Stage 10pm): the index's name is
  * a small-caps label and its return a lighter figure beside it, so the cell
  * reads as the holding first and its index second.
  */

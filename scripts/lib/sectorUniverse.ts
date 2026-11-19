@@ -17,7 +17,7 @@
  *
  * Bundled by the build script with esbuild and never shipped.
  */
-import { BOOK_POSITIONS, BOOK_POLYCAB } from "../../src/data/glowData";
+import { BOOK_POSITIONS, BOOK_POLYCAB, BOOK_TAPE_ROWS } from "../../src/data/glowData";
 import { dedupedPositions, isCompanyShare } from "../../src/lib/analytics";
 import { lookthroughCompanies } from "../../src/lib/recordedHoldings";
 import { applyFundNavs, depositoryFundHoldings, unpricedStatementUnits } from "../../src/lib/fundNavs";
@@ -47,7 +47,12 @@ export async function sectorUniverse(source: { index: Index; portfolios: Record<
     isins: new Set(BOOK_POLYCAB.flatMap((p) => (p.isin ? [p.isin.trim().toUpperCase()] : []))),
   };
   const balances = shareCandidates().map((p) => ({ ...p, marketValue: 1 }));
-  const all = dedupedPositions(applyFundNavs([...BOOK_POSITIONS, ...depositoryFundHoldings(), ...unpricedStatementUnits(), ...balances]));
+  // A PMS mandate whose own tape rolls the whole book (Stage 10mh, `BOOK_TAPE_ROWS`,
+  // live basis) puts the names it bought on the Sector Composition page, so the
+  // store has to ask screener.in about them too — else a tape-only holding (Green
+  // Lantern's Elgi Equipments, HEG Advanced Materials) stands Unclassified with no
+  // row ever asking for its page.
+  const all = dedupedPositions(applyFundNavs([...BOOK_POSITIONS, ...BOOK_TAPE_ROWS, ...depositoryFundHoldings(), ...unpricedStatementUnits(), ...balances]));
   const companies = lookthroughCompanies(all);
   const shares = companies.filter(isCompanyShare) as Position[];
   const exposure = await loadStockExposure(heldFundVehicles(all), bookIsinBridge(companies).index, fence,

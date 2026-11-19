@@ -47,18 +47,18 @@ import {
 } from "@/lib/tranches";
 // THE TWO DATED RECORDS, MERGED INTO ONE ROW SET — and the two money blocks
 // that must never be added. See its header for what that was measured at.
-import { mergeDatedRecords, datedTotals, datedSectionRollup, clubDatedRows, type DatedRow, type DatedUnit, type DatedSectionRows } from "@/lib/txnLedger";
+import { mergeDatedRecords, withEveryAccount, datedTotals, datedSectionRollup, clubDatedRows, type DatedRow, type DatedUnit, type DatedSectionRows } from "@/lib/txnLedger";
 import { TXN_SORTS, type TxnSort } from "@/lib/txnSort";
 import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_GAINS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY, type TaxonomySource } from "@/lib/familyTaxonomy";
 // THE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the same
 // three; see the header of `groupAxis.ts` for why they cannot be a local
-// definition on either screen — and for why the FOURTH one, SECURITY, is this
-// page's alone and is deliberately not in `GROUP_VIEWS`.
+// definition on either screen — and for why the FOURTH and FIFTH (SECURITY,
+// OWNER) are this page's alone and deliberately not in `GROUP_VIEWS`.
 import {
   MONITOR_GROUP_VIEWS, GROUP_VIEWS, type MonitorAxis, type GroupAxis,
-  SECURITY_AXIS, SECURITY_SECTION,
+  SECURITY_AXIS, SECURITY_SECTION, OWNER_AXIS,
   groupKeyFor, groupSourceFor, groupOrdFor, groupLabelFor,
   ALL_LABEL, GROUP_COLUMN_HEAD, GROUP_NOUN, bucketFor, heldUnderMandate,
   statedGroupKeyFor, moveTargetsFor, productKeysFor,
@@ -75,11 +75,11 @@ import { SourceValue } from '@/components/SourceTrace';
 // Market fund table now. Everything that used to be defined here moved verbatim;
 // this page supplies only how one of ITS rows resolves a measure.
 import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasureSelect";
-import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta, returnGapLabel } from "@/lib/returnColumns";
+import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta } from "@/lib/returnColumns";
 import { datedButUnvalued } from "@/lib/holdingFlows";
 import { useDatedCapital } from "@/lib/useDatedCapital";
 import { BenchLine, useBenchmarkLevels } from "@/components/HoldingBenchmark";
-import { closeLegsOn, indexCompound, indexMove, indexOnSameMoney, indexOverPeriod, onePaymentLeg, pooledLegs, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
+import { BENCH_SHORT, closeLegsOn, indexCompound, indexMove, indexOnSameMoney, indexOverPeriod, onePaymentLeg, pooledLegs, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
 import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import type { IndexLevel } from "@/lib/periodReturns";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
@@ -110,7 +110,7 @@ import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
 import {
   TREE_ROW_DENSE, TREE_CELL_DENSE, rowToggle, TreeNameCell, TreeSectionCell, ExpandAllButton,
 } from "@/components/TreeTable";
-import { useTableView, sortRows, type TableView } from "@/lib/tableView";
+import { useTableView, sortRows, type TableView, type TableSort } from "@/lib/tableView";
 import { withReviewAccessors, type ReviewScope } from "@/lib/reviewColumns";
 import { EditColumns } from "@/components/EditColumns";
 import { useMarketHistories } from "@/lib/useMarketReturns";
@@ -584,7 +584,7 @@ const canLookThrough = (r: { assetClass: string; securityKey: string }) =>
  * `monitor-stock` key is read only where nothing is saved under `monitor`.
  */
 const MONITOR_COLS = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "mv",
-  "weight", "pnl", "realised", "return", "sector", "entity"] as const;
+  "weight", "pnl", "realised", "return", "benchmark", "sector", "entity"] as const;
 /**
  * THE MEASURED HALF, SPLIT BY WHO CHOSE THE SHARES. `Direct` and `PMS` stand
  * before their subtotal `Direct + PMS` (`mv`), which every cost, gain and
@@ -592,9 +592,9 @@ const MONITOR_COLS = ["security", "qty", "avgCost", "invested", "investedOn", "c
  * Direct + PMS, then + Via funds = Total exposure.
  */
 const MONITOR_STOCK_COLS = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "direct", "pms", "mv",
-  "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "sector", "entity"] as const;
+  "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "benchmark", "sector", "entity"] as const;
 const MONITOR_STOCK_COLS_OTHER = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "direct", "pms", "otherRoute", "mv",
-  "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "sector", "entity"] as const;
+  "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "benchmark", "sector", "entity"] as const;
 const MONITOR_LEGACY_KEYS = ["monitor-stock"] as const;
 /** Why a company's route cell is empty while a statement does report it — through another route. */
 const ROUTE_ABSENT_ROW: Record<keyof MeasuredSplit, string> = {
@@ -878,7 +878,11 @@ export function PortfolioMonitor() {
    * CASE rather than an edge one: a reader who opens `/monitor` and clicks
    * Transactions without touching the axis takes exactly this path.
    */
-  const txnAxis: GroupAxis = groupAxis === SECURITY_AXIS ? "category" : groupAxis;
+  // SECURITY and OWNER are Holdings-only axes; the Transactions table cannot
+  // section on either (a dated trade has no "all securities" row, and owner is
+  // the Holdings pivot), so both fall back to Category there — exactly as the
+  // security axis already did.
+  const txnAxis: GroupAxis = groupAxis === SECURITY_AXIS || groupAxis === OWNER_AXIS ? "category" : groupAxis;
   /** What the axis control lights up: the raw param on Holdings, the resolved one on Transactions. */
   const activeAxis: MonitorAxis = view === "holdings" ? groupAxis : txnAxis;
   const entities = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => ownerOf(accIdx, p)))).sort()], [positions, accIdx]);
@@ -938,7 +942,7 @@ export function PortfolioMonitor() {
   const closeMoveMenu = useCallback(() => setMoveMenu(null), []);
   const closeMoveToast = useCallback(() => setMoveToast(null), []);
   const openMoveMenu = (e: ReactMouseEvent<HTMLTableRowElement>, r: Row) => {
-    if (view !== "holdings" || groupAxis === SECURITY_AXIS) return;
+    if (view !== "holdings" || groupAxis === SECURITY_AXIS || groupAxis === OWNER_AXIS) return;
     const ps = rowPositionsOf(r);
     if (!ps.length) return;
     e.preventDefault();
@@ -1127,7 +1131,13 @@ export function PortfolioMonitor() {
   const holdCols = useMemo(
     () => withReturnCols(bySecurity ? (otherRouteHeld ? MONITOR_STOCK_COLS_OTHER : MONITOR_STOCK_COLS) : MONITOR_COLS, returnMeasures),
     [bySecurity, otherRouteHeld, returnMeasures]);
-  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS, reviewKind: "holding", manualEditor: true });
+  // The table opens on its own ranking — largest total exposure on the security
+  // axis, largest market value on the others (the `effSort` ordering below) — so
+  // the header shows which column that is from the first paint rather than
+  // leaving the reader to guess what it is sorted by (#375). The order itself is
+  // unchanged: both fields are always finite, so the sort reproduces the ranking.
+  const holdDefaultSort = useMemo<TableSort>(() => ({ col: bySecurity ? "totalExposure" : "mv", dir: "desc" }), [bySecurity]);
+  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS, reviewKind: "holding", manualEditor: true, defaultSort: holdDefaultSort });
   /**
    * AND THE ACCESSORS GAIN ONE PER MEASURE, so each return column sorts on the
    * figure it prints rather than on `returnPct` for all of them.
@@ -1144,10 +1154,12 @@ export function PortfolioMonitor() {
    * Returns tab reads (`ytdAvailable.ts`). Loaded only while YTD is on screen.
    */
   const wantYtd = returnMeasures.includes("ytd");
+  const wantFytd = returnMeasures.includes("fytd");   // #369 — FY-to-date: the same engine, a 31 March anchor
+  const wantPeriod = wantYtd || wantFytd;              // the shared data both period books read
   // THE WHOLE FAMILY'S HOLDINGS, whatever the member selector shows: the Excel
   // snapshot is the whole family's, and its YTD must find their prices loaded.
-  const ytdHeld = useMemo(() => (wantYtd ? currentHoldings((wholePortfolio ?? portfolio)?.positions ?? EMPTY_POSITIONS) : EMPTY_POSITIONS),
-    [wantYtd, wholePortfolio, portfolio]);
+  const ytdHeld = useMemo(() => (wantPeriod ? currentHoldings((wholePortfolio ?? portfolio)?.positions ?? EMPTY_POSITIONS) : EMPTY_POSITIONS),
+    [wantPeriod, wholePortfolio, portfolio]);
   const ytdHistories = useMarketHistories(ytdHeld);
   /**
    * THE PRICES ARE READ ONCE EVERY HISTORY HAS ANSWERED, not as each arrives:
@@ -1162,8 +1174,8 @@ export function PortfolioMonitor() {
   const ytdPrices = useMemo(() => (ytdSettled ? ytdHistories.histories : null), [ytdSettled, ytdInstrumentKey]);
   const ytdInputs = useMemo(() => {
     const statement = statementPortfolio ?? portfolio;
-    return wantYtd && statement ? statementReturnInputs(statement) : [];
-  }, [wantYtd, statementPortfolio, portfolio]);
+    return wantPeriod && statement ? statementReturnInputs(statement) : [];
+  }, [wantPeriod, statementPortfolio, portfolio]);
   const ytdEnd = useMemo(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }, []);
   const ytd = useMemo(() => {
     if (!wantYtd || !portfolio) return null;
@@ -1173,14 +1185,34 @@ export function PortfolioMonitor() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wantYtd, portfolio, ytdInputs, ytdHeld, ytdEnd, corporateActions, ytdPrices, fmtFromBase]);
   /**
+   * #369 — THE FINANCIAL YEAR TO DATE. The Indian FY runs 1 April–31 March, so its
+   * opening anchor is the 31 March before `ytdEnd` (end in Apr–Dec → 31 March of
+   * end's year; Jan–Mar → the year before). The SAME `ytdBook` engine, opened on
+   * that date instead of 31 December — every figure computed identically, only the
+   * note wording changes (`openLabel`/`periodLabel`).
+   */
+  const fyStart = useMemo(() => {
+    const y = Number(ytdEnd.slice(0, 4)); const mo = Number(ytdEnd.slice(5, 7));
+    return `${mo >= 4 ? y : y - 1}-03-31`;
+  }, [ytdEnd]);
+  const fytd = useMemo(() => {
+    if (!wantFytd || !portfolio) return null;
+    return ytdBook({ inputs: ytdInputs, held: ytdHeld, accounts: portfolio.accounts, end: ytdEnd, open: fyStart,
+      periodLabel: "Financial year to date", openLabel: "1 April", yearWord: "financial year",
+      assumptions: ytdPrices ? assumedHoldingBook({ actions: corporateActions, instruments: ytdHistories.instruments, histories: ytdPrices }) : null,
+      money: (n) => fmtFromBase(n, { compact: true }) });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantFytd, portfolio, ytdInputs, ytdHeld, ytdEnd, fyStart, corporateActions, ytdPrices, fmtFromBase]);
+  /**
    * The row's input with what its own lines add: its YTD from the first date we
    * have, where the YTD measure asks, and — on CAGR and XIRR — whether its money
    * is all dated but only a live price or a NAV values it (Stage 10jm).
    */
   const withYtd = useCallback(<T extends ReturnInput>(input: T, ps: readonly Position[] | null | undefined, m: ReturnMeasure): T =>
     m === "ytd" && ytd && ps?.length ? { ...input, ytdFrom: ytd.of(ps) }
+    : m === "fytd" && fytd && ps?.length ? { ...input, ytdFrom: fytd.of(ps) }
     : (m === "cagr" || m === "xirr") && ps?.length && datedButUnvalued(ps) ? { ...input, needsStatementValue: true }
-    : input, [ytd]);
+    : input, [ytd, fytd]);
   /**
    * EACH ROW AGAINST ITS OWN INDEX (Stage 10kd): which index (a mandate by its
    * manager's report, a share by AMFI's size class, a fund by its category) and
@@ -1298,8 +1330,8 @@ export function PortfolioMonitor() {
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
     // after one; these accessors are only ever called from `sortRows` under it,
     // so the fallback is unreachable rather than a default date standing in.
-    () => withReviewAccessors<Row>({ ...MONITOR_ACCESSORS, ...returnAccessorsFor<Row>(returnMeasures, (r, m) => measuredReturn(withYtd(r, rowPositionsOf(r), m), m, portfolio?.asOf ?? "")) }, monitorReviewScope, memberScope.owners !== null),
-    [returnMeasures, portfolio?.asOf, memberScope.owners, withYtd]);
+    () => withReviewAccessors<Row>({ ...MONITOR_ACCESSORS, benchmark: (r: Row) => { const hb = benchOf(r); return hb.bench ? BENCH_SHORT[hb.bench.key] : null; }, ...returnAccessorsFor<Row>(returnMeasures, (r, m) => measuredReturn(withYtd(r, rowPositionsOf(r), m), m, portfolio?.asOf ?? "")) }, monitorReviewScope, memberScope.owners !== null),
+    [returnMeasures, portfolio?.asOf, memberScope.owners, withYtd, benchOf]);
   // ORDER-INDEPENDENT BY CONSTRUCTION: a span struck on the view's own column
   // count cannot drift from the header when a reader moves a column, where the
   // literal it replaced had to be kept in step by hand.
@@ -1934,7 +1966,16 @@ export function PortfolioMonitor() {
         // name's whole exposure, however it was arrived at — and the route is
         // named per account in the row's own expansion rather than by splitting
         // the row in two.
-        const k = bySecurity ? rowKeyOf(p) : bucketFor(accIdx, p) + " | " + rowKeyOf(p);
+        // THE KEY'S FIRST HALF IS THE SECTION, so a name held two ways reads as
+        // two rows under the category it sits in. On the OWNER axis the section
+        // IS the owner, and owner is a fact about the ACCOUNT, not the holding:
+        // a share two members both hold must be two rows, one per member, or one
+        // member's row carries the other's units and neither section ties to its
+        // own header. So key `rest` by the active section on that axis (the
+        // mandate rows above already do, via `groupKeyFor`); the product axes keep
+        // their category half, which is what splits a direct holding from a PMS one.
+        const sectionHalf = groupAxis === OWNER_AXIS ? groupKeyFor(groupAxis, accIdx, p) : bucketFor(accIdx, p);
+        const k = bySecurity ? rowKeyOf(p) : sectionHalf + " | " + rowKeyOf(p);
         (m.get(k) ?? m.set(k, []).get(k)!).push(p);
       }
       out = [...m.values()].map((ps) => {
@@ -3016,7 +3057,7 @@ export function PortfolioMonitor() {
   // row does. A blank here is "see the row above", never "zero" and never
   // "nobody measured it".
   type ChildCells = Partial<Record<"qty" | "avgCost" | "invested" | "investedOn" | "cmp" | "day" | "direct" | "pms" | "otherRoute" | "mv"
-    | "viaFunds" | "totalExposure" | "weight" | "pnl" | "realised" | "sector" | "entity", ReactNode>>
+    | "viaFunds" | "totalExposure" | "weight" | "pnl" | "realised" | "benchmark" | "sector" | "entity", ReactNode>>
     & { ret?: (measure: ReturnMeasure) => ReactNode; reviewScope?: ReviewScope; sourcePositions?: readonly Position[] };
   const CHILD_NUM = `${TREE_CELL_DENSE.child} text-right mono whitespace-nowrap text-slate-400`;
   /** A child's cells, in the table's DECLARED column order — which is what `<Tr>` permutes from. */
@@ -3043,6 +3084,9 @@ export function PortfolioMonitor() {
     ...returnMeasures.map((measure) => (
       <td key={`ret:${measure}`} className={CHILD_NUM} data-child-return={c.ret ? measure : undefined}>{c.ret?.(measure)}</td>
     )),
+    // The Benchmark column cell. An opened/aggregated row keeps its index inline
+    // under its own return (above), so this is empty unless a caller fills it.
+    <td key="benchmark" className={`${TREE_CELL_DENSE.child} text-left mono whitespace-nowrap text-slate-400`}>{c.benchmark}</td>,
     <td key="sector" className={`${TREE_CELL_DENSE.child} text-slate-500`}>{c.sector}</td>,
     <td key="entity" className={`${TREE_CELL_DENSE.child} text-slate-400`}>{c.entity}</td>,
   ];
@@ -3072,7 +3116,7 @@ export function PortfolioMonitor() {
           {res.shown && res.assumed && <AssumedMark note={res.note} />}
           {res.shown
             ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
-            : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />}
+            : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} />}
         </span>
         {res.shown && hb && <BenchLine hb={hb} fig={benchFigure(hb, res, inp, portfolio.asOf, ps, bench?.legs)} holdingPct={res.pct} />}
       </span>
@@ -4095,7 +4139,7 @@ export function PortfolioMonitor() {
           the account's real dated purchases and redemptions here.
         */}
         <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} source={returnSource} />
-        {view === "holdings" && <EditColumns view={holdView} />}
+        {view === "holdings" && <EditColumns view={holdView} labels={{ benchmark: { label: "Benchmark", detail: "Each holding's index and its holding-period return; * = best-guess size class, no * = the manager's printed benchmark." } }} />}
         {/* EXPAND ALL — the standard's one control for every row the table can
             open. Beside the return picker, with the other controls that arrange
             the table rather than narrow it; absent on the security axis, where
@@ -4218,6 +4262,24 @@ export function PortfolioMonitor() {
         </div>
       )}
 
+      {/* NAMING THE DEFAULT VIEW, so it is not read as a direct-only list (a
+          client review read a share held through a fund as a leak into Direct
+          Equity). All Securities clubs every vehicle; the Direct / PMS / Via
+          funds columns already split them, and this one line says so where the
+          section-filter row is not drawn, with the single click to the
+          direct-equity grouping. Exempt from the prose probe as a declared,
+          acted-on note (`data-prose-ok`), not an explainer paragraph. */}
+      {view === "holdings" && bySecurity && (
+        <div className="mb-2 border-b border-ink-700 pb-1.5">
+          <p className="max-w-[56rem] text-xs leading-relaxed text-slate-400"
+            data-prose-ok="names the All Securities view as total exposure across every vehicle, not a direct-only list, and links to the Direct Equity grouping">
+            <span className="font-medium text-slate-300">Total exposure</span> — every company clubbed across each vehicle that holds it: the family's own demat (<span className="text-slate-300">Direct</span>), a PMS manager's mandate (<span className="text-slate-300">PMS</span>) and funds that disclose it (<span className="text-slate-300">Via funds</span>). Not a direct-equity-only list —{" "}
+            <button type="button" data-show-direct-equity onClick={() => setGroupAxis("category")}
+              className="font-medium text-champagne-400 hover:underline ring-focus">group by Category</button>{" "}for Direct Equity on its own.
+          </p>
+        </div>
+      )}
+
       {view === "holdings" ? (
         <Card pad={false} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-auto" data-navigation-scroll="monitor-holdings">
@@ -4331,7 +4393,7 @@ export function PortfolioMonitor() {
                       // footer counts (Stage 10jf): a company reached only through a
                       // fund is no holding of the family's and can never have a return.
                       // YTD reads each row's first dated value this year (Stage 10jl).
-                      : returnColumnMeta(measure, returnCoverage(measure === "ytd" ? measuredRows.map((r) => withYtd(r, rowPositionsOf(r), measure)) : measuredRows, measure, portfolio.asOf), portfolio.asOf, rows.length - measuredRows.length);
+                      : returnColumnMeta(measure, returnCoverage(measure === "ytd" || measure === "fytd" ? measuredRows.map((r) => withYtd(r, rowPositionsOf(r), measure)) : measuredRows, measure, portfolio.asOf), portfolio.asOf, rows.length - measuredRows.length);
                     return (
                       <SortHeader key={measure} col={`ret:${measure}`} view={holdView} pad="px-2 py-1.5"
                         title={auto ? undefined : def.hint}
@@ -4340,6 +4402,15 @@ export function PortfolioMonitor() {
                       </SortHeader>
                     );
                   })}
+                  {/* ── THE BENCHMARK COLUMN ───────────────────────────────────
+                      *"you are mentioning benchmark column? where is it on
+                      portfolio monitor i cant see it?"* — the index was a small
+                      line under each return and never a column of its own. It is
+                      a column now: each holding's index and its return over the
+                      holding period, the `*` flagging a best-guess size-class
+                      index against the manager's own printed benchmark. */}
+                  <SortHeader col="benchmark" view={holdView} align="left" pad="px-2 py-1.5"
+                    title="Each holding's benchmark index and that index's return over the same holding-period money, so it reads against the HPR beside it. A * marks an index assigned by size-class rule (a best guess, to confirm with Yamini); no * means the manager's own report names it. Drag it or hide it from Edit Columns.">Benchmark</SortHeader>
                   {/* SECTOR AND ENTITY CLOSE THE TABLE — the family asked for
                       the money to read first, and these two are the only
                       columns on the row that are not money. They describe the
@@ -4799,6 +4870,9 @@ export function PortfolioMonitor() {
                               </td>
                             );
                           })}
+                          {/* Benchmark: a section keeps its pooled index inline
+                              under its own return above, so this cell is empty. */}
+                          <td className="px-2 py-1.5"></td>
                           {/* Sector and Entity describe a holding; a category has
                               no sum of words. Empty, exactly as in the footer. */}
                           <td className="px-2 py-1.5"></td>
@@ -4825,6 +4899,28 @@ export function PortfolioMonitor() {
                    * `AbsentCell` with the reason rather than a 0 or a blend.
                    */
                   const m = r.mandate;
+                  /**
+                   * WHERE THE FAMILY HOLDS IT DIRECTLY — the demat or broking
+                   * account(s) its OWN shares sit in, named under the security so
+                   * "which demat is this direct holding in?" is answered without
+                   * opening the row (a client review asked to tell direct holdings
+                   * apart by their custody). Own-account venues only: a PMS line is
+                   * the manager's mandate and shows under the PMS column, and a name
+                   * the family reaches only through a fund has no own custody and so
+                   * carries nothing here. Never on a mandate row, which is itself an
+                   * account. `vehicle` is the account's provider for a demat
+                   * (`mandateLabel` falls to it where no strategy is printed).
+                   *
+                   * THE CONSOLIDATED REVIEW IS NOT A CUSTODIAN (types.ts: "a
+                   * GROUPING, not a custodian"). Its private lines carry `engagement
+                   * "Direct"`, so they read as the own route, but the review is a
+                   * source, not a demat — a venue whose every line is review-sourced
+                   * is dropped, so an unlisted direct holding names no false custody.
+                   */
+                  const directCustodians = m ? [] : [...new Set((r.venues ?? [])
+                    .filter((v) => v.route === ROUTE_LABEL.own && v.positions.some((p) => !p.reviewSource))
+                    .map((v) => v.vehicle)
+                    .filter(Boolean))].sort();
                   const cmpSymbol = !m && !r.fundClasses.length && (r.measuredNA || r.assetClass === "Equity" || r.assetClass === "ETF")
                     ? quoteSymbolFor({ securityKey: r.securityKey, isin: r.isin }) : null;
                   const cmpQuote = cmpSymbol ? quoteFeed?.quotes[cmpSymbol] : null;
@@ -5065,9 +5161,14 @@ export function PortfolioMonitor() {
                              when it is true: under a filter a mandate row's
                              figures cover PART of the mandate, and a reader who
                              is not told that reads a subset as the account. */
-                          sub={m && m.holdings.length < m.accountCount ? (
+                          sub={m ? (m.holdings.length < m.accountCount ? (
                             <span className="text-amber-400/80">
                               {m.holdings.length} of {m.accountCount} holdings match the filters — the mandate itself holds {fmtFromBase(m.accountMV, { compact: true })}
+                            </span>
+                          ) : undefined) : directCustodians.length > 0 ? (
+                            <span className="text-slate-500" data-direct-custodians={directCustodians.join(" · ")}
+                              title={`Held directly in the family's own ${directCustodians.length === 1 ? "account" : "accounts"}: ${directCustodians.join(", ")}. A PMS manager's holding of this company shows under PMS, and a fund's under Via funds.`}>
+                              Direct in {directCustodians.join(" · ")}
                             </span>
                           ) : undefined} />
                         <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
@@ -5344,7 +5445,7 @@ export function PortfolioMonitor() {
                           // Tag "HPR" is always the raw return on cost (res.pct === returnPct),
                           // so its audit popover ties to the workbook; CAGR/other are derived.
                           const value = !res.shown
-                            ? res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />
+                            ? res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} />
                             : res.tag === "HPR" && !r.live
                               ? <Auditable formula={returnFormula(pnlValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed, income: r.fifo.income,
                                   capital: m && r.fifo.wholeMandates.length ? { value: r.fifo.marketValue, contributed: r.fifo.wholeContributed, withdrawn: r.fifo.wholeWithdrawn } : null } : undefined)}><span className={`font-semibold ${changeColor(res.pct)}`} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
@@ -5393,17 +5494,61 @@ export function PortfolioMonitor() {
                               /* A shown figure keeps itself on one line and lets the index line under it wrap below. */
                               className={`px-2 py-1.5 text-right mono ${res.shown ? "" : "whitespace-nowrap"}`}
                               title={r.live && !r.costNA ? mixedBasisNote : undefined}>
-                              {/* THE HOLDING'S FIGURE LEADS (Stage 10oc): a size up and semibold, the index line under it quieter. */}
+                              {/* THE HOLDING'S FIGURE LEADS (Stage 10pm): a size up and semibold, the index line under it quieter. */}
                               <span className={`whitespace-nowrap ${res.shown ? "text-[13px] leading-tight" : ""}`}>
                                 {offMeasure && <span className="ret-tag mr-0.5">{res.tag}</span>}
                                 {res.shown && res.assumed && <AssumedMark note={res.note} />}
                                 {value}
                               </span>
-                              {/* THE ROW'S OWN INDEX, ON THE SAME MONEY AND MEASURE (Stage 10kd). */}
-                              {res.shown && <BenchLine hb={benchOf(r)} fig={benchFigure(benchOf(r), res, input, portfolio.asOf, rowPositionsOf(r))} holdingPct={res.pct} />}
+                              {/* THE ROW'S OWN INDEX, ON THE SAME MONEY AND MEASURE
+                                  (Stage 10kd), for the measures that have NO column of
+                                  their own: XIRR and YTD footnote the index over their
+                                  own window here. The holding-period (HPR/auto) index
+                                  moved to the Benchmark column (Stage 10oc), so it is
+                                  not drawn twice. */}
+                              {res.shown && measure !== "absolute" && measure !== "auto" && <BenchLine hb={benchOf(r)} fig={benchFigure(benchOf(r), res, input, portfolio.asOf, rowPositionsOf(r))} holdingPct={res.pct} />}
                             </td>
                           );
                         })}
+                        {/* ── THE BENCHMARK COLUMN CELL ──────────────────────────
+                            The holding's index, named in full, and its return over
+                            the SAME holding-period money as HPR — the headline
+                            comparison — computed on "absolute" independently of
+                            which return columns are ticked, so the column stands
+                            on its own. The `*` flags a size-class best guess against
+                            the manager's printed benchmark. This is PLAIN markup, not
+                            `BenchLine`: it carries `data-bench-col`, not `data-bench`,
+                            so it reads as the column it is and does not count as one
+                            of the inline index lines the returns still carry. */}
+                        {(() => {
+                          const bHb = benchOf(r);
+                          if (!bHb.bench) return <td key="benchmark" className="px-2 py-1.5 text-left text-[11px] text-slate-500" title={bHb.why} data-bench-col="none" data-export-value={`— no benchmark index. ${bHb.why}`}>—</td>;
+                          const bInput = withYtd(r, rowPositionsOf(r), "absolute");
+                          const bRes = measuredReturn(bInput, "absolute", portfolio.asOf);
+                          const bFig = bRes.shown ? benchFigure(bHb, bRes, bInput, portfolio.asOf, rowPositionsOf(r)) : null;
+                          const guess = bHb.source === "rule";
+                          const gap = bFig?.shown && bRes.shown ? bRes.pct - bFig.pct : null;
+                          const title = [`${bHb.bench.name}. ${bHb.why}`,
+                            guess ? "Assigned by size-class rule — a best guess, to confirm with Yamini." : "The manager's own report names this benchmark.",
+                            bFig?.shown ? `Index ${fmtPct(bFig.pct, { sign: true, decimals: 1 })} over the holding period — a price index, so dividends are not in it.` : bFig ? `No index figure: ${bFig.reason}.` : null,
+                            gap != null ? `The holding ${gap >= 0 ? "is ahead of" : "trails"} it by ${Math.abs(gap).toFixed(1)} percentage points.` : null,
+                          ].filter(Boolean).join(" ");
+                          // THE EXCEL EXPORT CARRIES THE BASIS AS READABLE TEXT, not
+                          // only as the cell's hover-note, so the Benchmark column can
+                          // be read and AutoFiltered in one sheet (the family asked for
+                          // Yamini to review every best-guess at once, not row by row).
+                          // The on-screen cell is unchanged; this only sets what the
+                          // export writes for this cell (`data-export-value`).
+                          const exportValue = `${bHb.bench.name}${bFig?.shown ? ` ${fmtPct(bFig.pct, { sign: true, decimals: 1 })}` : ""} — ${guess ? "best guess, confirm with Yamini" : "manager's own benchmark"}. ${bHb.why}`;
+                          return (
+                            <td key="benchmark" className="px-2 py-1.5 text-left align-top whitespace-nowrap" title={title} data-bench-col={bHb.bench.key} data-bench-col-source={bHb.source} data-export-value={exportValue}>
+                              <span className="text-[11px] text-slate-300">{bHb.bench.name}{guess && <sup className="text-amber-400/90">*</sup>}</span>
+                              {bFig?.shown
+                                ? <span className="ml-1.5 mono text-[11px] text-slate-400">{fmtPct(bFig.pct, { sign: true, decimals: 1 })}</span>
+                                : <span className="ml-1.5 text-[11px] text-slate-500">—</span>}
+                            </td>
+                          );
+                        })()}
                         {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG
                             WAY TO SAY SO. It reads as a sector the pipeline
                             failed to map — the same cell a directly-held share
@@ -5794,6 +5939,11 @@ export function PortfolioMonitor() {
                         </td>
                       )];
                     })),
+                    /* Benchmark: the book's pooled index shows inline under the
+                        total return above, so this column has nothing to add. */
+                    benchmark: (
+                    <td key="benchmark" className="px-2 py-1.5"></td>
+                    ),
                     /* Sector and Entity — descriptors, so the footer has nothing
                         to total under them. Empty rather than absent: a column
                         of words has no sum to be missing. */
@@ -6291,6 +6441,7 @@ const TXN_MEASURE_HINT: Record<ReturnMeasure, string> = {
   cagr: "The capital paid in, compounded: ONE purchase annualised over the years since it was made, against what came back and what the account is worth. An account funded over several dates has no single start to compound from — its rate is the XIRR.",
   xirr: "A money-weighted rate on the capital paid in, solved over each dated purchase and redemption and the account's value on its own statement date.",
   ytd: "The return on the capital paid in since 1 January — measurable only where the first purchase is inside the current year, so there was nothing to value then.",
+  fytd: "The return on the capital paid in since 1 April, the start of the Indian financial year — struck on the same records as the year to date, opened on 31 March's value or the first dated value this financial year.",
 };
 
 /** The column note and hover for one return measure on this table — counted, never claimed. */
@@ -6348,6 +6499,12 @@ const NO_TRADES_WHY =
 const OWN_TRADE_CAPITAL_WHY =
   "this row is a security bought and sold in the family's own broking account — the Capital columns are an account's "
   + "own dated purchases and redemptions, and a broking account issues none; what was paid for this security is its Bought column";
+/** …and the same account's own row, listed so every account in the book has one (16 Nov 2026). */
+const OWN_ACCOUNT_CAPITAL_WHY =
+  "this is the family's own broking or depository account — it issues no dated record of money paid in; what was paid "
+  + "for each security dealt here is that security's own row, under its Bought column";
+const OWN_DEALT_BY_SECURITY_WHY =
+  "this account's own trades are drawn by security — each name it bought or sold is a row of its own in this table";
 
 /**
  * ── WHAT THE MANAGER DEALT INSIDE ONE ROW ──────────────────────────────────
@@ -6771,9 +6928,33 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   const tradeGroups = useMemo(
     () => rollup(filtered, accountsReg, "auto", sort, (t) => sections.forTxn(axis, t)),
     [filtered, accountsReg, sort, sections, axis]);
-  const rows = useMemo(
-    () => mergeDatedRecords(mineGroups, tradeGroups, (id, sk) => sections.forAccount(axis, id, sk), valueOfAccount, sort),
-    [mineGroups, tradeGroups, sections, axis, valueOfAccount, sort]);
+  /**
+   * ── EVERY ACCOUNT IN THE BOOK HAS A ROW (16 November 2026) ──────────────────
+   *
+   *   *"why is transaction only showing … 68 of 95 accounts — it should show all"*
+   *
+   * An account no statement dates anything on is listed with what it is worth
+   * today (`withEveryAccount`) — narrowed by the entity, the section and the
+   * member scope, which say WHICH accounts, and not drawn under a date window,
+   * a side, a sector or a picked holding, which ask what MOVED: such a row has
+   * nothing to show there.
+   */
+  const listsEveryAccount = !(from || to) && side === "all" && sector === "All" && selected.size === 0;
+  const rows = useMemo(() => {
+    const merged = mergeDatedRecords(mineGroups, tradeGroups, (id, sk) => sections.forAccount(axis, id, sk), valueOfAccount, sort);
+    if (!listsEveryAccount) return merged;
+    const listed = accountsReg.filter((a) => inScopeAccount(memberScope.accountIds, a.accountId)
+      && (entity === "All" || ownerDisplayName(a.ownerId) === entity));
+    return withEveryAccount(merged, listed,
+      (id) => sections.partsOfAccount(axis, id).filter((p) => section === "All" || p.section === section), sort);
+  }, [mineGroups, tradeGroups, sections, axis, valueOfAccount, sort, listsEveryAccount, accountsReg, memberScope.accountIds, entity, section]);
+  /**
+   * The own broking accounts whose trades are drawn under each security they
+   * dealt — their account row's Trades cells point there rather than say no
+   * transaction statement covers them.
+   */
+  const dealtBySecurity = useMemo(
+    () => new Set(rows.filter((r) => r.kind === "security").flatMap((r) => r.trades?.accountIds ?? [])), [rows]);
   const secs = useMemo(
     () => datedSectionRollup(rows, (keys) => orderSections(axis, keys)), [rows, axis]);
   const totals = useMemo(() => datedTotals(rows), [rows]);
@@ -6865,14 +7046,17 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   const tapeWhy = tapePeriod.from && tapePeriod.to
     ? `no transaction statement covers this date window — the statements this table reads run ${fmtDate(tapePeriod.from)} → ${fmtDate(tapePeriod.to)}`
     : "no transaction statement covers this date window";
-  const capitalNarrowed = windowed || side !== "all" || entity !== "All" || section !== "All";
   /** Why a row carries no capital record — an own-account security is not a mandate (MT-15). */
   const noCapitalWhy = (r: DatedRow): string => {
+    if (r.kind === "account" && r.accountId && dealtBySecurity.has(r.accountId)) return OWN_ACCOUNT_CAPITAL_WHY;
     if (r.kind === "account" || !r.trades) return NO_CAPITAL_WHY;
     const tr = r.trades.instruments.flatMap((i) => i.tranches);
     const own = tr.length > 0 && tr.every((t) => holdingRoute(accByPA.get(acctKey(t.provider, t.accountNo))?.engagement ?? null) === "own");
     return own ? OWN_TRADE_CAPITAL_WHY : NO_CAPITAL_WHY;
   };
+  /** Why a row carries no trades — an own broking account's are drawn under each security it dealt. */
+  const noTradesWhy = (r: DatedRow): string =>
+    r.kind === "account" && r.accountId && dealtBySecurity.has(r.accountId) ? OWN_DEALT_BY_SECURITY_WHY : NO_TRADES_WHY;
   /** Why no purchase is in view: the side filter or the date window, never assumed (MT-16). */
   const noPurchaseWhy = side === "out"
     ? "no purchase is in view — the movements are filtered to what came back out, and this account's purchase amount is not struck over that"
@@ -7244,9 +7428,12 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                     }])),
                     entity: (r) => entitiesOf(r)[0] ?? null,
                   }, (r: DatedRow, clubOf?: string) => {
-                    const isOpen = openRow.has(r.key);
                     const cap = r.capital;
                     const trd = r.trades;
+                    // A row listed with no dated record has nothing to open into,
+                    // so it offers no affordance (`withEveryAccount`).
+                    const opens = !!(cap || trd);
+                    const isOpen = opens && openRow.has(r.key);
                     const ents = entitiesOf(r);
                     return (
                       <Fragment key={r.key}>
@@ -7263,6 +7450,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                         <Tr view={dv} data-dated-row={r.key} data-dated-kind={r.kind}
                           data-dated-section={sec.key} data-dated-label={r.label}
                           data-dated-account={r.accountId ?? undefined}
+                          data-dated-account-ids={[...new Set([...(r.accountId ? [r.accountId] : []), ...(trd?.accountIds ?? [])])].join(";") || undefined}
+                          data-dated-listed={opens ? undefined : ""}
                           data-dated-accounts={trd ? [...new Set(trd.instruments.flatMap((i) => i.tranches.map((t) => acctKey(t.provider, t.accountNo))))].join(";") : undefined}
                           data-dated-first={r.first} data-dated-last={r.last}
                           data-dated-club-member={clubOf}
@@ -7303,7 +7492,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           data-group-section={trd ? sec.key : undefined}
                           data-group-kind={trd ? (r.kind === "account" ? "mandate" : "security") : undefined}
                           data-group-label={trd ? r.label : undefined}
-                          className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(setOpenRow, r.key)}>
+                          className={opens ? "cursor-pointer hover:bg-ink-700/40" : undefined}
+                          onClick={opens ? () => toggle(setOpenRow, r.key) : undefined}>
                           <td className={clubOf ? "py-2.5 pl-8 pr-3" : "px-3 py-2.5"}>
                             {/*
                               ONE AFFORDANCE, AND THE ROW IS IT.
@@ -7320,7 +7510,9 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                               and it is simply not reached from here.
                             */}
                             <div className="flex items-center gap-1.5">
-                              <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                              {opens
+                                ? <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                                : <span aria-hidden className="h-3.5 w-3.5 shrink-0" />}
                               <div>
                                 <div data-mine-name={r.accountId ?? undefined} className="font-medium text-slate-100">{r.label}</div>
                                 {r.sublabel && <div className="text-[10.5px] text-slate-500">{r.sublabel}</div>}
@@ -7492,29 +7684,29 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           </td>
                           {/* ── TRADES ────────────────────────────────────── */}
                           <td className="px-3 py-2.5 text-right mono text-slate-300 whitespace-nowrap">
-                            {!trd ? <AbsentCell reason={NO_TRADES_WHY} />
+                            {!trd ? <AbsentCell reason={noTradesWhy(r)} />
                               : <>{fmtNum(trd.trades)}<span className="ml-1 text-[10.5px] text-slate-500">{trd.buys}B/{trd.sells}S</span></>}
                           </td>
                           <td className="px-3 py-2.5 text-right mono text-slate-300 whitespace-nowrap">
-                            {!trd ? <AbsentCell reason={NO_TRADES_WHY} />
+                            {!trd ? <AbsentCell reason={noTradesWhy(r)} />
                               : trd.buys === 0 ? <AbsentCell reason="nothing was bought in this row over the window" />
                               : trd.bought == null ? <AbsentCell reason="no buy row in this group reports a settled amount on its statement" />
                               : money(trd.bought)}
                           </td>
                           <td className="px-3 py-2.5 text-right mono text-slate-300 whitespace-nowrap">
-                            {!trd ? <AbsentCell reason={NO_TRADES_WHY} />
+                            {!trd ? <AbsentCell reason={noTradesWhy(r)} />
                               : trd.sells === 0 ? <AbsentCell reason="nothing was sold in this row over the window" />
                               : trd.sold == null ? <AbsentCell reason="no sell row in this group reports a settled amount on its statement" />
                               : money(trd.sold)}
                           </td>
                           <td className={`px-3 py-2.5 text-right mono whitespace-nowrap ${trd?.realized == null ? "text-slate-600" : changeColor(trd.realized)}`}>
-                            {!trd ? <AbsentCell reason={NO_TRADES_WHY} />
+                            {!trd ? <AbsentCell reason={noTradesWhy(r)} />
                               : trd.realized == null
                                 ? <AbsentCell reason={trd.sells === 0 ? "nothing was sold in this row over the window" : realisedAbsence(sellsOf(trd))} />
                                 : <>{fmtFromBase(trd.realized, { compact: true, sign: true })}{trd.realizedOf < trd.sells && <span className="ml-1 text-[10.5px] text-slate-500" data-realised-of={`${trd.realizedOf}/${trd.sells}`} title={realisedCoverageNote(sellsOf(trd))}>{trd.realizedOf}/{trd.sells}</span>}</>}
                           </td>
                           <td className="px-3 py-2.5 whitespace-nowrap mono text-[11px] text-slate-400">
-                            {!trd ? <AbsentCell reason={NO_TRADES_WHY} /> : period(trd.first, trd.last)}
+                            {!trd ? <AbsentCell reason={noTradesWhy(r)} /> : period(trd.first, trd.last)}
                           </td>
                           <td className="px-3 py-2.5 text-[12px] text-slate-400 whitespace-nowrap">
                             {ents.length === 0 ? <AbsentCell reason="no statement behind this row names a holder this book can resolve to a family member" />
@@ -7663,13 +7855,19 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                   data-foot-realised={totals.realized ?? undefined}
                   data-foot-bought={totals.bought ?? undefined}
                   className="px-3 py-2.5 text-slate-200"
-                  labelTitle={capitalNarrowed
-                    /* A NARROWED COUNT IS NOT A FACT ABOUT THE BOOK (MT-16). Under
-                       a window "5 of this book's 51 accounts publish a dated
-                       capital record" was only the accounts with a movement in it. */
-                    ? `${totals.accounts} ${totals.accounts === 1 ? "account has" : "accounts have"} a dated purchase or redemption in view under the filters set. Across the whole record, ${fundedInBook} of this book's ${accountsReg.length} accounts publish a dated capital record or a fund's dated capital calls — clear the filters to see them all. The others were funded as well — the managed mandates issue a capital-account ledger rather than dated allotments, and a depository records what is held and never what was paid for it — so the Purchase total is not the whole of what the family has paid in.`
-                    : `${totals.accounts} of this book's ${accountsReg.length} accounts publish a dated capital record or a fund's dated capital calls. The other ${accountsReg.length - totals.accounts} were funded as well — the managed mandates issue a capital-account ledger rather than dated allotments, and a depository records what is held and never what was paid for it — so the Purchase total is not the whole of what the family has paid in.`}
-                  label={<>Total · {fmtNum(totals.rows)} {totals.rows === 1 ? "row" : "rows"} · {totals.accounts} of {accountsReg.length} accounts{capitalNarrowed ? " in view" : ""}</>}
+                  labelTitle={[
+                    totals.accounts === accountsReg.length
+                      ? `Every one of this book's ${accountsReg.length} accounts is in this table.`
+                      : listsEveryAccount
+                        ? `${totals.accounts} of this book's ${accountsReg.length} accounts are in view under the entity or section filter.`
+                        /* A NARROWED COUNT IS NOT A FACT ABOUT THE BOOK (MT-16). */
+                        : `${totals.accounts} of this book's ${accountsReg.length} accounts have a dated record in view under the filters set; an account with no dated record is listed only without a date window, a Buys/Sells side, a sector or a picked holding — clear them to see every account. Across the whole record, ${fundedInBook} of this book's ${accountsReg.length} accounts publish a dated capital record or a fund's dated capital calls.`,
+                    `Of the ${totals.accounts} here, ${totals.capitalAccounts} publish a dated capital record or a fund's dated capital calls`
+                      + (totals.tradeOnlyAccounts ? `, ${totals.tradeOnlyAccounts} report only the trades inside them` : "")
+                      + (totals.undatedAccounts ? `, and ${totals.undatedAccounts} report neither, so their rows carry only what each is worth today` : "") + ".",
+                    "Those without a capital record were funded as well — the managed mandates issue a capital-account ledger rather than dated allotments, and a depository records what is held and never what was paid for it — so the Purchase total is not the whole of what the family has paid in.",
+                  ].join(" ")}
+                  label={<>Total · {fmtNum(totals.rows)} {totals.rows === 1 ? "row" : "rows"} · {totals.accounts === accountsReg.length ? `all ${totals.accounts} accounts` : `${totals.accounts} of ${accountsReg.length} accounts in view`}</>}
                   cells={{
                     how: (
                       <td key="how" data-foot-cell="how" className="px-3 py-2.5 text-right text-[12px] text-slate-400 whitespace-nowrap">
@@ -7684,8 +7882,13 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           : money(totals.committed)}
                       </td>
                     ),
+                    /* THE PURCHASE TOTAL NAMES ITS OWN COVERAGE. The label counts every
+                       account drawn; this sum is over the ones that date what was paid in. */
                     in: (
-                      <td key="in" data-foot-cell="in" className="px-3 py-2.5 text-right mono font-medium text-slate-100 whitespace-nowrap">
+                      <td key="in" data-foot-cell="in" className="px-3 py-2.5 text-right mono font-medium text-slate-100 whitespace-nowrap"
+                        data-foot-in-of={totals.capitalAccounts}
+                        title={totals.contributions === 0 ? undefined
+                          : `Summed over the ${totals.capitalAccounts} of the ${totals.accounts} ${totals.accounts === 1 ? "account" : "accounts"} here that publish a dated capital record or a fund's dated capital calls. The others were funded as well, but no statement dates what was paid in, so they add nothing rather than ₹0.`}>
                         {totals.contributions === 0
                           ? <AbsentCell reason={side === "out" ? "no purchase is in view under this side filter" : windowed ? "no purchase falls inside the date window" : "no row in view carries a dated purchase"} />
                           : money(totals.paidIn)}

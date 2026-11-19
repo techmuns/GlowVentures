@@ -19,6 +19,7 @@ const Polycab = lazy(() => import("@/pages/Polycab").then((m) => ({ default: m.P
 const PortfolioMonitor = lazy(() => import("@/pages/PortfolioMonitor").then((m) => ({ default: m.PortfolioMonitor })));
 const PrivateMarket = lazy(() => import("@/pages/PrivateMarket").then((m) => ({ default: m.PrivateMarket })));
 const PrivateCompany = lazy(() => import("@/pages/PrivateCompany").then((m) => ({ default: m.PrivateCompany })));
+const DealFlow = lazy(() => import("@/pages/DealFlow").then((m) => ({ default: m.DealFlow })));
 const RealEstate = lazy(() => import("@/pages/RealEstate").then((m) => ({ default: m.RealEstate })));
 const FamilyEntities = lazy(() => import("@/pages/FamilyEntities").then((m) => ({ default: m.FamilyEntities })));
 const SectorComposition = lazy(() => import("@/pages/SectorComposition").then((m) => ({ default: m.SectorComposition })));
@@ -412,6 +413,11 @@ export default function App() {
             <Route path="/performance" element={<Gate><Performance /></Gate>} />
             <Route path="/returns" element={<Gate><ReturnAnalysis /></Gate>} />
             <Route path="/ledger" element={<LedgerInsights />} />
+            {/* Deal Flow — the private-market funding UNIVERSE (client #441–#448).
+                Reads Glow Central Research's live Inc42 feed, never the portfolio,
+                so — like Ledger Insights — it renders on an empty book and needs
+                no Gate. */}
+            <Route path="/deal-flow" element={<DealFlow />} />
             {/* News & Announcements was REMOVED at the family's request. Both
                 paths redirect rather than 404, because a bookmark is a promise
                 the app made and a removal is verified by asserting it happened —

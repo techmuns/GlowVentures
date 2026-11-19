@@ -1,0 +1,330 @@
+// NAMED HOME VIEWS — several dashboards a reader can build, name and switch between.
+//
+// *"Look at all the widgets they have and the view function they have for the home
+//  page where people can see many views."* — the family, 17 Nov 2026.
+//
+// Home already kept ONE widget layout (`homeWidgets.ts`). This wraps that one
+// layout into a SET of named views: the switcher on Home chooses which view's
+// layout the widget board shows and edits, and every edit saves back to that view.
+//
+// ── WHERE A VIEW IS KEPT (for now) ──────────────────────────────────────────
+//
+// In this browser (`localStorage`), the same place the single layout lived, so a
+// reader's existing arrangement carries forward unchanged (see `migratedViews`).
+// The follow-up moves these to the dashboard's shared store (`/api/tile-sets`'s
+// sibling), so the same named views open on any device — the hook `useHomeViews`
+// is the only seam that changes. A VIEW IS A LIST OF WIDGET IDS AND SIZES AND A
+// NAME, never a figure: the page decides what a widget means from the book at
+// render time, so nothing stored here can put a number on screen.
+import { useEffect, useRef, useState } from 'react';
+import { DEFAULT_HOME_LAYOUT, HOME_LAYOUT_KEY, HOME_WIDGETS, LEGACY_HOME_LAYOUT_KEY, migrateHomeLayout, readHomeLayout, type HomeWidgetEntry, type HomeWidgetId } from './homeWidgets';
+
+export type HomeView = { id: string; name: string; layout: HomeWidgetEntry[] };
+export type HomeViewsState = { views: HomeView[]; activeId: string };
+
+export const HOME_VIEWS_KEY = 'glow:home:views:v1';
+/** More dashboards than anyone curates by hand; a longer list is a mistake, not a set. */
+export const MAX_VIEWS = 24;
+const MAX_NAME = 48;
+const ID = /^[a-z0-9][a-z0-9-]{0,39}$/;
+
+/** A readable, bounded slug for a view id, derived from its name; never empty. */
+export const slugify = (name: string): string =>
+  (name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)) || 'view';
+
+/** A slug not already taken, so two views named the same still address distinctly. */
+export function uniqueViewId(base: string, taken: Iterable<string>): string {
+  const set = new Set(taken);
+  const root = slugify(base);
+  if (!set.has(root)) return root;
+  for (let n = 2; ; n++) {
+    const id = `${root}-${n}`.slice(0, 40);
+    if (!set.has(id)) return id;
+  }
+}
+
+/** A view name, trimmed and bounded; falls back rather than storing an empty string. */
+export function cleanName(name: unknown, fallback = 'Untitled view'): string {
+  const s = typeof name === 'string' ? name.trim().replace(/\s+/g, ' ').slice(0, MAX_NAME) : '';
+  return s || fallback;
+}
+
+/** One view read from untrusted storage: a clean id/name and a sanitized layout, or null. */
+export function sanitizeView(raw: unknown, taken: Set<string>): HomeView | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as { id?: unknown; name?: unknown; layout?: unknown };
+  const name = cleanName(r.name);
+  const base = typeof r.id === 'string' && ID.test(r.id) ? r.id : slugify(name);
+  const id = taken.has(base) ? uniqueViewId(base, taken) : base;
+  taken.add(id);
+  // An empty layout is legitimate — the board shows its "add widgets" empty state.
+  return { id, name, layout: readHomeLayout(r.layout) ?? [] };
+}
+
+export function sanitizeViews(raw: unknown): HomeView[] {
+  if (!Array.isArray(raw)) return [];
+  const taken = new Set<string>();
+  const out: HomeView[] = [];
+  for (const v of raw) {
+    const view = sanitizeView(v, taken);
+    if (view) out.push(view);
+    if (out.length >= MAX_VIEWS) break;
+  }
+  return out;
+}
+
+const sized = (ids: HomeWidgetId[]): HomeWidgetEntry[] =>
+  ids.flatMap(id => { const w = HOME_WIDGETS.find(x => x.id === id); return w ? [{ id, size: w.size }] : []; });
+
+/**
+ * READY-MADE THEMED VIEWS, so a reader picks a dashboard rather than a blank canvas
+ * (the family, 17 Nov 2026: *"cant we add something default?"*). Each is a curated set
+ * of the existing widgets — the same affordance as the competitor's view templates. The
+ * switcher's "New" offers these, and a fresh book opens on a few of them.
+ */
+export const HOME_VIEW_PRESETS: HomeView[] = [
+  { id: 'overview', name: 'Overview', layout: DEFAULT_HOME_LAYOUT },
+  { id: 'performance', name: 'Performance', layout: sized(['ytd', 'inception', 'equityTwr', 'cash', 'performance', 'gains', 'movements', 'monthly']) },
+  { id: 'allocation', name: 'Allocation', layout: sized(['baskets', 'allocation', 'sectorBars', 'sectors', 'geography', 'assets', 'history']) },
+  { id: 'cash', name: 'Cash & liquidity', layout: sized(['aum', 'cash', 'flows', 'assets']) },
+];
+const clonePreset = (p: HomeView): HomeView => ({ ...p, layout: p.layout.map(e => ({ ...e })) });
+const presetsByIds = (ids: readonly string[]): HomeView[] => ids.flatMap(id => { const p = HOME_VIEW_PRESETS.find(x => x.id === id); return p ? [clonePreset(p)] : []; });
+
+export const DEFAULT_VIEW_NAME = 'Overview';
+/** A fresh book opens on three ready-made views to flip between, not one empty one. */
+export const defaultViews = (): HomeView[] => presetsByIds(['overview', 'performance', 'allocation']);
+
+/**
+ * FIRST RUN CARRIES A READER'S EXISTING LAYOUT FORWARD. Before views existed,
+ * Home kept one arrangement in `glow:home:widgets:v2`. If that is present and no
+ * views are saved yet, it becomes a named view ("My overview") rather than being
+ * silently replaced by the default — nothing a reader arranged is lost.
+ */
+function migratedViews(): HomeView[] | null {
+  try {
+    // Honour BOTH legacy keys exactly as the single-layout hook did: the v2 key
+    // first, else the v1 key through `migrateHomeLayout` (which also rebalances a
+    // simplified summary row). A reader's personal removals must survive the move.
+    const saved = localStorage.getItem(HOME_LAYOUT_KEY);
+    const layout = saved != null
+      ? readHomeLayout(JSON.parse(saved))
+      : migrateHomeLayout(JSON.parse(localStorage.getItem(LEGACY_HOME_LAYOUT_KEY) ?? 'null'));
+    // Keep their arrangement as "My overview", and offer the themed presets beside it,
+    // so a reader who already customised Home still gains the ready-made views.
+    return layout && layout.length ? [{ id: 'my-overview', name: 'My overview', layout }, ...presetsByIds(['performance', 'allocation'])] : null;
+  } catch {
+    return null;
+  }
+}
+
+export function readHomeViews(): HomeViewsState {
+  try {
+    const raw = localStorage.getItem(HOME_VIEWS_KEY);
+    if (raw != null) {
+      const parsed = JSON.parse(raw) as { views?: unknown; activeId?: unknown };
+      const views = sanitizeViews(parsed.views);
+      if (views.length) {
+        const activeId = typeof parsed.activeId === 'string' && views.some(v => v.id === parsed.activeId) ? parsed.activeId : views[0].id;
+        return { views, activeId };
+      }
+    }
+    const migrated = migratedViews();
+    if (migrated?.length) return { views: migrated, activeId: migrated[0].id };
+  } catch {
+    /* private mode, or a value this build cannot parse → the default below */
+  }
+  const views = defaultViews();
+  return { views, activeId: views[0].id };
+}
+
+export function writeHomeViews(state: HomeViewsState, synced = false) {
+  try { localStorage.setItem(HOME_VIEWS_KEY, JSON.stringify({ ...state, synced })); } catch { /* private mode: keep this session's views */ }
+}
+
+/** Has this browser's saved views been confirmed by the shared store? An older save, with no flag, reads as not confirmed — a change of unknown age, which is pushed rather than overwritten. */
+export function readSyncedFlag(): boolean {
+  try { return (JSON.parse(localStorage.getItem(HOME_VIEWS_KEY) ?? 'null') as { synced?: unknown } | null)?.synced === true; }
+  catch { return false; }
+}
+
+// ── PURE TRANSFORMS (testable without a browser) ─────────────────────────────
+
+export const activeView = (s: HomeViewsState): HomeView => s.views.find(v => v.id === s.activeId) ?? s.views[0];
+
+export function setActiveLayout(s: HomeViewsState, layout: HomeWidgetEntry[]): HomeViewsState {
+  return { ...s, views: s.views.map(v => (v.id === s.activeId ? { ...v, layout } : v)) };
+}
+
+/** Add a new view and make it active. A no-op past the cap, so the caller can report it. */
+export function addView(s: HomeViewsState, name: string, layout: HomeWidgetEntry[] = []): HomeViewsState {
+  if (s.views.length >= MAX_VIEWS) return s;
+  const id = uniqueViewId(name || DEFAULT_VIEW_NAME, s.views.map(v => v.id));
+  return { views: [...s.views, { id, name: cleanName(name), layout }], activeId: id };
+}
+
+/** Copy the active view beside itself and make the copy active. */
+export function duplicateView(s: HomeViewsState, id: string): HomeViewsState {
+  const index = s.views.findIndex(v => v.id === id);
+  if (index < 0 || s.views.length >= MAX_VIEWS) return s;
+  const src = s.views[index];
+  const newId = uniqueViewId(`${src.name} copy`, s.views.map(v => v.id));
+  const copy: HomeView = { id: newId, name: cleanName(`${src.name} copy`), layout: src.layout.map(e => ({ ...e })) };
+  const views = [...s.views];
+  views.splice(index + 1, 0, copy);
+  return { views, activeId: newId };
+}
+
+export function renameView(s: HomeViewsState, id: string, name: string): HomeViewsState {
+  return { ...s, views: s.views.map(v => (v.id === id ? { ...v, name: cleanName(name, v.name) } : v)) };
+}
+
+/** Remove a view. A set always keeps at least one, so Home never has nothing to show. */
+export function removeView(s: HomeViewsState, id: string): HomeViewsState {
+  if (s.views.length <= 1) return s;
+  const views = s.views.filter(v => v.id !== id);
+  return { views, activeId: s.activeId === id ? views[0].id : s.activeId };
+}
+
+// ── THE SHARED STORE (`/api/home-views`) ─────────────────────────────────────
+//
+// The view DEFINITIONS, saved for everyone on the repo's store branch — the same
+// store the KPI tile layouts use — so the same named views open on a second
+// laptop, a phone, after a cleared browser and inside the frame the dashboard is
+// embedded in, none of which a browser's own storage survives. This browser's
+// `localStorage` copy is the instant paint and the whole of the memory where the
+// store is not connected. WHICH view is active is this browser's own and is
+// never sent here, so flipping between views on one device never moves another.
+export const HOME_VIEWS_ENDPOINT = '/api/home-views';
+
+/** Where the views are kept, in words — shown on the view bar. The cause picks the sentence (`upstreamStatus.ts`'s rule arriving through a preference). */
+export const VIEWS_REASONS = {
+  notConfigured: 'Saved in this browser only — the shared store has not been switched on yet.',
+  noFunction: 'Saved in this browser only — the shared store is not running here.',
+  signedOut: 'Saved in this browser only — you have been signed out, so it could not be saved for everyone.',
+  noAnswer: 'Saved in this browser for now — the shared store did not answer.',
+} as const;
+export const VIEWS_SAVED_FOR_EVERYONE = 'Saved for everyone — your views open on any device.';
+
+export type ViewsStatus = { status: 'loading' } | { status: 'shared' } | { status: 'local'; reason: string };
+type ViewsReply = { ok: true; views: HomeView[] | null } | { ok: false; reason: string };
+
+/** Read one answer from the store, naming the actual cause of any failure, and SANITIZING untrusted stored views. */
+async function readViewsReply(r: Response): Promise<ViewsReply> {
+  const type = (r.headers.get('content-type') ?? '').toLowerCase();
+  if (!type.includes('application/json')) {
+    const text = await r.text().catch(() => '');
+    return { ok: false, reason: text.includes('/__auth/login') ? VIEWS_REASONS.signedOut : VIEWS_REASONS.noFunction };
+  }
+  let j: { ok?: boolean; views?: unknown; code?: string } | null = null;
+  try { j = await r.json(); } catch { j = null; }
+  if (j?.ok === true) return { ok: true, views: Array.isArray(j.views) ? sanitizeViews(j.views) : null };
+  if (j?.code === 'NOT_CONFIGURED') return { ok: false, reason: VIEWS_REASONS.notConfigured };
+  return { ok: false, reason: VIEWS_REASONS.noAnswer };
+}
+
+export async function loadSharedViews(): Promise<ViewsReply> {
+  try { return await readViewsReply(await fetch(HOME_VIEWS_ENDPOINT, { credentials: 'same-origin', cache: 'no-store' })); }
+  catch { return { ok: false, reason: VIEWS_REASONS.noAnswer }; }
+}
+
+export async function saveSharedViews(views: HomeView[]): Promise<ViewsReply> {
+  try {
+    return await readViewsReply(await fetch(HOME_VIEWS_ENDPOINT, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin',
+      body: JSON.stringify({ views }),
+    }));
+  } catch { return { ok: false, reason: VIEWS_REASONS.noAnswer }; }
+}
+
+/**
+ * WHICH VIEWS WIN ON LOAD, as a pure rule so it is testable without a browser:
+ *
+ *   an unconfirmed change in this browser  >  the shared store's views  >  this browser's copy.
+ *
+ * `adopt` (non-null) replaces the local views with the store's; `push` sends this
+ * browser's up — an unconfirmed change made while the store was down, or seeding
+ * a store that is connected but empty. A choice a reader just made must never
+ * revert because a request was slow.
+ */
+export function chooseViews(opts: { localViews: HomeView[]; localSynced: boolean; sharedViews: HomeView[] | null }):
+  { adopt: HomeView[] | null; push: boolean } {
+  const { localViews, localSynced, sharedViews } = opts;
+  if (!localSynced && localViews.length > 0) return { adopt: null, push: true };
+  if (sharedViews && sharedViews.length > 0) return { adopt: sharedViews, push: false };
+  if (sharedViews !== null && localViews.length > 0) return { adopt: null, push: true };
+  return { adopt: null, push: false };
+}
+
+// ── THE HOOK: THIS BROWSER'S COPY, AND THE SHARED STORE OVER IT ───────────────
+// Home reads one object. `localStorage` paints first; the store answers, and
+// `chooseViews` decides whether to adopt its views or push this browser's up.
+// View DEFINITIONS are saved for everyone; the active view stays this browser's.
+export function useHomeViews() {
+  const [state, setState] = useState<HomeViewsState>(() => readHomeViews());
+  const [status, setStatus] = useState<ViewsStatus>({ status: 'loading' });
+  const syncedRef = useRef<boolean>(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const [rev, setRev] = useState(0);
+
+  // This browser's confirmed-flag, read after mount so import touches no storage.
+  useEffect(() => { syncedRef.current = readSyncedFlag(); }, []);
+  // Paint-through: keep this browser's copy current on every change.
+  useEffect(() => { writeHomeViews(state, syncedRef.current); }, [state]);
+
+  // Load the shared views once; adopt them or push this browser's up.
+  useEffect(() => {
+    let alive = true;
+    void loadSharedViews().then((reply) => {
+      if (!alive) return;
+      if (!reply.ok) { setStatus({ status: 'local', reason: reply.reason }); return; }
+      const cur = stateRef.current;
+      const choice = chooseViews({ localViews: cur.views, localSynced: syncedRef.current, sharedViews: reply.views });
+      if (choice.adopt) {
+        const views = choice.adopt;
+        const activeId = views.some((v) => v.id === cur.activeId) ? cur.activeId : (views[0]?.id ?? cur.activeId);
+        syncedRef.current = true;
+        setState({ views, activeId });
+      }
+      if (choice.push) setRev((r) => r + 1);
+      setStatus({ status: 'shared' });
+    });
+    return () => { alive = false; };
+  }, []);
+
+  // Push the view DEFINITIONS up whenever they change in this browser. `rev`
+  // bumps in the same render that set the views, so `stateRef` holds the new set.
+  useEffect(() => {
+    if (rev === 0) return;
+    let alive = true;
+    void saveSharedViews(stateRef.current.views).then((reply) => {
+      if (!alive) return;
+      if (reply.ok) { syncedRef.current = true; writeHomeViews(stateRef.current, true); setStatus({ status: 'shared' }); }
+      else { syncedRef.current = false; setStatus({ status: 'local', reason: reply.reason }); }
+    });
+    return () => { alive = false; };
+  }, [rev]);
+
+  // A view-DEFINITION change: mark unconfirmed, update, and trigger a push.
+  const changeViews = (fn: (s: HomeViewsState) => HomeViewsState) => {
+    syncedRef.current = false;
+    setState(fn);
+    setRev((r) => r + 1);
+  };
+
+  return {
+    views: state.views,
+    activeId: state.activeId,
+    active: activeView(state),
+    status,
+    atCap: state.views.length >= MAX_VIEWS,
+    // The active view is this browser's own — localStorage only, never pushed.
+    setActiveId: (id: string) => setState(s => (s.views.some(v => v.id === id) ? { ...s, activeId: id } : s)),
+    setActiveLayout: (layout: HomeWidgetEntry[]) => changeViews(s => setActiveLayout(s, layout)),
+    addView: (name: string, layout?: HomeWidgetEntry[]) => changeViews(s => addView(s, name, layout)),
+    duplicateActive: () => changeViews(s => duplicateView(s, s.activeId)),
+    renameActive: (name: string) => changeViews(s => renameView(s, s.activeId, name)),
+    removeActive: () => changeViews(s => removeView(s, s.activeId)),
+  };
+}

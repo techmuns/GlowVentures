@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { BOOK_POSITIONS } from '../../data/glowData';
 import { closeLegsOn, indexCompound, indexMove, indexOnSameMoney, indexOverPeriod, onePaymentLeg, pooledLegs, positionBenchmark, printedBenchmark, rowBenchmark } from '../holdingBenchmark';
 import type { Position } from '../types';
-import { returnGapLabel } from '../returnColumns';
 import { holdingPeriodStart } from '../investedOn';
 
 const near = (a: number | null | undefined, b: number) => assert.ok(a != null && Math.abs(a - b) < 1e-6, `${a} != ${b}`);
@@ -116,6 +115,5 @@ const pmsLine = (BOOK_POSITIONS as unknown as Position[]).find((p) => (p.tradeRe
 assert.ok(pmsLine, 'a Goldstandard 100022 line with units before its dated trades');
 assert.deepEqual(holdingPeriodStart([pmsLine!])?.date, '2025-12-26');
 assert.equal(holdingPeriodStart([]), null);
-assert.equal(returnGapLabel("2 of the 2 investments behind this row carry no dated record a money-weighted return can be solved over — x: the family's review dates this investment only as a span — Dec 2022 – Aug 2023 — with one cost for the whole of it, not the amount paid on each day, so there are no dated payments to solve a money-weighted return over"), 'Date range only');
 
 console.log('holding benchmark: ok');

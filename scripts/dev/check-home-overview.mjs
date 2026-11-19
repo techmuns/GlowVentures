@@ -151,7 +151,7 @@ try {
     }
     await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
     const dialog = page.getByRole('dialog');
-    assert.equal(await dialog.locator('[data-widget-catalog]').count(), 18, 'all personal-choice widgets remain available');
+    assert.equal(await dialog.locator('[data-widget-catalog]').count(), 29, 'all personal-choice widgets remain available');
     await page.getByRole('searchbox', { name: 'Search widgets' }).fill('currency');
     assert.equal(await dialog.locator('[data-widget-catalog]').count(), 1);
     await dialog.locator('[data-widget-catalog="currency"]').hover();
@@ -175,13 +175,35 @@ try {
     assert.equal(await page.locator('[data-home-widget="currency"]').count(), 0);
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     // Add every additional reference widget through its actual popup.
-    for (const id of ['concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors']) {
+    for (const id of ['concentration', 'movements', 'monthly', 'vintage', 'volatility', 'sectors', 'baskets', 'equity', 'fixedIncome', 'alternate', 'realEstate', 'commodities', 'ytd', 'inception', 'gains', 'equityTwr', 'sectorBars']) {
+      if (await page.locator(`[data-home-widget="${id}"]`).count()) continue;  // already in this view's layout (baskets now leads the default)
       await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
       await page.getByRole('searchbox', { name: 'Search widgets' }).fill('');
       await dialog.locator(`[data-widget-catalog="${id}"]`).click();
       await dialog.getByRole('button', { name: 'Add to Home', exact: true }).click();
       await page.locator(`[data-home-widget="${id}"]`).waitFor();
     }
+    // Each asset class tile is its own allocation row; the basket donut splits the same AUM.
+    const ties = await page.evaluate(() => [...document.querySelectorAll('[data-home-class-total]')].map(el => ({ key: el.dataset.homeClassTotal, tile: el.dataset.value,
+      row: document.querySelector(`[data-home-class="${CSS.escape(el.dataset.homeClassTotal)}"]`)?.dataset.value ?? '' })));
+    assert.equal(ties.length, 6, 'one tile per family asset class');
+    for (const t of ties) assert.equal(t.tile, t.row, `${t.key} tile equals its allocation row`);
+    const basketRows = await page.locator('[data-home-basket-row]').evaluateAll(els => els.map(el => Number(el.dataset.value)));
+    assert.ok(basketRows.length > 1 && Math.abs(basketRows.reduce((sum, n) => sum + n, 0) - expected) < .01, 'basket rows sum to Investment AUM');
+    // The gains bars add up to the YTD gain, by member and by asset class.
+    for (const by of ['Members', 'Asset classes']) {
+      await page.getByRole('group', { name: 'Group gains by' }).getByRole('button', { name: by, exact: true }).click();
+      const gains = await page.locator('[data-home-gains]').evaluate(el => ({ total: Number(el.dataset.homeGainsTotal), rows: [...el.querySelectorAll('[data-home-gain-row]')].map(r => Number(r.dataset.value)) }));
+      assert.ok(gains.rows.length > 0 && Math.abs(gains.rows.reduce((sum, n) => sum + n, 0) - gains.total) < 1, `gains by ${by} add up to the YTD gain`);
+    }
+    // Every ⓘ opens a popover with its explanation, and Escape closes it.
+    const hint = page.locator('[data-home-widget="cash"] .home-hint').first();
+    await hint.click();
+    const popover = page.locator('[data-home-hint-popover]:popover-open');
+    await popover.waitFor();
+    assert.ok((await popover.innerText()).length > 20, 'the ⓘ explains the figure');
+    await page.keyboard.press('Escape');
+    await popover.waitFor({ state: 'hidden' });
     await page.getByLabel('Home start date', { exact: true }).fill('2026-03-31');
     await page.getByLabel('Home end date', { exact: true }).fill('2026-06-30');
     await page.getByRole('button', { name: 'Apply Home dates', exact: true }).click();

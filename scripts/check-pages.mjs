@@ -4984,6 +4984,13 @@ const UNVALUED_ACCOUNTS = (() => {
 })();
 
 const FUNDED_ACCOUNTS = CAPITAL_RECORD_BOOK ? new Set(CAPITAL_RECORD_BOOK.moves.map((m) => m.accountId)).size : null;
+/** Every account id in the book — the Transactions table draws each (16 Nov 2026). */
+const BOOK_ACCOUNT_IDS = (() => {
+  try {
+    const accounts = bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_ACCOUNTS");
+    return accounts ? accounts.map((a) => a.accountId) : null;
+  } catch { return null; }
+})();
 
 /**
  * ── ONE ENTRY PER ROW THE TRANSACTIONS CARD DRAWS (Stage 10dh) ──────────────
@@ -5294,7 +5301,11 @@ const HOLDING_FLOWS_BOOK = (() => {
       }
       const r = p.tradeRecord;
       const inc = income[k] ?? [];
-      if (r && r.unaccounted === 0) {
+      // A split or bonus moves units and no money (Stage 10ot): the replayed
+      // trades are every rupee; a demerger's money was paid for its parent.
+      const acts = p.actionRecord?.actions ?? [];
+      const splitOnly = acts.length > 0 && acts.every((a) => a.kind === "split" || a.kind === "bonus");
+      if (r && (r.unaccounted === 0 || (r.unaccounted !== null && splitOnly))) {
         const ts = (trades[k] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
         if (!ts.length) return null;
         if (ts.some((t) => t.amount === null) || inc.some((x) => !x.date)) return "short";
@@ -5328,6 +5339,20 @@ const HOLDING_FLOWS_BOOK = (() => {
         if (mc === false) return null;
         return {
           flows: rec.cashRecord.map((x) => ({ t: Date.parse(x.date), a: x.side === "buy" ? -x.amount : x.amount })),
+          since: Date.parse(moved.find((x) => x.side === "buy")?.date ?? moved[0].date),
+          close: mc ?? (p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null), payments: moved.length,
+        };
+      }
+      // THE REVIEW'S DATED PURCHASES CARRIED THROUGH THE ACCOUNT'S TRADES (Stage
+      // 10ot): every row at its own amount, ending on exactly the units held.
+      const rv = p.reviewPurchases;
+      if (end && rv && !rv.reason && rv.cashRecord?.length && rv.unitRecord?.length && !p.rolledForward
+        && Math.abs(rv.units - p.quantity) <= .0005 && Math.abs(rv.unitRecord.at(-1).units - p.quantity) <= .0005) {
+        const moved = rv.cashRecord.filter((x) => x.side !== "income");
+        const mc = closeOf(m, end);
+        if (mc === false) return null;
+        return {
+          flows: rv.cashRecord.map((x) => ({ t: Date.parse(x.date), a: x.side === "buy" ? -x.amount : x.amount })),
           since: Date.parse(moved.find((x) => x.side === "buy")?.date ?? moved[0].date),
           close: mc ?? (p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null), payments: moved.length,
         };
@@ -15580,7 +15605,9 @@ const txnMergedChecks = () => [
     const r = ctx?.txnMerged;
     if (!r) return { notChecked: "the transactions card was not on screen on this run" };
     if (!r.rows) return { notChecked: "no dated record matched the filters on this run" };
-    return r.capital > 0 && r.trades > 0 && r.capital + r.trades > r.rows;
+    // A row LISTED with no dated record carries neither half by construction
+    // (16 Nov 2026), and is counted apart — it is not a half silently lost.
+    return r.capital > 0 && r.trades > 0 && r.capital + r.trades > r.rows - (r.listed ?? 0);
   }],
   ["…and an account publishing both is ONE row, not two", (t, ctx) => {
     const r = ctx?.txnMerged;
@@ -15592,7 +15619,7 @@ const txnMergedChecks = () => [
      * IS the number carrying both. A merge that keyed the two halves apart
      * makes that zero while every figure on the page stays right.
      */
-    return r.both > 0 && r.both === r.capital + r.trades - r.rows;
+    return r.both > 0 && r.both === r.capital + r.trades - (r.rows - (r.listed ?? 0));
   }],
 ];
 
@@ -18557,12 +18584,18 @@ const pmViewChecks = (expected) => [
    * "Transactions" are phrases this page's own prose uses, so a text match
    * cannot tell a rendered button from a sentence about one.
    */
-  [`the private book is one card with three tabs (fund, brand, transactions), no legal-entity or review tab, and this address opens on ${expected}`, (t, ctx) => {
+  [`the private book is one card with five tabs (fund, brand, transactions, history, watchlist), no legal-entity or review tab, and this address opens on ${expected}`, (t, ctx) => {
     const pv = ctx?.pmView;
     if (!pv) return { notChecked: "the private-view probe did not run" };
     const keys = pv.views.map((v) => v.key);
-    return keys.length === 3
-      && ["funds", "brands", "transactions"].every((k) => keys.includes(k))
+    // The History tab (client #414 / #415) is one fund's dated calls and
+    // distributions over time, its valuation history and a money-weighted return
+    // over a chosen window; the Watchlist tab (client #310, Stage 10od) is the
+    // companies and funds the family is watching but does not hold, kept apart
+    // from the book and counted in no total — both are further views on the SAME
+    // card, not the old legal-entity or review tab, whose absence is still asserted.
+    return keys.length === 5
+      && ["funds", "brands", "transactions", "history", "watchlist"].every((k) => keys.includes(k))
       && !keys.includes("owners") && !keys.includes("folios") && !keys.includes("review")
       && pv.views.find((v) => v.active)?.key === expected;
   }],
@@ -21559,19 +21592,21 @@ const RETURN_COLUMNS = [
       return cells.every((c) => (c.tag ? new RegExp(`\\b${c.tag}\\b`).test(c.text) : true));
     }],
     /**
-     * ── A BLANK RETURN CELL SAYS WHY ON ITS FACE (Stage 10jm) ───────────────
+     * ── A BLANK RETURN CELL IS A BARE DASH, ITS CAUSE THE HOVER (Stage 10ot) ─
      *
-     *   *"in the blank you can simple write - No buy/sell date"*
+     *   *"why are you still showing things like No buy/sell dates — No 1 Jan
+     *    value didnt we decide the full logic"* — the family, 16 Nov 2026.
      *
-     * A bare dash read as a broken feed. Every holding's blank return cell
-     * names its cause in a few words beside the dash; the full reason stays
-     * its hover. Struck on the cell's own handle, never on the wording.
+     * Stage 10jm's few words beside the dash went the way of the index line's
+     * (Stage 10nt, *"remove all fluff"*): no gap words on the face, and every
+     * dash still carries its full reason as the hover. Struck on the cell's own
+     * handles, never on the wording.
      */
-    ["every blank return cell names its cause in a few words beside the dash", (t, ctx) => {
+    ["every blank return cell is a bare dash whose hover names its cause", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
       const blank = cells.filter((c) => /^—/.test(c.text) && !/is a category, not a holding/.test(c.reason ?? ""));
-      return blank.every((c) => !!c.absentLabel && c.absentLabel.split(/\s+/).length <= 5 && !!c.reason);
+      return blank.every((c) => !c.absentLabel && !!c.reason);
     }],
     /**
      * ── ONE COLUMN PER PICKED RETURN, ADDED AND REMOVED WITH THE SELECTION ──
@@ -23587,16 +23622,20 @@ const INVARIANTS = {
        * row per LINE: summed as the ROW count the label read "39 of 64
        * accounts" over a record 38 accounts publish. It is struck twice, on
        * the handle and on the rendered label, against the accounts the rows
-       * themselves name (`data-mine-row`), so a footer back on the row count
-       * fails by name.
+       * themselves name, so a footer back on the row count fails by name.
+       *
+       * THE ACCOUNTS THE ROWS DRAW (16 Nov 2026), off `data-dated-account-ids`
+       * — not the accounts that publish a capital record (`data-mine-row`).
+       * Counted on those, the label read "68 of 95 accounts" over a table that
+       * also drew trade-only mandates and own broking accounts.
        */
-      const accClaimed = /\b([\d,]+) of ([\d,]+) accounts/.exec(tbl.foot[0] ?? "");
+      const accClaimed = /\b(?:all ([\d,]+)|([\d,]+) of [\d,]+) accounts/.exec(tbl.foot[0] ?? "");
       if (!accClaimed) return false;
-      const drawnAccounts = new Set(tbl.rows.map((r) => r.accountId).filter(Boolean)).size;
+      const drawnAccounts = new Set(tbl.rows.flatMap((r) => r.accountIds)).size;
       return Number(rowsClaimed.replace(/,/g, "")) === tbl.rows.length
         && d.rows === tbl.rows.length && trades === d.trades
         && d.accounts === drawnAccounts
-        && Number(accClaimed[1].replace(/,/g, "")) === drawnAccounts;
+        && Number((accClaimed[1] ?? accClaimed[2]).replace(/,/g, "")) === drawnAccounts;
     }],
     /**
      * ── THE REALISED TOTAL IS THE STATEMENTS' OWN (A-08) ──────────────────────
@@ -23907,7 +23946,9 @@ const INVARIANTS = {
         && same(c.paid, sum(c.rows.map((m) => m.paid)))
         && same(c.value, sum(c.rows.map((m) => m.value)))
         && same(c.bought, sum(c.rows.map((m) => m.bought)))
-        && c.last === c.rows.map((m) => m.last).filter(Boolean).sort().at(-1));
+        // A line of accounts LISTED with no dated record (16 Nov 2026) has no
+        // dated span, and neither has any of its members: both are "".
+        && c.last === (c.rows.map((m) => m.last).filter(Boolean).sort().at(-1) ?? ""));
     }],
     ["the order is a control, and it opens on recent first", (t, ctx) => {
       const s = ctx.txnSort;
@@ -23948,6 +23989,27 @@ const INVARIANTS = {
         && new Set(ctx.mineRows.map((r) => r.accountId)).size === FUNDED_ACCOUNTS
         && CAPITAL_GROUPS.accounts === FUNDED_ACCOUNTS;
     }],
+    /**
+     * ...AND EVERY ACCOUNT IN THE BOOK IS IN THE TABLE (16 November 2026).
+     *
+     *   *"why is transaction only showing … 68 of 95 accounts — it should show all"*
+     *
+     * Struck against the book's own account ids, read off `glowData.ts`, so a
+     * table that quietly dropped one cannot agree with its own footer. A listed
+     * row carries no dated half (neither handle) and every dash on it a reason;
+     * the footer says "all N accounts" and its handle counts every one.
+     */
+    ["every account in the book is in the table, listed where nothing is dated", (t, ctx) => {
+      const tbl = ctx.datedTable;
+      if (!BOOK_ACCOUNT_IDS) return { notChecked: "the book's accounts could not be read" };
+      if (!tbl?.rows?.length || !tbl.footData) return false;
+      const drawn = new Set(tbl.rows.flatMap((r) => r.accountIds));
+      const listed = tbl.rows.filter((r) => r.listed);
+      return BOOK_ACCOUNT_IDS.every((id) => drawn.has(id)) && drawn.size === BOOK_ACCOUNT_IDS.length
+        && tbl.footData.accounts === BOOK_ACCOUNT_IDS.length
+        && new RegExp(`\\ball ${BOOK_ACCOUNT_IDS.length} accounts\\b`).test(tbl.foot[0] ?? "")
+        && listed.length > 0 && listed.every((r) => !r.capital && !r.trades && r.accountIds.length === 1);
+    }],
 
     /**
      * LUMPSUM OR STAGGERED, WHICH IS THE ASK ITSELF — *"how have I executed
@@ -23977,14 +24039,20 @@ const INVARIANTS = {
         // (38); and the PAYMENTS are those accounts' purchases (116). Rows and
         // accounts coincided until Stage 10dh, when a review holder bucket
         // began drawing one row per LINE.
-        const m = /Total · ([\d,]+) rows? · (\d+) of (\d+) accounts\t(\d+) payments/.exec(t);
+        //
+        // Since 16 Nov 2026 the ACCOUNTS are every account the rows draw ("all
+        // 95 accounts"), and the accounts the payments come from are the Purchase
+        // cell's own coverage handle (`data-foot-in-of`).
+        const m = /Total · ([\d,]+) rows? · (?:all (\d+)|(\d+) of \d+) accounts\t(\d+) payments/.exec(t);
         if (!m) return false;
         const drawn = ctx.datedTable?.rows?.length;
         if (drawn == null) return false;
         const payments = ctx.mineRows.reduce((a, r) => a + r.contributions, 0);
-        const accounts = new Set(ctx.mineRows.map((r) => r.accountId).filter(Boolean)).size;
+        const accounts = new Set(ctx.datedTable.rows.flatMap((r) => r.accountIds)).size;
+        const funded = new Set(ctx.mineRows.map((r) => r.accountId).filter(Boolean)).size;
         return Number(m[1].replace(/,/g, "")) === drawn
-          && Number(m[2]) === accounts
+          && Number(m[2] ?? m[3]) === accounts
+          && ctx.datedTable.footData?.inOf === funded
           && Number(m[4]) === payments;
       }],
 
@@ -24004,14 +24072,21 @@ const INVARIANTS = {
         // accounts figure against the rows carrying a capital record, which
         // coincided until Stage 10dh gave a review holder bucket one row per
         // LINE — 39 such rows over 38 accounts, on a footer that was right.
-        const m = /Total · ([\d,]+) rows? · (\d+) of (\d+) accounts/.exec(t);
+        //
+        // Since 16 Nov 2026 every account is drawn and the label reads "all N
+        // accounts"; the share the PURCHASE total covers moved onto that cell,
+        // which must name it against the accounts drawn.
+        const m = /Total · ([\d,]+) rows? · (?:all (\d+)|(\d+) of (\d+)) accounts/.exec(t);
         if (!m) return false;
         const drawn = ctx.datedTable?.rows?.length;
         if (drawn == null) return false;
-        const accounts = new Set(ctx.mineRows.map((r) => r.accountId).filter(Boolean)).size;
+        const accounts = new Set(ctx.datedTable.rows.flatMap((r) => r.accountIds)).size;
+        const funded = new Set(ctx.mineRows.map((r) => r.accountId).filter(Boolean)).size;
+        const inTitle = ctx.datedTable.footData?.inTitle ?? "";
         return Number(m[1].replace(/,/g, "")) === drawn
-          && Number(m[2]) === accounts
-          && Number(m[3]) === BOOK_ACCOUNT_COUNT;
+          && Number(m[2] ?? m[3]) === accounts
+          && Number(m[2] ?? m[4]) === BOOK_ACCOUNT_COUNT
+          && new RegExp(`\\b${funded} of the ${accounts} accounts here\\b`).test(inTitle);
       }],
 
     /**
@@ -32469,14 +32544,16 @@ const INVARIANTS = {
       // figure (MH-04), which cuts that text line at the figure.
       const cells = ctx?.footerCells;
       if (!cells?.length) return false;
-      // …Realised, Return, Sector, Entities. The two descriptor columns stay
-      // empty; the last figure the footer carries is now the return, since the
-      // separate YTD column (and its absent total) is gone — YTD is a Return
-      // measure now.
-      return cells.length >= 3
+      // …Realised, Return, Benchmark, Sector, Entities. THREE trailing columns
+      // carry no total now — the Benchmark column (the book's pooled index shows
+      // inline under the total return, not here) and the two descriptors Sector
+      // and Entities — so the last figure the footer carries is the return, four
+      // from the end. YTD is a Return measure, not its own column.
+      return cells.length >= 4
         && cells[cells.length - 1].trim() === ""
         && cells[cells.length - 2].trim() === ""
-        && FOOT_RETURN_CELL.test(cells[cells.length - 3].trim());
+        && cells[cells.length - 3].trim() === ""
+        && FOOT_RETURN_CELL.test(cells[cells.length - 4].trim());
     }],
     /**
      * ── DENSITY, MEASURED RATHER THAN DESCRIBED ─────────────────────────────
@@ -34116,7 +34193,7 @@ const INVARIANTS = {
   // The totals row renders on every axis, so its claims are checked on every
   // axis: the sections it totals are the family's own here, and a partition that
   // adds up on the category axis can still miss on one the family defined.
-  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Real Estate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
+  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Commodities", "Real Estate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
     ...CASH_ON_AXIS("assetClass"), ...CASH_RULE_HEADINGS("assetClass"), ...CASH_HEADING_COUNTS, ...NO_PHANTOM_DUPLICATE,
     ...footBasisChecks("all"), ...SECTION_REALISED],
   "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
@@ -41414,7 +41491,17 @@ for (const theme of THEMES) {
           if (!/[+\-−]\d[\d,.]*%/.test(face)) continue;
           out.figures++;
           const name = (td.closest("tr")?.cells[0]?.innerText ?? "").split("\n")[0].trim().slice(0, 60);
-          if (!b) { out.missing.push(`${name}: ${face}`); continue; }
+          if (!b) {
+            // THE HOLDING-PERIOD INDEX MOVED TO THE BENCHMARK COLUMN (Stage 10oc):
+            // the HPR/auto return cell on a holding row no longer footnotes its
+            // index inline — the row's own Benchmark column cell (`data-bench-col`)
+            // carries it. That is the index line for this figure, so it is not
+            // missing. XIRR/YTD still footnote inline and keep the `[data-bench]`
+            // path above.
+            const measure = td.getAttribute("data-return-cell");
+            if ((measure === "absolute" || measure === "auto") && td.closest("tr")?.querySelector("[data-bench-col]")) { out.lines++; continue; }
+            out.missing.push(`${name}: ${face}`); continue;
+          }
           out.lines++;
           // The feed's own state (closes loading, the service down) keeps the plain dash; a gap in the record never does.
           // Stage 10nt: no words on the face — a dash carries its reason as its hover.
@@ -42074,6 +42161,11 @@ for (const theme of THEMES) {
             last: tr.getAttribute("data-dated-last") ?? "",
             capital: tr.hasAttribute("data-mine-row"),
             accountId: tr.getAttribute("data-mine-row"),
+            // EVERY BOOK ACCOUNT THE ROW DRAWS — its own, or those whose trades
+            // a security row carries — and whether it is LISTED with no dated
+            // record at all (16 Nov 2026: every account has a row).
+            accountIds: (tr.getAttribute("data-dated-account-ids") ?? "").split(";").filter(Boolean),
+            listed: tr.hasAttribute("data-dated-listed"),
             trades: tr.hasAttribute("data-trades"),
             windowed: tr.hasAttribute("data-mine-windowed"),
             // The ONE LINE this row is drawn under, where two or more accounts
@@ -42151,6 +42243,9 @@ for (const theme of THEMES) {
             realisedOf: Number(foot.getAttribute("data-foot-realised-of")),
             realised: foot.hasAttribute("data-foot-realised") ? Number(foot.getAttribute("data-foot-realised")) : null,
             bought: foot.hasAttribute("data-foot-bought") ? Number(foot.getAttribute("data-foot-bought")) : null,
+            /** The accounts the Purchase total is summed over, and the cell's own hover naming them. */
+            inOf: (() => { const c = foot.querySelector('[data-foot-cell="in"]'); return c?.hasAttribute("data-foot-in-of") ? Number(c.getAttribute("data-foot-in-of")) : null; })(),
+            inTitle: foot.querySelector('[data-foot-cell="in"]')?.getAttribute("title") ?? "",
             /** The capital-gain lots no trade on the tape settles, as the realised cell names them (A-08). */
             ...(() => {
               const c = foot.querySelector('[data-foot-cell="realised"]');
@@ -42910,6 +43005,8 @@ for (const theme of THEMES) {
           capital: rows.filter((r) => r.hasAttribute("data-mine-row")).length,
           trades: rows.filter((r) => r.hasAttribute("data-trades")).length,
           both: rows.filter((r) => r.hasAttribute("data-mine-row") && r.hasAttribute("data-trades")).length,
+          // AN ACCOUNT LISTED WITH NO DATED RECORD carries neither half (16 Nov 2026).
+          listed: rows.filter((r) => r.hasAttribute("data-dated-listed")).length,
           kinds: rows.map((r) => r.getAttribute("data-dated-kind")),
           title: (document.querySelector("main .h-section")?.innerText ?? "").replace(/\s+/g, " ").trim(),
         };

@@ -9,6 +9,33 @@ html.dark .home-dashboard { --home-border: #32334b; --home-surface: #201e38; --h
 .home-periods { padding: 4px; background: var(--home-tint); border-radius: 8px; gap: 1px; }
 .home-periods button { border-radius: 5px; padding: 6px 12px; font-size: var(--home-font-body); color: var(--home-muted); }
 .home-periods button[aria-pressed=true] { background: var(--home-surface); color: var(--home-text); box-shadow: 0 1px 4px #0000000a; }
+/* ── The view switcher: several named dashboards on one Home (Stage 10ow) ── */
+.home-view-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.home-view-icon { color: var(--home-muted); flex: none; }
+.home-view-tabs { display: flex; align-items: center; flex-wrap: wrap; padding: 4px; gap: 1px; background: var(--home-tint); border-radius: 8px; }
+.home-view-tabs button { border-radius: 5px; padding: 6px 12px; font-size: var(--home-font-body); font-weight: 600; color: var(--home-muted); }
+.home-view-tabs button[aria-pressed=true] { background: var(--home-surface); color: var(--home-text); box-shadow: 0 1px 4px #0000000a; }
+.home-view-add { display: flex; align-items: center; padding: 6px 9px; color: var(--home-muted); }
+.home-view-add:disabled { opacity: .45; }
+.home-view-rename input { padding: 6px 10px; font-size: var(--home-font-body); font-weight: 650; color: var(--home-text); background: var(--home-surface); border: 1px solid var(--home-border); border-radius: 6px; min-width: 150px; }
+.home-view-actions { display: flex; align-items: center; gap: 6px; }
+.home-view-sync { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 4px 9px; border-radius: 999px; font-size: var(--home-font-caption); font-weight: 600; color: var(--home-muted); background: var(--home-tint); white-space: nowrap; }
+.home-view-sync[data-home-view-sync=shared] { color: var(--home-accent); }
+.home-view-sync svg { flex: none; }
+.home-view-icon-button { padding: 7px 8px; }
+.home-view-confirm { display: flex; align-items: center; gap: 6px; }
+.home-view-danger { color: #d2544f; border-color: #d2544f66; }
+.home-view-newwrap { position: relative; display: flex; }
+.home-view-menu-backdrop { position: fixed; inset: 0; z-index: 40; background: transparent; border: 0; padding: 0; cursor: default; }
+.home-view-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 41; min-width: 200px; display: flex; flex-direction: column; padding: 6px; gap: 1px; background: var(--home-surface); border: 1px solid var(--home-border); border-radius: 10px; box-shadow: 0 12px 34px #00000026; }
+.home-view-menu-head { padding: 5px 9px 7px; font-size: 11px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; color: var(--home-muted); }
+.home-view-menu button { text-align: left; padding: 8px 10px; border-radius: 7px; font-size: var(--home-font-body); font-weight: 600; color: var(--home-text); }
+.home-view-menu button:hover, .home-view-menu button:focus-visible { background: var(--home-tint); }
+.home-view-menu-blank { color: var(--home-muted) !important; font-weight: 500 !important; margin-top: 3px; border-top: 1px solid var(--home-border); border-radius: 0 !important; }
+/* A drillable allocation slice underlines its name to show it opens its holdings (Stage 10oy). */
+.home-allocation-legend button[data-home-drill] { cursor: pointer; }
+.home-allocation-legend button[data-home-drill]:hover .home-allocation-name, .home-allocation-legend button[data-home-drill]:focus-visible .home-allocation-name { text-decoration: underline; text-underline-offset: 2px; }
+@media (max-width: 560px) { .home-view-bar { gap: 8px; margin-top: 14px; } .home-view-rename input { min-width: 0; width: 120px; } .home-view-actions .home-button { padding: 7px; } }
 .home-date-range { padding: 7px 10px; border: 1px solid var(--home-border); background: var(--home-surface); border-radius: 8px; gap: 8px; color: var(--home-muted); }
 .home-date-range input { min-width: 0; width: 118px; padding: 0; background: transparent; border: 0; color: var(--home-text); font-size: var(--home-font-body); font-family: inherit; }
 .home-date-range input::-webkit-calendar-picker-indicator { width: 11px; opacity: .55; }
@@ -48,7 +75,17 @@ html.dark .home-hero { background: linear-gradient(110deg, #203c35, #252c37 70%,
 .home-panel-heading h2 { font-weight: 600; font-size: var(--home-font-title); letter-spacing: -.02em; margin-top: 5px; }
 .home-tag { color: var(--home-muted); font-size: var(--home-font-secondary); }
 .home-muted { color: var(--home-muted); }
-.home-hint { display: inline-flex; vertical-align: middle; color: var(--home-muted); cursor: help; flex-shrink: 0; }
+.home-hint { position: relative; display: inline-flex; vertical-align: middle; align-items: center; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--home-muted); cursor: pointer; flex-shrink: 0; transition: transform 120ms cubic-bezier(.23, 1, .32, 1), color 120ms ease; }
+.home-hint::after { content: ''; position: absolute; inset: -7px; }
+.home-hint:active { transform: scale(.9); }
+.home-hint[aria-expanded=true] { color: var(--home-accent); }
+.home-hint:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .home-hint:hover { color: var(--home-accent); } }
+/* The ⓘ popover: top layer, so no card or dialog clips it; enters from the icon. */
+.home-hint-popover { position: fixed; inset: auto; margin: 0; display: none; box-sizing: border-box; max-height: min(60vh, 420px); overflow: auto; padding: 12px 14px; border: 1px solid var(--home-border); border-radius: 10px; background: var(--home-surface); color: var(--home-text); box-shadow: 0 12px 32px #182d3d26; font-size: 13px; font-weight: 400; line-height: 1.55; letter-spacing: 0; text-align: left; text-transform: none; white-space: pre-line; overflow-wrap: anywhere; z-index: 60; opacity: 1; transform: none; transition: opacity 150ms cubic-bezier(.23, 1, .32, 1), transform 150ms cubic-bezier(.23, 1, .32, 1); }
+.home-hint-popover:popover-open, .home-hint-popover[data-open] { display: block; }
+@starting-style { .home-hint-popover:popover-open, .home-hint-popover[data-open] { opacity: 0; transform: scale(.96); } }
+html.dark .home-hint-popover { box-shadow: 0 12px 32px #0008; }
 .home-two-column { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
 .home-allocation-layout { display: flex; align-items: center; gap: 26px; min-height: 224px; }
 .home-donut { position: relative; width: 220px; height: 220px; flex-shrink: 0; }
@@ -75,7 +112,6 @@ html.dark .home-hero { background: linear-gradient(110deg, #203c35, #252c37 70%,
 .home-performance-stats > div { display: flex; flex-direction: column; gap: 7px; }
 .home-performance-stats span { display: flex; align-items: center; gap: 6px; font-size: var(--home-font-body); color: var(--home-muted); }
 .home-performance-stats strong { font-size: 32px; font-weight: 450; line-height: 1.2; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
-.home-performance-stats small { font-size: var(--home-font-caption); color: var(--home-muted); }
 .home-performance-stats > .home-excess { margin-left: auto; text-align: right; }
 .home-excess > span { justify-content: flex-end; }
 .home-positive { color: #378574; }
@@ -89,7 +125,6 @@ html.dark .home-hero { background: linear-gradient(110deg, #203c35, #252c37 70%,
 .home-flow-summary > div { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
 .home-flow-summary > div > span { font-size: var(--home-font-body); color: var(--home-muted); }
 .home-flow-summary strong { font-size: 24px; font-weight: 500; margin-left: 12px; }
-.home-flow-summary > .home-muted { display: flex; align-items: center; gap: 7px; font-size: var(--home-font-caption); }
 .home-table-scroll { overflow-x: auto; width: 100%; }
 .home-table { border-collapse: collapse; width: 100%; white-space: nowrap; font-size: var(--home-font-body); }
 .home-table th { font-size: var(--home-font-secondary); font-weight: 500; color: var(--home-muted); padding: 12px 12px; border-bottom: 1px solid var(--home-border); text-align: right; }
@@ -234,12 +269,9 @@ html #root .home-table tfoot td { border-bottom: 0; }
 .home-geography-icon { display: grid; place-items: center; flex-shrink: 0; width: 43px; height: 43px; border-radius: 50%; color: var(--home-accent); background: var(--home-surface); }
 .home-geography-heading strong { display: block; font-size: 16px; font-weight: 550; line-height: 1.5; }
 .home-geography-heading div > span { display: block; margin-top: 3px; color: var(--home-muted); font-size: var(--home-font-secondary); }
-.home-geography p { max-width: 46ch; font-size: var(--home-font-body); line-height: 1.8; color: var(--home-muted); }
 .home-geography-coverage { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 9px; padding-top: 17px; border-top: 1px solid var(--home-border); }
 .home-geography-coverage > span { font-size: var(--home-font-secondary); color: var(--home-muted); }
 .home-geography-coverage strong { font-size: 22px; font-weight: 500; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
-.home-geography-status { display: flex; align-items: center; gap: 6px; font-size: var(--home-font-secondary); color: var(--home-muted); }
-.home-geography-status > i { width: 4px; height: 4px; border-radius: 50%; background: var(--home-muted); }
 .home-widget > .home-panel { transition: border-color .18s, box-shadow .18s; }
 .home-widget > .home-panel:hover { border-color: #b7cfc2; box-shadow: 0 4px 16px #263f3505; }
 html.dark .home-widget > .home-panel:hover { border-color: #52695f; }
@@ -251,3 +283,25 @@ html.dark .home-widget > .home-panel:hover { border-color: #52695f; }
 
 /* Keep larger summary values on a full row after the shared size rules. */
 @media (max-width: 560px) { .home-widget-quarter { grid-column: span 12; } }
+
+/* Panel heading tools: a control and the ⓘ side by side. */
+.home-panel-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.home-gains-toggle button { font-size: var(--home-font-secondary); padding: 5px 10px; transition: transform 120ms cubic-bezier(.23, 1, .32, 1); }
+.home-gains-toggle button:active { transform: scale(.97); }
+/* Gains breakdown: diverging bars around one zero line. */
+.home-gains-total { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; }
+.home-gains-total > span { font-size: var(--home-font-body); color: var(--home-muted); }
+.home-gains-total > strong { font-size: 28px; font-weight: 450; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.home-gains-total > small { font-size: var(--home-font-secondary); color: var(--home-muted); font-variant-numeric: tabular-nums; }
+.home-gain-bars { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.home-gain-bars li { display: grid; grid-template-columns: minmax(90px, 30%) minmax(0, 1fr) auto; align-items: center; gap: 12px; font-size: var(--home-font-secondary); }
+.home-gain-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--home-text); }
+.home-gain-track { position: relative; height: 14px; border-radius: 3px; }
+.home-gain-track::before { content: ''; position: absolute; top: -3px; bottom: -3px; left: var(--zero); width: 1px; background: var(--home-border); }
+.home-gain-track > i { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.home-gain-pos { background: #378574; }
+.home-gain-neg { background: #b86b64; }
+.home-gain-bars strong { min-width: 74px; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+/* Value by sector: a long list of columns scrolls inside its own card. */
+.home-sector-bars { height: 360px; overflow-x: auto; overflow-y: hidden; }
+@media (max-width: 560px) { .home-gain-bars li { grid-template-columns: minmax(70px, 34%) minmax(0, 1fr) auto; gap: 8px; } .home-gains-total > strong { font-size: 24px; } }
