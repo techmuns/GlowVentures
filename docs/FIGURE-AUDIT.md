@@ -200,11 +200,11 @@ Doc aliases used below:
 
 | Alias | docKey |
 |---|---|
-| SAN-821 | `sanshi-fund-9039671821-2026-06-30-unknown` |
-| SAN-854 | `sanshi-fund-9039671854-2026-06-30-unknown` |
-| SAN-912 | `sanshi-fund-9039671912-2026-06-30-unknown` |
-| SAN-554 | `sanshi-fund-9069671554-2026-06-30-unknown` |
-| SAN-634 | `sanshi-fund-9069671634-2026-06-30-unknown` |
+| SAN-821 | `sanshi-fund-9039671821-2026-06-30-holdings` |
+| SAN-854 | `sanshi-fund-9039671854-2026-06-30-holdings` |
+| SAN-912 | `sanshi-fund-9039671912-2026-06-30-holdings` |
+| SAN-554 | `sanshi-fund-9069671554-2026-06-30-holdings` |
+| SAN-634 | `sanshi-fund-9069671634-2026-06-30-holdings` |
 | BUO-73 | `buoyant-capital-103473-2026-07-31-holdings` |
 | BUO-72 | `buoyant-capital-103472-2026-07-31-holdings` |
 | FF-104 | `motilal-oswal-founders-fund-90410016104-2026-07-31-holdings` |

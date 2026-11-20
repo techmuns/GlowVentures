@@ -1,5 +1,5 @@
 {
- "docKey": "sanshi-fund-9039671854-2026-10-31-unknown",
+ "docKey": "sanshi-fund-9039671854-2026-10-31-holdings",
  "provider": "Sanshi Fund",
  "accountNo": "9039671854",
  "ownerSource": "printed",
@@ -14,7 +14,7 @@
  "members": [],
  "asOf": "2026-10-31",
  "inceptionDate": null,
- "reportType": "unknown",
+ "reportType": "holdings",
  "sourcePath": "source/november-2026-g/SANSHI/9039671854_16112026120639767659.pdf",
  "pages": 2,
  "status": "ok",
@@ -60,7 +60,7 @@
    "marketValueFromPrinted": false,
    "dedupeGroup": null,
    "alsoReportedUnder": [],
-   "source": "sanshi-fund-9039671854-2026-10-31-unknown"
+   "source": "sanshi-fund-9039671854-2026-10-31-holdings"
   }
  ],
  "totals": {
@@ -73,7 +73,7 @@
   "pctGainLoss": null,
   "positionCount": null,
   "declaredAum": null,
-  "source": "sanshi-fund-9039671854-2026-10-31-unknown"
+  "source": "sanshi-fund-9039671854-2026-10-31-holdings"
  },
  "returns": [],
  "flows": {
@@ -90,7 +90,7 @@
   "openingCorpus": null,
   "periodFrom": "2025-10-06",
   "periodTo": "2026-10-31",
-  "source": "sanshi-fund-9039671854-2026-10-31-unknown"
+  "source": "sanshi-fund-9039671854-2026-10-31-holdings"
  },
  "cashFlows": [
   {
@@ -114,7 +114,7 @@
    "debit": null,
    "notes": null,
    "balance": null,
-   "source": "sanshi-fund-9039671854-2026-10-31-unknown"
+   "source": "sanshi-fund-9039671854-2026-10-31-holdings"
   },
   {
    "date": "2025-10-06",
@@ -137,7 +137,7 @@
    "debit": null,
    "notes": null,
    "balance": null,
-   "source": "sanshi-fund-9039671854-2026-10-31-unknown"
+   "source": "sanshi-fund-9039671854-2026-10-31-holdings"
   },
   {
    "date": "2025-10-06",
@@ -160,7 +160,7 @@
    "debit": null,
    "notes": null,
    "balance": null,
-   "source": "sanshi-fund-9039671854-2026-10-31-unknown"
+   "source": "sanshi-fund-9039671854-2026-10-31-holdings"
   }
  ],
  "transactions": [],

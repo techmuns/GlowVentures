@@ -224,6 +224,15 @@ test('an undated reading gives way to the same file read with its printed date; 
   assert.ok(has(assess([doc(), later({ docKey: 'hdfc-123-2026-07-06-holdings', asOf: '2026-07-06', sourcePath: 'source/other.pdf' })], [doc(), undated]), 'ARCHIVE_LOSS'));
   assert.ok(has(assess([doc(), later({ docKey: 'hdfc-456-2026-07-06-holdings', asOf: '2026-07-06', accountNo: '456', sourcePath: 'source/book.pdf' })], [doc(), undated]), 'ARCHIVE_LOSS'));
 });
+test('an unknown-type reading gives way to the same file read under the type a verified reader names; nothing else does (Sanshi)', () => {
+  const untyped = doc({ docKey: 'sanshi-123-2026-06-30-unknown', reportType: 'unknown', asOf: '2026-06-30', sourcePath: 'source/sanshi.pdf' });
+  const typed = later({ docKey: 'sanshi-123-2026-06-30-holdings', reportType: 'holdings', asOf: '2026-06-30', sourcePath: 'source/sanshi.pdf' });
+  assert.equal(assess([doc(), typed], [doc(), untyped]).decision, 'verified');
+  // a different source, account or date is still a loss; so is a baseline that was already typed
+  assert.ok(has(assess([doc(), later({ docKey: 'sanshi-123-2026-06-30-holdings', reportType: 'holdings', asOf: '2026-06-30', sourcePath: 'source/other.pdf' })], [doc(), untyped]), 'ARCHIVE_LOSS'));
+  assert.ok(has(assess([doc(), later({ docKey: 'sanshi-456-2026-06-30-holdings', reportType: 'holdings', asOf: '2026-06-30', accountNo: '456', sourcePath: 'source/sanshi.pdf' })], [doc(), untyped]), 'ARCHIVE_LOSS'));
+  assert.ok(has(assess([doc(), later({ docKey: 'sanshi-123-2026-09-30-holdings', reportType: 'holdings', asOf: '2026-09-30', sourcePath: 'source/sanshi.pdf' })], [doc(), untyped]), 'ARCHIVE_LOSS'));
+});
 test('a cross-report delta within printing precision does not hold a delivery; a larger one does (Stage 10ki)', () => {
   const delta = (d, severity) => ({ crossReportDeltas: [{ field: 'holding.totalCost', securityKey: 'elecon', delta: d, severity }] });
   assert.equal(assess([doc(), later()], [doc()], { report: delta(-0.34, 'rounding') }).decision, 'verified');

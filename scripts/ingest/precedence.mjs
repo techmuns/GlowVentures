@@ -297,14 +297,14 @@ export const PRECEDENCE = {
    * of where each fact comes from rather than a choice between sources.
    */
   "Sanshi Fund": {
-    holdings:        { reportType: "unknown", note: "one line — units of one class of the scheme." },
-    quantity:        { reportType: "unknown", note: "units balance." },
-    marketPrice:     { reportType: "unknown", note: "NAV per unit, PRE-TAX; the post-tax NAV is carried separately." },
-    marketValue:     { reportType: "unknown", note: "printed valuation; derived as units x NAV and checked against it." },
-    totalCost:       { reportType: "unknown", note: "contribution amount, net of the stamp duty deducted at allotment." },
-    accountTotals:   { reportType: "unknown" },
-    capitalInOut:    { reportType: "unknown", note: "the transaction ledger, dated." },
-    cashFlows:       { reportType: "unknown" },
+    holdings:        { reportType: "holdings", note: "one line — units of one class of the scheme." },
+    quantity:        { reportType: "holdings", note: "units balance." },
+    marketPrice:     { reportType: "holdings", note: "NAV per unit, PRE-TAX; the post-tax NAV is carried separately." },
+    marketValue:     { reportType: "holdings", note: "printed valuation; derived as units x NAV and checked against it." },
+    totalCost:       { reportType: "holdings", note: "contribution amount, net of the stamp duty deducted at allotment." },
+    accountTotals:   { reportType: "holdings" },
+    capitalInOut:    { reportType: "holdings", note: "the transaction ledger, dated." },
+    cashFlows:       { reportType: "holdings" },
   },
 
   /**

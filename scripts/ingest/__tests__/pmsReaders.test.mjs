@@ -389,7 +389,7 @@ for (const [docKey, name, qty] of [
     b.warnings.some((w) => w.code === "holdings-do-not-tie") && b.status === "partial", b.warnings.map((w) => w.code).join(","));
 }
 {
-  const docKey = "sanshi-fund-9039671821-2026-06-30-unknown";
+  const docKey = "sanshi-fund-9039671821-2026-06-30-holdings";
   const pages = pagesOf(docKey);
   if (!pages) ok(`${docKey}: its committed text is in the archive`, false);
   else {

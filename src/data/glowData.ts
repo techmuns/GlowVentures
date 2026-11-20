@@ -32416,7 +32416,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "sanshi-fund-9039671821-2026-10-31-unknown",
+      "document": "sanshi-fund-9039671821-2026-10-31-holdings",
       "pointer": "/holdings/0"
     },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -32481,7 +32481,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "sanshi-fund-9039671854-2026-10-31-unknown",
+      "document": "sanshi-fund-9039671854-2026-10-31-holdings",
       "pointer": "/holdings/0"
     },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -32546,7 +32546,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "sanshi-fund-9039671912-2026-10-31-unknown",
+      "document": "sanshi-fund-9039671912-2026-10-31-holdings",
       "pointer": "/holdings/0"
     },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2",
@@ -32611,7 +32611,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "sanshi-fund-9069671554-2026-10-31-unknown",
+      "document": "sanshi-fund-9069671554-2026-10-31-holdings",
       "pointer": "/holdings/0"
     },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -32676,7 +32676,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "sanshi-fund-9069671634-2026-10-31-unknown",
+      "document": "sanshi-fund-9069671634-2026-10-31-holdings",
       "pointer": "/holdings/0"
     },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -95540,6 +95540,46 @@ export const BOOK_EARLIER_BALANCES: EarlierBalance[] = [
     "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings-2"
   },
   {
+    "accountId": "sanshi-fund-9039671821",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 6045934.485,
+    "docKey": "sanshi-fund-9039671821-2026-06-30-holdings"
+  },
+  {
+    "accountId": "sanshi-fund-9039671854",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 1211186.597,
+    "docKey": "sanshi-fund-9039671854-2026-06-30-holdings"
+  },
+  {
+    "accountId": "sanshi-fund-9039671912",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 2341480.851,
+    "docKey": "sanshi-fund-9039671912-2026-06-30-holdings"
+  },
+  {
+    "accountId": "sanshi-fund-9069671554",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 1820926.864,
+    "docKey": "sanshi-fund-9069671554-2026-06-30-holdings"
+  },
+  {
+    "accountId": "sanshi-fund-9069671634",
+    "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 1761264.629,
+    "docKey": "sanshi-fund-9069671634-2026-06-30-holdings"
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "securityKey": "apollo-pipes",
     "isin": null,
@@ -96453,6 +96493,81 @@ export const BOOK_UNIT_WINDOWS: Record<string, UnitWindow> = {
       }
     ],
     "evidence": "the same units of the same holding on every statement from 2026-07-31 to 2026-09-30"
+  },
+  "sanshi-fund-9039671821": {
+    "valuations": [
+      {
+        "date": "2026-06-30",
+        "value": 976826519.91,
+        "docKey": "sanshi-fund-9039671821-2026-06-30-holdings"
+      },
+      {
+        "date": "2026-10-31",
+        "value": 1060949652.33,
+        "docKey": "sanshi-fund-9039671821-2026-10-31-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-06-30 to 2026-10-31"
+  },
+  "sanshi-fund-9039671854": {
+    "valuations": [
+      {
+        "date": "2026-06-30",
+        "value": 195688390.51,
+        "docKey": "sanshi-fund-9039671854-2026-06-30-holdings"
+      },
+      {
+        "date": "2026-10-31",
+        "value": 212540840.82,
+        "docKey": "sanshi-fund-9039671854-2026-10-31-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-06-30 to 2026-10-31"
+  },
+  "sanshi-fund-9039671912": {
+    "valuations": [
+      {
+        "date": "2026-06-30",
+        "value": 293523824.82,
+        "docKey": "sanshi-fund-9039671912-2026-06-30-holdings"
+      },
+      {
+        "date": "2026-10-31",
+        "value": 319365812.38,
+        "docKey": "sanshi-fund-9039671912-2026-10-31-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-06-30 to 2026-10-31"
+  },
+  "sanshi-fund-9069671554": {
+    "valuations": [
+      {
+        "date": "2026-06-30",
+        "value": 294202601.1,
+        "docKey": "sanshi-fund-9069671554-2026-06-30-holdings"
+      },
+      {
+        "date": "2026-10-31",
+        "value": 319538977.49,
+        "docKey": "sanshi-fund-9069671554-2026-10-31-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-06-30 to 2026-10-31"
+  },
+  "sanshi-fund-9069671634": {
+    "valuations": [
+      {
+        "date": "2026-06-30",
+        "value": 284563122.95,
+        "docKey": "sanshi-fund-9069671634-2026-06-30-holdings"
+      },
+      {
+        "date": "2026-10-31",
+        "value": 309069358.99,
+        "docKey": "sanshi-fund-9069671634-2026-10-31-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-06-30 to 2026-10-31"
   }
 };
 
@@ -100726,8 +100841,8 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   ],
   "sanshi-fund-9039671821": [
     {
-      "reportType": "unknown",
-      "source": "sanshi-fund-9039671821-2026-10-31-unknown",
+      "reportType": "holdings",
+      "source": "sanshi-fund-9039671821-2026-10-31-holdings",
       "periodFrom": "2025-10-03",
       "periodTo": "2026-10-31",
       "basis": "window",
@@ -100761,8 +100876,8 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   ],
   "sanshi-fund-9039671854": [
     {
-      "reportType": "unknown",
-      "source": "sanshi-fund-9039671854-2026-10-31-unknown",
+      "reportType": "holdings",
+      "source": "sanshi-fund-9039671854-2026-10-31-holdings",
       "periodFrom": "2025-10-06",
       "periodTo": "2026-10-31",
       "basis": "window",
@@ -100796,8 +100911,8 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   ],
   "sanshi-fund-9039671912": [
     {
-      "reportType": "unknown",
-      "source": "sanshi-fund-9039671912-2026-10-31-unknown",
+      "reportType": "holdings",
+      "source": "sanshi-fund-9039671912-2026-10-31-holdings",
       "periodFrom": "2025-12-16",
       "periodTo": "2026-10-31",
       "basis": "window",
@@ -100831,8 +100946,8 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   ],
   "sanshi-fund-9069671554": [
     {
-      "reportType": "unknown",
-      "source": "sanshi-fund-9069671554-2026-10-31-unknown",
+      "reportType": "holdings",
+      "source": "sanshi-fund-9069671554-2026-10-31-holdings",
       "periodFrom": "2025-03-21",
       "periodTo": "2026-10-31",
       "basis": "window",
@@ -100866,8 +100981,8 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   ],
   "sanshi-fund-9069671634": [
     {
-      "reportType": "unknown",
-      "source": "sanshi-fund-9069671634-2026-10-31-unknown",
+      "reportType": "holdings",
+      "source": "sanshi-fund-9069671634-2026-10-31-holdings",
       "periodFrom": "2025-04-30",
       "periodTo": "2026-10-31",
       "basis": "window",

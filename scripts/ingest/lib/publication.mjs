@@ -133,7 +133,19 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   const sources = new Set(documents.map(d => d.sourcePath));
   const datedNow = d => !d.asOf && documents.some(x => x.sourcePath === d.sourcePath && x.asOf
     && x.provider === d.provider && String(x.accountNo) === String(d.accountNo) && x.reportType === d.reportType);
-  for (const d of baseline) if (!byKey.has(d.docKey) && !(d.status === 'failed' && !carriesFacts(d) && sources.has(d.sourcePath)) && !datedNow(d)) {
+  // So too an UNKNOWN-TYPE reading gives way to the same source file read under
+  // the report type a verified reader now NAMES — the sibling of datedNow on the
+  // reportType segment, not the date. The Sanshi Fund reader filed its monthly
+  // Category-III AIF statements as `…-unknown` because it alone never set
+  // `reportType`; naming them `holdings` (as every other AIF / holdings reader
+  // does — Franklin AIF, folioLedger) re-files the SAME source, provider, account
+  // and date under its real type. Nothing is removed — UNKNOWN_FORMAT would
+  // otherwise reject the newly-delivered statements as a format no verified reader
+  // recognizes. Narrow by design: only a baseline reading that was itself
+  // `unknown` gives way, and only to the same file now read with a real type.
+  const typedNow = d => d.reportType === 'unknown' && documents.some(x => x.sourcePath === d.sourcePath && x.reportType !== 'unknown'
+    && x.provider === d.provider && String(x.accountNo) === String(d.accountNo) && (x.asOf ?? null) === (d.asOf ?? null));
+  for (const d of baseline) if (!byKey.has(d.docKey) && !(d.status === 'failed' && !carriesFacts(d) && sources.has(d.sourcePath)) && !datedNow(d) && !typedNow(d)) {
     add('ARCHIVE_LOSS', d, 'A delivery cannot remove an earlier statement.');
   }
 

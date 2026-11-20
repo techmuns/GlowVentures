@@ -116,7 +116,7 @@ export function extract({ grid, meta }) {
     warn(warnings, "summary-row-not-matched",
       "the Class / NAV date / NAV / units / contribution / valuation row did not match; nothing is inferred from the rest of the page");
     return {
-      provider: PROVIDER, accountNo: folio, owner, asOf, strategy: SCHEME,
+      provider: PROVIDER, reportType: "holdings", accountNo: folio, owner, asOf, strategy: SCHEME,
       engagement: "AIF", providerEngagement: "Open Ended AIF CAT-III",
       pan, holdings: [], totals: null, warnings, status: "failed",
     };
@@ -218,6 +218,13 @@ export function extract({ grid, meta }) {
 
   return {
     provider: PROVIDER,
+    // One monthly account statement whose primary fact is the holding (units of
+    // one class × NAV = valuation); the dated ledger rides alongside as cashFlows.
+    // Named here like every sibling AIF/holdings reader (Franklin AIF, folioLedger)
+    // so the document carries a VERIFIED report type rather than defaulting to
+    // `unknown` — the publication boundary (publication.mjs UNKNOWN_FORMAT) rejects
+    // a newly-added statement no verified reader recognizes.
+    reportType: "holdings",
     accountNo: folio,
     owner,
     pan,
