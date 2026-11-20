@@ -75,6 +75,17 @@ export const neverArrived = d => d.status === 'failed' && !carriesFacts(d)
 export const heldOutByDecision = d => d.status === 'failed' && !carriesFacts(d)
   && NON_STATEMENT_PROVIDERS.has(d.provider) && !d.accountNo && !d.ownerId
   && (d.warnings ?? []).length > 0 && d.warnings.every(w => w?.code === 'held-out-by-decision');
+/**
+ * A ROW HELD OUT OF A PARTIALLY-HELD STATEMENT. Ajay's Motilal demat
+ * 1201090012539150 holding statement publishes only its two new listed shares
+ * (`familyDematShares`); its fund, ETF, AIF and Zepto rows are held pending the
+ * companion AMC-folio statements and enter no book total. A held row takes no
+ * part in the security-key consistency map — neither seeded from the baseline nor
+ * checked as a change — because that map only guards rows that are actually
+ * published, where a split key could double-count. The published rows are mapped
+ * and checked like any other delivery's.
+ */
+const isHeldDematShareRow = (d, r) => d.docKey === DEMAT_SHARES_DOCKEY && !!r?.isin && !HARVEST_ISINS.has(r.isin);
 
 /**
  * WHAT A RE-READ MAY CHANGE WITHOUT THE STATEMENT CHANGING: `pdf-encrypted` names
@@ -132,6 +143,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
     remember(ownerByAccount, accountKey(d), d.ownerId);
     for (const section of RECORD_SECTIONS) for (const r of d[section] ?? []) {
       if (!r.isin || !r.securityKey) continue;
+      if (isHeldDematShareRow(d, r)) continue;
       const isin = currentIsin(r.isin);
       // The key a reviewed KEY_ALIASES entry now files an archived key under is
       // the verified pairing too (`securityKeyOf` is idempotent on a key and
@@ -203,15 +215,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
           if (v != null && numericFields.has(field) && (typeof v !== 'number' || !Number.isFinite(v))) add('INVALID_NUMBER', d, 'A numeric field is not a finite number or null.', ptr + p);
           if (nonempty(v) && /^(date|purchaseDate|saleDate|settlementDate|priceAsOn)$/.test(field) && !validDate(v)) add('INVALID_DATE', d, 'A dated record contains an invalid or ambiguous date.', ptr + p);
         });
-        // Ajay's Motilal demat 1201090012539150 holding statement is PARTIALLY
-        // HELD: only its two new listed shares are published (`familyDematShares`);
-        // its fund, ETF, AIF and Zepto rows are held pending the companion AMC-folio
-        // statements, so they enter no book total. Their depository-abbreviated key
-        // is not reconciled against the book here — that would only matter for a row
-        // that is published, where a split key could double-count. The published
-        // rows (Kingfa, Manorama) ARE checked, like any other delivery's.
-        const heldRow = d.docKey === DEMAT_SHARES_DOCKEY && !HARVEST_ISINS.has(r.isin);
-        if (r.isin && r.securityKey && !heldRow) {
+        if (r.isin && r.securityKey && !isHeldDematShareRow(d, r)) {
           // A delivery may not ADD a pairing the verified book does not carry. One
           // it already carries — an AIF's units under the depository's name and
           // under the fund's own (`sanshi-trust-fd-i-cl-e-…` and
