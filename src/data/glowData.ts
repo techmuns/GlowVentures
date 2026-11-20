@@ -47156,6 +47156,27 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
   {
     "statementRecord": {
       "document": "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings",
+      "pointer": "/holdings/2"
+    },
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "deepak-ferts-chm",
+    "security": "DEEPAK FERTS_ CHM",
+    "isin": "INE501A01019",
+    "assetClass": "Equity",
+    "quantity": 15000,
+    "faceValue": null,
+    "lastMovementRate": 1099.95,
+    "lastMovementValue": 16499250,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-10-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-10-31 prints the price of this holding's last depository movement — ₹1,099.95 a unit — not a valuation of the 15,000 unit(s) held, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings",
       "pointer": "/holdings/5"
     },
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
