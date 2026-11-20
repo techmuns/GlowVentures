@@ -12,6 +12,7 @@ import { NON_STATEMENT_PROVIDERS } from './classify.mjs';
 import { currentIsin } from '../../../shared/isinSuccessors.mjs';
 import { securityKeyOf } from '../../../shared/securityKey.mjs';
 import { canonicalJson } from '../../../shared/canonicalJson.mjs';
+import { DEMAT_SHARES_DOCKEY, HARVEST_ISINS } from '../reference/familyDematShares.mjs';
 
 export const RECORD_SECTIONS = ['holdings', 'transactions', 'capitalGains', 'cashFlows', 'income', 'expenses', 'returns'];
 export const stable = canonicalJson;
@@ -202,7 +203,15 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
           if (v != null && numericFields.has(field) && (typeof v !== 'number' || !Number.isFinite(v))) add('INVALID_NUMBER', d, 'A numeric field is not a finite number or null.', ptr + p);
           if (nonempty(v) && /^(date|purchaseDate|saleDate|settlementDate|priceAsOn)$/.test(field) && !validDate(v)) add('INVALID_DATE', d, 'A dated record contains an invalid or ambiguous date.', ptr + p);
         });
-        if (r.isin && r.securityKey) {
+        // Ajay's Motilal demat 1201090012539150 holding statement is PARTIALLY
+        // HELD: only its two new listed shares are published (`familyDematShares`);
+        // its fund, ETF, AIF and Zepto rows are held pending the companion AMC-folio
+        // statements, so they enter no book total. Their depository-abbreviated key
+        // is not reconciled against the book here — that would only matter for a row
+        // that is published, where a split key could double-count. The published
+        // rows (Kingfa, Manorama) ARE checked, like any other delivery's.
+        const heldRow = d.docKey === DEMAT_SHARES_DOCKEY && !HARVEST_ISINS.has(r.isin);
+        if (r.isin && r.securityKey && !heldRow) {
           // A delivery may not ADD a pairing the verified book does not carry. One
           // it already carries — an AIF's units under the depository's name and
           // under the fund's own (`sanshi-trust-fd-i-cl-e-…` and
