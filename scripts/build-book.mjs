@@ -318,15 +318,28 @@ const AMOUNT_FIELDS = [
   "shortTerm", "longTerm", "purchaseAmount", "units", "unitPrice", "ratePerUnit",
 ];
 
-const datedKey = (kind, r) => [
-  kind,
-  r.date ?? r.saleDate ?? r.exDate ?? r.receivedDate ?? "",
-  r.securityKey ?? r.security ?? "",
-  r.side ?? r.kind ?? r.detail ?? r.description ?? "",
-  r.quantity ?? "",
-  r.purchaseDate ?? "",
-  ...AMOUNT_FIELDS.map((f) => (r[f] ?? r.printed?.[f] ?? "")),
-].join("\u0001");
+// A fund contribution's allotment is identified by its UNIT COUNT, which is exact
+// across re-reportings; the rupee amount beside it is units × NAV and drifts by a
+// few paise between an earlier and a later statement (Sanshi's 2025-09-03 allotment
+// is 204989750.47 on the 30 Jun statement and 204989750.51 on the 31 Oct one — the
+// SAME allotment of the SAME 1233164.412 units). So for a units-backed CASH FLOW only
+// the unit count enters the dedup key — keying on the amount would count one allotment
+// twice and collapse the gross-paid contribution tranche. Transactions (trades) keep
+// every amount: there the price, hence the amount, distinguishes real events (the GSK
+// bank-book trap above). `golden` reconciles the book against the printed totals, so a
+// merge of two genuinely different rows fails it.
+const datedKey = (kind, r) => {
+  const unitsBacked = kind === "cashFlows" && typeof r.units === "number" && Number.isFinite(r.units) && r.units > 0;
+  return [
+    kind,
+    r.date ?? r.saleDate ?? r.exDate ?? r.receivedDate ?? "",
+    r.securityKey ?? r.security ?? "",
+    r.side ?? r.kind ?? r.detail ?? r.description ?? "",
+    r.quantity ?? "",
+    r.purchaseDate ?? "",
+    ...AMOUNT_FIELDS.map((f) => (unitsBacked && f !== "units" ? "" : (r[f] ?? r.printed?.[f] ?? ""))),
+  ].join("\u0001");
+};
 
 /**
  * Every dated row for one account, across ALL its statements — superseded or not.

@@ -18,10 +18,10 @@ export const BOOK_AS_OF = "2026-11-04";
 
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-11-04",
-  "listedValue": 7949249936.81,
+  "listedValue": 8125910119.53,
   "privateValue": 2786869378.68,
   "unplacedValue": 0,
-  "totalValue": 10736119315.49,
+  "totalValue": 10912779498.21,
   "positionsCount": 506,
   "entitiesCount": 11,
   "startupsCount": 0,
@@ -1939,14 +1939,14 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "AIF",
     "providerEngagement": "Open Ended AIF CAT-III",
     "members": [],
-    "asOf": "2026-06-30",
+    "asOf": "2026-10-31",
     "inceptionDate": null,
-    "capitalRecordTo": "2026-06-30",
+    "capitalRecordTo": "2026-10-31",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null,
     "demat": {
       "printed": null,
-      "reason": "the statement read for Sanshi Fund 9039671821 prints no DP ID or Client ID"
+      "reason": "none of the 2 statements read for Sanshi Fund 9039671821 prints a DP ID and Client ID"
     }
   },
   {
@@ -1959,14 +1959,14 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "AIF",
     "providerEngagement": "Open Ended AIF CAT-III",
     "members": [],
-    "asOf": "2026-06-30",
+    "asOf": "2026-10-31",
     "inceptionDate": null,
-    "capitalRecordTo": "2026-06-30",
+    "capitalRecordTo": "2026-10-31",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null,
     "demat": {
       "printed": null,
-      "reason": "the statement read for Sanshi Fund 9039671854 prints no DP ID or Client ID"
+      "reason": "none of the 2 statements read for Sanshi Fund 9039671854 prints a DP ID and Client ID"
     }
   },
   {
@@ -1979,14 +1979,14 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "AIF",
     "providerEngagement": "Open Ended AIF CAT-III",
     "members": [],
-    "asOf": "2026-06-30",
+    "asOf": "2026-10-31",
     "inceptionDate": null,
-    "capitalRecordTo": "2026-06-30",
+    "capitalRecordTo": "2026-10-31",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null,
     "demat": {
       "printed": null,
-      "reason": "the statement read for Sanshi Fund 9039671912 prints no DP ID or Client ID"
+      "reason": "none of the 2 statements read for Sanshi Fund 9039671912 prints a DP ID and Client ID"
     }
   },
   {
@@ -1999,14 +1999,14 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "AIF",
     "providerEngagement": "Open Ended AIF CAT-III",
     "members": [],
-    "asOf": "2026-06-30",
+    "asOf": "2026-10-31",
     "inceptionDate": null,
-    "capitalRecordTo": "2026-06-30",
+    "capitalRecordTo": "2026-10-31",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null,
     "demat": {
       "printed": null,
-      "reason": "the statement read for Sanshi Fund 9069671554 prints no DP ID or Client ID"
+      "reason": "none of the 2 statements read for Sanshi Fund 9069671554 prints a DP ID and Client ID"
     }
   },
   {
@@ -2019,14 +2019,14 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "AIF",
     "providerEngagement": "Open Ended AIF CAT-III",
     "members": [],
-    "asOf": "2026-06-30",
+    "asOf": "2026-10-31",
     "inceptionDate": null,
-    "capitalRecordTo": "2026-06-30",
+    "capitalRecordTo": "2026-10-31",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null,
     "demat": {
       "printed": null,
-      "reason": "the statement read for Sanshi Fund 9069671634 prints no DP ID or Client ID"
+      "reason": "none of the 2 statements read for Sanshi Fund 9069671634 prints a DP ID and Client ID"
     }
   },
   {
@@ -32416,7 +32416,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "sanshi-fund-9039671821-2026-06-30-unknown",
+      "document": "sanshi-fund-9039671821-2026-10-31-unknown",
       "pointer": "/holdings/0"
     },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -32430,15 +32430,15 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 6045934.485,
     "avgCost": 124.0503,
-    "currentPrice": 161.5675,
+    "currentPrice": 175.4815,
     "costBasis": 750000000,
     "costBasisSource": "gross-paid",
     "printedCostBasis": 749962501.87,
-    "marketValue": 976826519.91,
-    "unrealizedPnL": 226826519.91,
+    "marketValue": 1060949652.33,
+    "unrealizedPnL": 310949652.33,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 30.24,
+    "returnPct": 41.46,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -32449,31 +32449,31 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true,
     "integrity": {
       "positionId": "position-3c867bd50fbe4f3576041367",
-      "quantityAsOf": "2026-06-30",
+      "quantityAsOf": "2026-10-31",
       "formulaVersion": "financial-integrity-v1",
       "metrics": {
         "quantity": {
           "status": "source-backed",
           "basis": "statement-unit-balance",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "costBasis": {
           "status": "source-backed",
           "basis": "statement-or-family-review",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "marketValue": {
           "status": "source-backed",
           "basis": "statement-valuation",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "unrealizedPnL": {
           "status": "source-backed",
           "basis": "derived",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         }
       }
@@ -32481,7 +32481,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "sanshi-fund-9039671854-2026-06-30-unknown",
+      "document": "sanshi-fund-9039671854-2026-10-31-unknown",
       "pointer": "/holdings/0"
     },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -32495,15 +32495,15 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1211186.597,
     "avgCost": 123.8455,
-    "currentPrice": 161.5675,
+    "currentPrice": 175.4815,
     "costBasis": 150000000,
     "costBasisSource": "gross-paid",
     "printedCostBasis": 149992500.37,
-    "marketValue": 195688390.51,
-    "unrealizedPnL": 45688390.51,
+    "marketValue": 212540840.82,
+    "unrealizedPnL": 62540840.82,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 30.46,
+    "returnPct": 41.69,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -32514,31 +32514,31 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true,
     "integrity": {
       "positionId": "position-4419fbca2718ece1f91d0b2f",
-      "quantityAsOf": "2026-06-30",
+      "quantityAsOf": "2026-10-31",
       "formulaVersion": "financial-integrity-v1",
       "metrics": {
         "quantity": {
           "status": "source-backed",
           "basis": "statement-unit-balance",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "costBasis": {
           "status": "source-backed",
           "basis": "statement-or-family-review",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "marketValue": {
           "status": "source-backed",
           "basis": "statement-valuation",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "unrealizedPnL": {
           "status": "source-backed",
           "basis": "derived",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         }
       }
@@ -32546,7 +32546,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "sanshi-fund-9039671912-2026-06-30-unknown",
+      "document": "sanshi-fund-9039671912-2026-10-31-unknown",
       "pointer": "/holdings/0"
     },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2",
@@ -32560,15 +32560,15 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2341480.851,
     "avgCost": 106.77,
-    "currentPrice": 125.3582,
+    "currentPrice": 136.3948,
     "costBasis": 250000000,
     "costBasisSource": "gross-paid",
     "printedCostBasis": 249987500.62,
-    "marketValue": 293523824.82,
-    "unrealizedPnL": 43523824.82,
+    "marketValue": 319365812.38,
+    "unrealizedPnL": 69365812.38,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 17.41,
+    "returnPct": 27.75,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -32579,31 +32579,31 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true,
     "integrity": {
       "positionId": "position-3f62c147dee709069cf88ee6",
-      "quantityAsOf": "2026-06-30",
+      "quantityAsOf": "2026-10-31",
       "formulaVersion": "financial-integrity-v1",
       "metrics": {
         "quantity": {
           "status": "source-backed",
           "basis": "statement-unit-balance",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "costBasis": {
           "status": "source-backed",
           "basis": "statement-or-family-review",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "marketValue": {
           "status": "source-backed",
           "basis": "statement-valuation",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "unrealizedPnL": {
           "status": "source-backed",
           "basis": "derived",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         }
       }
@@ -32611,7 +32611,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "sanshi-fund-9069671554-2026-06-30-unknown",
+      "document": "sanshi-fund-9069671554-2026-10-31-unknown",
       "pointer": "/holdings/0"
     },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -32625,15 +32625,15 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1820926.864,
     "avgCost": 120.8176,
-    "currentPrice": 161.5675,
+    "currentPrice": 175.4815,
     "costBasis": 220000000,
     "costBasisSource": "gross-paid",
     "printedCostBasis": 219989000.54,
-    "marketValue": 294202601.1,
-    "unrealizedPnL": 74202601.1,
+    "marketValue": 319538977.49,
+    "unrealizedPnL": 99538977.49,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 33.73,
+    "returnPct": 45.24,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -32644,31 +32644,31 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true,
     "integrity": {
       "positionId": "position-ed2bbd97781d1039e83652aa",
-      "quantityAsOf": "2026-06-30",
+      "quantityAsOf": "2026-10-31",
       "formulaVersion": "financial-integrity-v1",
       "metrics": {
         "quantity": {
           "status": "source-backed",
           "basis": "statement-unit-balance",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "costBasis": {
           "status": "source-backed",
           "basis": "statement-or-family-review",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "marketValue": {
           "status": "source-backed",
           "basis": "statement-valuation",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "unrealizedPnL": {
           "status": "source-backed",
           "basis": "derived",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         }
       }
@@ -32676,7 +32676,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "sanshi-fund-9069671634-2026-06-30-unknown",
+      "document": "sanshi-fund-9069671634-2026-10-31-unknown",
       "pointer": "/holdings/0"
     },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -32690,15 +32690,15 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1761264.629,
     "avgCost": 116.3936,
-    "currentPrice": 161.5675,
+    "currentPrice": 175.4815,
     "costBasis": 205000000,
     "costBasisSource": "gross-paid",
     "printedCostBasis": 204989750.51,
-    "marketValue": 284563122.95,
-    "unrealizedPnL": 79563122.95,
+    "marketValue": 309069358.99,
+    "unrealizedPnL": 104069358.99,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 38.81,
+    "returnPct": 50.77,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -32709,31 +32709,31 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true,
     "integrity": {
       "positionId": "position-10afdb781a290bc7463ec50b",
-      "quantityAsOf": "2026-06-30",
+      "quantityAsOf": "2026-10-31",
       "formulaVersion": "financial-integrity-v1",
       "metrics": {
         "quantity": {
           "status": "source-backed",
           "basis": "statement-unit-balance",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "costBasis": {
           "status": "source-backed",
           "basis": "statement-or-family-review",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "marketValue": {
           "status": "source-backed",
           "basis": "statement-valuation",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "unrealizedPnL": {
           "status": "source-backed",
           "basis": "derived",
-          "effectiveDate": "2026-06-30",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         }
       }
@@ -50092,8 +50092,8 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-06-30",
     "date": "2026-06-30",
-    "nav": 1119877053.25,
-    "accountsOnDate": 6,
+    "nav": 3164681512.54,
+    "accountsOnDate": 11,
     "accountsCarried": 6,
     "flowIn": -986,
     "flowWeighted": -657.3333333333334,
@@ -50108,385 +50108,385 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-07-01",
     "date": "2026-07-01",
-    "nav": 1122211497.89,
+    "nav": 3167015957.18,
     "accountsOnDate": 4,
-    "accountsCarried": 12,
+    "accountsCarried": 17,
     "flowIn": 0,
     "flowWeighted": 0,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 1119877053.25,
-    "linkClose": 1119877053.25,
-    "linkAccounts": 12,
+    "linkOpen": 3164681512.54,
+    "linkClose": 3164681512.54,
+    "linkAccounts": 17,
     "panelComplete": false
   },
   {
     "period": "2026-07-02",
     "date": "2026-07-02",
-    "nav": 1123147884.71,
+    "nav": 3167952344,
     "accountsOnDate": 1,
-    "accountsCarried": 16,
+    "accountsCarried": 21,
     "flowIn": 0,
     "flowWeighted": 0,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 1122211497.89,
-    "linkClose": 1122211497.89,
-    "linkAccounts": 16,
+    "linkOpen": 3167015957.18,
+    "linkClose": 3167015957.18,
+    "linkAccounts": 21,
     "panelComplete": false
   },
   {
     "period": "2026-07-06",
     "date": "2026-07-06",
-    "nav": 1176282341.76,
+    "nav": 3221086801.05,
     "accountsOnDate": 2,
-    "accountsCarried": 15,
+    "accountsCarried": 20,
     "flowIn": -7494,
     "flowWeighted": -2106.422680412371,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 1123147884.71,
-    "linkClose": 1176282341.76,
-    "linkAccounts": 17,
+    "linkOpen": 3167952344,
+    "linkClose": 3221086801.05,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-07-10",
     "date": "2026-07-10",
-    "nav": 1300206253.15,
+    "nav": 3345010712.44,
     "accountsOnDate": 3,
-    "accountsCarried": 14,
+    "accountsCarried": 19,
     "flowIn": -142601,
     "flowWeighted": -14138.009900990099,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 1176282341.76,
-    "linkClose": 1300206253.15,
-    "linkAccounts": 17,
+    "linkOpen": 3221086801.05,
+    "linkClose": 3345010712.44,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-07-27",
     "date": "2026-07-27",
-    "nav": 1296533751.87,
+    "nav": 3341338211.16,
     "accountsOnDate": 2,
-    "accountsCarried": 15,
+    "accountsCarried": 20,
     "flowIn": -9559,
     "flowWeighted": -1634.3148148148148,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 1300206253.15,
-    "linkClose": 1296533751.87,
-    "linkAccounts": 17,
+    "linkOpen": 3345010712.44,
+    "linkClose": 3341338211.16,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-07-31",
     "date": "2026-07-31",
-    "nav": 2566028192.51,
+    "nav": 4610832651.8,
     "accountsOnDate": 9,
-    "accountsCarried": 13,
+    "accountsCarried": 18,
     "flowIn": -22945,
     "flowWeighted": -13727.612903225807,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 1296533751.87,
-    "linkClose": 1304898361,
-    "linkAccounts": 17,
+    "linkOpen": 3341338211.16,
+    "linkClose": 3349702820.29,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-08-03",
     "date": "2026-08-03",
-    "nav": 2566039545.76,
+    "nav": 4610844005.05,
     "accountsOnDate": 3,
-    "accountsCarried": 19,
+    "accountsCarried": 24,
     "flowIn": 0,
     "flowWeighted": null,
     "flowTimingKnown": false,
     "returnMethod": "unproven",
     "unreportedFlowValue": 7201.78,
-    "linkOpen": 2566028192.51,
-    "linkClose": 2566039545.76,
-    "linkAccounts": 22,
+    "linkOpen": 4610832651.8,
+    "linkClose": 4610844005.05,
+    "linkAccounts": 27,
     "panelComplete": false
   },
   {
     "period": "2026-08-06",
     "date": "2026-08-06",
-    "nav": 2566044265.65,
+    "nav": 4610848724.94,
     "accountsOnDate": 2,
-    "accountsCarried": 20,
+    "accountsCarried": 25,
     "flowIn": 0,
     "flowWeighted": 0,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 2566039545.76,
-    "linkClose": 2566044265.65,
-    "linkAccounts": 22,
+    "linkOpen": 4610844005.05,
+    "linkClose": 4610848724.94,
+    "linkAccounts": 27,
     "panelComplete": false
   },
   {
     "period": "2026-08-07",
     "date": "2026-08-07",
-    "nav": 2876028766.42,
+    "nav": 4920833225.71,
     "accountsOnDate": 1,
-    "accountsCarried": 22,
+    "accountsCarried": 27,
     "flowIn": 0,
     "flowWeighted": 0,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 2566044265.65,
-    "linkClose": 2566044265.65,
-    "linkAccounts": 22,
+    "linkOpen": 4610848724.94,
+    "linkClose": 4610848724.94,
+    "linkAccounts": 27,
     "panelComplete": false
   },
   {
     "period": "2026-08-10",
     "date": "2026-08-10",
-    "nav": 2871260355.34,
+    "nav": 4916064814.63,
     "accountsOnDate": 1,
-    "accountsCarried": 22,
+    "accountsCarried": 27,
     "flowIn": -30690,
     "flowWeighted": -20790,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 2876028766.42,
-    "linkClose": 2871260355.34,
-    "linkAccounts": 23,
+    "linkOpen": 4920833225.71,
+    "linkClose": 4916064814.63,
+    "linkAccounts": 28,
     "panelComplete": false
   },
   {
     "period": "2026-08-11",
     "date": "2026-08-11",
-    "nav": 2880759243.1,
+    "nav": 4925563702.39,
     "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "accountsCarried": 26,
     "flowIn": -65735,
     "flowWeighted": -17060.625,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 2871260355.34,
-    "linkClose": 2880759243.1,
-    "linkAccounts": 23,
+    "linkOpen": 4916064814.63,
+    "linkClose": 4925563702.39,
+    "linkAccounts": 28,
     "panelComplete": false
   },
   {
     "period": "2026-08-13",
     "date": "2026-08-13",
-    "nav": 2990683753.28,
+    "nav": 5035488212.57,
     "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "accountsCarried": 26,
     "flowIn": 112393342,
     "flowWeighted": 47170527.00000001,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 2880759243.1,
-    "linkClose": 2990683753.28,
-    "linkAccounts": 23,
+    "linkOpen": 4925563702.39,
+    "linkClose": 5035488212.57,
+    "linkAccounts": 28,
     "panelComplete": false
   },
   {
     "period": "2026-08-31",
     "date": "2026-08-31",
-    "nav": 3010900417.53,
+    "nav": 5055704876.82,
     "accountsOnDate": 3,
-    "accountsCarried": 20,
+    "accountsCarried": 25,
     "flowIn": -14984.6,
     "flowWeighted": null,
     "flowTimingKnown": false,
     "returnMethod": "unproven",
     "unreportedFlowValue": 5781806.04,
-    "linkOpen": 2990683753.28,
-    "linkClose": 3010900417.53,
-    "linkAccounts": 23,
+    "linkOpen": 5035488212.57,
+    "linkClose": 5055704876.82,
+    "linkAccounts": 28,
     "panelComplete": false
   },
   {
     "period": "2026-09-29",
     "date": "2026-09-29",
-    "nav": 2975455422.63,
+    "nav": 5020259881.92,
     "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "accountsCarried": 26,
     "flowIn": 0,
     "flowWeighted": 0,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 3010900417.53,
-    "linkClose": 2975455422.63,
-    "linkAccounts": 23,
+    "linkOpen": 5055704876.82,
+    "linkClose": 5020259881.92,
+    "linkAccounts": 28,
     "panelComplete": false
   },
   {
     "period": "2026-09-30",
     "date": "2026-09-30",
-    "nav": 2955081271.31,
+    "nav": 4999885730.6,
     "accountsOnDate": 9,
-    "accountsCarried": 14,
+    "accountsCarried": 19,
     "flowIn": -81004.8,
     "flowWeighted": -38556.00372870459,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 2975455422.63,
-    "linkClose": 2955081271.31,
-    "linkAccounts": 23,
+    "linkOpen": 5020259881.92,
+    "linkClose": 4999885730.6,
+    "linkAccounts": 28,
     "panelComplete": false
   },
   {
     "period": "2026-10-05",
     "date": "2026-10-05",
-    "nav": 2955089053.27,
+    "nav": 4999893512.56,
     "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "accountsCarried": 26,
     "flowIn": 0,
     "flowWeighted": null,
     "flowTimingKnown": false,
     "returnMethod": "unproven",
     "unreportedFlowValue": 7781.96,
-    "linkOpen": 2955081271.31,
-    "linkClose": 2955089053.27,
-    "linkAccounts": 23,
+    "linkOpen": 4999885730.6,
+    "linkClose": 4999893512.56,
+    "linkAccounts": 28,
     "panelComplete": false
   },
   {
     "period": "2026-10-06",
     "date": "2026-10-06",
-    "nav": 2943964423.32,
+    "nav": 4988768882.61,
     "accountsOnDate": 4,
-    "accountsCarried": 19,
+    "accountsCarried": 24,
     "flowIn": -70005,
     "flowWeighted": null,
     "flowTimingKnown": false,
     "returnMethod": "unproven",
     "unreportedFlowValue": 7138.6,
-    "linkOpen": 2955089053.27,
-    "linkClose": 2943964423.32,
-    "linkAccounts": 23,
+    "linkOpen": 4999893512.56,
+    "linkClose": 4988768882.61,
+    "linkAccounts": 28,
     "panelComplete": false
   },
   {
     "period": "2026-10-07",
     "date": "2026-10-07",
-    "nav": 2943593727.97,
+    "nav": 4988398187.26,
     "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "accountsCarried": 26,
     "flowIn": -18689,
     "flowWeighted": -12193.527272727273,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 2943964423.32,
-    "linkClose": 2943593727.97,
-    "linkAccounts": 23,
+    "linkOpen": 4988768882.61,
+    "linkClose": 4988398187.26,
+    "linkAccounts": 28,
     "panelComplete": false
   },
   {
     "period": "2026-10-14",
     "date": "2026-10-14",
-    "nav": 3374898104.58,
+    "nav": 5419702563.87,
     "accountsOnDate": 1,
-    "accountsCarried": 23,
+    "accountsCarried": 28,
     "flowIn": 0,
     "flowWeighted": 0,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 2943593727.97,
-    "linkClose": 2943593727.97,
-    "linkAccounts": 23,
+    "linkOpen": 4988398187.26,
+    "linkClose": 4988398187.26,
+    "linkAccounts": 28,
     "panelComplete": false
   },
   {
     "period": "2026-10-26",
     "date": "2026-10-26",
-    "nav": 3380395452.59,
+    "nav": 5425199911.88,
     "accountsOnDate": 3,
-    "accountsCarried": 22,
+    "accountsCarried": 27,
     "flowIn": 0,
     "flowWeighted": 0,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 3374898104.58,
-    "linkClose": 3332267925.25,
-    "linkAccounts": 24,
+    "linkOpen": 5419702563.87,
+    "linkClose": 5377072384.54,
+    "linkAccounts": 29,
     "panelComplete": true
   },
   {
     "period": "2026-10-31",
     "date": "2026-10-31",
-    "nav": 3373765076.3,
-    "accountsOnDate": 1,
+    "nav": 5595229718.31,
+    "accountsOnDate": 6,
     "accountsCarried": 24,
     "flowIn": 0,
     "flowWeighted": 0,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 3380395452.59,
-    "linkClose": 3373765076.3,
-    "linkAccounts": 25,
+    "linkOpen": 5425199911.88,
+    "linkClose": 5595229718.31,
+    "linkAccounts": 30,
     "panelComplete": true
   },
   {
     "period": "2026-11-02",
     "date": "2026-11-02",
-    "nav": 3373575049.31,
+    "nav": 5595039691.32,
     "accountsOnDate": 1,
-    "accountsCarried": 24,
+    "accountsCarried": 29,
     "flowIn": -1765,
     "flowWeighted": -1276.8085106382978,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 3373765076.3,
-    "linkClose": 3373575049.31,
-    "linkAccounts": 25,
+    "linkOpen": 5595229718.31,
+    "linkClose": 5595039691.32,
+    "linkAccounts": 30,
     "panelComplete": true
   },
   {
     "period": "2026-11-03",
     "date": "2026-11-03",
-    "nav": 3391693390.99,
+    "nav": 5613158033,
     "accountsOnDate": 2,
-    "accountsCarried": 23,
+    "accountsCarried": 28,
     "flowIn": 0,
     "flowWeighted": 0,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 3373575049.31,
-    "linkClose": 3391693390.99,
-    "linkAccounts": 25,
+    "linkOpen": 5595039691.32,
+    "linkClose": 5613158033,
+    "linkAccounts": 30,
     "panelComplete": true
   },
   {
     "period": "2026-11-04",
     "date": "2026-11-04",
-    "nav": 3379171786.73,
+    "nav": 5600636428.74,
     "accountsOnDate": 2,
-    "accountsCarried": 23,
+    "accountsCarried": 28,
     "flowIn": -25884,
     "flowWeighted": -22698.285714285714,
     "flowTimingKnown": true,
     "returnMethod": "modified-dietz",
     "unreportedFlowValue": 0,
-    "linkOpen": 3391693390.99,
-    "linkClose": 3379171786.73,
-    "linkAccounts": 25,
+    "linkOpen": 5613158033,
+    "linkClose": 5600636428.74,
+    "linkAccounts": 30,
     "panelComplete": true
   }
 ];
@@ -50930,6 +50930,66 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-11-04",
       "date": "2026-11-04",
       "nav": 102112920.64
+    }
+  ],
+  "sanshi-fund-9039671821": [
+    {
+      "period": "2026-06-30",
+      "date": "2026-06-30",
+      "nav": 976826519.91
+    },
+    {
+      "period": "2026-10-31",
+      "date": "2026-10-31",
+      "nav": 1060949652.33
+    }
+  ],
+  "sanshi-fund-9039671854": [
+    {
+      "period": "2026-06-30",
+      "date": "2026-06-30",
+      "nav": 195688390.51
+    },
+    {
+      "period": "2026-10-31",
+      "date": "2026-10-31",
+      "nav": 212540840.82
+    }
+  ],
+  "sanshi-fund-9039671912": [
+    {
+      "period": "2026-06-30",
+      "date": "2026-06-30",
+      "nav": 293523824.82
+    },
+    {
+      "period": "2026-10-31",
+      "date": "2026-10-31",
+      "nav": 319365812.38
+    }
+  ],
+  "sanshi-fund-9069671554": [
+    {
+      "period": "2026-06-30",
+      "date": "2026-06-30",
+      "nav": 294202601.1
+    },
+    {
+      "period": "2026-10-31",
+      "date": "2026-10-31",
+      "nav": 319538977.49
+    }
+  ],
+  "sanshi-fund-9069671634": [
+    {
+      "period": "2026-06-30",
+      "date": "2026-06-30",
+      "nav": 284563122.95
+    },
+    {
+      "period": "2026-10-31",
+      "date": "2026-10-31",
+      "nav": 309069358.99
     }
   ],
   "v-e-c-assago-capital-management-llp-128004": [
@@ -51484,6 +51544,91 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       ]
     },
     {
+      "accountId": "sanshi-fund-9039671821",
+      "points": 2,
+      "first": "2026-06-30",
+      "last": "2026-10-31",
+      "latestValue": 1060949652.33,
+      "bookValue": 1060949652.33,
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-06-30",
+          "to": "2026-10-31",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
+    },
+    {
+      "accountId": "sanshi-fund-9039671854",
+      "points": 2,
+      "first": "2026-06-30",
+      "last": "2026-10-31",
+      "latestValue": 212540840.82,
+      "bookValue": 212540840.82,
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-06-30",
+          "to": "2026-10-31",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
+    },
+    {
+      "accountId": "sanshi-fund-9039671912",
+      "points": 2,
+      "first": "2026-06-30",
+      "last": "2026-10-31",
+      "latestValue": 319365812.38,
+      "bookValue": 319365812.38,
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-06-30",
+          "to": "2026-10-31",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
+    },
+    {
+      "accountId": "sanshi-fund-9069671554",
+      "points": 2,
+      "first": "2026-06-30",
+      "last": "2026-10-31",
+      "latestValue": 319538977.49,
+      "bookValue": 319538977.49,
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-06-30",
+          "to": "2026-10-31",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
+    },
+    {
+      "accountId": "sanshi-fund-9069671634",
+      "points": 2,
+      "first": "2026-06-30",
+      "last": "2026-10-31",
+      "latestValue": 309069358.99,
+      "bookValue": 309069358.99,
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-06-30",
+          "to": "2026-10-31",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
+    },
+    {
       "accountId": "svan-investment-managers-llp-8710067",
       "points": 6,
       "first": "2026-04-30",
@@ -51934,41 +52079,6 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 72581778.8
     },
     {
-      "accountId": "sanshi-fund-9039671821",
-      "provider": "Sanshi Fund",
-      "accountNo": "9039671821",
-      "date": "2026-06-30",
-      "bookValue": 976826519.91
-    },
-    {
-      "accountId": "sanshi-fund-9039671854",
-      "provider": "Sanshi Fund",
-      "accountNo": "9039671854",
-      "date": "2026-06-30",
-      "bookValue": 195688390.51
-    },
-    {
-      "accountId": "sanshi-fund-9039671912",
-      "provider": "Sanshi Fund",
-      "accountNo": "9039671912",
-      "date": "2026-06-30",
-      "bookValue": 293523824.82
-    },
-    {
-      "accountId": "sanshi-fund-9069671554",
-      "provider": "Sanshi Fund",
-      "accountNo": "9069671554",
-      "date": "2026-06-30",
-      "bookValue": 294202601.1
-    },
-    {
-      "accountId": "sanshi-fund-9069671634",
-      "provider": "Sanshi Fund",
-      "accountNo": "9069671634",
-      "date": "2026-06-30",
-      "bookValue": 284563122.95
-    },
-    {
       "accountId": "sky-capital-rising-titans-fund-SKY003",
       "provider": "Sky Capital Rising Titans Fund",
       "accountNo": "SKY003",
@@ -52130,15 +52240,15 @@ export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = [];
 export const BOOK_ATTRIBUTION: Attribution = {
   "from": "2026-05-31",
   "to": "2026-11-04",
-  "openValue": 3331020519.49,
-  "closeValue": 3379171786.73,
-  "priceEffect": -69176370.82,
+  "openValue": 5375824978.78,
+  "closeValue": 5600636428.74,
+  "priceEffect": 107483811.91,
   "tradeEffect": 84356449.24,
   "enteredValue": 173996473.56,
   "exitedValue": 99872612.94,
   "undecomposedValue": -41152671.82,
-  "bookValue": 10736119315.49,
-  "coveredBookValue": 3379734867.65,
+  "bookValue": 10912779498.21,
+  "coveredBookValue": 5601199509.66,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
@@ -52498,6 +52608,91 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "rowsUnpriced": 0
     },
     {
+      "accountId": "sanshi-fund-9039671821",
+      "from": "2026-06-30",
+      "to": "2026-10-31",
+      "days": 123,
+      "openValue": 976826519.91,
+      "closeValue": 1060949652.33,
+      "priceEffect": 84123132.42,
+      "tradeEffect": 0,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 1,
+      "rowsEntered": 0,
+      "rowsExited": 0,
+      "rowsUnpriced": 0
+    },
+    {
+      "accountId": "sanshi-fund-9039671854",
+      "from": "2026-06-30",
+      "to": "2026-10-31",
+      "days": 123,
+      "openValue": 195688390.51,
+      "closeValue": 212540840.82,
+      "priceEffect": 16852450.31,
+      "tradeEffect": 0,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 1,
+      "rowsEntered": 0,
+      "rowsExited": 0,
+      "rowsUnpriced": 0
+    },
+    {
+      "accountId": "sanshi-fund-9039671912",
+      "from": "2026-06-30",
+      "to": "2026-10-31",
+      "days": 123,
+      "openValue": 293523824.82,
+      "closeValue": 319365812.38,
+      "priceEffect": 25841987.56,
+      "tradeEffect": 0,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 1,
+      "rowsEntered": 0,
+      "rowsExited": 0,
+      "rowsUnpriced": 0
+    },
+    {
+      "accountId": "sanshi-fund-9069671554",
+      "from": "2026-06-30",
+      "to": "2026-10-31",
+      "days": 123,
+      "openValue": 294202601.1,
+      "closeValue": 319538977.49,
+      "priceEffect": 25336376.39,
+      "tradeEffect": 0,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 1,
+      "rowsEntered": 0,
+      "rowsExited": 0,
+      "rowsUnpriced": 0
+    },
+    {
+      "accountId": "sanshi-fund-9069671634",
+      "from": "2026-06-30",
+      "to": "2026-10-31",
+      "days": 123,
+      "openValue": 284563122.95,
+      "closeValue": 309069358.99,
+      "priceEffect": 24506236.05,
+      "tradeEffect": 0,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 1,
+      "rowsEntered": 0,
+      "rowsExited": 0,
+      "rowsUnpriced": 0
+    },
+    {
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
       "to": "2026-11-04",
@@ -52567,6 +52762,91 @@ export const BOOK_ATTRIBUTION: Attribution = {
     }
   ],
   "rows": [
+    {
+      "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+      "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+      "accountId": "sanshi-fund-9039671821",
+      "from": "2026-06-30",
+      "to": "2026-10-31",
+      "openValue": 976826519.91,
+      "closeValue": 1060949652.33,
+      "openPrice": 161.5675,
+      "closePrice": 175.4815,
+      "openQty": 6045934.485,
+      "closeQty": 6045934.485,
+      "kind": "held",
+      "priceEffect": 84123132.42,
+      "tradeEffect": 0,
+      "returnPct": 8.6119
+    },
+    {
+      "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2",
+      "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2",
+      "accountId": "sanshi-fund-9039671912",
+      "from": "2026-06-30",
+      "to": "2026-10-31",
+      "openValue": 293523824.82,
+      "closeValue": 319365812.38,
+      "openPrice": 125.3582,
+      "closePrice": 136.3948,
+      "openQty": 2341480.851,
+      "closeQty": 2341480.851,
+      "kind": "held",
+      "priceEffect": 25841987.56,
+      "tradeEffect": 0,
+      "returnPct": 8.8041
+    },
+    {
+      "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+      "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+      "accountId": "sanshi-fund-9069671554",
+      "from": "2026-06-30",
+      "to": "2026-10-31",
+      "openValue": 294202601.1,
+      "closeValue": 319538977.49,
+      "openPrice": 161.5675,
+      "closePrice": 175.4815,
+      "openQty": 1820926.864,
+      "closeQty": 1820926.864,
+      "kind": "held",
+      "priceEffect": 25336376.39,
+      "tradeEffect": 0,
+      "returnPct": 8.6119
+    },
+    {
+      "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+      "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+      "accountId": "sanshi-fund-9069671634",
+      "from": "2026-06-30",
+      "to": "2026-10-31",
+      "openValue": 284563122.95,
+      "closeValue": 309069358.99,
+      "openPrice": 161.5675,
+      "closePrice": 175.4815,
+      "openQty": 1761264.629,
+      "closeQty": 1761264.629,
+      "kind": "held",
+      "priceEffect": 24506236.05,
+      "tradeEffect": 0,
+      "returnPct": 8.6119
+    },
+    {
+      "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
+      "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
+      "accountId": "sanshi-fund-9039671854",
+      "from": "2026-06-30",
+      "to": "2026-10-31",
+      "openValue": 195688390.51,
+      "closeValue": 212540840.82,
+      "openPrice": 161.5675,
+      "closePrice": 175.4815,
+      "openQty": 1211186.597,
+      "closeQty": 1211186.597,
+      "kind": "held",
+      "priceEffect": 16852450.31,
+      "tradeEffect": 0,
+      "returnPct": 8.6119
+    },
     {
       "securityKey": "pvr-inox",
       "security": "PVR Inox Ltd",
@@ -62540,27 +62820,27 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "sanshi-fund-9039671821": {
-    "latestValuationDate": "2026-06-30",
+    "latestValuationDate": "2026-10-31",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "sanshi-fund-9039671854": {
-    "latestValuationDate": "2026-06-30",
+    "latestValuationDate": "2026-10-31",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "sanshi-fund-9039671912": {
-    "latestValuationDate": "2026-06-30",
+    "latestValuationDate": "2026-10-31",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "sanshi-fund-9069671554": {
-    "latestValuationDate": "2026-06-30",
+    "latestValuationDate": "2026-10-31",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "sanshi-fund-9069671634": {
-    "latestValuationDate": "2026-06-30",
+    "latestValuationDate": "2026-10-31",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
@@ -100447,9 +100727,9 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   "sanshi-fund-9039671821": [
     {
       "reportType": "unknown",
-      "source": "sanshi-fund-9039671821-2026-06-30-unknown",
+      "source": "sanshi-fund-9039671821-2026-10-31-unknown",
       "periodFrom": "2025-10-03",
-      "periodTo": "2026-06-30",
+      "periodTo": "2026-10-31",
       "basis": "window",
       "opening": null,
       "contribution": 749962501.87,
@@ -100460,7 +100740,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "income": null,
       "fees": null,
       "expenses": null,
-      "closing": 976826519.91,
+      "closing": 1060949652.33,
       "profit": null,
       "accruedIncome": null,
       "changeInAccruals": null,
@@ -100482,9 +100762,9 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   "sanshi-fund-9039671854": [
     {
       "reportType": "unknown",
-      "source": "sanshi-fund-9039671854-2026-06-30-unknown",
+      "source": "sanshi-fund-9039671854-2026-10-31-unknown",
       "periodFrom": "2025-10-06",
-      "periodTo": "2026-06-30",
+      "periodTo": "2026-10-31",
       "basis": "window",
       "opening": null,
       "contribution": 149992500.37,
@@ -100495,7 +100775,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "income": null,
       "fees": null,
       "expenses": null,
-      "closing": 195688390.51,
+      "closing": 212540840.82,
       "profit": null,
       "accruedIncome": null,
       "changeInAccruals": null,
@@ -100517,9 +100797,9 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   "sanshi-fund-9039671912": [
     {
       "reportType": "unknown",
-      "source": "sanshi-fund-9039671912-2026-06-30-unknown",
+      "source": "sanshi-fund-9039671912-2026-10-31-unknown",
       "periodFrom": "2025-12-16",
-      "periodTo": "2026-06-30",
+      "periodTo": "2026-10-31",
       "basis": "window",
       "opening": null,
       "contribution": 249987500.62,
@@ -100530,7 +100810,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "income": null,
       "fees": null,
       "expenses": null,
-      "closing": 293523824.82,
+      "closing": 319365812.38,
       "profit": null,
       "accruedIncome": null,
       "changeInAccruals": null,
@@ -100552,9 +100832,9 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   "sanshi-fund-9069671554": [
     {
       "reportType": "unknown",
-      "source": "sanshi-fund-9069671554-2026-06-30-unknown",
+      "source": "sanshi-fund-9069671554-2026-10-31-unknown",
       "periodFrom": "2025-03-21",
-      "periodTo": "2026-06-30",
+      "periodTo": "2026-10-31",
       "basis": "window",
       "opening": null,
       "contribution": 219989000.54,
@@ -100565,7 +100845,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "income": null,
       "fees": null,
       "expenses": null,
-      "closing": 294202601.1,
+      "closing": 319538977.49,
       "profit": null,
       "accruedIncome": null,
       "changeInAccruals": null,
@@ -100587,9 +100867,9 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   "sanshi-fund-9069671634": [
     {
       "reportType": "unknown",
-      "source": "sanshi-fund-9069671634-2026-06-30-unknown",
+      "source": "sanshi-fund-9069671634-2026-10-31-unknown",
       "periodFrom": "2025-04-30",
-      "periodTo": "2026-06-30",
+      "periodTo": "2026-10-31",
       "basis": "window",
       "opening": null,
       "contribution": 204989750.51,
@@ -100600,7 +100880,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "income": null,
       "fees": null,
       "expenses": null,
-      "closing": 284563122.95,
+      "closing": 309069358.99,
       "profit": null,
       "accruedIncome": null,
       "changeInAccruals": null,

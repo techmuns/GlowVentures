@@ -90,11 +90,11 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani Family Trust 2 | — | — | Opening valuation and complete dated cash flows are missing |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani Family Trust 3 | — | — | Opening valuation and complete dated cash flows are missing |
 | Consolidated review (MOPWM) | MOPWM | Not attributed to a member | — | — | Opening valuation and complete dated cash flows are missing |
-| Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | — | Opening valuation and complete dated cash flows are missing |
-| Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-06-30 | — | Opening valuation and complete dated cash flows are missing |
-| Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | — | Opening valuation and complete dated cash flows are missing |
-| Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | — | Opening valuation and complete dated cash flows are missing |
-| Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | — | Opening valuation and complete dated cash flows are missing |
+| Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-10-31 | — | Opening valuation and complete dated cash flows are missing |
+| Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-10-31 | — | Opening valuation and complete dated cash flows are missing |
+| Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-10-31 | — | Opening valuation and complete dated cash flows are missing |
+| Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-10-31 | — | Opening valuation and complete dated cash flows are missing |
+| Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-10-31 | — | Opening valuation and complete dated cash flows are missing |
 | Sky Capital Rising Titans Fund | SKY003 | Bharat Jaisinghani | 2026-08-31 | — | Opening valuation and complete dated cash flows are missing |
 | Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-08-31 | — | Opening valuation and complete dated cash flows are missing |
 | Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-08-31 | — | Opening valuation and complete dated cash flows are missing |
