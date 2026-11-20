@@ -37,6 +37,7 @@ import { rollAccountTape } from "./lib/tapeRoll.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
 import { applyFamilyAdvice } from "./ingest/reference/familyAdvisedInvestments.mjs";
 import { adviseBalances } from "./ingest/reference/familyAdvisedBalances.mjs";
+import { familyDematShares, DEMAT_SHARES_DOCKEY } from "./ingest/reference/familyDematShares.mjs";
 import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs";
 import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
@@ -2502,8 +2503,18 @@ function build(archived, archiveCount = archived.length, references = {}) {
       + [...byProvider].map(([p, n]) => `${p} ${n}`).join(", ")
       + `. Each carries no facts; every figure in it was checked against its PDF at extraction (docs/EXTRACTION-REPORT.md).`);
   }
+  // Ajay's Motilal demat 1201090012539150: its 31 Oct holding statement is read
+  // and archived for provenance, but it is NOT grouped into the account's own
+  // processing. The account keeps its 31 Jul tape (`transactionsOnly`) so its
+  // funds stay untouched — on 1 Oct 2026 ~Rs 50 Cr of its fund units moved to AMC
+  // folios not yet loaded, and making this the authoritative holdings document
+  // would drop them. The statement is quantity-only (Stage 10cz), so it never
+  // forced the account's date forward (`check-reads` `valued()`); only its two new
+  // listed shares are taken, straight from the document, by `familyDematShares`.
+  let dematSharesDoc = null;
   const byAccount = new Map();
   for (const d of docs) {
+    if (d.docKey === DEMAT_SHARES_DOCKEY) { dematSharesDoc = d; continue; }
     const k = acctKey(d);
     if (!k) continue;
     (byAccount.get(k) ?? byAccount.set(k, []).get(k)).push(d);
@@ -5006,6 +5017,18 @@ function build(archived, archiveCount = archived.length, references = {}) {
   const polycab = positions.filter((p) => RINGFENCED_SECURITY_KEYS.has(p.securityKey));
   for (let i = positions.length - 1; i >= 0; i--) {
     if (RINGFENCED_SECURITY_KEYS.has(positions[i].securityKey)) positions.splice(i, 1);
+  }
+
+  // AJAY'S MOTILAL DEMAT 1201090012539150 — its two new listed shares (Kingfa,
+  // Manorama) from the 31 Oct holding statement above, as the account's unvalued
+  // holdings, each pointing at the real archived statement row. Pushed before the
+  // review layer and the unvalued passes so they dedupe, carry a
+  // `sameUnitsReportedBy` mark and sort like any other such row. The guard keeps
+  // it a no-op if the same ISIN ever reaches the account by another route.
+  for (const h of familyDematShares(dematSharesDoc)) {
+    const dup = unvaluedHoldings.some((u) => u.accountId === h.accountId && (u.isin === h.isin || u.securityKey === h.securityKey))
+      || positions.some((p) => p.accountId === h.accountId && (p.isin === h.isin || p.securityKey === h.securityKey));
+    if (!dup) unvaluedHoldings.push(h);
   }
 
   // THE REVIEW'S PRIVATE-MARKET ROWS, IN PLACE OF THE STATEMENT ROWS THEY REPLACE.

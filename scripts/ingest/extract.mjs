@@ -27,6 +27,7 @@ import { readSpreadsheet, witnessCheck } from "./lib/sheet.mjs";
 import { makeDocument, makeDocKey, assertNormalized, deriveDocument, DOCUMENT_FIELDS } from "./lib/document.mjs";
 import { resolveOwner } from "../../shared/owners.mjs";
 import { securityKeyOf, stripDepositoryTail } from "../../shared/securityKey.mjs";
+import { DEMAT_SHARES_DOCKEY } from "./reference/familyDematShares.mjs";
 import * as pms from "./providers/pmsStatements.mjs";
 import * as threeSixtyOne from "./providers/threeSixtyOne.mjs";
 import * as sanshiFund from "./providers/sanshiFund.mjs";
@@ -987,6 +988,13 @@ export function nameScannedHoldings(docs) {
   const byIsin = new Map();
   for (const d of docs) {
     if (isScanned(d) || d.status === "failed") continue;
+    // Ajay's Motilal demat 1201090012539150 holding statement is held as a
+    // provenance-only source: the book keeps that account on its tape and takes
+    // only its two new listed shares (`familyDematShares`), so it is not a full
+    // participant in the book and must not re-name another account's holdings.
+    // Its clipped CDSL name for 360 ONE SOF-8 (INF0RO522964) would otherwise
+    // override the fuller name Bharat's HDFC NSDL scan (22025655) carries.
+    if (d.docKey === DEMAT_SHARES_DOCKEY) continue;
     for (const k of ["holdings", "capitalGains", "transactions", "openLots"]) {
       for (const r of d[k] ?? []) {
         if (!r?.isin || !r.security) continue;

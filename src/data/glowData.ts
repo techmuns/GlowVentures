@@ -6377,6 +6377,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "mps",
     "security": "MPS Ltd",
     "symbol": "MPSLTD",
+    "isin": "INE943D01017",
     "accountId": "goldstandard-wealth-private-limited-100022",
     "memberId": null,
     "sector": "Information Technology",
@@ -8776,6 +8777,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "mps",
     "security": "MPS Ltd",
     "symbol": "MPSLTD",
+    "isin": "INE943D01017",
     "accountId": "goldstandard-wealth-private-limited-100023",
     "memberId": null,
     "sector": "Information Technology",
@@ -47150,6 +47152,48 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "asOf": "2026-10-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-10-31 records 55 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings",
+      "pointer": "/holdings/5"
+    },
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "kingfa-science",
+    "security": "KINGFA SCIENCE-EQ",
+    "isin": "INE473D01015",
+    "assetClass": "Equity",
+    "quantity": 17675,
+    "faceValue": null,
+    "lastMovementRate": 6773.5,
+    "lastMovementValue": 119721612.5,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-10-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-10-31 prints the price of this holding's last depository movement — ₹6,773.5 a unit — not a valuation of the 17,675 unit(s) held, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings",
+      "pointer": "/holdings/7"
+    },
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "manorama-ind",
+    "security": "MANORAMA IND-EQ2/",
+    "isin": "INE00VM01036",
+    "assetClass": "Equity",
+    "quantity": 73770,
+    "faceValue": null,
+    "lastMovementRate": 1795,
+    "lastMovementValue": 132417150,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-10-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-10-31 prints the price of this holding's last depository movement — ₹1,795 a unit — not a valuation of the 73,770 unit(s) held, so it carries a quantity and no value"
   },
   {
     "statementRecord": {
@@ -92573,9 +92617,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|mps-limited-equity-shares": {
+  "motilal-oswal-financial-services-demat-1201090012539150|mps": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "mps-limited-equity-shares",
+    "securityKey": "mps",
     "security": "MPS LIMITED-EQUITY SHARES",
     "isin": "INE943D01017",
     "periodFrom": "2026-04-01",
