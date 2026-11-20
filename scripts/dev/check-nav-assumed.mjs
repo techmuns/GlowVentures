@@ -65,7 +65,18 @@ try {
   const priced = await open(true);
   const chip = page.locator('[data-testid="nav-book-chip"]');
   // Once the histories are in, the financial-year card values the demats' shares at published closes.
-  await page.waitForFunction(() => Number(document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-assumed-count')) > 0, null, { timeout: 120000 });
+  // The whole-book NAV series now carries the Sanshi Fund units too (Stage 10pu made its statements a
+  // recognised `holdings` snapshot, so its ₹222 Cr correctly joins the book line), so the card does more
+  // work before the first assumed value lands; the calc is proven in assumedBookNav.test (count > 0), so
+  // give the browser longer here, and on a timeout print the chip's state so a real stall — not slowness —
+  // is debuggable from the CI log rather than a bare TimeoutError.
+  await page.waitForFunction(() => Number(document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-assumed-count')) > 0, null, { timeout: 240000 })
+    .catch(async (e) => {
+      const st = await page.evaluate(() => { const c = document.querySelector('[data-testid="nav-book-chip"]');
+        return c ? { count: c.getAttribute('data-nav-assumed-count'), period: c.getAttribute('data-nav-period'), ret: c.getAttribute('data-nav-ret'), pending: c.getAttribute('data-nav-pending') } : 'no chip'; });
+      console.error('nav-assumed: count>0 not reached —', JSON.stringify(st), '; pageerrors:', JSON.stringify(priced.errors));
+      throw e;
+    });
   const fy = await settled('fytd', 'data-nav-ret', true);
   const count = Number(await chip.getAttribute('data-nav-assumed-count'));
   assert.equal(await chip.getAttribute('data-nav-period'), 'fytd', 'the line opens on the financial year');
