@@ -33,6 +33,8 @@ import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SHARE_MOVEMENTS, BOOK_CAPITAL_MOVES
 import { LIVE_PRICED } from "./liveBook";
 import NSE_SYMBOLS from "@/data/nseSymbols.json";
 import { UPSTOX_INSTRUMENTS } from "../../../shared/upstoxInstruments.mjs";
+// @ts-ignore — the held-doc decision, read from its own config (one source of truth).
+import { DEMAT_SHARES_ACCOUNT, HARVEST_ISINS } from "../../../scripts/ingest/reference/familyDematShares.mjs";
 import type { Position } from "../types";
 
 let pass = 0;
@@ -562,7 +564,14 @@ const unvaluedLineOf = (p: Position) => BOOK_UNVALUED_HOLDINGS.find((u) => u.acc
 ok("every such candidate is an equity ISIN a holding statement records with no usable price, and says which in its kind",
   NP.length > 0 && NP.every((p) => {
     const u = unvaluedLineOf(p);
-    if (!u || txOnly.has(p.accountId)) return false;
+    // A transactions-only account's shares normally come off its tape
+    // (`depositoryShareCandidates`), not a holding statement, so one appearing
+    // here would be double-surfaced — EXCEPT Ajay's Motilal demat 1201090012539150,
+    // whose 31 Oct holding statement is partially held: its two new listed shares
+    // (Kingfa, Manorama; not on its 31 Jul tape) are the account's only holding-
+    // statement rows, and they are legitimate candidates (`familyDematShares.mjs`).
+    const heldDocRow = p.accountId === DEMAT_SHARES_ACCOUNT && HARVEST_ISINS.has(p.isin?.toUpperCase() ?? "");
+    if (!u || (txOnly.has(p.accountId) && !heldDocRow)) return false;
     const moved = typeof u.lastMovementRate === "number" && u.lastMovementRate > 0;
     return moved
       ? p.depositoryUnits?.kind === "last-movement" && p.depositoryUnits.lastMovementRate === u.lastMovementRate

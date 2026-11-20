@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-19T14:38:30.872Z",
+  "generatedAt": "2026-11-20T09:55:58.356Z",
   "summary": {
-    "documents": 465,
-    "parsed": 459,
+    "documents": 466,
+    "parsed": 460,
     "partial": 0,
     "failed": 6,
     "rowSumChecks": 445,
@@ -23,12 +23,12 @@
     "quantityOnlyMatches": 5,
     "confirmedSeparateByFamily": 4,
     "suspectedDuplicateEarnings": 1,
-    "securitiesWithoutSymbol": 36,
+    "securitiesWithoutSymbol": 50,
     "ownerNamesUnmatched": 0,
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 455,
+    "pdfsFound": 456,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -246,7 +246,7 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 459,
+    "parsed": 460,
     "partial": 0,
     "failed": 6,
     "byProvider": {
@@ -467,7 +467,7 @@
       },
       "Motilal Oswal Financial Services (demat)": {
         "holdings": {
-          "ok": 6,
+          "ok": 7,
           "partial": 0,
           "failed": 0
         },
@@ -277072,6 +277072,104 @@
         "securityKey": "zf-commercial-vehicle-control",
         "docs": [
           "green-lantern-capital-llp-510861-2026-06-30-investor-report"
+        ]
+      },
+      {
+        "security": "BSE LIMITED-EQ 2/",
+        "securityKey": "bse",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "DEEPAK FERTS_ CHM",
+        "securityKey": "deepak-ferts-chm",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "INSOLATION-EQ1/",
+        "securityKey": "insolation",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "KINGFA SCIENCE-EQ",
+        "securityKey": "kingfa-science",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "KRBL LTD-EQ RE.1/",
+        "securityKey": "krbl",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "MANORAMA IND-EQ2/",
+        "securityKey": "manorama-ind",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "NEULAND LABS EQUITY",
+        "securityKey": "neuland-labs",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "NUVAMA WEALTH-EQ2/",
+        "securityKey": "nuvama-wealth",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "TAAL TECH-EQ2/",
+        "securityKey": "taal-tech",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "TATVA CHINTAN-EQ",
+        "securityKey": "tatva-chintan",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "TEGA INDUSTRIES-EQ",
+        "securityKey": "tega-industries",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "VEDANTA ALUMINI - EQ",
+        "securityKey": "vedanta-alumini",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "ZEPTO LTD-EQ5/",
+        "securityKey": "zepto",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "ZOTA HEALTH CARE-EQ",
+        "securityKey": "zota-health-care",
+        "docs": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings"
         ]
       },
       {

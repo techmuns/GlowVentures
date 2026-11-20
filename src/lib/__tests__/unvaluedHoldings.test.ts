@@ -21,6 +21,8 @@ import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS, BO
 // @ts-ignore — precedence.mjs is a plain-JS committed decision table with no
 // declaration file; the suite reads the decision itself, not the builder's use of it.
 import { sourceFor } from "../../../scripts/ingest/precedence.mjs";
+// @ts-ignore — the held-doc decision, read from its own config (one source of truth).
+import { DEMAT_SHARES_DOCKEY, HARVEST_ISINS } from "../../../scripts/ingest/reference/familyDematShares.mjs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -59,6 +61,14 @@ for (const a of BOOK_ACCOUNTS) {
   }
   for (const h of doc?.holdings ?? []) {
     if (num(h.marketValue) || !h.securityKey || FENCED.has(h.securityKey)) continue;
+    // Ajay's Motilal demat 1201090012539150: its 31 Oct holding statement is
+    // PARTIALLY HELD (the standing rule). The account keeps its 31 Jul tape, and
+    // only the two new listed shares its tape did not carry (Kingfa, Manorama)
+    // are taken (`familyDematShares.mjs`); its fund, ETF and private rows are held
+    // — their units moved to AMC folios not yet in the book (the 1 Oct transfers),
+    // so carrying them from this statement would misstate the account. So those
+    // rows are not expected in BOOK_UNVALUED_HOLDINGS.
+    if (doc?.docKey === DEMAT_SHARES_DOCKEY && !HARVEST_ISINS.has(h.isin)) continue;
     archived.push({
       accountId: a.accountId, securityKey: h.securityKey, quantity: num(h.quantity) ? h.quantity : null,
       faceValue: num(h.faceValue) ? h.faceValue : null, custody: /demat/i.test(a.provider),
