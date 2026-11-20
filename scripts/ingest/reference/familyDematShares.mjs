@@ -26,30 +26,41 @@
 // keeps its tape (its funds stay exactly as today, to be reconciled when the AMC
 // folio / CAMS statements arrive), and `build-book` leaves the 31 Oct document out
 // of the account's own processing (it is not grouped into the account). This file
-// takes only its two NEW listed shares and adds them as the account's unvalued
-// holdings, each pointing at the real archived statement row for provenance
-// (`publicationViews.test.ts`). They are valued at the live quote, never at the
-// statement's last-movement rate.
+// takes the listed shares its tape and the MOPWM roll both miss and adds them as the
+// account's unvalued holdings, each pointing at the real archived statement row for
+// provenance (`publicationViews.test.ts`). They are valued at the live quote, never at
+// the statement's last-movement rate.
 //
-// ONLY THESE TWO. Of the statement's 16 listed-equity rows, the others either are
-// already surfaced from the 31 Jul tape (OneSource, Vedanta Aluminium, Insolation,
-// MPS) or engage MOPWM's reconciled exchange trades and the cost-recovery records
-// (KRBL, TAAL Tech, Tega, Zota, BSE, Neuland) — a separate pass with those tests
-// reconciled. Kingfa and Manorama touch none of that: absent from the tape, held
-// nowhere else, no MOPWM trade, no recovered cost. The statement's fund, ETF and
-// AIF rows (Motilal Arbitrage, Liquid BeES, DSP Silver, 360 ONE SOF-8, MOGAFS-II,
-// NIIOF) and Zepto stay on their current records (tape / the family's 21 Oct note
-// / the consolidated review).
+// WHICH ROWS. The explicit allowlist `HARVEST_ISINS` below, verified isin-by-isin against
+// the 31 Jul tape (`positionsAsOf`, read live by `depositoryShareCandidates`), the MOPWM
+// rolls (`BOOK_SHARE_ROLLS`), the 21 Oct advised balances and every other account.
+// Harvested: Kingfa, Manorama (Stage 10ps); Deepak Fertilisers (Stage 10pt — the client
+// confirmed on 20 Nov that its 15,000 here is a holding SEPARATE from the 10,930 on Ajay's
+// HDFC Securities, a different custodian). Each is Ajay's own, absent everywhere else, and
+// its NSE symbol is in the committed corporate-action capture (`public/data/
+// corporate-actions.json`) so the live quote may value it.
+// NOT harvested, already in the book once: OneSource, Vedanta Aluminium, Insolation, MPS
+// (the tape — their `positionsAsOf` equals this statement); KRBL, TAAL Tech, Tega, Zota
+// (MOPWM rolls, with cost); Motilal Arbitrage, Liquid BeES (advised balances); Motilal
+// Founders Fund (acct 90410016104); DSP Silver, 360 ONE SOF-8, NIIOF, Zepto (fund/ETF
+// records, the tape and the review). NOT harvested YET: BSE (40,000), Tatva Chintan
+// (21,185) — on the statement but their symbols are not in the capture, so a harvest adds
+// an uncovered, unpriced row; they land once the capture names them. Neuland (4,625) — a
+// review gap whose resolution re-runs reconcile:review (which also drops BSE), so the two
+// go together in a reviewGaps pass. Nuvama is understated (tape 3,695 vs 9,500).
 
 /** The 31 Oct 2026 DP Holdings statement this record harvests from. */
 export const DEMAT_SHARES_DOCKEY = "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings";
 export const DEMAT_SHARES_ACCOUNT = "motilal-oswal-financial-services-demat-1201090012539150";
 
-/** The ISINs harvested — the two the client flagged and that no other record touches. */
-export const HARVEST_ISINS = new Set(["INE473D01015" /* Kingfa */, "INE00VM01036" /* Manorama */]);
+/** The ISINs harvested — see the WHICH ROWS note above; each verified absent from the tape,
+ * the rolls, the advised balances and other accounts, and named by the corporate-action capture. */
+export const HARVEST_ISINS = new Set([
+  "INE473D01015" /* Kingfa */, "INE00VM01036" /* Manorama */, "INE501A01019" /* Deepak Fertilisers */,
+]);
 
 /**
- * The two listed shares as `UnvaluedStatementHolding` rows, read straight from the
+ * The harvested listed shares as `UnvaluedStatementHolding` rows, read straight from the
  * extracted statement document so every field (securityKey, quantity, pointer) is
  * the statement's own. `octDoc` is the archived `document.json` for
  * `DEMAT_SHARES_DOCKEY`; returns [] when it is absent (nothing is invented).
