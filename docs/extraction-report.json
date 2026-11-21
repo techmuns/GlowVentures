@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-21T05:25:41.274Z",
+  "generatedAt": "2026-11-21T07:00:26.981Z",
   "summary": {
-    "documents": 475,
-    "parsed": 469,
+    "documents": 477,
+    "parsed": 471,
     "partial": 0,
     "failed": 6,
     "rowSumChecks": 464,
@@ -28,7 +28,7 @@
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 465,
+    "pdfsFound": 467,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -246,7 +246,7 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 469,
+    "parsed": 471,
     "partial": 0,
     "failed": 6,
     "byProvider": {
@@ -775,7 +775,7 @@
       },
       "ICICI Bank (NSDL demat)": {
         "transaction-statement": {
-          "ok": 1,
+          "ok": 3,
           "partial": 0,
           "failed": 0
         },

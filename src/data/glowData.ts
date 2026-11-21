@@ -998,7 +998,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "owner": "Ajay Jaisinghani",
     "strategy": null,
     "engagement": "Direct",
-    "providerEngagement": "equity order book — every trade settles into IN302902-49794950; the broker is not named on the export",
+    "providerEngagement": "NSDL depository account at IN302902 — Non House Beneficiary, Resident Ordinary",
     "members": [],
     "asOf": "2026-10-31",
     "inceptionDate": null,
@@ -83275,6 +83275,20 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "quantity": 1000,
       "price": 950.025,
       "amount": 948254.68
+    },
+    {
+      "date": "2026-11-03",
+      "side": "sell",
+      "quantity": 10000,
+      "price": 1280,
+      "amount": 12776196.75
+    },
+    {
+      "date": "2026-11-03",
+      "side": "sell",
+      "quantity": 4250,
+      "price": 1280,
+      "amount": 5429883.63
     }
   ],
   "lkp-securities-98245|belrise-industries": [

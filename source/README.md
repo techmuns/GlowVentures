@@ -380,3 +380,16 @@ Strategy" rather than "GREEN LANTERN CAPITAL". Both house matchers now return
 null for either signature, and `pipeline.test.mjs` asserts that a non-statement
 reaches **no report type, no account and no owner** — while an ordinary
 Goldstandard appraisal, which also names Aristos, still resolves to its own house.
+
+`november-2026-i/` holds Ajay's ICICI NSDL demat **49794950** equity order books,
+sent 20 November: the FY 2025-26 trade report (Aug 2025 → 10 March 2026) and the
+"April 2026 to as-on-date" report (24 June → 3 November 2026). Both are
+`orderBook_Equity` exports named `.xls`; `sheet.mjs` reads the BIFF bytes and
+`equityOrderBook.mjs` files each under 49794950 by its `IN302902-49794950` DP Id.
+The 27 October order book already in the book carried 24 June → 27 October, so
+precedence (dated rows unioned, deduped by order ref) takes from these only the
+prior financial year's trades — IFB Industries, E2E and others the account traded
+and exited within FY25-26 — and the 3 November 2026 Yash Highvoltage sales. The
+account keeps its 31 October holdings close; the later sale is on record
+(Stage 10pw). The same two reports arrived again as Apple `.numbers` inside
+`icicidematstatementajayjaisinghani_1.zip` and are not added.
