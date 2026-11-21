@@ -15179,6 +15179,130 @@
   ]
  },
  {
+  "docKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown",
+  "provider": "LLP partner capital ledger (not a statement)",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/november-2026-j/LLP CAPITAL LEDGERS/FH Edutech LLP - Bharat Jaisinghani Capital Ledger.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "failedBecause": "held-out-by-decision",
+  "fileKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown",
+  "label": "LLP partner capital ledger (not a statement) · unknown",
+  "fy": "",
+  "source": "source/november-2026-j/LLP CAPITAL LEDGERS/FH Edutech LLP - Bharat Jaisinghani Capital Ledger.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-2",
+  "provider": "LLP partner capital ledger (not a statement)",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/november-2026-j/LLP CAPITAL LEDGERS/FH Enable LLP - Bharat Jaisinghani Capital Ledger.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "failedBecause": "held-out-by-decision",
+  "fileKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-2",
+  "label": "LLP partner capital ledger (not a statement) · unknown",
+  "fy": "",
+  "source": "source/november-2026-j/LLP CAPITAL LEDGERS/FH Enable LLP - Bharat Jaisinghani Capital Ledger.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-3",
+  "provider": "LLP partner capital ledger (not a statement)",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Ankita Jaisinghani Capital Account.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "failedBecause": "held-out-by-decision",
+  "fileKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-3",
+  "label": "LLP partner capital ledger (not a statement) · unknown",
+  "fy": "",
+  "source": "source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Ankita Jaisinghani Capital Account.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-4",
+  "provider": "LLP partner capital ledger (not a statement)",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Bharat Jaisinghani Capital Account.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "failedBecause": "held-out-by-decision",
+  "fileKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-4",
+  "label": "LLP partner capital ledger (not a statement) · unknown",
+  "fy": "",
+  "source": "source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Bharat Jaisinghani Capital Account.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "helios-mutual-fund-10355977-2026-11-03-holdings",
   "provider": "Helios Mutual Fund",
   "accountNo": "10355977",

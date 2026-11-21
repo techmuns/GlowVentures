@@ -201,7 +201,7 @@ for (const f of files) {
     // so a second copy of the workbook is not mistaken for the one it reads.
     const reviewSource = f === REVIEW_WORKBOOK || f === REGISTER || f === MOPWM_TRANSACTIONS;
     const heldOut = docs.every((d) => (d.status === "failed")
-      && /Family investment register|Consolidated family review/.test(d.provider ?? ""));
+      && /Family investment register|Consolidated family review|LLP partner capital ledger/.test(d.provider ?? ""));
     const witness = docs.every((d) => d.twinOf);
     // A FILE WHOSE EVERY DOCUMENT FAILED WAS NOT READ, whatever the archive holds for it.
     const failed = !reviewSource && !heldOut && docs.every((d) => d.status === "failed");

@@ -324,6 +324,16 @@ export const FAMILY_REVIEW_SIGNATURE = /Absolute\s+Gain\s*\/\s*\(Loss\)\s+Includ
 export const ADVISER_TRANSACTIONS_SIGNATURE = /Scheme\s*\/\s*Scrip\s+Name\s+Folio\s+Number\s+Transaction\s+Date\s+Transaction\s+Type\s+Transaction\s+Sub\s+Type/i;
 
 /**
+ * THE FAMILY'S LLP PARTNER CAPITAL LEDGERS (Stage 10px): FH Edutech, FH Enable and
+ * Sky Vision Cure each send a partner's own capital account from the LLP's books —
+ * contributions, share of FY losses, closing balance. Not a statement: no custodian
+ * struck it, and its figures are the family's committed record in `reviewHolders.mjs`
+ * (Sky Vision Cure's ₹5.65 Cr), not read from the PDF. Matched on its document title,
+ * which no custodian prints — verified absent from every other document in the corpus.
+ */
+export const LLP_LEDGER_SIGNATURE = /PARTNER\s+CAPITAL\s+ACCOUNT/i;
+
+/**
  * EVERY non-statement signature, tested TOGETHER by the house-rule guards.
  *
  * The review workbook was protected only by ISSUER_PROVIDER_RULES, which run
@@ -333,7 +343,7 @@ export const ADVISER_TRANSACTIONS_SIGNATURE = /Scheme\s*\/\s*Scrip\s+Name\s+Foli
  * legal name in one cell is all it would take: the workbook would then be filed
  * as a Green Lantern report. Both documents are guarded on both signatures.
  */
-export const NON_STATEMENT_SIGNATURES = [FAMILY_REGISTER_SIGNATURE, FAMILY_REVIEW_SIGNATURE, ADVISER_TRANSACTIONS_SIGNATURE];
+export const NON_STATEMENT_SIGNATURES = [FAMILY_REGISTER_SIGNATURE, FAMILY_REVIEW_SIGNATURE, ADVISER_TRANSACTIONS_SIGNATURE, LLP_LEDGER_SIGNATURE];
 
 /** True for a document the family or their adviser produced, not an institution. */
 export const isNonStatement = (text) => NON_STATEMENT_SIGNATURES.some((re) => re.test(text));
@@ -358,6 +368,7 @@ export const NON_STATEMENT_PROVIDERS = new Set([
   "Consolidated family review (not a statement)",
   "Family investment register (not a statement)",
   "Adviser transaction report (not a statement)",
+  "LLP partner capital ledger (not a statement)",
 ]);
 
 /**
@@ -798,6 +809,13 @@ const ISSUER_PROVIDER_RULES = [
    * any of them it would be filed as that manager's statement.
    */
   [ADVISER_TRANSACTIONS_SIGNATURE, "Adviser transaction report (not a statement)"],
+  /**
+   * AND THE FAMILY'S LLP PARTNER CAPITAL LEDGERS (Stage 10px): a partner's own
+   * capital account from an LLP's books, titled "Partner Capital Account" — a
+   * title no custodian prints. Held out of the book like the review and register;
+   * Sky Vision Cure's figure is carried from them in `reviewHolders.mjs`.
+   */
+  [LLP_LEDGER_SIGNATURE, "LLP partner capital ledger (not a statement)"],
   /**
    * A DEMAT STATEMENT IS MATCHED ON ITS DEPOSITORY REGISTRATION, and it comes
    * first because its ROWS are other people's funds.
