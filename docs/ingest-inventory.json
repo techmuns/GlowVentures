@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-11-20T09:39:17.239Z",
+  "generatedAt": "2026-11-20T15:12:06.411Z",
   "sourceDir": "source",
   "counts": {
-    "files": 501,
-    "pdfs": 488,
+    "files": 506,
+    "pdfs": 493,
     "nonPdf": 13,
-    "classified": 425,
+    "classified": 430,
     "unclassified": 76,
     "encrypted": 48,
     "fromArchives": 413,
     "archivesExpanded": 54,
-    "pages": 2227
+    "pages": 2237
   },
   "reportTypes": [
     "holdings",
@@ -9866,6 +9866,106 @@
       "matchedBy": "generic keywords"
     },
     {
+      "path": "source/november-2026-g/SANSHI/9039671821_16112026120638126970.pdf",
+      "fileName": "9039671821_16112026120638126970.pdf",
+      "bytes": 341118,
+      "size": "333.1 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sanshi Fund",
+      "ownerName": "AARTI AJAY JAISINGHANI",
+      "accountNo": "00841000060714",
+      "asOfDate": "2026-12-06",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/november-2026-g/SANSHI/9039671854_16112026120639767659.pdf",
+      "fileName": "9039671854_16112026120639767659.pdf",
+      "bytes": 341115,
+      "size": "333.1 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sanshi Fund",
+      "ownerName": "BHARAT AJAY JAISINGHANI",
+      "accountNo": "00841000137803",
+      "asOfDate": "2026-12-06",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/november-2026-g/SANSHI/9039671912_16112026120635975179.pdf",
+      "fileName": "9039671912_16112026120635975179.pdf",
+      "bytes": 341109,
+      "size": "333.1 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sanshi Fund",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "00841000060394",
+      "asOfDate": "2026-12-06",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/november-2026-g/SANSHI/9069671554_16112026120635959556.pdf",
+      "fileName": "9069671554_16112026120635959556.pdf",
+      "bytes": 342835,
+      "size": "334.8 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sanshi Fund",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "06510040008050",
+      "asOfDate": "2026-12-06",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/november-2026-g/SANSHI/9069671634_16112026120633726112.pdf",
+      "fileName": "9069671634_16112026120633726112.pdf",
+      "bytes": 342302,
+      "size": "334.3 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Sanshi Fund",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "00841000060394",
+      "asOfDate": "2026-12-06",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
       "path": "source/november-2026/HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
       "fileName": "HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
       "bytes": 280671,
@@ -16334,9 +16434,23 @@
                 ]
               },
               "fileCount": 1
+            },
+            "2026-12-06": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/november-2026-g/SANSHI/9039671821_16112026120638126970.pdf",
+                    "pages": 2,
+                    "size": "333.1 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
             }
           },
-          "fileCount": 1
+          "fileCount": 2
         },
         "00841000137803": {
           "owner": "BHARAT AJAY JAISINGHANI",
@@ -16355,9 +16469,23 @@
                 ]
               },
               "fileCount": 1
+            },
+            "2026-12-06": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/november-2026-g/SANSHI/9039671854_16112026120639767659.pdf",
+                    "pages": 2,
+                    "size": "333.1 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
             }
           },
-          "fileCount": 1
+          "fileCount": 2
         },
         "00841000060394": {
           "owner": "AJAY JAISINGHANI",
@@ -16383,9 +16511,30 @@
                 ]
               },
               "fileCount": 2
+            },
+            "2026-12-06": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/november-2026-g/SANSHI/9039671912_16112026120635975179.pdf",
+                    "pages": 2,
+                    "size": "333.1 KB",
+                    "confidence": "high",
+                    "sections": []
+                  },
+                  {
+                    "path": "source/november-2026-g/SANSHI/9069671634_16112026120633726112.pdf",
+                    "pages": 2,
+                    "size": "334.3 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 2
             }
           },
-          "fileCount": 2
+          "fileCount": 4
         },
         "06510040008050": {
           "owner": "ANKITA JAISINGHANI",
@@ -16404,12 +16553,26 @@
                 ]
               },
               "fileCount": 1
+            },
+            "2026-12-06": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/november-2026-g/SANSHI/9069671554_16112026120635959556.pdf",
+                    "pages": 2,
+                    "size": "334.8 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
             }
           },
-          "fileCount": 1
+          "fileCount": 2
         }
       },
-      "fileCount": 5
+      "fileCount": 10
     },
     "Marathon Trends Advisory Pvt Ltd": {
       "accounts": {
@@ -18268,6 +18431,18 @@
       "provider": "Sanshi Fund",
       "account": "00841000060394",
       "asOf": "2026-07-08",
+      "fileCount": 2,
+      "reportTypes": [
+        "unknown"
+      ],
+      "duplicateTypes": [
+        "unknown"
+      ]
+    },
+    {
+      "provider": "Sanshi Fund",
+      "account": "00841000060394",
+      "asOf": "2026-12-06",
       "fileCount": 2,
       "reportTypes": [
         "unknown"

@@ -1,5 +1,5 @@
 {
- "docKey": "sanshi-fund-9039671821-2026-06-30-unknown",
+ "docKey": "sanshi-fund-9039671821-2026-10-31-holdings",
  "provider": "Sanshi Fund",
  "accountNo": "9039671821",
  "ownerSource": "printed",
@@ -12,10 +12,10 @@
  "engagement": "AIF",
  "providerEngagement": "Open Ended AIF CAT-III",
  "members": [],
- "asOf": "2026-06-30",
+ "asOf": "2026-10-31",
  "inceptionDate": null,
- "reportType": "unknown",
- "sourcePath": "source/_extracted/SANSHI FUND/9039671821_08072026183813966197.pdf",
+ "reportType": "holdings",
+ "sourcePath": "source/november-2026-g/SANSHI/9039671821_16112026120638126970.pdf",
  "pages": 2,
  "status": "ok",
  "warnings": [],
@@ -33,7 +33,7 @@
    "quantity": 6045934.485,
    "unitCost": null,
    "totalCost": 749962501.87,
-   "marketPrice": 161.5675,
+   "marketPrice": 175.4815,
    "accruedIncome": null,
    "distributedIncome": null,
    "realized": null,
@@ -45,13 +45,13 @@
    "faceValue": null,
    "lastMovementRate": null,
    "lastMovementValue": null,
-   "marketValue": 976826519.91,
-   "gainLoss": 226864018.04,
-   "pctGainLoss": 30.25,
+   "marketValue": 1060949652.33,
+   "gainLoss": 310987150.46,
+   "pctGainLoss": 41.47,
    "pctAssets": 100,
-   "unrealized": 226864018.04,
+   "unrealized": 310987150.46,
    "printed": {
-    "marketValue": 976826519.91,
+    "marketValue": 1060949652.33,
     "gainLoss": null,
     "pctGainLoss": null,
     "pctAssets": null,
@@ -60,20 +60,20 @@
    "marketValueFromPrinted": false,
    "dedupeGroup": null,
    "alsoReportedUnder": [],
-   "source": "sanshi-fund-9039671821-2026-06-30-unknown"
+   "source": "sanshi-fund-9039671821-2026-10-31-holdings"
   }
  ],
  "totals": {
   "equityMarketValue": null,
   "cashValue": null,
-  "totalMarketValue": 976826519.91,
+  "totalMarketValue": 1060949652.33,
   "equityCost": null,
   "totalCost": 749962501.87,
   "gainLoss": null,
   "pctGainLoss": null,
   "positionCount": null,
   "declaredAum": null,
-  "source": "sanshi-fund-9039671821-2026-06-30-unknown"
+  "source": "sanshi-fund-9039671821-2026-10-31-holdings"
  },
  "returns": [],
  "flows": {
@@ -86,11 +86,11 @@
   "expenses": null,
   "fees": null,
   "profit": null,
-  "corpus": 976826519.91,
+  "corpus": 1060949652.33,
   "openingCorpus": null,
   "periodFrom": "2025-10-03",
-  "periodTo": "2026-06-30",
-  "source": "sanshi-fund-9039671821-2026-06-30-unknown"
+  "periodTo": "2026-10-31",
+  "source": "sanshi-fund-9039671821-2026-10-31-holdings"
  },
  "cashFlows": [
   {
@@ -114,7 +114,7 @@
    "debit": null,
    "notes": null,
    "balance": null,
-   "source": "sanshi-fund-9039671821-2026-06-30-unknown"
+   "source": "sanshi-fund-9039671821-2026-10-31-holdings"
   },
   {
    "date": "2025-10-03",
@@ -137,7 +137,7 @@
    "debit": null,
    "notes": null,
    "balance": null,
-   "source": "sanshi-fund-9039671821-2026-06-30-unknown"
+   "source": "sanshi-fund-9039671821-2026-10-31-holdings"
   },
   {
    "date": "2025-10-03",
@@ -147,7 +147,7 @@
    "isin": null,
    "kind": "contribution",
    "memberId": null,
-   "amount": 749962501.85,
+   "amount": 749962501.87,
    "units": 6045934.485,
    "netAmount": null,
    "settlementDate": null,
@@ -160,7 +160,7 @@
    "debit": null,
    "notes": null,
    "balance": null,
-   "source": "sanshi-fund-9039671821-2026-06-30-unknown"
+   "source": "sanshi-fund-9039671821-2026-10-31-holdings"
   }
  ],
  "transactions": [],
@@ -176,7 +176,7 @@
  "clientXirrPct": null,
  "commitment": null,
  "capitalAccount": [],
- "postTaxNav": 151.9662,
+ "postTaxNav": 164.192,
  "unitsRedeemed": 0,
  "openLots": [],
  "positionsAsOf": null,
@@ -188,5 +188,5 @@
  "jointHolders": [],
  "checks": null,
  "stitches": [],
- "derivedPortfolioTotal": 976826519.91
+ "derivedPortfolioTotal": 1060949652.33
 }

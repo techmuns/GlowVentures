@@ -22,6 +22,7 @@ const page = await context.newPage(),errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 await page.route('**/api/**',r=>r.fulfill({status:503,contentType:'application/json',body:'{"status":"unreachable"}'}));
 await installReadModelRoutes(page);
+let failed = false;
 try {
   // Stage 10ma/10mb: Ankita's DSP Silver and DSP Gold were sold (the family's
   // confirmation, MOPWM folio 466887); Aarti's 11,95,000 Gold units, split 1:10,
@@ -79,6 +80,17 @@ try {
     bothSearches:true,unpricedCostAndDate:true,errors},null,2));
   console.log('PASS ETF pages, conversion quantities, original purchase dates, both searches and unpriced acquisition details');
 } catch(e) {
-  await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({url:page.url(),errors,text:(await page.locator('body').innerText()).slice(-9000)},null,2));
-  await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{}); throw e;
-} finally {await browser.close();}
+  failed = true;
+  console.error(e);
+  await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({url:page.url(),errors,text:(await page.locator('body').innerText().catch(()=>'')).slice(-9000)},null,2)).catch(()=>{});
+  await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{});
+} finally {await browser.close().catch(()=>{});}
+// The browser-check CI step fails via `trap ERR`, so this check's EXIT CODE must
+// reflect its ASSERTIONS, not a browser teardown that races after a clean pass.
+// On the CI runner `browser.close()` (or a dangling handle) was exiting the
+// process non-zero AFTER "PASS" had printed and results.json was written — a
+// false red that blocked merge-on-green (the etf-teardown flake; locally the
+// check passes and exits 0). Swallow teardown errors and exit on the recorded
+// outcome: a real assertion failure still logs its stack, writes failure.json
+// and exits 1.
+process.exit(failed ? 1 : 0);

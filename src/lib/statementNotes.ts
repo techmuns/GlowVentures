@@ -52,7 +52,7 @@ export const STATEMENT_NOTES: StatementNote[] = [
     // The footnote the NAV is "calculated without accounting for" is about the
     // manager's PERFORMANCE FEE. This note once said tax; the page says the fee.
     note: "Marked at the fund's pre-tax NAV, the family's default. Sanshi's statement also prints a post-tax NAV, lower, and says its NAV is before the manager's annual performance fee, which is charged at the end of the financial year.",
-    cite: { docKey: "sanshi-fund-9039671821-2026-06-30-unknown", text: ["The Post Tax Nav is", "annual performance fees, which will be factored in at the end of the financial year"] },
+    cite: { docKey: "sanshi-fund-9039671821-2026-06-30-holdings", text: ["The Post Tax Nav is", "annual performance fees, which will be factored in at the end of the financial year"] },
   },
   {
     securityKeys: ["carnelian-bharat-amritkaal-fund-class-a2", "carnelian-bharat-amritkaal-fund"],

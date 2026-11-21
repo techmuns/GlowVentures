@@ -46,14 +46,40 @@ try {
     await page.route('**/api/quotes', route => route.fulfill({ json: { ok: true, ...quotes } }));
     await page.route('**/api/corporate-actions?*', route => route.fulfill({ json: { ok: true, feed: book.CAPTURE } }));
     await page.route('**/data/corporate-actions.json', route => route.fulfill({ json: book.CAPTURE }));
+    // The sector returns settle only once the stubbed live quotes ARRIVE and price
+    // the depository shares (the point of this check), which changes each sector's
+    // holding/costed counts and their order. Reading before that gave transient
+    // values (seen as data-costed > data-holdings) and a mid-render missing list —
+    // this check flaked ~5 of 6 runs. So wait for the quote response, then until the
+    // coverage rows stop changing for two polls, and read each row's counts from one
+    // DOM snapshot so they cannot tear between two getAttribute calls.
+    const quoted = page.waitForResponse(r => /\/api\/quotes/.test(r.url()), { timeout: 20000 }).catch(() => null);
     await page.goto(base + route);
     await page.locator('[data-sector-row]').first().waitFor();
+    await quoted;
+    // The quote RESPONSE arriving is not enough: the live overlay applies a render
+    // later, collapsing the sector's holdings (e.g. 87 -> 54) as statement rows are
+    // superseded. Wait for the network to go fully idle (read models + quotes +
+    // capture all settled) so that apply has rendered before the stability poll,
+    // which otherwise locked onto the pre-apply count.
+    await page.waitForLoadState('networkidle').catch(() => {});
+    await page.waitForFunction(() => {
+      const snap = [...document.querySelectorAll('[data-sector-row]:has([data-return-coverage])')].map(r => {
+        const c = r.querySelector('[data-cell="return"]');
+        return `${r.getAttribute('data-sector-row')}:${c?.getAttribute('data-costed')}/${c?.getAttribute('data-holdings')}`;
+      }).join('|');
+      const w = window;
+      w.__ssStable = snap && snap === w.__ssPrev ? (w.__ssStable || 0) + 1 : 0;
+      w.__ssPrev = snap;
+      return (w.__ssStable || 0) >= 2;
+    }, { timeout: 20000, polling: 250 });
     const row = page.locator('[data-sector-row]').filter({ has: page.locator('[data-return-coverage]') }).first();
     await row.waitFor();
     const sector = await row.getAttribute('data-sector-row');
     const cell = row.locator('[data-cell="return"]');
-    const costed = Number(await cell.getAttribute('data-costed'));
-    const holdings = Number(await cell.getAttribute('data-holdings'));
+    const { costed, holdings } = await cell.evaluate(el => ({
+      costed: Number(el.getAttribute('data-costed')), holdings: Number(el.getAttribute('data-holdings')),
+    }));
     const expanded = await row.getAttribute('aria-expanded');
     const trigger = cell.getByRole('button');
     await trigger.click();
