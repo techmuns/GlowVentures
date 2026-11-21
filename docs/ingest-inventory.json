@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-11-21T06:58:37.666Z",
+  "generatedAt": "2026-11-21T10:28:30.654Z",
   "sourceDir": "source",
   "counts": {
-    "files": 512,
-    "pdfs": 499,
+    "files": 516,
+    "pdfs": 503,
     "nonPdf": 13,
-    "classified": 432,
+    "classified": 436,
     "unclassified": 80,
     "encrypted": 48,
     "fromArchives": 413,
     "archivesExpanded": 54,
-    "pages": 2247
+    "pages": 2251
   },
   "reportTypes": [
     "holdings",
@@ -10090,6 +10090,86 @@
       "matchedBy": "equity order book settling into IN302902-49794950"
     },
     {
+      "path": "source/november-2026-j/LLP CAPITAL LEDGERS/FH Edutech LLP - Bharat Jaisinghani Capital Ledger.pdf",
+      "fileName": "FH Edutech LLP - Bharat Jaisinghani Capital Ledger.pdf",
+      "bytes": 246579,
+      "size": "240.8 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "LLP partner capital ledger (not a statement)",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "non-statement signature"
+    },
+    {
+      "path": "source/november-2026-j/LLP CAPITAL LEDGERS/FH Enable LLP - Bharat Jaisinghani Capital Ledger.pdf",
+      "fileName": "FH Enable LLP - Bharat Jaisinghani Capital Ledger.pdf",
+      "bytes": 250978,
+      "size": "245.1 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "LLP partner capital ledger (not a statement)",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "non-statement signature"
+    },
+    {
+      "path": "source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Ankita Jaisinghani Capital Account.pdf",
+      "fileName": "Sky Vision Cure LLP - Ankita Jaisinghani Capital Account.pdf",
+      "bytes": 247214,
+      "size": "241.4 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "LLP partner capital ledger (not a statement)",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "non-statement signature"
+    },
+    {
+      "path": "source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Bharat Jaisinghani Capital Account.pdf",
+      "fileName": "Sky Vision Cure LLP - Bharat Jaisinghani Capital Account.pdf",
+      "bytes": 249903,
+      "size": "244.0 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "LLP partner capital ledger (not a statement)",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "non-statement signature"
+    },
+    {
       "path": "source/november-2026/HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
       "fileName": "HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
       "bytes": 280671,
@@ -17302,6 +17382,53 @@
       },
       "fileCount": 1
     },
+    "LLP partner capital ledger (not a statement)": {
+      "accounts": {
+        "(unidentified)": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/november-2026-j/LLP CAPITAL LEDGERS/FH Edutech LLP - Bharat Jaisinghani Capital Ledger.pdf",
+                    "pages": 1,
+                    "size": "240.8 KB",
+                    "confidence": "high",
+                    "sections": []
+                  },
+                  {
+                    "path": "source/november-2026-j/LLP CAPITAL LEDGERS/FH Enable LLP - Bharat Jaisinghani Capital Ledger.pdf",
+                    "pages": 1,
+                    "size": "245.1 KB",
+                    "confidence": "high",
+                    "sections": []
+                  },
+                  {
+                    "path": "source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Ankita Jaisinghani Capital Account.pdf",
+                    "pages": 1,
+                    "size": "241.4 KB",
+                    "confidence": "high",
+                    "sections": []
+                  },
+                  {
+                    "path": "source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Bharat Jaisinghani Capital Account.pdf",
+                    "pages": 1,
+                    "size": "244.0 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 4
+            }
+          },
+          "fileCount": 4
+        }
+      },
+      "fileCount": 4
+    },
     "Adviser transaction report (not a statement)": {
       "accounts": {
         "(unidentified)": {
@@ -18105,6 +18232,18 @@
         "transaction-statement"
       ],
       "duplicateTypes": []
+    },
+    {
+      "provider": "LLP partner capital ledger (not a statement)",
+      "account": "(unidentified)",
+      "asOf": "(unidentified)",
+      "fileCount": 4,
+      "reportTypes": [
+        "unknown"
+      ],
+      "duplicateTypes": [
+        "unknown"
+      ]
     },
     {
       "provider": "Goldstandard Wealth Private Limited",

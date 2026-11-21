@@ -13,15 +13,15 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 | Read via a byte-identical twin | 43 | the pipeline reads each md5 once; the data IS in the archive |
 | Read as a witness | 19 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
 | Read by `build-book` | 3 | the review supplies private lines and exact lot costs; the register supplies verified payment evidence |
-| Held out by decision | 0 | read perfectly and deliberately not a source |
+| Held out by decision | 4 | read perfectly and deliberately not a source |
 | Not a document | 156 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
 | Excluded by policy | 2 | the drop's own password notes |
 | **Never arrived** | **2** | **a mail server's removal notice in place of the statement — ask the sender to re-send it** |
 | Never arrived, then re-sent | 1 | a removal notice whose statement the sender sent again — the copy is read |
 | **Unread** | **0** | **must be zero** |
-| **Total leaf files** | **668** | |
+| **Total leaf files** | **672** | |
 
-Those files produce **477 documents** in the archive.
+Those files produce **481 documents** in the archive.
 
 ## ⚠ Statements that never arrived
 
@@ -58,6 +58,10 @@ struck it. It is recorded in the archive with that reason — it is NOT a missin
 
 | File | Where its data goes instead |
 | --- | --- |
+| `source/november-2026-j/LLP CAPITAL LEDGERS/FH Edutech LLP - Bharat Jaisinghani Capital Ledger.pdf` | `npm run reconcile:review` — an independent cross-check of the generated book |
+| `source/november-2026-j/LLP CAPITAL LEDGERS/FH Enable LLP - Bharat Jaisinghani Capital Ledger.pdf` | `npm run reconcile:review` — an independent cross-check of the generated book |
+| `source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Ankita Jaisinghani Capital Account.pdf` | `npm run reconcile:review` — an independent cross-check of the generated book |
+| `source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Bharat Jaisinghani Capital Account.pdf` | `npm run reconcile:review` — an independent cross-check of the generated book |
 
 ## Excluded by policy
 

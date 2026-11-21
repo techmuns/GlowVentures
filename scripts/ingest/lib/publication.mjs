@@ -74,7 +74,12 @@ export const neverArrived = d => d.status === 'failed' && !carriesFacts(d)
  */
 export const heldOutByDecision = d => d.status === 'failed' && !carriesFacts(d)
   && NON_STATEMENT_PROVIDERS.has(d.provider) && !d.accountNo && !d.ownerId
-  && (d.warnings ?? []).length > 0 && d.warnings.every(w => w?.code === 'held-out-by-decision');
+  && (d.warnings ?? []).some(w => w?.code === 'held-out-by-decision')
+  // The four LLP capital ledgers share one unknown-everything docKey (no reader
+  // reads an account, owner or date off a held-out record), so three also carry
+  // `duplicate-doc-key`. That is benign on a fact-less held-out record and does not
+  // make it a statement to publish (Stage 10py).
+  && d.warnings.every(w => w?.code === 'held-out-by-decision' || w?.code === 'duplicate-doc-key');
 /**
  * A ROW HELD OUT OF A PARTIALLY-HELD STATEMENT. Ajay's Motilal demat
  * 1201090012539150 holding statement publishes only its two new listed shares

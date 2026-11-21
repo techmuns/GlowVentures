@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-21T07:00:26.981Z",
+  "generatedAt": "2026-11-21T10:30:16.117Z",
   "summary": {
-    "documents": 477,
+    "documents": 481,
     "parsed": 471,
     "partial": 0,
-    "failed": 6,
+    "failed": 10,
     "rowSumChecks": 464,
     "totalMismatches": 151,
     "totalsMaterial": 1,
@@ -28,7 +28,7 @@
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 467,
+    "pdfsFound": 471,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -248,7 +248,7 @@
     ],
     "parsed": 471,
     "partial": 0,
-    "failed": 6,
+    "failed": 10,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -941,6 +941,13 @@
           "failed": 0
         }
       },
+      "LLP partner capital ledger (not a statement)": {
+        "unknown": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 4
+        }
+      },
       "Bandhan Mutual Fund": {
         "holdings": {
           "ok": 4,
@@ -1062,6 +1069,45 @@
         "reportType": "unknown",
         "reasons": [
           "held-out-by-decision: Family investment register (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total."
+        ]
+      },
+      {
+        "docKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown",
+        "sourcePath": "source/november-2026-j/LLP CAPITAL LEDGERS/FH Edutech LLP - Bharat Jaisinghani Capital Ledger.pdf",
+        "provider": "LLP partner capital ledger (not a statement)",
+        "reportType": "unknown",
+        "reasons": [
+          "held-out-by-decision: LLP partner capital ledger (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total."
+        ]
+      },
+      {
+        "docKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-2",
+        "sourcePath": "source/november-2026-j/LLP CAPITAL LEDGERS/FH Enable LLP - Bharat Jaisinghani Capital Ledger.pdf",
+        "provider": "LLP partner capital ledger (not a statement)",
+        "reportType": "unknown",
+        "reasons": [
+          "held-out-by-decision: LLP partner capital ledger (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total.",
+          "duplicate-doc-key: llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown was already claimed by source/november-2026-j/LLP CAPITAL LEDGERS/FH Edutech LLP - Bharat Jaisinghani Capital Ledger.pdf; filed as llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
+        ]
+      },
+      {
+        "docKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-3",
+        "sourcePath": "source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Ankita Jaisinghani Capital Account.pdf",
+        "provider": "LLP partner capital ledger (not a statement)",
+        "reportType": "unknown",
+        "reasons": [
+          "held-out-by-decision: LLP partner capital ledger (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total.",
+          "duplicate-doc-key: llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown was already claimed by source/november-2026-j/LLP CAPITAL LEDGERS/FH Edutech LLP - Bharat Jaisinghani Capital Ledger.pdf; filed as llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-3. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
+        ]
+      },
+      {
+        "docKey": "llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-4",
+        "sourcePath": "source/november-2026-j/LLP CAPITAL LEDGERS/Sky Vision Cure LLP - Bharat Jaisinghani Capital Account.pdf",
+        "provider": "LLP partner capital ledger (not a statement)",
+        "reportType": "unknown",
+        "reasons": [
+          "held-out-by-decision: LLP partner capital ledger (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total.",
+          "duplicate-doc-key: llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown was already claimed by source/november-2026-j/LLP CAPITAL LEDGERS/FH Edutech LLP - Bharat Jaisinghani Capital Ledger.pdf; filed as llp-partner-capital-ledger-not-a-statement-unknown-unknown-unknown-4. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
         ]
       },
       {

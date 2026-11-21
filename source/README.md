@@ -393,3 +393,13 @@ and exited within FY25-26 — and the 3 November 2026 Yash Highvoltage sales. Th
 account keeps its 31 October holdings close; the later sale is on record
 (Stage 10pw). The same two reports arrived again as Apple `.numbers` inside
 `icicidematstatementajayjaisinghani_1.zip` and are not added.
+
+`november-2026-j/` holds the family's four **LLP partner capital ledgers**, sent
+20 November: FH Edutech LLP and FH Enable LLP (Bharat), and Sky Vision Cure LLP
+(Bharat and Ankita). Each is a partner's own capital account from the LLP's books
+— contributions, share of FY losses, closing balance — not a statement any
+custodian struck. They are held out of the book by decision (`classify.mjs`'s
+`PARTNER CAPITAL ACCOUNT` signature → "LLP partner capital ledger (not a
+statement)"), their figures carried as the committed record in
+`shared/reviewHolders.mjs` (Sky Vision Cure's ₹5.65 Cr, Stage 10px). They join the
+Statement Library for provenance (Stage 10py).
