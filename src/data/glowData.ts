@@ -43614,6 +43614,68 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE531F01023",
+    "quantity": 9500,
+    "asOf": "2026-10-31",
+    "costBasis": 9468099,
+    "heldPurchases": {
+      "first": "2024-06-26",
+      "last": "2024-06-26",
+      "lots": 1
+    },
+    "cashRecord": [
+      {
+        "date": "2024-06-26",
+        "side": "buy",
+        "amount": 9468099
+      },
+      {
+        "date": "2024-08-07",
+        "side": "income",
+        "amount": 154850
+      },
+      {
+        "date": "2024-11-07",
+        "side": "income",
+        "amount": 119700
+      },
+      {
+        "date": "2025-06-03",
+        "side": "income",
+        "amount": 131100
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2024-06-26",
+        "units": 1900
+      },
+      {
+        "date": "2025-12-27",
+        "units": 9500
+      }
+    ],
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": 405650,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          368,
+          369,
+          370,
+          371,
+          372,
+          373
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
     "isin": "INE559A01017",
     "quantity": 15772,
     "asOf": "2026-07-31",
@@ -47296,6 +47358,27 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "asOf": "2026-10-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-10-31 prints the price of this holding's last depository movement — ₹1,795 a unit — not a valuation of the 73,770 unit(s) held, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings",
+      "pointer": "/holdings/14"
+    },
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "nuvama-wealth",
+    "security": "NUVAMA WEALTH-EQ2/",
+    "isin": "INE531F01023",
+    "assetClass": "Equity",
+    "quantity": 9500,
+    "faceValue": null,
+    "lastMovementRate": 1746.1,
+    "lastMovementValue": 16587950,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-10-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-10-31 prints the price of this holding's last depository movement — ₹1,746.1 a unit — not a valuation of the 9,500 unit(s) held, so it carries a quantity and no value"
   },
   {
     "statementRecord": {
@@ -93081,24 +93164,6 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "corporateAction": 0,
     "encumbranceMoves": 0,
     "rows": 1,
-    "unclassified": 0,
-    "reason": null,
-    "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
-  },
-  "motilal-oswal-financial-services-demat-1201090012539150|nuvama-wealth-management-limited-new-equity-shares-with-face-value-rs-2-after-sub-division": {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "nuvama-wealth-management-limited-new-equity-shares-with-face-value-rs-2-after-sub-division",
-    "security": "NUVAMA WEALTH MANAGEMENT LIMITED#NEW EQUITY SHARES WITH FACE VALUE RS.2/- AFTER SUB-DIVISION",
-    "isin": "INE531F01023",
-    "periodFrom": "2026-04-01",
-    "periodTo": "2026-07-31",
-    "opening": 9500,
-    "closing": 3695,
-    "unitsIn": 0,
-    "unitsOut": 5805,
-    "corporateAction": 0,
-    "encumbranceMoves": 2,
-    "rows": 3,
     "unclassified": 0,
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"

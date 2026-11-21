@@ -47,16 +47,23 @@
 // (21,185) — on the statement but their symbols are not in the capture, so a harvest adds
 // an uncovered, unpriced row; they land once the capture names them. Neuland (4,625) — a
 // review gap whose resolution re-runs reconcile:review (which also drops BSE), so the two
-// go together in a reviewGaps pass. Nuvama is understated (tape 3,695 vs 9,500).
+// go together in a reviewGaps pass. NUVAMA (INE531F01023) IS harvested below: its 31 Jul
+// tape closing was 3,695, but this 31 Oct statement — the authoritative depository unit
+// count — holds 9,500 (a later purchase; both post the Rs-2 sub-division), so the newer
+// count supersedes the stale tape. It is the one harvested ISIN also present in
+// `positionsAsOf`, so `build-book` skips its tape row there to avoid a double-count (Stage 10pz).
 
 /** The 31 Oct 2026 DP Holdings statement this record harvests from. */
 export const DEMAT_SHARES_DOCKEY = "motilal-oswal-financial-services-demat-1201090012539150-2026-10-31-holdings";
 export const DEMAT_SHARES_ACCOUNT = "motilal-oswal-financial-services-demat-1201090012539150";
 
-/** The ISINs harvested — see the WHICH ROWS note above; each verified absent from the tape,
- * the rolls, the advised balances and other accounts, and named by the corporate-action capture. */
+/** The ISINs harvested — see the WHICH ROWS note above; each verified against the tape, the
+ * rolls, the advised balances and other accounts, and named by the corporate-action capture.
+ * Kingfa/Manorama/Deepak were ABSENT from the 31 Jul tape; Nuvama SUPERSEDES its own stale tape
+ * row (3,695 → the 31 Oct statement's 9,500), which `build-book` skips in `positionsAsOf`. */
 export const HARVEST_ISINS = new Set([
   "INE473D01015" /* Kingfa */, "INE00VM01036" /* Manorama */, "INE501A01019" /* Deepak Fertilisers */,
+  "INE531F01023" /* Nuvama Wealth (31 Oct 9,500 supersedes the 31 Jul tape's 3,695) */,
 ]);
 
 /**
