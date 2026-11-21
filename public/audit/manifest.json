@@ -15119,6 +15119,66 @@
   ]
  },
  {
+  "docKey": "icici-bank-nsdl-demat-49794950-2026-11-03-transaction-statement",
+  "provider": "ICICI Bank (NSDL demat)",
+  "accountNo": "49794950",
+  "owner": "Ajay Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-03",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/november-2026-i/ICICI DEMAT ORDER BOOK/TRADE_REPORT_APR_26_TO_AS_ON_DATE-_AJAY.xls",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 4,
+  "fileKey": "icici-bank-nsdl-demat-49794950-2026-11-03-transaction-statement",
+  "label": "ICICI Bank (NSDL demat) · 49794950 · transaction-statement",
+  "fy": "2026-11-03",
+  "source": "source/november-2026-i/ICICI DEMAT ORDER BOOK/TRADE_REPORT_APR_26_TO_AS_ON_DATE-_AJAY.xls",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "icici-bank-nsdl-demat-49794950-2026-03-10-transaction-statement",
+  "provider": "ICICI Bank (NSDL demat)",
+  "accountNo": "49794950",
+  "owner": "Ajay Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-03-10",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/november-2026-i/ICICI DEMAT ORDER BOOK/TRADE_REPORT_FY_2025-2026_AJAY.xls",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 3,
+  "fileKey": "icici-bank-nsdl-demat-49794950-2026-03-10-transaction-statement",
+  "label": "ICICI Bank (NSDL demat) · 49794950 · transaction-statement",
+  "fy": "2026-03-10",
+  "source": "source/november-2026-i/ICICI DEMAT ORDER BOOK/TRADE_REPORT_FY_2025-2026_AJAY.xls",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "helios-mutual-fund-10355977-2026-11-03-holdings",
   "provider": "Helios Mutual Fund",
   "accountNo": "10355977",

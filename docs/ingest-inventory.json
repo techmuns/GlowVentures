@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-11-21T05:24:43.993Z",
+  "generatedAt": "2026-11-21T06:58:37.666Z",
   "sourceDir": "source",
   "counts": {
-    "files": 510,
-    "pdfs": 497,
+    "files": 512,
+    "pdfs": 499,
     "nonPdf": 13,
-    "classified": 430,
+    "classified": 432,
     "unclassified": 80,
     "encrypted": 48,
     "fromArchives": 413,
     "archivesExpanded": 54,
-    "pages": 2245
+    "pages": 2247
   },
   "reportTypes": [
     "holdings",
@@ -10046,6 +10046,50 @@
       "matchedBy": "generic keywords"
     },
     {
+      "path": "source/november-2026-i/ICICI DEMAT ORDER BOOK/TRADE_REPORT_APR_26_TO_AS_ON_DATE-_AJAY.xls",
+      "fileName": "TRADE_REPORT_APR_26_TO_AS_ON_DATE-_AJAY.xls",
+      "bytes": 44032,
+      "size": "43.0 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "ownerName": null,
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "provider": "ICICI Bank (NSDL demat)",
+      "accountNo": "49794950",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "matchedBy": "equity order book settling into IN302902-49794950"
+    },
+    {
+      "path": "source/november-2026-i/ICICI DEMAT ORDER BOOK/TRADE_REPORT_FY_2025-2026_AJAY.xls",
+      "fileName": "TRADE_REPORT_FY_2025-2026_AJAY.xls",
+      "bytes": 33792,
+      "size": "33.0 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "ownerName": null,
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "provider": "ICICI Bank (NSDL demat)",
+      "accountNo": "49794950",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "matchedBy": "equity order book settling into IN302902-49794950"
+    },
+    {
       "path": "source/november-2026/HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
       "fileName": "HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
       "bytes": 280671,
@@ -16101,6 +16145,38 @@
     },
     "ICICI Bank (NSDL demat)": {
       "accounts": {
+        "49794950": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "transaction-statement": [
+                  {
+                    "path": "source/november-2026-i/ICICI DEMAT ORDER BOOK/TRADE_REPORT_APR_26_TO_AS_ON_DATE-_AJAY.xls",
+                    "pages": 1,
+                    "size": "43.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/november-2026-i/ICICI DEMAT ORDER BOOK/TRADE_REPORT_FY_2025-2026_AJAY.xls",
+                    "pages": 1,
+                    "size": "33.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 2
+        },
         "(unidentified)": {
           "owner": null,
           "strategy": null,
@@ -16141,7 +16217,7 @@
           "fileCount": 2
         }
       },
-      "fileCount": 2
+      "fileCount": 4
     },
     "ICICI Prudential Mutual Fund": {
       "accounts": {
@@ -18495,6 +18571,18 @@
         "investor-report"
       ],
       "duplicateTypes": []
+    },
+    {
+      "provider": "ICICI Bank (NSDL demat)",
+      "account": "49794950",
+      "asOf": "(unidentified)",
+      "fileCount": 2,
+      "reportTypes": [
+        "transaction-statement"
+      ],
+      "duplicateTypes": [
+        "transaction-statement"
+      ]
     },
     {
       "provider": "Molecule Ventures LLP",
