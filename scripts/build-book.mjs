@@ -37,7 +37,7 @@ import { rollAccountTape } from "./lib/tapeRoll.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
 import { applyFamilyAdvice } from "./ingest/reference/familyAdvisedInvestments.mjs";
 import { adviseBalances } from "./ingest/reference/familyAdvisedBalances.mjs";
-import { familyDematShares, DEMAT_SHARES_DOCKEY } from "./ingest/reference/familyDematShares.mjs";
+import { familyDematShares, DEMAT_SHARES_DOCKEY, DEMAT_SHARES_ACCOUNT, HARVEST_ISINS } from "./ingest/reference/familyDematShares.mjs";
 import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs";
 import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
@@ -1976,6 +1976,12 @@ function shareMovementsFrom(docs, positions, accounts, notes, unvalued = []) {
     if (!known.has(accountId)) { offRegistry += 1; continue; }
     for (const row of d.positionsAsOf ?? []) {
       if (row.opening == null && row.quantity == null) continue;
+      // A share harvested from this demat's 31 Oct holding statement supersedes its own
+      // stale 31 Jul tape closing (Stage 10pz): Nuvama grew 3,695 → 9,500 between them and
+      // the newer depository count is authoritative, so skip the tape row here and let
+      // `familyDematShares` carry the single 9,500 line (the one harvested ISIN also in
+      // `positionsAsOf`; Kingfa/Manorama/Deepak were absent, so this touches only Nuvama).
+      if (accountId === DEMAT_SHARES_ACCOUNT && HARVEST_ISINS.has(row.isin)) continue;
       blocks += 1;
       if (row.movements) split += 1;
       // The ISIN the statement prints, joined to the holding the book carries.

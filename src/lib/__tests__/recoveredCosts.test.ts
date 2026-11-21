@@ -38,8 +38,11 @@ for (const [account, isin, units] of FOLIO_COSTED_DEMATS)
 // Less four on Ajay's ICICI NSDL account whose 31 Mar counts its 31 Oct statement
 // no longer holds (Stage 10kn): Smartworks and Insolation Energy sold to nil, Yash
 // Highvoltage 1,38,462 → 1,04,462 and EMA Partners 44,643 → 643. Plus Sotefin
-// Bharat, which the investment register dates through its bonus (Stage 10mv).
-assert.equal(BOOK_RECOVERED_COSTS.length, 59 - costedAtFolio.length, "only exact owner/ISIN/quantity matches are recoverable");
+// Bharat, which the investment register dates through its bonus (Stage 10mv). Plus
+// Nuvama on Ajay's Motilal demat, corrected to its 31 Oct count of 9,500 (Stage 10pz):
+// the review dates 1,900 bought on 2024-06-26 and the 5:1 sub-division to 9,500 — an
+// exact owner/ISIN/quantity match the stale 3,695 tape closing never made.
+assert.equal(BOOK_RECOVERED_COSTS.length, 60 - costedAtFolio.length, "only exact owner/ISIN/quantity matches are recoverable");
 const MOPWM = "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx";
 assert.equal(BOOK_RECOVERED_COSTS.filter(r => r.evidence.some(e => e.path === MOPWM)).length, 17);
 // Bharat's scanned HDFC Bank NSDL statement (Stage 10gk) prints the 1,01,111
@@ -84,12 +87,17 @@ const candidates = shareCandidates();
 // 22 until Stage 10iw: Axis, ICICI Bank, SBI, IFB and NLC kept their recovered
 // costs on the statement, and MOPWM's exchange trades sold them to nil, so the
 // live layer carries them as no candidate.
-assert.equal(candidates.filter(p => p.recoveredCost).length, 17);
+// 18 since Stage 10pz: Nuvama on Ajay's Motilal demat, harvested at its 31 Oct
+// 9,500 (familyDematShares) with the review's exact 1,900 → 9,500 cost; the stale
+// 3,695 tape row was an unresolved split entry carrying no cost (the loop below).
+assert.equal(candidates.filter(p => p.recoveredCost).length, 18);
 assert.ok(candidates.some(p => p.accountId === "hdfc-bank-nsdl-demat-22025655" && p.isin === "INE0NAZ01010" && p.recoveredCost));
 const infinium = candidates.find(p => p.isin === "INE0MRE01011")!;
 assert.equal(infinium.quantity, 8000); near(infinium.costBasis, 2646660);
 near(infinium.realizedPnL, -88917.69); near(infinium.costOfUnitsSold, 330630);
-for (const isin of ["INE0LGX01024", "INE531F01023", "INE1CDF01017"]) {
+// Nuvama (INE531F01023) left this set at Stage 10pz: its 31 Oct 9,500 is now harvested
+// with the review's mapped lots, so it is a costed candidate above, not an unresolved split.
+for (const isin of ["INE0LGX01024", "INE1CDF01017"]) {
   const p = candidates.find(p => p.isin === isin)!;
   assert.ok(p, `unresolved ${isin} stays recorded`);
   assert.equal(p.costBasis, null, "a split or demerger entry needs its original lots mapped");
