@@ -2039,7 +2039,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "AIF",
     "providerEngagement": "Category I Alternative Investment Fund – Angel Fund",
     "members": [],
-    "asOf": "2026-08-31",
+    "asOf": "2026-10-31",
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
@@ -2051,8 +2051,9 @@ export const BOOK_ACCOUNTS: Account[] = [
         "clientId": "22025655",
         "participant": "HDFC Bank",
         "accountId": "hdfc-bank-nsdl-demat-22025655",
-        "asOf": "2026-08-31",
+        "asOf": "2026-10-31",
         "documents": [
+          "sky-capital-rising-titans-fund-sky003-2026-10-31-holdings",
           "sky-capital-rising-titans-fund-sky003-2026-08-31-holdings",
           "sky-capital-rising-titans-fund-sky003-2026-07-31-holdings",
           "sky-capital-rising-titans-fund-sky003-2026-06-30-holdings",
@@ -2072,7 +2073,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "AIF",
     "providerEngagement": "Category I Alternative Investment Fund – Angel Fund",
     "members": [],
-    "asOf": "2026-08-31",
+    "asOf": "2026-10-31",
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
@@ -2084,8 +2085,9 @@ export const BOOK_ACCOUNTS: Account[] = [
         "clientId": "49794950",
         "participant": "ICICI Bank",
         "accountId": "icici-bank-nsdl-demat-49794950",
-        "asOf": "2026-08-31",
+        "asOf": "2026-10-31",
         "documents": [
+          "sky-capital-rising-titans-fund-sky022-2026-10-31-holdings",
           "sky-capital-rising-titans-fund-sky022-2026-08-31-holdings",
           "sky-capital-rising-titans-fund-sky022-2026-07-31-holdings",
           "sky-capital-rising-titans-fund-sky022-2026-06-30-holdings",
@@ -2105,7 +2107,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "AIF",
     "providerEngagement": "Category I Alternative Investment Fund – Angel Fund",
     "members": [],
-    "asOf": "2026-08-31",
+    "asOf": "2026-10-31",
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
@@ -2117,8 +2119,9 @@ export const BOOK_ACCOUNTS: Account[] = [
         "clientId": "42155971",
         "participant": "Motilal Oswal Financial Services",
         "accountId": null,
-        "asOf": "2026-08-31",
+        "asOf": "2026-10-31",
         "documents": [
+          "sky-capital-rising-titans-fund-sky023-2026-10-31-holdings",
           "sky-capital-rising-titans-fund-sky023-2026-08-31-holdings",
           "sky-capital-rising-titans-fund-sky023-2026-07-31-holdings",
           "sky-capital-rising-titans-fund-sky023-2026-06-30-holdings",
@@ -2138,7 +2141,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "AIF",
     "providerEngagement": "Category I Alternative Investment Fund – Angel Fund",
     "members": [],
-    "asOf": "2026-08-31",
+    "asOf": "2026-10-31",
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
@@ -2150,8 +2153,9 @@ export const BOOK_ACCOUNTS: Account[] = [
         "clientId": "42155967",
         "participant": "Motilal Oswal Financial Services",
         "accountId": null,
-        "asOf": "2026-08-31",
+        "asOf": "2026-10-31",
         "documents": [
+          "sky-capital-rising-titans-fund-sky024-2026-10-31-holdings",
           "sky-capital-rising-titans-fund-sky024-2026-08-31-holdings",
           "sky-capital-rising-titans-fund-sky024-2026-07-31-holdings",
           "sky-capital-rising-titans-fund-sky024-2026-06-30-holdings",
@@ -32786,19 +32790,19 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement. A statement says otherwise: SKY003's statement of 31 Jul 2026 prints ₹1,72,85,000 drawn — its 22 Apr 2026 call of ₹1,35,000 is on no row of the review.",
     "integrity": {
       "positionId": "position-be30db97092da2e288dde11f",
-      "quantityAsOf": "2026-08-31",
+      "quantityAsOf": "2026-10-31",
       "formulaVersion": "financial-integrity-v1",
       "metrics": {
         "quantity": {
           "status": "source-backed",
           "basis": "statement-unit-balance",
-          "effectiveDate": "2026-08-31",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "costBasis": {
           "status": "source-backed",
           "basis": "statement-or-family-review",
-          "effectiveDate": "2026-08-31",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "marketValue": {
@@ -32863,19 +32867,19 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement.",
     "integrity": {
       "positionId": "position-7000f595546ebeef749ecad1",
-      "quantityAsOf": "2026-08-31",
+      "quantityAsOf": "2026-10-31",
       "formulaVersion": "financial-integrity-v1",
       "metrics": {
         "quantity": {
           "status": "source-backed",
           "basis": "statement-unit-balance",
-          "effectiveDate": "2026-08-31",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "costBasis": {
           "status": "source-backed",
           "basis": "statement-or-family-review",
-          "effectiveDate": "2026-08-31",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "marketValue": {
@@ -32940,19 +32944,19 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement.",
     "integrity": {
       "positionId": "position-09338991890d5c18f9ffbe5b",
-      "quantityAsOf": "2026-08-31",
+      "quantityAsOf": "2026-10-31",
       "formulaVersion": "financial-integrity-v1",
       "metrics": {
         "quantity": {
           "status": "source-backed",
           "basis": "statement-unit-balance",
-          "effectiveDate": "2026-08-31",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "costBasis": {
           "status": "source-backed",
           "basis": "statement-or-family-review",
-          "effectiveDate": "2026-08-31",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "marketValue": {
@@ -33017,19 +33021,19 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement.",
     "integrity": {
       "positionId": "position-7c2eb6269edbeb2f618e834a",
-      "quantityAsOf": "2026-08-31",
+      "quantityAsOf": "2026-10-31",
       "formulaVersion": "financial-integrity-v1",
       "metrics": {
         "quantity": {
           "status": "source-backed",
           "basis": "statement-unit-balance",
-          "effectiveDate": "2026-08-31",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "costBasis": {
           "status": "source-backed",
           "basis": "statement-or-family-review",
-          "effectiveDate": "2026-08-31",
+          "effectiveDate": "2026-10-31",
           "exceptions": []
         },
         "marketValue": {
@@ -62845,22 +62849,22 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "sky-capital-rising-titans-fund-SKY003": {
-    "latestValuationDate": "2026-08-31",
+    "latestValuationDate": "2026-10-31",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "sky-capital-rising-titans-fund-SKY022": {
-    "latestValuationDate": "2026-08-31",
+    "latestValuationDate": "2026-10-31",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "sky-capital-rising-titans-fund-SKY023": {
-    "latestValuationDate": "2026-08-31",
+    "latestValuationDate": "2026-10-31",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "sky-capital-rising-titans-fund-SKY024": {
-    "latestValuationDate": "2026-08-31",
+    "latestValuationDate": "2026-10-31",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
@@ -102114,7 +102118,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "name": "Sky Capital Rising Titans Fund",
     "provider": "Sky Capital Rising Titans Fund",
     "ownerId": "bharat-jaisinghani",
-    "asOf": "2026-08-31",
+    "asOf": "2026-10-31",
     "committed": 17285000,
     "drawn": 17285000,
     "undrawn": 0,
@@ -102162,7 +102166,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "name": "Sky Capital Rising Titans Fund",
     "provider": "Sky Capital Rising Titans Fund",
     "ownerId": "ajay-jaisinghani",
-    "asOf": "2026-08-31",
+    "asOf": "2026-10-31",
     "committed": 15000000,
     "drawn": 15000000,
     "undrawn": 0,
@@ -102185,7 +102189,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "name": "Sky Capital Rising Titans Fund",
     "provider": "Sky Capital Rising Titans Fund",
     "ownerId": "bharat-jaisinghani-family-trust-2",
-    "asOf": "2026-08-31",
+    "asOf": "2026-10-31",
     "committed": 7500000,
     "drawn": 7500000,
     "undrawn": 0,
@@ -102208,7 +102212,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "name": "Sky Capital Rising Titans Fund",
     "provider": "Sky Capital Rising Titans Fund",
     "ownerId": "bharat-jaisinghani-family-trust-3",
-    "asOf": "2026-08-31",
+    "asOf": "2026-10-31",
     "committed": 7500000,
     "drawn": 7500000,
     "undrawn": 0,

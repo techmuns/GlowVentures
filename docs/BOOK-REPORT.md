@@ -102,10 +102,10 @@ Generated — **do not edit by hand**.
 | 9039671912 | Sanshi Fund | Ajay Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-10-31 | 1 | 31,93,65,812.38 |
 | 9069671554 | Sanshi Fund | Ankita Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-10-31 | 1 | 31,95,38,977.49 |
 | 9069671634 | Sanshi Fund | Ajay Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-10-31 | 1 | 30,90,69,358.99 |
-| SKY003 | Sky Capital Rising Titans Fund | Bharat Jaisinghani | — | 2026-08-31 | 1 | 1,71,50,000 |
-| SKY022 | Sky Capital Rising Titans Fund | Ajay Jaisinghani | — | 2026-08-31 | 1 | 1,50,00,000 |
-| SKY023 | Sky Capital Rising Titans Fund | Bharat Jaisinghani Family Trust 2 | — | 2026-08-31 | 1 | 75,00,000 |
-| SKY024 | Sky Capital Rising Titans Fund | Bharat Jaisinghani Family Trust 3 | — | 2026-08-31 | 1 | 75,00,000 |
+| SKY003 | Sky Capital Rising Titans Fund | Bharat Jaisinghani | — | 2026-10-31 | 1 | 1,71,50,000 |
+| SKY022 | Sky Capital Rising Titans Fund | Ajay Jaisinghani | — | 2026-10-31 | 1 | 1,50,00,000 |
+| SKY023 | Sky Capital Rising Titans Fund | Bharat Jaisinghani Family Trust 2 | — | 2026-10-31 | 1 | 75,00,000 |
+| SKY024 | Sky Capital Rising Titans Fund | Bharat Jaisinghani Family Trust 3 | — | 2026-10-31 | 1 | 75,00,000 |
 | 8710067 | SVAN Investment Managers LLP | Ajay Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-11-04 | 48 | 15,47,31,232.44 |
 | 8710090 | SVAN Investment Managers LLP | Bharat Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-11-04 | 48 | 10,21,12,920.64 |
 | TVC262 | Transition Venture Capital | Bharat Jaisinghani Family Trust 2 | Transition Venture Capital Fund I | 2026-03-31 | 1 | 96,80,754 |
@@ -911,35 +911,39 @@ never guessed into the nearest plausible bucket.
 - account 9069671634: no time-weighted return series in any statement
 - account 9069671634: the holdings value bridge 2025-04-30 → 2026-10-31 is WITHHELD — The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no realised gain, unrealised gain, income, profit / loss, fees or expenses line. Not read from this report: gain prior to takeover, other expenses, accrued income and change in accruals.
 - account 9069671634: no external capital movements found, so no money-weighted return series
-- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky003-2026-04-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky003-2026-05-31-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky003-2026-06-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky003-2026-07-31-holdings`; its dated rows are still counted
-- account SKY003 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-08-31 carries 2 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky003-2026-04-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky003-2026-05-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky003-2026-06-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky003-2026-07-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-08-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky003-2026-08-31-holdings`; its dated rows are still counted
+- account SKY003 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-10-31 carries 2 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account SKY003: no time-weighted return series in any statement
 - account SKY003: no flow block in any statement, so no value bridge
 - account SKY003: no external capital movements found, so no money-weighted return series
-- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky022-2026-04-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky022-2026-05-31-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky022-2026-06-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky022-2026-07-31-holdings`; its dated rows are still counted
-- account SKY022 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-08-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky022-2026-04-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky022-2026-05-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky022-2026-06-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky022-2026-07-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-08-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky022-2026-08-31-holdings`; its dated rows are still counted
+- account SKY022 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-10-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account SKY022: no time-weighted return series in any statement
 - account SKY022: no flow block in any statement, so no value bridge
 - account SKY022: no external capital movements found, so no money-weighted return series
-- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky023-2026-04-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky023-2026-05-31-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky023-2026-06-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky023-2026-07-31-holdings`; its dated rows are still counted
-- account SKY023 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-08-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky023-2026-04-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky023-2026-05-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky023-2026-06-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky023-2026-07-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-08-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky023-2026-08-31-holdings`; its dated rows are still counted
+- account SKY023 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-10-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account SKY023: no time-weighted return series in any statement
 - account SKY023: no flow block in any statement, so no value bridge
 - account SKY023: no external capital movements found, so no money-weighted return series
-- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky024-2026-04-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky024-2026-05-31-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky024-2026-06-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky024-2026-07-31-holdings`; its dated rows are still counted
-- account SKY024 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-08-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky024-2026-04-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky024-2026-05-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky024-2026-06-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky024-2026-07-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-08-31 superseded for SNAPSHOT facts by 2026-10-31 — `sky-capital-rising-titans-fund-sky024-2026-08-31-holdings`; its dated rows are still counted
+- account SKY024 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-10-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account SKY024: no time-weighted return series in any statement
 - account SKY024: no flow block in any statement, so no value bridge
 - account SKY024: no external capital movements found, so no money-weighted return series

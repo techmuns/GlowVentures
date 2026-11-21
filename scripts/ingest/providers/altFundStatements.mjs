@@ -2135,8 +2135,11 @@ const LAYOUTS = [
     capitalFrom: (text, warn) => {
       const paid = n((/Total Drawdown\s+₹?\s*([\d,]+)/i.exec(text) ?? [])[1]);
       const block = (/Drawdown Details([\s\S]*?)Total Drawdown/i.exec(text) ?? [])[1] ?? "";
-      const rows = callRows(block, /₹\s*([\d,]+)\s+(\d{1,2}-[A-Za-z]{3}-\d{4})/g,
-        (m) => ({ date: toIso(m[2]), label: "Drawdown", amount: n(m[1]) }));
+      // The drawdown date accepts `-` or `/` for the same reason as ALLOTMENT: the
+      // 31 Oct 2026 reissue prints `03/Feb/2026` where earlier issues printed
+      // `03-Feb-2026`. Normalise to `-` so toIso reads the DD-Mon-YYYY it expects.
+      const rows = callRows(block, /₹\s*([\d,]+)\s+(\d{1,2}[-/][A-Za-z]{3}[-/]\d{4})/g,
+        (m) => ({ date: toIso(m[2].replace(/\//g, "-")), label: "Drawdown", amount: n(m[1]) }));
       if (!rows.length && paid != null) {
         warn?.("drawdown-table-not-found",
           `this statement prints a Total Drawdown of ${paid} and no dated rows under a "Drawdown Details" heading; the table is there on every issue of this layout, so it has moved rather than gone`);
@@ -3418,6 +3421,9 @@ export function amritkaalFlows(text, warn) {
  * figures on the next, and where it holds several they sit on one line each.
  * The en-dash is the character the statement actually prints; the hyphen is
  * allowed because a reissue that changes it should not silently read zero rows.
+ * The allotment date likewise accepts `-` or `/`: the 31 Oct 2026 reissue prints
+ * `03/02/2026` where every earlier issue printed `03-02-2026`, and a cosmetic
+ * separator change must not drop the only holding row the statement carries.
  */
 const ALLOTMENT = new RegExp(
   String.raw`Sky Capital Rising Titans Fund\s*[–-]\s*` +
@@ -3427,7 +3433,7 @@ const ALLOTMENT = new RegExp(
   String.raw`(INF[A-Z0-9]{9})\s+` +              // 4 ISIN
   String.raw`₹?\s*([\d,]+\.\d{2})\s+` +        // 5 face value
   String.raw`([\d,]+\.\d{5})\s+` +             // 6 units
-  String.raw`(\d{2}-\d{2}-\d{4})`,              // 7 allotment date
+  String.raw`(\d{2}[-/]\d{2}[-/]\d{4})`,        // 7 allotment date (`-` or `/`)
   "g",
 );
 

@@ -327,27 +327,27 @@ extraction mirrors each archive's own path under `source/`.
 | --- | --- | --- | --- | ---: |
 | Consolidated review (MOPWM) | MOPWM | Ajay Jaisinghani | 2026-06-30 | ₹123.40 Cr |
 | ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-10-31 | ₹106.16 Cr\*\* |
-| Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹97.68 Cr |
+| Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-10-31 | ₹106.09 Cr |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-09-30 | ₹48.07 Cr |
 | HDFC Bank (NSDL demat) | 67776432 | Glowterra LLP | 2026-10-29 | ₹47.62 Cr |
 | HDFC Securities | 3110320 | Ajay Jaisinghani | 2026-11-02 | ₹47.24 Cr |
 | Bandhan Mutual Fund | 8652064 | Ajay Jaisinghani | 2026-10-26 | ₹41.51 Cr |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-09-30 | ₹38.16 Cr |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani | 2026-06-30 | ₹37.26 Cr |
+| Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-10-31 | ₹31.95 Cr |
+| Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-10-31 | ₹31.94 Cr |
+| Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-10-31 | ₹30.91 Cr |
 | Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-11-03 | ₹29.91 Cr |
-| Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹29.42 Cr |
-| Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹29.35 Cr |
 | Consolidated review (MOPWM) | MOPWM | Ankita Jaisinghani | 2026-06-30 | ₹29.04 Cr |
-| Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹28.46 Cr |
 | Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-09-30 | ₹27.00 Cr |
 | Motilal Oswal Founders Fund | 90410016104 | Ajay Jaisinghani | 2026-09-30 | ₹22.07 Cr |
 | Motilal Oswal Active Momentum Fund | 904168868444 | Ankita Jaisinghani | 2026-08-06 | ₹21.42 Cr |
+| Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-10-31 | ₹21.25 Cr |
 | V.E.C Assago Capital Management LLP | 128005 | Ajay Jaisinghani | 2026-08-13 | ₹20.29 Cr |
 | Franklin India Credit AIF | 10387 | Ajay Jaisinghani | 2026-10-22 | ₹20.00 Cr |
-| Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-06-30 | ₹19.57 Cr |
 | Goldstandard Wealth Private Limited | 100023 | Ajay Jaisinghani | 2026-10-06 | ₹18.03 Cr |
-| Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-07-31 | ₹16.31 Cr |
 | HDFC Bank (NSDL demat) | 67776424 | Glowsphere LLP | 2026-10-29 | ₹15.87 Cr |
+| Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-10-31 | ₹15.65 Cr |
 | SVAN Investment Managers LLP | 8710067 | Ajay Jaisinghani | 2026-11-04 | ₹15.47 Cr |
 | Green Lantern Capital LLP | 510861 | Ajay Jaisinghani | 2026-07-27 | ₹11.45 Cr |
 | Motilal Oswal Delphi Equity Fund | 9049241536 | Ajay Jaisinghani | 2026-06-30 | ₹11.13 Cr |
@@ -368,8 +368,8 @@ extraction mirrors each archive's own path under `source/`.
 | India SME Investments | 177302 | Ankita Jaisinghani | 2026-06-30 | ₹3.19 Cr |
 | HDFC Mutual Fund | 16002141 | Ankita Jaisinghani | 2026-10-01 | ₹2.62 Cr |
 | Baring Private Equity India Fund | AIFM_BPEPF6_0584 | Ankita Jaisinghani | 2026-03-31 | ₹1.88 Cr |
-| Sky Capital Rising Titans Fund | SKY003 | Bharat Jaisinghani | 2026-08-31 | ₹1.72 Cr |
-| Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-08-31 | ₹1.50 Cr |
+| Sky Capital Rising Titans Fund | SKY003 | Bharat Jaisinghani | 2026-10-31 | ₹1.72 Cr |
+| Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-10-31 | ₹1.50 Cr |
 | 360 ONE Private Wealth | 37702 | Ajay Jaisinghani | 2026-09-30 | ₹1.46 Cr\* |
 | 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-09-30 | ₹1.46 Cr\* |
 | Kotak Mahindra Mutual Fund | 5372722 | Aarti Jaisinghani | 2026-11-02 | ₹1.38 Cr |
@@ -380,8 +380,8 @@ extraction mirrors each archive's own path under `source/`.
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹0.99 Cr |
 | Transition Venture Capital | TVC262 | Bharat Jaisinghani Family Trust 2 | 2026-03-31 | ₹0.97 Cr\* |
 | Transition Venture Capital | TVC263 | Bharat Jaisinghani Family Trust 3 | 2026-03-31 | ₹0.97 Cr\* |
-| Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-08-31 | ₹0.75 Cr |
-| Sky Capital Rising Titans Fund | SKY024 | Bharat Jaisinghani Family Trust 3 | 2026-08-31 | ₹0.75 Cr |
+| Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-10-31 | ₹0.75 Cr |
+| Sky Capital Rising Titans Fund | SKY024 | Bharat Jaisinghani Family Trust 3 | 2026-10-31 | ₹0.75 Cr |
 | ICICI Prudential Mutual Fund | 36378950 | Ajay Jaisinghani | 2026-10-05 | ₹0.56 Cr |
 | Bandhan Mutual Fund | 8691267 | Ankita Jaisinghani | 2026-09-30 | ₹0.39 Cr |
 | ICICI Prudential Mutual Fund | 36379637 | Bharat Jaisinghani | 2026-10-05 | ₹0.38 Cr |

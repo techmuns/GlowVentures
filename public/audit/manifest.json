@@ -14999,6 +14999,126 @@
   ]
  },
  {
+  "docKey": "sky-capital-rising-titans-fund-sky003-2026-10-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY003",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-31",
+  "reportType": "holdings",
+  "sourcePath": "source/november-2026-h/SKY CAPITAL/SKY003 - Bharat Jaisinghani_SOA Oct 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky003-2026-10-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY003 · holdings",
+  "fy": "2026-10-31",
+  "source": "source/november-2026-h/SKY CAPITAL/SKY003 - Bharat Jaisinghani_SOA Oct 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky022-2026-10-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY022",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-31",
+  "reportType": "holdings",
+  "sourcePath": "source/november-2026-h/SKY CAPITAL/SKY022 - Ajay Jaisinghani_SOA Oct 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky022-2026-10-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY022 · holdings",
+  "fy": "2026-10-31",
+  "source": "source/november-2026-h/SKY CAPITAL/SKY022 - Ajay Jaisinghani_SOA Oct 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky023-2026-10-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY023",
+  "owner": "Bharat Jaisinghani Family Trust 2",
+  "ownerId": "bharat-jaisinghani-family-trust-2",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-31",
+  "reportType": "holdings",
+  "sourcePath": "source/november-2026-h/SKY CAPITAL/SKY023 - BJ Family Trust 2_SOA Oct 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky023-2026-10-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY023 · holdings",
+  "fy": "2026-10-31",
+  "source": "source/november-2026-h/SKY CAPITAL/SKY023 - BJ Family Trust 2_SOA Oct 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "sky-capital-rising-titans-fund-sky024-2026-10-31-holdings",
+  "provider": "Sky Capital Rising Titans Fund",
+  "accountNo": "SKY024",
+  "owner": "Bharat Jaisinghani Family Trust 3",
+  "ownerId": "bharat-jaisinghani-family-trust-3",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-31",
+  "reportType": "holdings",
+  "sourcePath": "source/november-2026-h/SKY CAPITAL/SKY024 - BJ Family Trust 3_SOA Oct 31, 2026.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 2,
+  "fileKey": "sky-capital-rising-titans-fund-sky024-2026-10-31-holdings",
+  "label": "Sky Capital Rising Titans Fund · SKY024 · holdings",
+  "fy": "2026-10-31",
+  "source": "source/november-2026-h/SKY CAPITAL/SKY024 - BJ Family Trust 3_SOA Oct 31, 2026.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "helios-mutual-fund-10355977-2026-11-03-holdings",
   "provider": "Helios Mutual Fund",
   "accountNo": "10355977",
