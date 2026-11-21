@@ -140,8 +140,10 @@ eq("the statement rows the review does not supersede — Neo Infra, Franklin, th
 eq("raw private rows = the review's lines + the statement's", scope.rows.length, reviewRows.length + statementPrivate.length);
 // Sotefin Bharat's ₹2,00,00,400 at-cost line left this page in Stage 10kn: the
 // ICICI NSDL statement of 31 Oct marks the listed shares, which stay on it.
-eq("raw private rows", scope.rows.length, 93);
-eq("…of which the review holds at cost", reviewRows.filter(isValuedAtCost).length, 75);
+// Sky Vision Cure is now two owner rows (Bharat + Ankita), completed by the LLP's
+// own capital ledgers from the review's single ₹4.41 Cr line under Ankita (Stage 10px).
+eq("raw private rows", scope.rows.length, 94);
+eq("…of which the review holds at cost", reviewRows.filter(isValuedAtCost).length, 76);
 // NOTHING IS COUNTED ONCE: both pairs the policy used to tag are separate
 // investments on the family's word, so the deduped set is the raw set.
 eq("deduped private rows — the same rows, nothing counted once", scope.dedupedRows.length, scope.rows.length);
@@ -181,7 +183,8 @@ const rawMV = sum(scope.rows.map((p) => p.marketValue));
 near("deduped private value === BOOK_SUMMARY.privateValue", dedupedMV, BOOK_SUMMARY.privateValue);
 near("raw private value = the review's lines + the statement's", rawMV,
   sum(reviewRows.map((p) => p.marketValue)) + sum(statementPrivate.map((p) => p.marketValue)));
-near("raw private value", rawMV, 1930944270.36 - 20000400 + 199990000.57 + 158745849.75 + 476210083 + 40979575);
+near("raw private value", rawMV, 1930944270.36 - 20000400 + 199990000.57 + 158745849.75 + 476210083 + 40979575
+  + (56500000 - 44092619.87) /* Sky Vision Cure: the LLP ledgers complete the review's ₹4.41 Cr to ₹5.65 Cr, Stage 10px */);
 near("double count = raw − deduped", scope.doubleCounted, rawMV - dedupedMV);
 near("the double count is nil — the family confirmed both pairs separate", scope.doubleCounted, 0);
 ok("…and so is the whole book's: every position is in its consolidated total",
@@ -248,7 +251,8 @@ near("cost = what every row reports", sumOrNull(funds.map((f) => f.cost)), sumOr
 // 360 ONE's two lines carry FIFO's cost since Stage 10fz — ₹99,41,987.06 held
 // each, where the review's purchases less sale proceeds read ₹99,21,180.02 —
 // so the valued review lines' cost is ₹41,614.08 above the review's own sum.
-near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + 200000000 + (349608469.84 + 2 * 20807.04) + 1406775806.88 - 20000400 + 158745849.75 + 476210083);
+near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + 200000000 + (349608469.84 + 2 * 20807.04) + 1406775806.88 - 20000400 + 158745849.75 + 476210083
+  + (56500000 - 44092619.87) /* Sky Vision Cure: the LLP ledgers complete it, Stage 10px */);
 near("…the at-cost lines' cost is their value", sum(atCostReview.map((p) => p.costBasis ?? NaN)), sum(atCostReview.map((p) => p.marketValue)));
 ok("an at-cost line carries no P&L, no return and no per-unit mark",
   atCostReview.every((p) => p.unrealizedPnL == null && p.returnPct == null && p.currentPrice == null));

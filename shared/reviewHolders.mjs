@@ -119,7 +119,15 @@ export const PRIVATE_INVESTMENT_HOLDERS = [
   { line: /^Rurash Financials/, assetClass: "Unlisted", ...one(BH) },
   { line: /^Variance PT Ventures/, assetClass: "Unlisted", ...one(BH) },
   { line: /^LANDCRAFT RETAIL/, assetClass: "Unlisted", ...one(AJ) },
-  { line: /^Sky Vision Cure LLP$/, assetClass: "Unlisted", ...one(AN) },
+  // The review's Private Investments line is the FIRST funding round only (27 Mar
+  // 2025, ₹4.41 Cr, lumped under Ankita); it missed the 20 Mar 2026 second round.
+  // The LLP's own partner capital ledgers (31 Oct 2026) record the complete
+  // ₹5.65 Cr paid — Bharat ₹64 L and Ankita ₹5.01 Cr, each across both rounds.
+  // `ledgerTotal` carries that complete figure in place of the review's undercount
+  // (the newest-complete-record rule; the family confirmed it on 21 Nov 2026).
+  { line: /^Sky Vision Cure LLP$/, assetClass: "Unlisted", ledgerTotal: 56500000,
+    split: [{ owner: BH, cost: 6400000 }, { owner: AN, cost: 50100000 }],
+    why: "the review's line is the first funding round only (27 Mar 2025, ₹4.41 Cr under Ankita); the LLP's own partner capital ledgers as on 31 Oct 2026 record the complete ₹5.65 Cr paid in — Bharat ₹64 L and Ankita ₹5.01 Cr, each across two rounds — which the family confirmed on 21 Nov 2026 is the figure to carry" },
   { line: /^Blue Ashva India Pool Account$/, assetClass: "AIF",
     split: [{ owner: AN, cost: 15251640 }, { owner: AJ, cost: 5108000 }, { owner: NA, cost: 17048360 }],
     why: `${REG} records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder` },

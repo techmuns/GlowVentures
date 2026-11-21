@@ -306,6 +306,10 @@ export function reviewBookLayer({ root = ".", positions, unvalued, reviewWorkboo
     return hits[0];
   };
   const writtenOff = [];
+  // Σ (ledger total − review line cost) for Private-Investments lines the LLP's own
+  // capital ledgers complete (Stage 10px) — the book attributes this much more than
+  // the review's member summary shows, so the Investorwise tie below adds it back.
+  let ledgerOverride = 0;
   for (const l of pi.lines) {
     if (!/written off/i.test(l.remark ?? "")) continue;
     if (l.cost || l.value) fail(`written-off row ${l.row} carries a figure`);
@@ -322,11 +326,20 @@ export function reviewBookLayer({ root = ".", positions, unvalued, reviewWorkboo
     const bare = e.split.filter((s) => s.cost === undefined);
     if (bare.length > 1) fail(`${name}: more than one part takes the remainder`);
     const fixed = sum(e.split.map((s) => s.cost));
-    const parts = e.split.map((s) => ({ ...s, cost: s.cost ?? l.cost - fixed }));
-    if (!near(sum(parts.map((s) => s.cost)), l.cost)) fail(`${name}: the split adds to ${sum(parts.map((s) => s.cost))}, not the line's ${l.cost}`);
+    // A line the LLP's own partner capital ledgers COMPLETE carries the ledger
+    // total in place of the review's own figure, which undercounts it by a
+    // funding round (Stage 10px): the split then adds to the ledger total, not
+    // the workbook line, and a note records the review figure it supersedes.
+    const lineCost = e.ledgerTotal ?? l.cost;
+    const parts = e.split.map((s) => ({ ...s, cost: s.cost ?? lineCost - fixed }));
+    if (!near(sum(parts.map((s) => s.cost)), lineCost)) fail(`${name}: the split adds to ${sum(parts.map((s) => s.cost))}, not the ${e.ledgerTotal ? "ledgers'" : "line's"} ${lineCost}`);
+    if (e.ledgerTotal) { ledgerOverride += e.ledgerTotal - l.cost; notes.push(`review: ${name} — Private Investments row ${l.row} records ₹${l.cost.toLocaleString("en-IN")} (one funding round); the LLP's own capital ledgers record ₹${e.ledgerTotal.toLocaleString("en-IN")} paid in full, which the book carries.`); }
     for (const s of parts) {
+      const where = e.ledgerTotal
+        ? `Held at cost per the LLP's own partner capital ledgers as on 31 Oct 2026${parts.length > 1 ? ` — ${ownerName(s.owner)}'s ₹${s.cost.toLocaleString("en-IN")}` : ""}`
+        : `Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row ${l.row}${parts.length > 1 ? ` — ${ownerName(s.owner)}'s ₹${s.cost.toLocaleString("en-IN")} of the line` : ""}`;
       push({ key, security: name, owner: s.owner, assetClass: e.assetClass, qty: null, cost: s.cost, atCost: true, tab: "privateInvestments", row: l.row, dates: l.dates,
-        note: `Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row ${l.row}${parts.length > 1 ? ` — ${ownerName(s.owner)}'s ₹${s.cost.toLocaleString("en-IN")} of the line` : ""}. ${cap(e.why)}.` });
+        note: `${where}. ${cap(e.why)}.` });
     }
   }
   for (const l of pi.lines) if (!covered.has(l.row)) fail(`Private Investments row ${l.row} (${displayName(l.product)}) is covered by no entry`);
@@ -422,7 +435,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued, reviewWorkboo
   }
   const elsewhereCost = sum(PRIVATE_INVESTMENT_ELSEWHERE.map((e) => pi.lines.find((l) => e.line.test(l.product)).cost));
   const gap = sum(Object.entries(r.members.peAtCost.byMember).map(([m, v]) => v - (held.peAtCost.get(INVESTOR[m]) ?? 0)));
-  if (!near(gap, (held.peAtCost.get(NOT_ATTRIBUTED) ?? 0) + elsewhereCost, 2)) fail(`Investorwise Private Equity: members leave ₹${gap}, not the not-attributed rows and the lines counted elsewhere`);
+  if (!near(gap + ledgerOverride, (held.peAtCost.get(NOT_ATTRIBUTED) ?? 0) + elsewhereCost, 2)) fail(`Investorwise Private Equity: members leave ₹${gap} (+₹${ledgerOverride} the ledgers complete), not the not-attributed rows and the lines counted elsewhere`);
 
   // ── 5. Keys unique per (account, security), and the name a reader reads ────
   const seen = new Set();
