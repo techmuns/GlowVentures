@@ -14737,6 +14737,9 @@ const MOCK_INDICES = [
   ["nifty-500", "Nifty 500", "^CRSLDX", "NIFTY 500", 23000],
   ["nifty-midcap-150", "Nifty Midcap 150", "NIFTYMIDCAP150.NS", "NIFTY MIDCAP 150", 22000],
   ["nifty-smallcap-250", "Nifty Smallcap 250", "NIFTYSMLCAP250.NS", "NIFTY SMLCAP 250", 18000],
+  ["nifty-next-50", "Nifty Next 50", "^NSMIDCP", "NIFTY NEXT 50", 70000],
+  ["sensex", "Sensex", "^BSESN", "S&P BSE SENSEX", 82000],
+  ["bse-500", "BSE 500", "BSE-500.BO", "S&P BSE 500 INDEX", 37000],
 ];
 
 /**
@@ -15147,7 +15150,7 @@ async function installLiveMocks(page, opts = {}) {
     const indices = MOCK_INDICES.map(([id, label, symbol, name, prev]) => {
       const level = Math.round(prev * INDEX_FACTOR * 100) / 100;
       return {
-        id, label, symbol, ok: true, reason: null, name, currency: "INR", exchange: "NSE",
+        id, label, symbol, ok: true, reason: null, name, currency: "INR", exchange: /(^\^BSE|\.BO$)/.test(symbol) ? "BSE" : "NSE",
         // The level's OWN session, distinct from the previous close's, because the
         // real Function now names both ends of the move — a fixture missing a
         // field the response carries stops exercising what reads it.
@@ -21488,6 +21491,33 @@ const NAV_BENCH_WRONG = [
       && /NIFTY MIDCAP 50/.test(wrong.title) && wrong.title.includes(BENCH_FIXTURE[i][1])
       && others.length === BENCH_FIXTURE.length - 1 && others.every((x) => x.state === "ok")
       && !c.strokes.includes(`var(--chart-bench-${i + 1})`) && c.lines === 1 + others.length;
+  }],
+];
+
+/**
+ * ── THE INDEX STRIP RUNS EVERY BENCHMARK, AS A TICKER ───────────────────────
+ *
+ * *"Add all benchmarks here and make it moving strip like they have in TV"* —
+ * 16 Nov 2026. The order is re-derived here off `BENCH_FIXTURE`, not imported:
+ * the family's four first, as they named them, then every other benchmark in
+ * the catalogue's order. Struck on the cio-live walk, where the fixture prices
+ * every index, so each cell must carry a level.
+ */
+const TICKER_FAMILY_FOUR = ["nifty-50", "nifty-500", "nifty-midcap-150", "nifty-smallcap-250"];
+const TICKER_ORDER = [...TICKER_FAMILY_FOUR, ...BENCH_FIXTURE.map((b) => b[0]).filter((k) => !TICKER_FAMILY_FOUR.includes(k))];
+const INDEX_TICKER = [
+  ["the index strip carries every benchmark once, the family's four first, each with a level", (t, ctx) => {
+    const k = ctx?.indexTicker;
+    if (!k?.primary) return false;
+    return k.primary.ids.join() === TICKER_ORDER.join() && k.primary.levels.every(Boolean) && k.primary.hidden === null;
+  }],
+  ["...and moves as a seamless ticker: a hidden repeat of the same run, the same width, both scrolling", (t, ctx) => {
+    const k = ctx?.indexTicker;
+    if (!k?.primary || !k.repeat) return false;
+    const moving = (a) => /^index-ticker-run \S+s linear infinite$/.test(a);
+    return k.repeat.hidden === "true" && k.repeat.ids.join() === k.primary.ids.join()
+      && Math.abs(k.repeat.width - k.primary.width) < 0.5 && k.primary.width >= k.width - 0.5
+      && moving(k.primary.animation) && k.repeat.animation === k.primary.animation;
   }],
 ];
 
@@ -31377,6 +31407,7 @@ const INVARIANTS = {
     }],
   ],
   "cio-live": [
+    ...INDEX_TICKER,
     /**
      * THE TOTAL NUMBER OF STOCKS IS ON THE CARD ONCE IT RANKS TOO (Stage
      * 10ec).
@@ -40852,6 +40883,30 @@ for (const theme of THEMES) {
         };
       });
       /**
+       * ── THE INDEX TICKER, READ OFF ITS DATA HANDLES ──────────────────────
+       *
+       * Which index each run carries, in order; whether the repeat run is
+       * hidden from assistive technology; both runs' widths (equal, or the loop
+       * jumps where one hands over to the other); and the animation each runs.
+       */
+      const indexTicker = FAST ? null : await page.evaluate(() => {
+        const t = document.querySelector('[data-testid="index-strip"] [data-ticker]');
+        if (!t) return null;
+        const run = (k) => {
+          const r = t.querySelector(`[data-ticker-run="${k}"]`);
+          if (!r) return null;
+          const cs = getComputedStyle(r);
+          return {
+            ids: [...r.querySelectorAll("[data-index-id]")].map((c) => c.getAttribute("data-index-id")),
+            levels: [...r.querySelectorAll("[data-index-id]")].map((c) => /\d[\d,]*\.\d{2}/.test(c.textContent ?? "")),
+            hidden: r.getAttribute("aria-hidden"),
+            width: r.getBoundingClientRect().width,
+            animation: `${cs.animationName} ${cs.animationDuration} ${cs.animationTimingFunction} ${cs.animationIterationCount}`,
+          };
+        };
+        return { primary: run("primary"), repeat: run("repeat"), width: t.getBoundingClientRect().width };
+      });
+      /**
        * ── WHICH PANEL MORNING CIO IS SHOWING, AND WHETHER IT FITS ───────────
        *
        * Both struck on structure and geometry rather than on the three labels,
@@ -46017,7 +46072,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, sectorAttr, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, privateCo, monitorMember, monitorFoot, monitorBench, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, sectorAttr, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, privateCo, monitorMember, monitorFoot, monitorBench, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside, indexTicker }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

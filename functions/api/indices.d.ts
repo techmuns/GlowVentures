@@ -10,3 +10,11 @@ export type IndicesContext = {
 };
 
 export function onRequest(context: IndicesContext): Promise<Response>;
+
+/** One index the feed reads: its key (a `BenchmarkKey`), symbol and accepted names. */
+export type IndexSpec = { id: string; label: string; symbol: string; expect: string[] };
+
+// `declare`, not a bare `const`: Cloudflare's Functions bundler (esbuild) reads this
+// file too, and refuses a `const` with no initialiser (the 16 Nov preview failure).
+/** Every index the feed reads — held to `BENCHMARKS` by `indicesFunction.test.ts`. */
+export declare const INDICES: IndexSpec[];

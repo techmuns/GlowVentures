@@ -20,7 +20,10 @@
 // therefore stubbed FROM REAL MEASURED BARS (7 and 8 September 2026, captured
 // from Yahoo) and the clock is the fixture's, so the failing window is
 // reproducible on demand rather than once a day.
-import { onRequest } from "../../../functions/api/indices.js";
+import { onRequest, INDICES } from "../../../functions/api/indices.js";
+import { BENCHMARKS } from "@/lib/benchmarks";
+import { TICKER_INDEX_IDS } from "@/components/IndexStrip";
+import { FAMILY_INDEX_IDS } from "@/lib/indices";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -188,6 +191,29 @@ async function run(body: unknown) {
   const row = await run(chart({ level: 7757.15, marketTime: T("2026-09-08T10:01:17Z"), longName: "NIFTY NEXT 50" }));
   ok("a symbol answering with a different index still yields no level",
      row.ok === false && row.reason === "identity_mismatch", `reason ${row.reason}`);
+}
+
+// ── 9. THE TICKER CARRIES EVERY BENCHMARK ───────────────────────────────────
+// *"Add all benchmarks here"* (16 Nov 2026). The NAV card's catalogue and this
+// feed are two lists in two runtimes; held together here on key, symbol and
+// every accepted name, so a benchmark added to one and not the other — or a
+// symbol changed in one only — fails rather than drops off the ticker.
+{
+  const feed = new Map(INDICES.map((x) => [x.id, x]));
+  const missing = BENCHMARKS.filter((b) => !feed.has(b.key)).map((b) => b.key);
+  ok("the index feed carries one row per benchmark, under the benchmark's key",
+     missing.length === 0 && INDICES.length === BENCHMARKS.length, missing.length ? `missing ${missing.join(", ")}` : `${INDICES.length} indices`);
+  const drift = BENCHMARKS.filter((b) => {
+    const f = feed.get(b.key);
+    return !f || f.symbol !== b.symbol || [...f.expect].sort().join() !== [...b.expect].sort().join();
+  }).map((b) => b.key);
+  ok("...on the same symbol and the same accepted names as the NAV card's line",
+     drift.length === 0, drift.length ? `drifted: ${drift.join(", ")}` : "symbols and names agree");
+  ok("the ticker runs every benchmark once, opening on the family's four in their order",
+     TICKER_INDEX_IDS.length === BENCHMARKS.length && new Set(TICKER_INDEX_IDS).size === TICKER_INDEX_IDS.length
+       && BENCHMARKS.every((b) => TICKER_INDEX_IDS.includes(b.key))
+       && FAMILY_INDEX_IDS.every((id, i) => TICKER_INDEX_IDS[i] === id),
+     TICKER_INDEX_IDS.join(" → "));
 }
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");

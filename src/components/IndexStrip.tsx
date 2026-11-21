@@ -1,9 +1,19 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { fetchIndices, indexReason, STRIP_INDEX_IDS, type IndexFeed, type IndexQuote } from "@/lib/indices";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { fetchIndices, indexReason, FAMILY_INDEX_IDS, type IndexFeed, type IndexQuote } from "@/lib/indices";
+import { BENCHMARKS } from "@/lib/benchmarks";
 import { fmtNum, fmtPct, changeColor } from "@/lib/format";
 
-// THE PERSISTENT INDEX STRIP — the level and the day's move for Nifty 50,
-// Nifty 500, Nifty Midcap 150 and Nifty Smallcap 250, on every route.
+// THE PERSISTENT INDEX STRIP — the level and the day's move for every benchmark
+// the NAV card can be set against, on every route, running as a ticker.
+//
+// *"Add all benchmarks here and make it moving strip like they have in TV"* —
+// the family, 16 Nov 2026. It opens on the four they first named (Nifty 50,
+// Nifty 500, Nifty Midcap 150, Nifty Smallcap 250) and then runs the rest of
+// `BENCHMARKS` in the catalogue's order, so a benchmark added there joins the
+// ticker without a second list to keep in step. The scroll is CSS on
+// `transform` alone (`.index-ticker` in `index.css`): it pauses under the
+// pointer so a cell's hover can be read, and stands still for a reader who has
+// asked for reduced motion.
 //
 // It sits BETWEEN the top bar and `<main>` rather than inside a page, because
 // "at all times" is the request. It is also outside `<main>` deliberately: every
@@ -24,6 +34,23 @@ import { fmtNum, fmtPct, changeColor } from "@/lib/format";
 
 /** 60s, matching the Function's own cache: a faster poll cannot see new data. */
 const POLL_MS = 60_000;
+
+/**
+ * The ticker's order: the family's four first, as they named them, then every
+ * other benchmark. Each id is a `BenchmarkKey`, and `/api/indices` carries one
+ * row per benchmark under the same key (`indicesFunction.test.ts`).
+ */
+export const TICKER_INDEX_IDS: readonly string[] = [
+  ...FAMILY_INDEX_IDS,
+  ...BENCHMARKS.map((b) => b.key).filter((k) => !(FAMILY_INDEX_IDS as readonly string[]).includes(k)),
+];
+
+/**
+ * Seconds per cell for one full pass — about 45 px/s at the cell's width, slow
+ * enough to read a level in passing. Struck per cell rather than measured, so a
+ * poll that widens a figure by one digit never retimes (and so jumps) the scroll.
+ */
+const SECONDS_PER_CELL = 6;
 
 /**
  * ── "LIVE" AND "TODAY" ARE CLAIMS ABOUT A SESSION, AND THE FEED NAMES IT ─────
@@ -70,7 +97,7 @@ function Cell({ q }: { q: IndexQuote }) {
     : indexReason(q);
 
   return (
-    <div className="flex min-w-0 shrink-0 items-baseline gap-2 whitespace-nowrap px-3 first:pl-0" title={title}>
+    <div className="flex shrink-0 items-baseline gap-2 whitespace-nowrap px-5" title={title} data-index-id={q.id}>
       <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-slate-500">{q.label}</span>
       {q.level == null ? (
         // Not "0", and not blank: the level is absent and the tooltip says why.
@@ -123,24 +150,48 @@ export function IndexStrip({ aside }: { aside?: ReactNode } = {}) {
   }, []);
 
   const rows = feed
-    ? STRIP_INDEX_IDS.map((id) => feed.indices.find((q) => q.id === id)).filter((q): q is IndexQuote => !!q)
+    ? TICKER_INDEX_IDS.map((id) => feed.indices.find((q) => q.id === id)).filter((q): q is IndexQuote => !!q)
     : [];
 
   return (
     <div data-testid="index-strip"
-      className="flex h-9 shrink-0 items-center gap-0 overflow-x-auto border-b border-ink-700 bg-ink-900/60 px-6 backdrop-blur">
-      {state === "loading" && <span className="text-[11px] text-slate-500">Fetching index levels…</span>}
+      className="flex h-9 shrink-0 items-center border-b border-ink-700 bg-ink-900/60 backdrop-blur">
+      {state === "loading" && <span className="px-6 text-[11px] text-slate-500">Fetching index levels…</span>}
       {state === "down" && (
-        <span className="text-[11px] text-slate-500"
+        <span className="px-6 text-[11px] text-slate-500"
           title="The index feed runs as a server-side function on the deployed site and is not available in local preview. Nothing has been substituted for a level.">
           Index levels unavailable — the feed did not respond
         </span>
       )}
-      {rows.map((q) => <Cell key={q.id} q={q} />)}
+      {rows.length > 0 && <Ticker rows={rows} />}
       {/* THE "NSE · close <date>" / "NSE · live" LABEL IS GONE AT THE FAMILY'S
           REQUEST (Stage 10ng); `aside` takes the freed width. Each cell still
           names its own session on its hover. */}
-      {aside && <div className="ml-auto flex min-w-0 shrink items-center pl-4">{aside}</div>}
+      {/* The ticker keeps the strip: the notice takes at most 40% of it and
+          truncates, its whole sentence on its own hover. */}
+      {aside && <div className="ml-auto flex min-w-0 max-w-[40%] shrink-0 items-center pl-4 pr-6 empty:hidden">{aside}</div>}
+    </div>
+  );
+}
+
+/**
+ * THE TICKER — two identical runs of cells side by side, each at least the
+ * strip's width, each sliding left by its own width and starting over. When the
+ * first run has gone, the second stands exactly where it began, so the loop has
+ * no seam and no jump. The second run is decoration for the eye: it is hidden
+ * from assistive technology, and `data-ticker-run` names it so nothing that
+ * reads the strip counts an index twice.
+ */
+function Ticker({ rows }: { rows: IndexQuote[] }) {
+  const style = { "--ticker-duration": `${rows.length * SECONDS_PER_CELL}s` } as CSSProperties;
+  return (
+    <div className="index-ticker h-full min-w-0 flex-1" style={style} data-ticker>
+      <div className="index-ticker-run" data-ticker-run="primary">
+        {rows.map((q) => <Cell key={q.id} q={q} />)}
+      </div>
+      <div className="index-ticker-run" data-ticker-run="repeat" aria-hidden="true">
+        {rows.map((q) => <Cell key={q.id} q={q} />)}
+      </div>
     </div>
   );
 }

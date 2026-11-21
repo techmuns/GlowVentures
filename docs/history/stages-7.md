@@ -45,6 +45,21 @@
 - The footer counts the accounts the rows draw (`datedTotals.accounts`, off `GroupRow.accountIds` for security rows): "Total · 129 rows · all 95 accounts"; its hover splits 68 with a capital record, 6 with trades only and 21 with neither. No dated figure moves; the Value total rises from ₹764.7 Cr to ₹929.3 Cr, the rest being the review buckets' lines with no dated payment, which stay off this table.
 - Checks: `txnLedger.test.ts` and `txnAxis.test.ts` (parts partition every account on every axis); `check:pages` `monitor-txns` gains "every account in the book is in the table" and the footer check counts `data-dated-account-ids`. `src/pages/PortfolioMonitor.tsx`, `src/lib/txnRollup.ts`, `src/lib/txnAxis.ts`, `scripts/check-pages.mjs`.
 
+### Stage 10oq — The index strip runs every benchmark as a TV-style ticker
+
+- *"Add all benchmarks here and make it moving strip like they have in TV"* (16 Nov 2026). The strip now carries all seven
+  benchmarks in `BENCHMARKS`: the family's four first, as they named them, then Nifty Next 50, Sensex and BSE 500
+  (`TICKER_INDEX_IDS` in `IndexStrip.tsx`). The movers card's index tile keeps the four (`FAMILY_INDEX_IDS`).
+- `/api/indices` reads the three new indices, each held to the name its upstream reports (measured 16 Nov 2026:
+  "NIFTY NEXT 50", "S&P BSE SENSEX", "S&P BSE 500 INDEX"); edge cache key moved to v2. `indicesFunction.test.ts` holds
+  the feed's list to `BENCHMARKS` on key, symbol and accepted names.
+- The ticker is CSS (`.index-ticker` in `index.css`): two identical runs, each at least the strip's width, sliding by
+  their own width, transform-only, linear, ~45 px/s (6 s per cell, never re-timed by a poll). Pauses under a fine
+  pointer; stands still, one run, for reduced motion. The repeat run is `aria-hidden`. The saved-numbers notice takes at
+  most 40% of the strip.
+- `check:pages` (cio-live): every benchmark once, in order, each with a level; a hidden repeat run of the same width,
+  both scrolling. Proved by cutting the ticker back to four.
+
 ### Stage 10or — Home: a tile per asset class, basket donut, YTD and since-inception tiles; captions off the widgets
 
 - *"please add total real estate widget to widget library … need total fixed income widget also … basically need to have individual widgets for all these"* — the family, 16 Nov 2026, pointing at the asset allocation legend. The library gains Total Equity, Total Fixed Income (the family's Debt class), Total Alternates, Total Real Estate and Total Commodities beside Total Cash, all drawn by one `classTile` from `HOME_CLASS_TILES` (`src/lib/homeDashboard.ts`): each is its allocation row's own value and weight (Real Estate is the book's Real Estate class; property records on the Real Estate page stay outside Investment AUM and the hover says so). Each opens its holdings through a new `home-class` drill-down, the `home-cash` rule for any class (`src/lib/drilldown.ts`). Unclassified (₹212) gets no tile.
