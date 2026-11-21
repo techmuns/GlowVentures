@@ -333,12 +333,12 @@ extraction mirrors each archive's own path under `source/`.
 | HDFC Securities | 3110320 | Ajay Jaisinghani | 2026-11-02 | ₹47.24 Cr |
 | Bandhan Mutual Fund | 8652064 | Ajay Jaisinghani | 2026-10-26 | ₹41.51 Cr |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-09-30 | ₹38.16 Cr |
-| Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani | 2026-06-30 | ₹37.26 Cr |
+| Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani | 2026-06-30 | ₹37.90 Cr |
 | Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-10-31 | ₹31.95 Cr |
 | Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-10-31 | ₹31.94 Cr |
 | Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-10-31 | ₹30.91 Cr |
 | Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-11-03 | ₹29.91 Cr |
-| Consolidated review (MOPWM) | MOPWM | Ankita Jaisinghani | 2026-06-30 | ₹29.04 Cr |
+| Consolidated review (MOPWM) | MOPWM | Ankita Jaisinghani | 2026-06-30 | ₹29.64 Cr |
 | Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-09-30 | ₹27.00 Cr |
 | Motilal Oswal Founders Fund | 90410016104 | Ajay Jaisinghani | 2026-09-30 | ₹22.07 Cr |
 | Motilal Oswal Active Momentum Fund | 904168868444 | Ankita Jaisinghani | 2026-08-06 | ₹21.42 Cr |

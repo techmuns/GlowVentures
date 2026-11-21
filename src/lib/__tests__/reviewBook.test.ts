@@ -139,8 +139,11 @@ const carriedPI: number[] = [], writtenOff: number[] = [], listedSince: number[]
       LINES.set(`${PI}|${r}`, { tab: PI, block: PI, row: r, product, cost, value, carried: true });
       const v = sum(rows.map((p) => p.marketValue)), c = sum(rows.map((p) => p.costBasis ?? 0));
       const tol = 1 + 0.01 * rows.length;
-      if (Math.abs(v - value) > tol) bad.push(`${product}: book value ${v} vs the review's ${value}`);
-      if (Math.abs(c - cost) > tol) bad.push(`${product}: book cost ${c} vs the review's ${cost}`);
+      // Sky Vision Cure's own partner capital ledgers complete the review's
+      // undercount to ₹5.65 Cr (Stage 10px); the book carries the ledger total.
+      const ledgerExpect = /^Sky Vision Cure LLP/.test(product) ? 56500000 : null;
+      if (Math.abs(v - (ledgerExpect ?? value)) > tol) bad.push(`${product}: book value ${v} vs the ${ledgerExpect ? "ledgers'" : "review's"} ${ledgerExpect ?? value}`);
+      if (Math.abs(c - (ledgerExpect ?? cost)) > tol) bad.push(`${product}: book cost ${c} vs the ${ledgerExpect ? "ledgers'" : "review's"} ${ledgerExpect ?? cost}`);
       continue;
     }
     LINES.set(`${PI}|${r}`, { tab: PI, block: PI, row: r, product, cost, value, carried: false });
@@ -152,7 +155,7 @@ const carriedPI: number[] = [], writtenOff: number[] = [], listedSince: number[]
   // Sotefin Bharat left the carried lines in Stage 10kn: its statement marks it.
   ok("58 lines are carried", carriedPI.length === 58, String(carriedPI.length));
   const piRows = REV.filter((p) => p.reviewSource?.sheet === PI);
-  ok("…as 70 book rows, one per holder", piRows.length === 70, String(piRows.length));
+  ok("…as 71 book rows, one per holder (Sky Vision Cure split Bharat + Ankita, Stage 10px)", piRows.length === 71, String(piRows.length));
   ok("22 are written off", writtenOff.length === 22, String(writtenOff.length));
   ok("4 are now listed", listedSince.length === 4, String(listedSince.length));
   ok("3 are held elsewhere", elsewhere.length === 3, elsewhere.map((r) => text(cell(PI, r, 1))).join(", "));
@@ -295,12 +298,14 @@ console.log("\n4. Nothing is counted twice, and nothing else is carried");
   const stray = REV.filter((p) => !p.reviewSource || !LINES.get(`${p.reviewSource.sheet}|${p.reviewSource.row}`)?.carried);
   ok("every review row in the book points at a private-market line of the review", stray.length === 0,
     stray.slice(0, 3).map((p) => `${p.security} → ${JSON.stringify(p.reviewSource)}`).join("; "));
-  ok("…and there are 88 of them: 70 private investments and 18 PE fund, unlisted and credit rows",
-    REV.length === 88 && REV.length === 70 + blockRows, `${REV.length} rows, ${blockRows} outside Private Investments`);
+  ok("…and there are 89 of them: 71 private investments and 18 PE fund, unlisted and credit rows",
+    REV.length === 89 && REV.length === 71 + blockRows, `${REV.length} rows, ${blockRows} outside Private Investments`);
   const carried = [...LINES.values()].filter((l) => l.carried);
+  // Sky Vision Cure's ledgers complete its carried line by ₹1.24 Cr (Stage 10px).
+  const LEDGER_OVERRIDE = 56500000 - 44092619.87;
   ok("the review rows add to the carried lines' own value, to the rupee",
-    Math.abs(sum(REV.map((p) => p.marketValue)) - sum(carried.map((l) => l.value))) <= 1 + 0.01 * REV.length,
-    `${sum(REV.map((p) => p.marketValue))} vs ${sum(carried.map((l) => l.value))}`);
+    Math.abs(sum(REV.map((p) => p.marketValue)) - (sum(carried.map((l) => l.value)) + LEDGER_OVERRIDE)) <= 1 + 0.01 * REV.length,
+    `${sum(REV.map((p) => p.marketValue))} vs ${sum(carried.map((l) => l.value)) + LEDGER_OVERRIDE}`);
   // Every other private holding is a statement's, and none of them is a line the
   // review carries — or the same holding would be counted from both.
   const privOthers = NONREV.filter((p) => p.marketSide === "private");
@@ -387,7 +392,7 @@ console.log("\n5. Each member's share is the review's own Investorwise figure");
   const na = sum(REV.filter((p) => accById.get(p.accountId)?.ownerId === "not-attributed").map((p) => p.costBasis ?? 0));
   const away = sum(elsewhere.map((r) => num(cell(PI, r, piCost)) * CRORE));
   ok("…and the gap is the lines attributed to no member plus ESDS and Credit Fair, to the rupee",
-    na > 0 && Math.abs(gap - na - away) <= 2, `gap ${gap}, not attributed ${na}, elsewhere ${away}`);
+    na > 0 && Math.abs(gap + (56500000 - 44092619.87) - na - away) <= 2, `gap ${gap} (+₹${(56500000 - 44092619.87).toFixed(2)} the SVC ledgers complete), not attributed ${na}, elsewhere ${away}`);
   ok("the lines attributed to no member are all private investments, held at cost",
     REV.filter((p) => accById.get(p.accountId)?.ownerId === "not-attributed").every((p) => p.reviewSource?.sheet === PI && p.valuedAtCost === true));
 }

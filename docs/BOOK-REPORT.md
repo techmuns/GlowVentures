@@ -7,8 +7,8 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 10,91,27,79,498.21 |
-| Positions | 506 |
+| Consolidated market value | 10,92,51,86,878.34 |
+| Positions | 507 |
 | Accounts | 95 |
 | Owners | 11 |
 | Newest as-of | 2026-11-04 |
@@ -92,8 +92,8 @@ Generated — **do not edit by hand**.
 | 90414963315 | Motilal Oswal Mutual Fund | Ajay Jaisinghani | — | 2026-09-30 | 3 | 0 |
 | 9039920536 | Neo Infra Income Opportunities Fund | Ajay Jaisinghani | — | 2026-06-30 | 1 | 5,54,98,303.25 |
 | MOPWM | Consolidated review (MOPWM) | Ajay Jaisinghani | — | 2026-06-30 | 26 | 1,23,39,86,365.57 |
-| MOPWM | Consolidated review (MOPWM) | Ankita Jaisinghani | — | 2026-06-30 | 12 | 29,04,27,491.87 |
-| MOPWM | Consolidated review (MOPWM) | Bharat Jaisinghani | — | 2026-06-30 | 31 | 37,26,33,638.62 |
+| MOPWM | Consolidated review (MOPWM) | Ankita Jaisinghani | — | 2026-06-30 | 12 | 29,64,34,872 |
+| MOPWM | Consolidated review (MOPWM) | Bharat Jaisinghani | — | 2026-06-30 | 32 | 37,90,33,638.62 |
 | MOPWM | Consolidated review (MOPWM) | Bharat Jaisinghani Family Trust 2 | — | 2026-06-30 | 1 | 1,35,00,875 |
 | MOPWM | Consolidated review (MOPWM) | Bharat Jaisinghani Family Trust 3 | — | 2026-06-30 | 1 | 1,35,00,875 |
 | MOPWM | Consolidated review (MOPWM) | Not attributed to a member | — | 2026-06-30 | 5 | 7,25,81,778.8 |
@@ -227,8 +227,8 @@ The review's dated rows behind the holdings it values (67 rows, `BOOK_REVIEW_FLO
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
 | Ajay Jaisinghani | 37 | 251 | 6,54,52,76,652.72 |
-| Ankita Jaisinghani | 22 | 119 | 1,71,81,91,897.01 |
-| Bharat Jaisinghani | 16 | 102 | 80,21,68,088.16 |
+| Ankita Jaisinghani | 22 | 119 | 1,72,41,99,277.14 |
+| Bharat Jaisinghani | 16 | 103 | 80,85,68,088.16 |
 | Aarti Jaisinghani | 4 | 10 | 1,07,49,30,360.06 |
 | Bharat Jaisinghani Family Trust 2 | 4 | 3 | 3,06,81,629 |
 | Bharat Jaisinghani Family Trust 3 | 4 | 3 | 3,06,81,629 |
@@ -274,7 +274,7 @@ page alone. `BOOK_POLYCAB` is its only reader; remove its key from
 | POLYCAB INDIA LIMITED - EQ | Bharat Jaisinghani | HDFC Bank (NSDL demat) 22025655 | 2026-03-31 | 51,08,911 | — |
 | POLYCAB INDIA LIMITED - EQ | Ajay Jaisinghani | ICICI Bank (NSDL demat) 49794950 | 2026-10-31 | 1,39,01,229 | 1,08,24,88,70,223 |
 
-Together **1,08,24,88,70,223**, excluded from the 10,91,27,79,498.21 consolidated market value above.
+Together **1,08,24,88,70,223**, excluded from the 10,92,51,86,878.34 consolidated market value above.
 
 ## The family's own dated investments
 
@@ -327,7 +327,7 @@ A per-contribution breakdown is published for **36** position(s), of which **15*
 
 ## When each holding was bought (Stage 10fm)
 
-Of **435** holdings, **323** carry the date their units were bought: 36 by the fund's own dated allotments, 23 by a lot register, 179 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 85 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
+Of **436** holdings, **324** carry the date their units were bought: 36 by the fund's own dated allotments, 23 by a lot register, 179 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 86 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
 
 **1822** dated buys and sells sit behind **228** holdings (`BOOK_HOLDING_TRADES`); **100** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
 
@@ -363,10 +363,10 @@ The rest are undated on the page, each with its reason:
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 9,50,45,96,429.76 | 87.10% |
-| Financials | 65,23,65,261.42 | 5.98% |
+| Unclassified | 9,51,70,03,809.89 | 87.11% |
+| Financials | 65,23,65,261.42 | 5.97% |
 | Health Care | 18,25,47,786.1 | 1.67% |
-| Consumer Discretionary | 18,07,07,727.82 | 1.66% |
+| Consumer Discretionary | 18,07,07,727.82 | 1.65% |
 | Industrials | 14,70,50,797.65 | 1.35% |
 | Information Technology | 9,34,24,695.48 | 0.86% |
 | Cash | 8,06,24,440.93 | 0.74% |
@@ -1007,6 +1007,7 @@ never guessed into the nearest plausible bucket.
 - 1 depository row(s) for Franklin India Credit AIF are NOT carried: the unit count matches that fund's own statement exactly, so they are the same holding seen from custody, and the fund is the authority on what its own units are worth.
 - 2 depository row(s) for Sanshi Fund are NOT carried: the unit count matches that fund's own statement exactly, so they are the same holding seen from custody, and the fund is the authority on what its own units are worth.
 - identity: 0 NSE symbol(s) are carried by two securityKeys among the positions — no listed company is keyed twice.
+- review: Sky Vision Cure LLP — Private Investments row 57 records ₹4,40,92,619.87 (one funding round); the LLP's own capital ledgers record ₹5,65,00,000 paid in full, which the book carries.
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Ajay Jaisinghani's Transactions rows walk to 9,94,198.706 units; the closing holds 9,90,429.68, so 3,769.026 units are on no dated row
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Ajay Jaisinghani's cost is FIFO over the review's dated rows: ₹99,41,987.06 held, ₹57,512.96 of cost sold for a realised ₹20,807.04; the review's purchases less sale proceeds (₹99,21,180.02) is kept as the check
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Bharat Jaisinghani's Transactions rows walk to 9,94,198.706 units; the closing holds 9,90,429.68, so 3,769.026 units are on no dated row
@@ -1014,7 +1015,7 @@ never guessed into the nearest plausible bucket.
 - review: Transition Venture Capital Fund I — Class A1 — Ankita Jaisinghani's ₹25,00,000 purchase (review Transactions row 82, dated 2025-08-01) is dated 2024-12-20, the family's investment register's FUND HOUSE row 91 — the family's decision of 12 Nov 2026
 - review: National Stock Exchange of India — Ankita Jaisinghani's line is dated by the family's investment register (PVT INV rows 74 and 75: ₹4,27,63,713 for 15,000 shares), carried to 75,000 by the 60,000-share bonus of 2024-11-02 in MOPWM's transaction report
 - review: Zepto — Ajay Jaisinghani's ₹15,00,15,960 purchase (review Transactions row 443, dated 2025-02-24) is dated 2024-11-13, the family's investment register's AJAY SIR - AARTI row 65 — the family's decision of 12 Nov 2026
-- review: 88 private-market rows from the consolidated review (MOPWM, 30 Jun 2026) — 62 statement rows superseded, 22 written-off lines named
+- review: 89 private-market rows from the consolidated review (MOPWM, 30 Jun 2026) — 62 statement rows superseded, 22 written-off lines named
 - review: 67 dated rows (purchases, sales, income) behind 17 valued holdings
 - review-ajay-jaisinghani: everest-fleet dated by the investment register — 3 payment(s), 2022-01-10 to 2023-05-15, adding to the review's cost, inside its Jan 2022 – May 2023
 - review-ankita-jaisinghani: everest-fleet dated by the investment register — 2 payment(s), 2022-01-11 to 2023-05-15, adding to the review's cost, inside its Jan 2022 – May 2023
@@ -1034,7 +1035,7 @@ never guessed into the nearest plausible bucket.
 - 2 ring-fenced holding(s) — POLYCAB INDIA LIMITED - EQ, POLYCAB INDIA LIMITED - EQ, 1,08,24,88,70,223 — are carried in the archive and in BOOK_POLYCAB, and OUT of every consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in build-book.mjs to fold it back into the book.
 - separate investments, confirmed by the family on 2026-09-28: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) under Ajay Jaisinghani (37702) and Bharat Jaisinghani (60117) — each counted in full, 2,91,60,825.51 across 2 account(s).
 - separate investments, confirmed by the family on 2026-09-28: Transition Venture Capital Fund I — Class A1 under Bharat Jaisinghani Family Trust 2 (TVC262) and Bharat Jaisinghani Family Trust 3 (TVC263) — each counted in full, 1,93,61,508 across 2 account(s).
-- market side: listed 8,12,59,10,119.53 over 409 holding(s), private 2,78,68,69,378.68 over 93, and 0 over 4 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
+- market side: listed 8,12,59,10,119.53 over 409 holding(s), private 2,79,92,76,758.81 over 94, and 0 over 4 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
 - market side: 23 AIF holding(s) placed by the family's own classification of what the fund invests in; 6 of them, in 3 fund(s), differ from what the printed SEBI category alone would say — India SME Investments Fund II — Class A2 (no category printed → private: private equity in early-growth SMEs); Motilal Oswal Founders Fund Series II — Class G1 (no category printed → listed: listed Indian equities); Motilal Oswal Wealth Delphi Equity Fund (no category printed → listed: Category III equity managers, as a fund of funds). The statement's category is unchanged; only the side is taken from the family.
 - market side: 3 fund(s) print NO SEBI category and the family have not classified them, so they are on neither side and are counted apart rather than defaulted to one: ASK Absolute Return Fund — Class A6 Series 31/01/2025; Motilal Oswal Hedged Equity Multi Factor Strategy — Class B2; Motilal Oswal Hedged Equity Multi Factor Strategy — Class F1. Putting them private would claim they are private capital and putting them listed would claim the opposite, and no document in this archive makes either claim. One line from the family, or a fund's own SEBI registration, settles each one.
 - market side: 2 holding(s) take a SEBI category the FAMILY declared, because no statement for them prints one — Motilal Oswal Wealth Delphi Equity Fund; VANTAGE OAK FUND - VOF I CL A2 - Restricted Transferability. A declaration only ever fills a category the statements leave empty and never overrides one they print; which side of the book each sits on is the family's own placing where they gave one (noted above), and otherwise the side its category gives.
@@ -1046,8 +1047,8 @@ never guessed into the nearest plausible bucket.
 - navHistory: buoyant-capital-103472 2026-07-31 → 2026-08-31 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
 - navHistory: kotak-mahindra-mutual-fund-4295974 2026-07-01 → 2026-08-03 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
 - navHistory: kotak-mahindra-mutual-fund-4295974 2026-08-03 → 2026-10-05 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
-- attribution: 30 account(s) publish a valued holdings statement at two or more dates, so 278 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-11-04 the covered set runs ₹537.58 Cr → ₹560.06 Cr, of which price ₹10.75 Cr, trading ₹8.44 Cr, bought in ₹17.40 Cr, sold out ₹9.99 Cr. Largest detractor Bandhan Large & Mid Cap Fund-Direct Plan-Growth ₹-162.74 L. It covers ₹560.12 Cr of the book's ₹1091.28 Cr; every other account publishes one statement, and one statement is a level rather than a change.
-- unrealised short/long-term split is populated on 17 of 506 position(s), across 2 of 95 account(s) (lkp-securities-98245, v-e-c-assago-capital-management-llp-128004): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- attribution: 30 account(s) publish a valued holdings statement at two or more dates, so 278 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-11-04 the covered set runs ₹537.58 Cr → ₹560.06 Cr, of which price ₹10.75 Cr, trading ₹8.44 Cr, bought in ₹17.40 Cr, sold out ₹9.99 Cr. Largest detractor Bandhan Large & Mid Cap Fund-Direct Plan-Growth ₹-162.74 L. It covers ₹560.12 Cr of the book's ₹1092.52 Cr; every other account publishes one statement, and one statement is a level rather than a change.
+- unrealised short/long-term split is populated on 17 of 507 position(s), across 2 of 95 account(s) (lkp-securities-98245, v-e-c-assago-capital-management-llp-128004): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - realised is NULL, not ₹0, on BELRISE INDUSTRIES LIMITED (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on CAPRI GLOBAL CAPITAL LIMITED (lkp-securities-98245): every one of its 2 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on Electronics Mart India Limited (lkp-securities-98245): every one of its 3 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.

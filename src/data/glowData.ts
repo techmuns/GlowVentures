@@ -19,10 +19,10 @@ export const BOOK_AS_OF = "2026-11-04";
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-11-04",
   "listedValue": 8125910119.53,
-  "privateValue": 2786869378.68,
+  "privateValue": 2799276758.81,
   "unplacedValue": 0,
-  "totalValue": 10912779498.21,
-  "positionsCount": 506,
+  "totalValue": 10925186878.34,
+  "positionsCount": 507,
   "entitiesCount": 11,
   "startupsCount": 0,
   "accountsCount": 95
@@ -29039,9 +29039,9 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": null,
     "avgCost": null,
     "currentPrice": null,
-    "costBasis": 44092619.87,
+    "costBasis": 50100000,
     "costBasisSource": "review",
-    "marketValue": 44092619.87,
+    "marketValue": 50100000,
     "unrealizedPnL": null,
     "realizedPnL": null,
     "costOfUnitsSold": null,
@@ -29070,7 +29070,7 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-03-27",
       "text": "27 Mar 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 57. One holder on the review's own Transactions and on the register.",
+    "reviewNote": "Held at cost per the LLP's own partner capital ledgers as on 31 Oct 2026 — Ankita Jaisinghani's ₹5,01,00,000. The review's line is the first funding round only (27 Mar 2025, ₹4.41 Cr under Ankita); the LLP's own partner capital ledgers as on 31 Oct 2026 record the complete ₹5.65 Cr paid in — Bharat ₹64 L and Ankita ₹5.01 Cr, each across two rounds — which the family confirmed on 21 Nov 2026 is the figure to carry.",
     "integrity": {
       "positionId": "position-c841a647310c1e33f9752ada",
       "quantityAsOf": "2026-06-30",
@@ -31103,6 +31103,83 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 38. One holder on the review's own Transactions and on the register.",
     "integrity": {
       "positionId": "position-55aba1e05104e41253039ede",
+      "quantityAsOf": "2026-06-30",
+      "formulaVersion": "financial-integrity-v1",
+      "metrics": {
+        "quantity": {
+          "status": "missing",
+          "basis": "statement-unit-balance",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "costBasis": {
+          "status": "source-backed",
+          "basis": "statement-or-family-review",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "marketValue": {
+          "status": "at-cost",
+          "basis": "carrying-cost",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        },
+        "unrealizedPnL": {
+          "status": "missing",
+          "basis": "derived",
+          "effectiveDate": "2026-06-30",
+          "exceptions": []
+        }
+      }
+    }
+  },
+  {
+    "securityKey": "sky-vision-cure",
+    "security": "Sky Vision Cure LLP",
+    "symbol": null,
+    "accountId": "review-bharat-jaisinghani",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Unlisted",
+    "marketSide": "private",
+    "quantity": null,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": 6400000,
+    "costBasisSource": "review",
+    "marketValue": 6400000,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-06-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "review": true,
+    "valuedAtCost": true,
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewSource": {
+      "sheet": "Private Investments",
+      "block": "Private Investments",
+      "row": 57
+    },
+    "investedDates": {
+      "from": "2025-03-27",
+      "to": "2025-03-27",
+      "text": "27 Mar 2025"
+    },
+    "reviewNote": "Held at cost per the LLP's own partner capital ledgers as on 31 Oct 2026 — Bharat Jaisinghani's ₹64,00,000. The review's line is the first funding round only (27 Mar 2025, ₹4.41 Cr under Ankita); the LLP's own partner capital ledgers as on 31 Oct 2026 record the complete ₹5.65 Cr paid in — Bharat ₹64 L and Ankita ₹5.01 Cr, each across two rounds — which the family confirmed on 21 Nov 2026 is the figure to carry.",
+    "integrity": {
+      "positionId": "position-d1642ba201c7d452ef9157ac",
       "quantityAsOf": "2026-06-30",
       "formulaVersion": "financial-integrity-v1",
       "metrics": {
@@ -52052,14 +52129,14 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "provider": "Consolidated review (MOPWM)",
       "accountNo": "MOPWM",
       "date": "2026-06-30",
-      "bookValue": 290427491.87
+      "bookValue": 296434872
     },
     {
       "accountId": "review-bharat-jaisinghani",
       "provider": "Consolidated review (MOPWM)",
       "accountNo": "MOPWM",
       "date": "2026-06-30",
-      "bookValue": 372633638.62
+      "bookValue": 379033638.62
     },
     {
       "accountId": "review-bharat-jaisinghani-family-trust-2",
@@ -52251,7 +52328,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
   "enteredValue": 173996473.56,
   "exitedValue": 99872612.94,
   "undecomposedValue": -41152671.82,
-  "bookValue": 10912779498.21,
+  "bookValue": 10925186878.34,
   "coveredBookValue": 5601199509.66,
   "accounts": [
     {

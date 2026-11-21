@@ -54,7 +54,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { readSpreadsheet } from "./ingest/lib/sheet.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
 import { readReviewPrivate } from "./lib/reviewPrivateRead.mjs";
-import { PRIVATE_INVESTMENT_ELSEWHERE } from "../shared/reviewHolders.mjs";
+import { PRIVATE_INVESTMENT_ELSEWHERE, PRIVATE_INVESTMENT_HOLDERS } from "../shared/reviewHolders.mjs";
 import { REVIEW_PRIVATE_JOIN } from "../shared/reviewPrivateJoin.mjs";
 import { makeSecurityMatcher } from "../shared/nameMatch.mjs";
 
@@ -1188,6 +1188,13 @@ for (const p of POSITIONS) {
 }
 const RP = readReviewPrivate(wb);
 const PI_LINES = RP.privateInvestments.lines;
+// Private-Investments lines the LLP's own capital ledgers COMPLETE carry more in
+// the book than the review's own figure (Stage 10px); the aggregate ties to the
+// review plus that completion.
+const LEDGER_OVERRIDE = PRIVATE_INVESTMENT_HOLDERS.filter((e) => e.ledgerTotal).reduce((t, e) => {
+  const l = PI_LINES.find((x) => e.line.test(x.product));
+  return t + (l ? e.ledgerTotal - l.cost : 0);
+}, 0);
 const piCarried = (l) => (REVIEW_BY_ROW.get(`Private Investments|${l.row}`) ?? []);
 const piElsewhere = PI_LINES.map((l) => ({ l, e: PRIVATE_INVESTMENT_ELSEWHERE.find((x) => x.line.test(l.product)) }))
   .filter((x) => x.e && piCarried(x.l).length === 0 && (x.l.value ?? 0) > 0);
@@ -1230,7 +1237,7 @@ for (const l of [...eq.filter((x) => !x.isSection), ...assetLines]) {
   const bookMv = rows.reduce((t, p) => t + (p.marketValue ?? 0), 0);
   // The aggregate is carried less what the Private Investments tab names elsewhere.
   const expect = l.aggregate
-    ? l.mv * CR - piElsewhere.reduce((t, x) => t + (x.l.value ?? 0), 0)
+    ? l.mv * CR - piElsewhere.reduce((t, x) => t + (x.l.value ?? 0), 0) + LEDGER_OVERRIDE
     : l.mv * CR;
   if (Math.abs(bookMv - expect) > Math.max(1, Math.abs(expect) * 1e-6)) {
     throw new Error(`carried review line '${l.product}' (${l.tab ?? "Equity"} row ${l.row}): book ₹${bookMv.toFixed(2)} vs review ₹${expect.toFixed(2)}`);
